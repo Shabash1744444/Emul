@@ -22,20 +22,22 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
+      # ФИКС: Используем официальный NPM вместо прямых ссылок! 
+      # Это на 100% надежно и не вызывает ошибок скачивания.
       - name: Prepare Web Assets
         run: |
           mkdir -p public
           cp index.html *.js *.wasm public/ 2>/dev/null || true
           
-          echo "📥 Скачиваем оффлайн-библиотеки для распаковки RAR/7Z/ZIP..."
-          wget -qO public/fflate.js "https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"
-          wget -qO public/libarchive.js "https://cdn.jsdelivr.net/npm/libarchive.js@1.1.3/main.js"
-          wget -qO public/worker-bundle.js "https://cdn.jsdelivr.net/npm/libarchive.js@1.1.3/dist/worker-bundle.js"
+          echo "📦 Устанавливаем библиотеки распаковки через официальный NPM..."
+          npm install fflate@0.8.2 libarchive.js@1.3.0
+          cp node_modules/fflate/umd/index.js public/fflate.js
+          cp node_modules/libarchive.js/main.js public/libarchive.js
+          cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
 
       - name: Init Capacitor and Add Android
         run: |
           npm init -y
-          # Подключаем плагины файловой системы и браузера
           npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/haptics@latest @capacitor/browser@latest @capacitor/filesystem@latest
           npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "public"
           npx cap add android
