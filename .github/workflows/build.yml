@@ -22,17 +22,18 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Install Capacitor and Build APK
+      - name: Prepare Web Assets
         run: |
-          # Создаём структуру: public/ для веб-ассетов
+          # Создаём папку public на уровне репозитория
           mkdir -p public
           cp index.html *.js *.wasm public/ 2>/dev/null || true
-          
-          cd public
+
+      - name: Init Capacitor and Build APK
+        run: |
+          # Инициализируем в корне репозитория, webDir указывает на public
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
           
-          # Инициализируем с webDir = public (текущая папка)
           npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "public"
           npx cap add android
           
@@ -49,5 +50,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ArcadeHub-APK
-          path: public/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
