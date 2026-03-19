@@ -25,24 +25,29 @@ jobs:
       - name: Install Capacitor and Build APK
         run: |
           mkdir -p www
-          rsync -a --exclude='www' --exclude='.github' --exclude='.git' ./ www/
+          # Копируем все нужные файлы в www
+          cp index.html *.js *.wasm www/ 2>/dev/null || true
+          
           cd www
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
+          
+          # webDir = текущая папка www (где лежит index.html)
           npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "."
           npx cap add android
           
-          # Права на вибрацию
+          # Права на вибрацию и cleartext
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
           sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
           
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ArcadeHub-APK
           path: www/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
