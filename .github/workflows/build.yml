@@ -24,23 +24,42 @@ jobs:
 
       - name: Prepare Web Assets
         run: |
-          # Создаём папку public на уровне репозитория
           mkdir -p public
           cp index.html *.js *.wasm public/ 2>/dev/null || true
-
-      - name: Init Capacitor and Build APK
-        run: |
-          # Инициализируем в корне репозитория, webDir указывает на public
-          npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
           
+          echo "📥 Скачиваем оффлайн-библиотеки для распаковки RAR/7Z/ZIP..."
+          wget -qO public/fflate.js "https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"
+          wget -qO public/libarchive.js "https://cdn.jsdelivr.net/npm/libarchive.js@1.1.3/main.js"
+          wget -qO public/worker-bundle.js "https://cdn.jsdelivr.net/npm/libarchive.js@1.1.3/dist/worker-bundle.js"
+
+      - name: Init Capacitor and Add Android
+        run: |
+          npm init -y
+          # Подключаем плагины файловой системы и браузера
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/haptics@latest @capacitor/browser@latest @capacitor/filesystem@latest
           npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "public"
           npx cap add android
-          
-          # Права на вибрацию и cleartext
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
-          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
-          
+
+      - name: Generate Custom App Icon
+        run: |
+          if [ -f "icon.png" ]; then
+            echo "🎨 Найдена кастомная иконка, генерируем..."
+            mkdir -p assets
+            cp icon.png assets/icon.png
+            npm install -D @capacitor/assets
+            npx capacitor-assets generate --android
+          fi
+
+      - name: Inject Android Permissions
+        run: |
+          sed -i 's/<application/<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml || true
+
+      - name: Sync and Build APK
+        run: |
           npx cap sync android
           cd android
           chmod +x gradlew
