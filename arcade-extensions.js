@@ -218,3 +218,9 @@ if (typeof processFilesArray !== 'undefined') {
     // мы просто переназначим саму функцию в window:
     window.processSingleFile = window.processSingleFileExtended;
 }
+            if (window.Capacitor && window.Capacitor.Plugins.Browser) {
+                await window.Capacitor.Plugins.Browser.open({ 
+                    url: targetUrl, 
+                    presentationStyle: 'popover',
+                    toolbarColor: '#1f2937' // <-- ЭТА СТРОЧКА ВЕРНЕТ ВЕРХНЮЮ ПАНЕЛЬ
+                });
