@@ -1,0 +1,52 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch: # Кнопка для ручного запуска
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Install Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
+          
+      - name: Initialize Capacitor
+        run: |
+          npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "."
+          npx cap add android
+          
+      - name: Enable Cleartext Traffic & Permissions
+        run: |
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
+          sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
+          sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.HAPTIC_FEEDBACK" />' android/app/src/main/AndroidManifest.xml
+
+      - name: Sync Files to Android
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: ./android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: ArcadeHub-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
