@@ -24,16 +24,16 @@ jobs:
 
       - name: Install Capacitor and Build APK
         run: |
-          mkdir -p www
-          # Копируем все нужные файлы в www
-          cp index.html *.js *.wasm www/ 2>/dev/null || true
+          # Создаём структуру: public/ для веб-ассетов
+          mkdir -p public
+          cp index.html *.js *.wasm public/ 2>/dev/null || true
           
-          cd www
+          cd public
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
           
-          # webDir = текущая папка www (где лежит index.html)
-          npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "."
+          # Инициализируем с webDir = public (текущая папка)
+          npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "public"
           npx cap add android
           
           # Права на вибрацию и cleartext
@@ -49,5 +49,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ArcadeHub-APK
-          path: www/android/app/build/outputs/apk/debug/app-debug.apk
+          path: public/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
