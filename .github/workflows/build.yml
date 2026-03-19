@@ -3,6 +3,11 @@ name: Build Android APK
 on:
   workflow_dispatch:
 
+# Принудительно гасим предупреждения GitHub о переходе на Node.js 24
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,39 +16,47 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (Modern)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
+      # КРИТИЧЕСКИЙ ФИКС: Изолируем игру от технического мусора сборщика
+      - name: Prepare Web Directory
+        run: |
+          mkdir -p www
+          rsync -a --exclude='www' --exclude='.github' --exclude='.git' ./ www/
+
       - name: Install Capacitor
         run: |
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/haptics@latest
           
       - name: Initialize Capacitor
         run: |
-          npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "."
+          npx cap init "Arcade Hub" "com.arcade.hub" --web-dir "www"
           npx cap add android
           
-      - name: Enable Cleartext Traffic & Permissions
+      - name: Inject Android Permissions
         run: |
-          sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml
-          sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.HAPTIC_FEEDBACK" />' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml || true
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.HAPTIC_FEEDBACK" />' android/app/src/main/AndroidManifest.xml || true
 
       - name: Sync Files to Android
         run: npx cap sync android
 
       - name: Build APK
         working-directory: ./android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
