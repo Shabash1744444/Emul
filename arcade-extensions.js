@@ -3,30 +3,25 @@
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Инициализация libarchive.js (Воркер должен лежать в public/)
     if (typeof Archive !== 'undefined') {
-        Archive.init({
-            workerUrl: 'worker-bundle.js'
-        });
+        Archive.init({ workerUrl: 'worker-bundle.js' });
     }
 
-    // 2. ВНУТРЕННИЙ БРАУЗЕР: Перехват всех ссылок target="_blank"
     const externalLinks = document.querySelectorAll('a[target="_blank"]');
     externalLinks.forEach(link => {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
             const targetUrl = link.href;
             
-            if (window.Capacitor && window.Capacitor.Plugins.Browser) {
-                await window.Capacitor.Plugins.Browser.open({ 
+            if (window.NativeBrowser) {
+                await window.NativeBrowser.open({ 
                     url: targetUrl, 
                     presentationStyle: 'popover',
-                    toolbarColor: '#1f2937' // <-- Верхняя панель с кнопкой "Закрыть"
+                    toolbarColor: '#1f2937' 
                 });
                 
-                // Триггерим Радар Загрузок после закрытия браузера
-                window.Capacitor.Plugins.Browser.addListener('browserFinished', () => {
-                    setTimeout(runDownloadRadar, 1500); // Задержка, чтобы файл точно скачался
+                window.NativeBrowser.addListener('browserFinished', () => {
+                    setTimeout(runDownloadRadar, 1500); 
                 });
             } else {
                 window.open(targetUrl, '_blank');
@@ -34,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 3. Запуск Радара при старте приложения
     setTimeout(runDownloadRadar, 2000);
 });
 
@@ -42,10 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // ЛОГИКА РАДАРА (АВТО-УСТАНОВКА И УДАЛЕНИЕ)
 // ==========================================
 async function runDownloadRadar() {
-    if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) return;
-    const { Filesystem, Directory } = window.Capacitor.Plugins;
+    if (!window.NativeFilesystem) return;
+    const Filesystem = window.NativeFilesystem;
+    const Directory = window.NativeDirectory;
     
     try {
+        await Filesystem.requestPermissions();
+
         const result = await Filesystem.readdir({
             path: 'Download',
             directory: Directory.ExternalStorage
@@ -74,7 +71,6 @@ function promptRadarInstall(fileObj, Filesystem, Directory) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
     
-    // ЭТАП 1: Предложение установить
     const modal = document.createElement('div');
     modal.style.cssText = 'background:#1f2937; border:2px solid #38bdf8; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
     
@@ -103,21 +99,15 @@ function promptRadarInstall(fileObj, Filesystem, Directory) {
                 directory: Directory.ExternalStorage
             });
             
-            const byteCharacters = atob(fileData.data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray]);
-            const fakeFile = new File([blob], fileName);
+            // ИСПРАВЛЕНО: Безопасная конвертация файлов для старых версий WebView
+            const base64Response = await fetch(`data:application/octet-stream;base64,${fileData.data}`);
+            const fakeFile = await base64Response.blob();
+            fakeFile.name = fileName;
             
-            // Вызываем нашу расширенную функцию (которая умеет распаковывать rar/7z)
             await window.processSingleFile(fakeFile); 
             
             if (typeof renderAllGames === 'function') renderAllGames();
 
-            // ЭТАП 2: Успех и предложение удалить исходник
             modal.innerHTML = `
                 <h3 style="margin-top:0; color:#10b981;">✅ УСТАНОВЛЕНО!</h3>
                 <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">Игра сохранена во внутреннюю базу эмулятора.<br>Удалить исходный файл из "Загрузок"?</p>
@@ -150,17 +140,24 @@ function promptRadarInstall(fileObj, Filesystem, Directory) {
 // ==========================================
 // ПОДДЕРЖКА RAR И 7Z (ПЕРЕУПАКОВКА НА ЛЕТУ)
 // ==========================================
-
-// Ждем загрузки основного index.html, чтобы перехватить processSingleFile
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
 
-        // Глобальная обертка, которую вызывают и Радар, и кнопка импорта
+        // ИСПРАВЛЕНО: Безопасное чтение для старых Webview
+        const readBlobSafe = (b) => {
+            if (b.arrayBuffer) return b.arrayBuffer();
+            return new Promise((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(r.result);
+                r.onerror = rej;
+                r.readAsArrayBuffer(b);
+            });
+        };
+
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
             
-            // Если это RAR или 7Z, переупаковываем
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
                 console.log('Обнаружен архив RAR/7Z. Начинаем распаковку в RAM...');
                 
@@ -179,35 +176,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 flatten(extractedFiles);
 
-                // Ищем чистый ROM
                 const romExtensions = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
                 let hasRom = fileList.find(f => romExtensions.some(ext => f.path.toLowerCase().endsWith(ext)));
                 
                 if (hasRom) {
-                    console.log('В архиве найден ROM. Отправляем в эмулятор напрямую.');
                     return await coreProcessSingleFile(hasRom.file);
                 }
 
-                // Если ROM нет, предполагаем, что это DOS. Упаковываем файлы обратно в .zip через fflate
-                console.log('В архиве DOS файлы. Переупаковываем в ZIP для ядра js-dos...');
                 let zipData = {};
                 for(let f of fileList) {
-                    zipData[f.path] = new Uint8Array(await f.file.arrayBuffer());
+                    zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
                 }
                 
                 if (typeof fflate !== 'undefined') {
                     const zipped = fflate.zipSync(zipData);
                     const zipBlob = new Blob([zipped], {type: 'application/zip'});
-                    const newZipFile = new File([zipBlob], file.name.replace(/\.(rar|7z)$/i, '.zip'), {type: 'application/zip'});
+                    const newZipFile = new Blob([zipBlob], {type: 'application/zip'});
+                    newZipFile.name = file.name.replace(/\.(rar|7z)$/i, '.zip');
+                    
                     return await coreProcessSingleFile(newZipFile);
                 }
             }
             
-            // Если обычный файл или zip — прогоняем через оригинальную функцию
             return await coreProcessSingleFile(file);
         };
 
-        // Подменяем оригинальную функцию нашей расширенной
         window.processSingleFile = window.processSingleFileExtended;
     }
 });
