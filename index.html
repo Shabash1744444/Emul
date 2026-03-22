@@ -36,9 +36,7 @@
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; }
-/* ИСПРАВЛЕНО: Добавлен padding-bottom: 90px чтобы ссылки не скрывались под наэкранными кнопками */
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
-/* ИСПРАВЛЕНО: Добавлен padding: 40px сверху чтобы пакман не прятался под статус бар */
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
 @keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
@@ -1826,6 +1824,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (nes) nes.reset();
                     return;
                 }
+
                 if (nesLoop) cancelAnimationFrame(nesLoop);
                 nes = new Constructor({
                     onFrame: (fb) => { 
@@ -1975,8 +1974,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (window.JSEvents) {
             try { 
                 if (window.JSEvents.eventHandlers) {
-                    for (let i = 0; i < window.JSEvents.eventHandlers.length; i++) {
-                        const handler = window.JSEvents.eventHandlers[i];
+                    while (window.JSEvents.eventHandlers.length > 0) {
+                        const handler = window.JSEvents.eventHandlers.pop();
                         if (handler?.target) {
                             handler.target.removeEventListener(handler.eventTypeString, handler.handlerFunc, handler.useCapture);
                         }
@@ -2038,6 +2037,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         screenPanel.style.display = 'none'; 
         padPanel.style.display = 'none'; 
         menuScreen.style.display = 'flex';
+        currentGame = null;
         
         try { 
             screen.orientation.unlock(); 
@@ -2243,81 +2243,33 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         gameGrid.appendChild(btn);
     }
 
-    document.getElementById('mainImportBtn').onclick = async (e) => {
+    document.getElementById('mainImportBtn').onclick = (e) => {
         e.preventDefault(); 
         e.stopPropagation();
-        const isAndroid = /Android/i.test(navigator.userAgent);
 
-        if (isAndroid) {
-            return new Promise((resolve) => {
-                const input = document.createElement('input'); 
-                input.type = 'file'; 
-                input.multiple = true; 
-                input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.html';
-                input.onchange = async () => { 
-                    const files = Array.from(input.files || []); 
-                    document.body.removeChild(input); 
-                    if (files.length > 0) await processFilesArray(files); 
-                    resolve(); 
-                };
-                input.style.position = 'absolute'; 
-                input.style.opacity = '0'; 
-                input.style.pointerEvents = 'none'; 
-                document.body.appendChild(input);
-                input.click(); 
-                setTimeout(() => { if (document.body.contains(input)) input.click(); }, 100);
-            });
-        } else {
-            const fileInput = document.createElement('input'); 
-            fileInput.type = 'file'; 
-            fileInput.multiple = true; 
-            fileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.html';
-            fileInput.style.position = 'absolute'; 
-            fileInput.style.opacity = '0'; 
-            fileInput.style.pointerEvents = 'none'; 
-            document.body.appendChild(fileInput);
-            
-            let files = [];
-            try {
-                files = await new Promise((resolve) => {
-                    let resolved = false;
-                    const onChange = (event) => { 
-                        if (resolved) return; 
-                        resolved = true; 
-                        const selectedFiles = event.target.files; 
-                        if (!selectedFiles || selectedFiles.length === 0) resolve([]); 
-                        else resolve(Array.from(selectedFiles)); 
-                        cleanup(); 
-                    };
-                    const onCancel = () => { 
-                        setTimeout(() => { 
-                            if (!resolved) { 
-                                resolved = true; 
-                                resolve([]); 
-                                cleanup(); 
-                            } 
-                        }, 100); 
-                    };
-                    const cleanup = () => { 
-                        fileInput.removeEventListener('change', onChange); 
-                        window.removeEventListener('focus', onCancel); 
-                    };
-                    fileInput.addEventListener('change', onChange, { once: true }); 
-                    window.addEventListener('focus', onCancel, { once: true });
-                    setTimeout(() => { 
-                        if (!resolved) { 
-                            resolved = true; 
-                            resolve([]); 
-                            cleanup(); 
-                        } 
-                    }, 60000); 
-                    fileInput.click();
-                });
-            } catch (err) { console.error('File selection error:', err); }
-            
-            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
-            if (files && files.length > 0) await processFilesArray(files);
-        }
+        const input = document.createElement('input'); 
+        input.type = 'file'; 
+        input.multiple = true; 
+        input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.html';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.onchange = async (event) => { 
+            const files = Array.from(event.target.files || []); 
+            document.body.removeChild(input); 
+            if (files.length > 0) {
+                await processFilesArray(files); 
+            }
+        };
+
+        // Защита от зависания окна, если пользователь нажал "Отмена"
+        window.addEventListener('focus', () => {
+            setTimeout(() => {
+                if (document.body.contains(input)) document.body.removeChild(input);
+            }, 1000);
+        }, { once: true });
+
+        input.click();
     };
 
     async function processFilesArray(files) {
@@ -2403,11 +2355,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } 
         else { throw new Error('Неподдерживаемый формат'); }
 
-        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
-            const netCover = await fetchNetCover(cleanGameName, sysType); 
-            if (netCover) coverData = netCover; 
-        }
-
         const newGame = { 
             id: "game_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10),
             n: cleanGameName, 
@@ -2421,6 +2368,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             fit: 'contain', 
             cover: coverData 
         };
+
+        // АСИНХРОННАЯ ЗАГРУЗКА ОБЛОЖЕК (Не тормозит массовое добавление файлов)
+        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
+            fetchNetCover(cleanGameName, sysType).then(netCover => {
+                if (netCover && db) { 
+                    newGame.cover = netCover; 
+                    const tx = db.transaction(["games"], "readwrite"); 
+                    tx.objectStore("games").put(newGame); 
+                    tx.oncomplete = () => { if(typeof renderAllGames === 'function') renderAllGames(); }; 
+                }
+            }); 
+        }
         
         return new Promise((resolve, reject) => { 
             if (!db) {
