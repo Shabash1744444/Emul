@@ -46,9 +46,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Запускаем 1 раз при старте
-    setTimeout(runDownloadRadar, 2000);
+    setTimeout(() => runDownloadRadar(false), 2000);
 });
+
+function showPermissionModal() {
+    if (document.getElementById('radar-perm-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'radar-perm-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:#1f2937; border:2px solid #ef4444; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
+    
+    modal.innerHTML = `
+        <h3 style="margin-top:0; color:#ef4444;">📡 НУЖЕН ДОСТУП</h3>
+        <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
+            Android заблокировал сканирование папки "Загрузки".<br><br>
+            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и включи тумблер <b>"Доступ ко всем файлам"</b>.
+        </p>
+        <button id="perm-settings-btn" class="action-btn" style="width:100%; background:#38bdf8; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
+        <button id="perm-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Спросить позже)</button>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('perm-settings-btn').onclick = () => {
+        window.location.href = "intent:#Intent;action=android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;package=com.arcade.hub;end";
+        setTimeout(() => {
+            window.location.href = "intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:com.arcade.hub;end";
+        }, 800);
+        overlay.remove();
+    };
+
+    document.getElementById('perm-close-btn').onclick = () => {
+        overlay.remove();
+    };
+}
 
 async function requestStoragePermission() {
     if (window.NativeFilesystem && window.NativeFilesystem.requestPermissions) {
@@ -69,28 +103,20 @@ async function runDownloadRadar(manualTrigger = false) {
         return;
     }
     
-    if (manualTrigger) await requestStoragePermission();
-    
-    const Filesystem = window.NativeFilesystem;
-    const Directory = window.NativeDirectory;
+    if (manualTrigger) {
+        try { await Filesystem.requestPermissions(); } catch(e) {}
+    }
     
     try {
-        let result;
-        try {
-            result = await Filesystem.readdir({
-                path: 'Download',
-                directory: Directory.ExternalStorage
-            });
-        } catch (e) {
-            console.error('Радар: Ошибка чтения папки Download:', e);
-            if (!localStorage.getItem('radar_alert_shown') || manualTrigger) {
-                alert('📡 РАДАРУ НУЖНЫ ПРАВА!\n\nЧтобы эмулятор сам устанавливал игры, зайдите в:\nНастройки -> Приложения -> Arcade Hub -> Разрешения -> "Доступ ко всем файлам" (или "Файлы и медиаконтент").');
-                localStorage.setItem('radar_alert_shown', 'true');
-            }
+        let result = await Filesystem.readdir({
+            path: 'Download',
+            directory: Directory.ExternalStorage
+        });
+        
+        if (!result || !Array.isArray(result.files)) {
+            if (manualTrigger) alert('📂 Папка загрузок пуста или недоступна.');
             return;
         }
-        
-        if (!result || !Array.isArray(result.files)) return;
 
         let ignoredFiles = JSON.parse(localStorage.getItem('radar_ignored')) || [];
         const validExtensions = ['.zip', '.rar', '.7z', '.nes', '.smc', '.sfc', '.md', '.gen', '.bin', '.ngp', '.ngc'];
@@ -101,18 +127,22 @@ async function runDownloadRadar(manualTrigger = false) {
         });
 
         if (newFiles.length > 0) {
-            promptRadarInstall(newFiles, Filesystem, Directory);
+            promptRadarInstall(newFiles);
         } else {
             if (manualTrigger) alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
         }
     } catch (error) {
-        console.error('Радар: Критическая ошибка:', error);
+        console.error('Радар: Ошибка чтения папки Download:', error);
+        if (manualTrigger || !localStorage.getItem('radar_perm_shown')) {
+            showPermissionModal();
+            localStorage.setItem('radar_perm_shown', 'true'); 
+        }
     }
 }
 
 window.runDownloadRadar = runDownloadRadar;
 
-function promptRadarInstall(files, Filesystem, Directory) {
+function promptRadarInstall(files) {
     const overlay = document.createElement('div');
     overlay.id = 'radar-overlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
@@ -133,12 +163,10 @@ function promptRadarInstall(files, Filesystem, Directory) {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    // Просто закрывает окно, файлы останутся "новыми" для следующего сканирования
     document.getElementById('radar-close-btn').onclick = () => {
         overlay.remove();
     };
 
-    // Заносит все файлы в черный список, больше они не появятся
     document.getElementById('radar-ignore-btn').onclick = () => {
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
         files.forEach(f => ignored.push(f.name || f));
@@ -149,8 +177,8 @@ function promptRadarInstall(files, Filesystem, Directory) {
     document.getElementById('radar-install-btn').onclick = async () => {
         let installed = 0;
         let failed = 0;
-        let toDelete = []; // Для успешных (чтобы удалить исходник)
-        let processedFiles = []; // Для ВСЕХ (чтобы добавить в игнор-лист)
+        let toDelete = []; 
+        let processedFiles = []; 
 
         for (let i = 0; i < files.length; i++) {
             let fileName = files[i].name || files[i];
@@ -184,7 +212,6 @@ function promptRadarInstall(files, Filesystem, Directory) {
                 
                 const fakeFile = new File([blob], fileName, { type: 'application/octet-stream' });
                 
-                // Вызов умного обработчика, который выкинет мусор
                 await window.processSingleFile(fakeFile); 
                 
                 installed++;
@@ -195,7 +222,6 @@ function promptRadarInstall(files, Filesystem, Directory) {
             }
         }
         
-        // ВАЖНО: Добавляем ВСЕ просканированные файлы (даже мусор) в игнор, чтобы радар не зациклился
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
         ignored.push(...processedFiles);
         localStorage.setItem('radar_ignored', JSON.stringify(ignored));
@@ -205,9 +231,9 @@ function promptRadarInstall(files, Filesystem, Directory) {
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
             <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-                Успешно установлено игр: ${installed} шт.<br>
-                ${failed > 0 ? `Отсеяно мусора (не игры): ${failed} шт.<br><br>` : '<br>'}
-                Игры сохранены во внутреннюю базу.<br>Удалить установленные архивы из папки "Загрузки", чтобы не занимали место?
+                Успешно обработано архивов/игр: ${installed} шт.<br>
+                ${failed > 0 ? `Отсеяно мусора (пустые архивы): ${failed} шт.<br><br>` : '<br>'}
+                Игры из архивов добавлены в меню.<br>Удалить исходные файлы из "Загрузок", чтобы не занимали место?
             </p>
             <button id="radar-delete-yes" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer; display: ${installed > 0 ? 'block' : 'none'};">🗑️ ДА, ОЧИСТИТЬ ПАМЯТЬ</button>
             <button id="radar-delete-no" class="action-btn" style="width:100%; background:#334155; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ЗАКРЫТЬ</button>
@@ -229,17 +255,22 @@ function promptRadarInstall(files, Filesystem, Directory) {
     };
 }
 
+// ==========================================
+// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ (Inception Mode)
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
 
-        // УМНАЯ ОБЕРТКА (Смотрит внутрь архивов и выкидывает мусор)
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
-            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
+            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc', '.html'];
             const validDosExts = ['.exe', '.bat', '.com'];
+            const validArchiveExts = ['.zip', '.rar', '.7z'];
             
+            // ОБРАБОТКА RAR И 7Z
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
+                console.log('Обнаружен архив RAR/7Z. Анализ...');
                 const archive = await Archive.open(file);
                 const extractedFiles = await archive.getFilesObject();
                 
@@ -255,45 +286,116 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 flatten(extractedFiles);
 
-                let hasRom = fileList.find(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
-                if (hasRom) return await coreProcessSingleFile(hasRom.file);
+                let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                let romFiles = fileList.filter(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
 
-                let hasDos = fileList.find(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
-                if (!hasRom && !hasDos) throw new Error("Архив пуст или не содержит игр");
+                let hasValidContent = false;
 
-                const zipData = {};
-                for(let f of fileList) {
-                    zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                // 1. Сначала проверяем вложенные архивы (РЕКУРСИЯ)
+                if (nestedArchives.length > 0) {
+                    for (let f of nestedArchives) {
+                        let cleanName = f.path.split('/').pop();
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        // Вызываем функцию саму себя!
+                        await window.processSingleFileExtended(newFile); 
+                        await new Promise(r => setTimeout(r, 5)); 
+                    }
+                    hasValidContent = true;
                 }
-                
-                if (typeof fflate !== 'undefined') {
-                    const zipped = fflate.zipSync(zipData);
-                    const zipBlob = new Blob([zipped], {type: 'application/zip'});
-                    const newZipFile = new File([zipBlob], file.name.replace(/\.(rar|7z)$/i, '.zip'), {type: 'application/zip'});
-                    return await coreProcessSingleFile(newZipFile);
+
+                // 2. Распаковываем ROM-файлы, если они валяются прямо в корне RAR/7Z
+                if (romFiles.length > 0) {
+                    for (let f of romFiles) {
+                        let cleanName = f.path.split('/').pop();
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        await coreProcessSingleFile(newFile);
+                        await new Promise(r => setTimeout(r, 5));
+                    }
+                    hasValidContent = true;
                 }
+
+                // 3. Обрабатываем DOS-файлы (только если это не сборник архивов)
+                if (dosFiles.length > 0 && nestedArchives.length === 0) {
+                    const zipData = {};
+                    for(let f of fileList) {
+                        zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                    }
+                    if (typeof fflate !== 'undefined') {
+                        const zipped = fflate.zipSync(zipData);
+                        const zipBlob = new Blob([zipped], {type: 'application/zip'});
+                        const newZipFile = new File([zipBlob], file.name.replace(/\.(rar|7z)$/i, '.zip'), {type: 'application/zip'});
+                        await coreProcessSingleFile(newZipFile);
+                        hasValidContent = true;
+                    }
+                }
+
+                if (!hasValidContent) throw new Error("Архив пуст или не содержит поддерживаемых игр");
+                return;
             } 
+            // ОБРАБОТКА ZIP
             else if (fileName.endsWith('.zip')) {
                 const buffer = await readBlobSafe(file);
                 const arr = new Uint8Array(buffer);
-                let isValid = false;
+                let unzipped;
 
                 try {
-                    // Быстрый поиск нужных расширений внутри zip без полной распаковки
-                    const unzipped = fflate.unzipSync(arr);
-                    for (const path in unzipped) {
-                        const lowPath = path.toLowerCase();
-                        if (validRomExts.some(ext => lowPath.endsWith(ext)) || validDosExts.some(ext => lowPath.endsWith(ext))) {
-                            isValid = true;
-                            break;
-                        }
-                    }
-                } catch(e) { console.error("Ошибка чтения ZIP:", e); }
+                    unzipped = fflate.unzipSync(arr);
+                } catch(e) { throw new Error("Ошибка чтения ZIP архива"); }
 
-                if (!isValid) throw new Error("В ZIP архиве не найдено ROM или DOS-игр");
+                let hasDos = false;
+                let romFiles = [];
+                let nestedArchives = [];
+
+                for (const path in unzipped) {
+                    const lowPath = path.toLowerCase();
+                    if (validDosExts.some(ext => lowPath.endsWith(ext))) hasDos = true;
+                    if (validRomExts.some(ext => lowPath.endsWith(ext))) {
+                        romFiles.push({ path: path, data: unzipped[path] });
+                    }
+                    if (validArchiveExts.some(ext => lowPath.endsWith(ext))) {
+                        nestedArchives.push({ path: path, data: unzipped[path] });
+                    }
+                }
+
+                let hasValidContent = false;
+
+                // 1. Вложенные архивы (РЕКУРСИЯ)
+                if (nestedArchives.length > 0) {
+                    for (let arc of nestedArchives) {
+                        let cleanName = arc.path.split('/').pop();
+                        let blob = new Blob([arc.data]);
+                        let newFile = new File([blob], cleanName);
+                        // Вызываем функцию саму себя!
+                        await window.processSingleFileExtended(newFile);
+                        await new Promise(r => setTimeout(r, 5));
+                    }
+                    hasValidContent = true;
+                }
+
+                // 2. ROM файлы
+                if (romFiles.length > 0) {
+                    for (let rom of romFiles) {
+                        let cleanName = rom.path.split('/').pop();
+                        let blob = new Blob([rom.data]);
+                        let newFile = new File([blob], cleanName);
+                        await coreProcessSingleFile(newFile);
+                        await new Promise(r => setTimeout(r, 5)); 
+                    }
+                    hasValidContent = true;
+                }
+
+                // 3. DOS файлы (Отдаем оригинальный ZIP как есть)
+                if (hasDos && nestedArchives.length === 0 && romFiles.length === 0) {
+                    await coreProcessSingleFile(file);
+                    hasValidContent = true;
+                }
+
+                if (!hasValidContent) throw new Error("В ZIP архиве не найдено ROM или DOS-игр");
+                return;
             }
             else {
-                // Если это просто отдельный файл, проверяем, что это игра
+                // Если файл без архива, проверим расширение
                 if (!validRomExts.some(ext => fileName.endsWith(ext)) && !fileName.endsWith('.html')) {
                     throw new Error("Неизвестный формат файла");
                 }
