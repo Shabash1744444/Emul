@@ -177,7 +177,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <button id="mainImportBtn" class="action-btn" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: 1px solid #0369a1; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
             ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
         </button>
-        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar(true)" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
             📡 СКАНИРОВАТЬ
         </button>
         <button id="infoBtn" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
@@ -191,7 +191,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8;">
         <span style="color: #94a3b8; font-weight: bold;">ГДЕ БРАТЬ ИГРЫ:</span><br>
         <a href="https://www.emu-land.net/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
-        <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a>
+        <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a><br>
+        <a href="https://share.google/hzuTPFPnckx9x0iS6" target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold; margin: 0 10px; display:inline-block; margin-top:8px;">✨ GameROMs (Сборники Dendy, Sega, GBA, SNES)</a>
     </div>
 </div>
 
@@ -1749,14 +1750,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 script.id = 'core-script'; 
                 script.onerror = () => { 
                     alert("Ошибка загрузки ядра: " + coreName); 
-                    executeCleanup(); 
+                    executeCleanup(true); 
                 }; 
                 document.body.appendChild(script);
                 isGameStarting = false;
             }, 100);
         }).catch(err => { 
             alert("Ошибка чтения файла: " + err.message); 
-            executeCleanup(); 
+            executeCleanup(true); 
             isGameStarting = false;
         });
     }
@@ -1797,7 +1798,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGameStarting = false;
         }).catch(err => { 
             alert("Ошибка чтения ROM: " + err.message); 
-            executeCleanup(); 
+            executeCleanup(true); 
             isGameStarting = false;
         });
     }
@@ -1897,18 +1898,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             glLoop();
         } catch(e) { 
             alert("Ошибка инициализации эмулятора: " + e.message); 
-            executeCleanup(); 
+            executeCleanup(true); 
         }
     }
 
-    function handleBackBtn() {
+    async function handleBackBtn() {
         if (!currentGame) {
             executeCleanup(true);
             return;
         }
         
         if (backTapCount === 0) {
-            saveGameState(); 
+            await saveGameState(); 
             
             try {
                 if (nes && nesRestartFn) { 
@@ -2262,7 +2263,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         };
 
-        // Защита от зависания окна, если пользователь нажал "Отмена"
         window.addEventListener('focus', () => {
             setTimeout(() => {
                 if (document.body.contains(input)) document.body.removeChild(input);
@@ -2369,7 +2369,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             cover: coverData 
         };
 
-        // АСИНХРОННАЯ ЗАГРУЗКА ОБЛОЖЕК (Не тормозит массовое добавление файлов)
         if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
             fetchNetCover(cleanGameName, sysType).then(netCover => {
                 if (netCover && db) { 
