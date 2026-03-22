@@ -1,6 +1,8 @@
-// ==========================================
-// БЕЗОПАСНОЕ ЧТЕНИЕ ФАЙЛОВ ДЛЯ СТАРЫХ WEBVIEW
-// ==========================================
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Browser } from '@capacitor/browser';
+
+// Безопасное чтение файлов
 const readBlobSafe = (b) => {
     if (b.arrayBuffer) return b.arrayBuffer();
     return new Promise((res, rej) => {
@@ -11,9 +13,6 @@ const readBlobSafe = (b) => {
     });
 };
 
-// ==========================================
-// ARCADE HUB EXTENSIONS (MODULAR SYSTEM)
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
@@ -25,26 +24,25 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const targetUrl = link.href;
             
-            if (window.NativeBrowser && typeof window.NativeBrowser.open === 'function') {
+            if (Capacitor.isNativePlatform()) {
                 try {
-                    await window.NativeBrowser.open({ 
+                    await Browser.open({ 
                         url: targetUrl, 
                         presentationStyle: 'popover',
                         toolbarColor: '#1f2937' 
                     });
                     
                     if (!window._browserListenerAdded) {
-                        window.NativeBrowser.addListener('browserFinished', () => {
+                        Browser.addListener('browserFinished', () => {
                             setTimeout(runDownloadRadar, 1500); 
                         });
                         window._browserListenerAdded = true;
                     }
                     return; 
                 } catch (err) {
-                    console.error('NativeBrowser ошибка:', err);
+                    console.error('Browser plugin ошибка:', err);
                 }
             }
-            
             window.open(targetUrl, '_blank');
         });
     });
@@ -52,39 +50,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(runDownloadRadar, 2000);
 });
 
-// ==========================================
-// RUNTIME PERMISSIONS (Исправление Кимми)
-// ==========================================
-async function requestStoragePermission() {
-    if (window.NativeFilesystem && window.NativeFilesystem.requestPermissions) {
-        try {
-            // Запрос прав во время работы для Android 10+ (API 29+)
-            const result = await window.NativeFilesystem.requestPermissions();
-            return result.publicStorage === 'granted';
-        } catch(e) {
-            console.log('Permission request error:', e);
-        }
-    }
-    return true; // Fallback для старых версий
-}
-
-// ==========================================
-// ЛОГИКА РАДАРА (АВТО-УСТАНОВКА И УДАЛЕНИЕ)
-// ==========================================
 async function runDownloadRadar(manualTrigger = false) {
-    if (!window.NativeFilesystem) {
-        console.log('Радар: NativeFilesystem не доступен (тестовый режим)');
+    if (!Capacitor.isNativePlatform()) {
+        console.log('Радар: Работаем в браузере, сканер отключен.');
         if (manualTrigger) alert('📡 Радар работает только в скомпилированном APK');
         return;
     }
     
-    // Явный запрос разрешений перед сканированием!
-    await requestStoragePermission();
-    
-    const Filesystem = window.NativeFilesystem;
-    const Directory = window.NativeDirectory;
-    
     try {
+        // Вызов нативного диалога разрешений
+        await Filesystem.requestPermissions();
+        
         let result;
         try {
             result = await Filesystem.readdir({
@@ -93,28 +69,23 @@ async function runDownloadRadar(manualTrigger = false) {
             });
         } catch (e) {
             console.error('Радар: Ошибка чтения папки Download:', e);
-            if (manualTrigger) {
-                alert('📡 РАДАРУ НУЖНЫ ПРАВА!\n\nЧтобы эмулятор сам устанавливал игры, зайдите в:\nНастройки -> Приложения -> Arcade Hub -> Разрешения -> "Доступ ко всем файлам" (или "Файлы и медиаконтент").');
-            }
+            // Если выскочила ошибка, значит Android 11+ заблокировал доступ.
+            alert('📡 РАДАРУ НУЖЕН ДОСТУП К ФАЙЛАМ!\n\nАндроид блокирует сканирование Загрузок.\nТебе нужно зайти в системные настройки телефона:\n\nИщи пункт "Доступ ко всем файлам" (или "Специальный доступ") и включи тумблер для Arcade Hub.');
             return;
         }
         
-        if (!result || !Array.isArray(result.files)) {
-            if (manualTrigger) alert('📂 Папка загрузок пуста или недоступна.');
-            return;
-        }
+        if (!result || !Array.isArray(result.files)) return;
 
         let ignoredFiles = JSON.parse(localStorage.getItem('radar_ignored')) || [];
         const validExtensions = ['.zip', '.rar', '.7z', '.nes', '.smc', '.sfc', '.md', '.gen', '.bin', '.ngp', '.ngc'];
         
         const newFiles = result.files.filter(f => {
             const fileName = (f.name || f).toLowerCase(); 
-            return validExtensions.some(ext => fileName.endsWith(ext)) && 
-                   !ignoredFiles.includes(f.name || f);
+            return validExtensions.some(ext => fileName.endsWith(ext)) && !ignoredFiles.includes(f.name || f);
         });
 
         if (newFiles.length > 0) {
-            promptRadarInstall(newFiles[0], Filesystem, Directory);
+            promptRadarInstall(newFiles[0]);
         } else {
             if (manualTrigger) alert('✅ Новых игр в Загрузках не найдено!');
         }
@@ -123,10 +94,10 @@ async function runDownloadRadar(manualTrigger = false) {
     }
 }
 
-// Экспортируем для кнопки сканера
+// Экспорт функции в глобальную область, чтобы кнопка в index.html ее видела
 window.runDownloadRadar = runDownloadRadar;
 
-function promptRadarInstall(fileObj, Filesystem, Directory) {
+function promptRadarInstall(fileObj) {
     const fileName = fileObj.name || fileObj; 
     
     const overlay = document.createElement('div');
@@ -175,10 +146,7 @@ function promptRadarInstall(fileObj, Filesystem, Directory) {
                 throw new Error('Нет данных файла');
             }
             
-            const fakeFile = new File([blob], fileName, { 
-                type: 'application/octet-stream' 
-            });
-            
+            const fakeFile = new File([blob], fileName, { type: 'application/octet-stream' });
             await window.processSingleFile(fakeFile); 
             
             if (typeof renderAllGames === 'function') renderAllGames();
@@ -212,9 +180,6 @@ function promptRadarInstall(fileObj, Filesystem, Directory) {
     };
 }
 
-// ==========================================
-// ПОДДЕРЖКА RAR И 7Z
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
@@ -260,10 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     return await coreProcessSingleFile(newZipFile);
                 }
             }
-            
             return await coreProcessSingleFile(file);
         };
-
         window.processSingleFile = window.processSingleFileExtended;
     }
 });
