@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -58,8 +58,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 @keyframes chomp { 100% { clip-path: polygon(100% 50%, 50% 50%, 100% 50%, 100% 0, 0 0, 0 100%, 100% 100%); } }
 @keyframes movePacman { 0% { left: -10%; transform: scaleX(1); } 100% { left: 110%; transform: scaleX(1); } }
 @keyframes floatNom { 0% { transform: translate(-50%, 0) scale(1); opacity: 1; } 100% { transform: translate(-50%, -6px) scale(1.1); opacity: 0.7; } }
-.top-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-#searchInput { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #374151; background: rgba(17, 24, 39, 0.8); color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 15px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: border-color 0.2s; }
+.top-actions { display: flex; gap: 8px; margin-bottom: 15px; }
+#searchInput { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #374151; background: rgba(17, 24, 39, 0.8); color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 0; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: border-color 0.2s; }
 #searchInput:focus { border-color: #38bdf8; }
 #searchInput::placeholder { color: #64748b; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
@@ -72,25 +72,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-title { padding: 0 5px; width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 3px #000, 0 0 5px rgba(0,0,0,0.5); letter-spacing: 0.5px; }
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: 900; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
-.sys-nes:active { box-shadow: 0 2px 0 #991b1b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-nes { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
 .sys-smd { box-shadow: 0 6px 0 #1e3a8a, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #3b82f6; }
-.sys-smd:active { box-shadow: 0 2px 0 #1e3a8a, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-smd { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
 .sys-snes { box-shadow: 0 6px 0 #4c1d95, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #8b5cf6; }
-.sys-snes:active { box-shadow: 0 2px 0 #4c1d95, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-snes { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
 .sys-ngp { box-shadow: 0 6px 0 #164e63, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #06b6d4; }
-.sys-ngp:active { box-shadow: 0 2px 0 #164e63, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-ngp { background: linear-gradient(135deg, #06b6d4, #0e7490); color: white; }
 .sys-dos { box-shadow: 0 6px 0 #064e3b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #10b981; }
-.sys-dos:active { box-shadow: 0 2px 0 #064e3b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-dos { background: linear-gradient(135deg, #10b981, #047857); color: white; }
 .sys-unk { box-shadow: 0 6px 0 #334155, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #64748b; }
-.sys-unk:active { box-shadow: 0 2px 0 #334155, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-unk { background: linear-gradient(135deg, #64748b, #334155); color: white; }
 .sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
-.sys-html:active { box-shadow: 0 2px 0 #78350f, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
 .del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
@@ -175,17 +168,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     <div class="top-actions">
         <button id="mainImportBtn" class="action-btn" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: 1px solid #0369a1; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
-            ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
+            ➕ ДОБАВИТЬ
         </button>
-        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar(true)" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
-            📡 СКАНИРОВАТЬ
+        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar(true)" style="flex: 1; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+            📡 СКАН
+        </button>
+        <button id="editLibBtn" class="action-btn" onclick="toggleLibraryEdit()" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; border: 1px solid #b45309; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+            ✏️
         </button>
         <button id="infoBtn" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
             ℹ️
         </button>
     </div>
 
-    <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off">
+    <div style="display:flex; gap:10px; margin-bottom:15px; width:100%;">
+        <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" style="flex:1; margin-bottom:0;" oninput="renderAllGames()">
+        <select id="sortSelect" onchange="renderAllGames()" style="background:#111827; color:#fff; border:1px solid #374151; padding:0 10px; border-radius:8px; font-weight:bold; font-size:12px; outline:none; box-shadow:inset 0 2px 5px rgba(0,0,0,0.5);">
+            <option value="newest">🕒 Новые</option>
+            <option value="name_asc">🔤 А-Я</option>
+            <option value="name_desc">🔤 Я-А</option>
+            <option value="sys">🎮 Платформа</option>
+        </select>
+    </div>
+
     <div class="grid" id="gameGrid"></div>
 
     <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8;">
@@ -193,6 +198,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <a href="https://www.emu-land.net/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
         <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a><br>
         <a href="https://share.google/hzuTPFPnckx9x0iS6" target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold; margin: 0 10px; display:inline-block; margin-top:8px;">✨ GameROMs (Сборники Dendy, Sega, GBA, SNES)</a>
+    </div>
+</div>
+
+<div id="editFloatingBar" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(17,24,39,0.95); border:2px solid #ef4444; border-radius:12px; padding:15px; display:none; z-index:10000; box-shadow:0 10px 25px rgba(0,0,0,0.8); flex-direction:column; gap:10px; width:90%; max-width:400px; backdrop-filter:blur(5px);">
+    <div style="text-align:center; color:#fff; font-weight:bold; font-size:14px;" id="editCountText">Выбрано: 0</div>
+    <div style="display:flex; gap:10px;">
+        <button onclick="deleteSelectedGames()" class="action-btn" style="flex:1; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold;">🗑️ УДАЛИТЬ</button>
+        <button onclick="toggleLibraryEdit()" class="action-btn" style="flex:1; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold;">ОТМЕНА</button>
     </div>
 </div>
 
@@ -205,7 +218,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <li><span>Super Nintendo (SNES)</span> <span class="info-ext">.sfc, .smc</span></li>
             <li><span>Neo Geo Pocket (Color)</span> <span class="info-ext">.ngp, .ngc</span></li>
             <li><span>MS-DOS (Компьютер)</span> <span class="info-ext">.zip (внутри .exe/.bat)</span></li>
-            <li><span>Браузерные игры</span> <span class="info-ext">.html</span></li>
         </ul>
         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 20px;">
             Поддерживается загрузка как чистых файлов, так и <strong>.ZIP архивов</strong>.<br>Эмулятор сам найдет нужный файл и скачает обложку.
@@ -222,7 +234,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="toolbar">
-    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px;">⬅</div>
+    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px; background:rgba(239,68,68,0.8); border-color:#ef4444;">⬅</div>
+    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
+    
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -354,9 +368,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </script>
 
 <script>
-    // ==========================================
-    // УТИЛИТЫ ДЛЯ ФАЙЛОВ
-    // ==========================================
     function readBlob(blob) {
         if (blob.arrayBuffer) return blob.arrayBuffer();
         return new Promise((res, rej) => {
@@ -367,9 +378,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    // ==========================================
-    // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-    // ==========================================
     const menuScreen = document.getElementById('menuScreen');
     const gameGrid = document.getElementById('gameGrid');
     const frameDiv = document.getElementById('gameFrame');
@@ -380,6 +388,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const btnKeyboard = document.getElementById('btnKeyboard');
     const btnScreen = document.getElementById('btnScreen');
     const btnPadEdit = document.getElementById('btnPadEdit');
+    const btnRestart = document.getElementById('btnRestart');
     const fkeysPanel = document.getElementById('fkeys-panel');
     const screenPanel = document.getElementById('screen-edit-panel');
     const padPanel = document.getElementById('pad-edit-panel');
@@ -388,13 +397,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let currentDos = null, nes = null, nesLoop = null, glLoopId = null;
     let currentGame = null;
     let isGamepadVisible = false;
-    let backTapCount = 0;
-    let windowCurrentROMString = null; 
-    let nesRestartFn = null;
-    let isShuttingDown = false;
     let isGamePaused = false;
     let isGameStarting = false;
-    const GAMES = []; 
+    let isShuttingDown = false;
+    
+    let isLibraryEditMode = false;
+    let selectedGamesForDelete = new Set();
 
     let padConfig = {};
     let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false;
@@ -426,27 +434,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE' } 
     };
 
-    const netCoverDB = {
-        'nes': 'Nintendo - Nintendo Entertainment System',
-        'md': 'Sega - Mega Drive - Genesis', 'gen': 'Sega - Mega Drive - Genesis', 'smd': 'Sega - Mega Drive - Genesis', 'bin': 'Sega - Mega Drive - Genesis',
-        'sfc': 'Nintendo - Super Nintendo Entertainment System', 'smc': 'Nintendo - Super Nintendo Entertainment System',
-        'ngp': 'SNK - Neo Geo Pocket', 'ngc': 'SNK - Neo Geo Pocket Color'
-    };
-    
-    const systemButtonMap = {
-        'nes': { brake: 88, jump: 90 },
-        'smd': { brake: 88, jump: 90 },
-        'snes': { brake: 65, jump: 88 },
-        'ngp': { brake: 88, jump: 90 },
-        'dos': { brake: 90, jump: 88 },
-        'unk': { brake: 88, jump: 90 }
-    };
-
     let videoConfig = { crt: true, curve: true, filter: 1, rgb: false, bloom: false, res: 1 };
     try {
         const savedVc = localStorage.getItem('videoV6');
         if (savedVc) videoConfig = JSON.parse(savedVc);
     } catch(e) {}
+
+    window.toggleLibraryEdit = function() {
+        isLibraryEditMode = !isLibraryEditMode;
+        selectedGamesForDelete.clear();
+        document.getElementById('editFloatingBar').style.display = isLibraryEditMode ? 'flex' : 'none';
+        document.getElementById('editLibBtn').classList.toggle('active-tool', isLibraryEditMode);
+        renderAllGames(); 
+        updateEditCount();
+    }
+
+    function updateEditCount() {
+        document.getElementById('editCountText').innerText = `Выбрано: ${selectedGamesForDelete.size}`;
+    }
+
+    window.deleteSelectedGames = function() {
+        if (selectedGamesForDelete.size === 0) return;
+        if (confirm(`Точно удалить ${selectedGamesForDelete.size} игр(у) из библиотеки эмулятора?`)) {
+            const tx = db.transaction(["games"], "readwrite");
+            const store = tx.objectStore("games");
+            selectedGamesForDelete.forEach(id => {
+                store.delete(id);
+            });
+            tx.oncomplete = () => {
+                toggleLibraryEdit(); 
+            };
+        }
+    }
 
     function packData(u8arr) {
         const compressed = fflate.zlibSync(u8arr);
@@ -474,26 +493,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (navigator.vibrate) { 
             try { if (navigator.vibrate(pattern) !== false) return true; } catch (e) {} 
         }
-        if (window.navigator?.notification?.vibrate) {
-            try { window.navigator.notification.vibrate(pattern); return true; } catch (e) {}
-        }
         if (window.Capacitor?.Plugins?.Haptics) {
             try {
                 if (typeof window.Capacitor.Plugins.Haptics.vibrate === 'function') { 
                     window.Capacitor.Plugins.Haptics.vibrate({ duration: pattern }); 
                     return true; 
                 }
-                if (pattern < 50 && typeof window.Capacitor.Plugins.Haptics.impact === 'function') { 
-                    window.Capacitor.Plugins.Haptics.impact({ style: window.Capacitor.Plugins.Haptics.ImpactStyle.Light }); 
-                    return true; 
-                }
             } catch (e) {}
-        }
-        if (window.Android?.vibrate) { 
-            try { window.Android.vibrate(pattern); return true; } catch (e) {} 
-        }
-        if (window.webkit?.messageHandlers?.vibrate) { 
-            try { window.webkit.messageHandlers.vibrate.postMessage({ duration: pattern }); return true; } catch (e) {} 
         }
         return false;
     }
@@ -544,25 +550,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     document.getElementById('closeInfoBtn').addEventListener('click', () => { 
         document.getElementById('infoModalOverlay').style.display = 'none'; 
     });
-    document.getElementById('infoModalOverlay').addEventListener('click', (e) => { 
-        if (e.target === document.getElementById('infoModalOverlay')) { 
-            document.getElementById('infoModalOverlay').style.display = 'none'; 
-        } 
-    });
-
-    document.addEventListener('touchmove', (e) => {
-        if (e.target.closest('#menuScreen') || e.target.closest('#screen-edit-panel') || e.target.closest('#pad-edit-panel') || e.target.closest('#infoModal')) return;
-        e.preventDefault();
-    }, { passive: false });
-
-    document.getElementById('searchInput').addEventListener('input', function(e) {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.game-btn').forEach(btn => {
-            const title = btn.querySelector('.game-title').textContent.toLowerCase();
-            btn.style.display = title.includes(term) ? 'flex' : 'none';
-        });
-    });
-
+    
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             isGamePaused = true; 
@@ -575,7 +563,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
 
     window.addEventListener('popstate', (e) => { 
-        if (frameDiv.style.display === 'block') { executeCleanup(); } 
+        if (frameDiv.style.display === 'block') { executeCleanup(false); } 
     });
     
     window.addEventListener('beforeunload', () => {
@@ -1493,10 +1481,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         }
         
+        // Очищаем поле поиска при входе в игру
         document.getElementById('searchInput').value = ''; 
+        
         menuScreen.style.display = 'none'; 
         frameDiv.style.display = 'block'; 
         toolbar.style.display = 'flex';
+        
+        document.getElementById('btnRestart').style.display = 'flex'; // Показываем кнопку сброса
         
         btnGamepad.style.display = 'none'; 
         btnKeyboard.style.display = 'none'; 
@@ -1541,7 +1533,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.style.pointerEvents = 'auto';
         document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
         
-        backTapCount = 0; 
         nesRestartFn = null; 
         isShuttingDown = false; 
         isGamePaused = false;
@@ -1633,14 +1624,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     isGameStarting = false;
                 }).catch(err => { 
                     alert("Ошибка распаковки DOS-архива."); 
-                    executeCleanup(); 
+                    executeCleanup(false); 
                     isGameStarting = false;
                 });
             });
         };
         reader.onerror = () => { 
             alert("Ошибка чтения DOS файла."); 
-            executeCleanup(); 
+            executeCleanup(false); 
             isGameStarting = false;
         };
         reader.readAsDataURL(game.fileBlob);
@@ -1750,14 +1741,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 script.id = 'core-script'; 
                 script.onerror = () => { 
                     alert("Ошибка загрузки ядра: " + coreName); 
-                    executeCleanup(true); 
+                    executeCleanup(false); 
                 }; 
                 document.body.appendChild(script);
                 isGameStarting = false;
             }, 100);
         }).catch(err => { 
             alert("Ошибка чтения файла: " + err.message); 
-            executeCleanup(true); 
+            executeCleanup(false); 
             isGameStarting = false;
         });
     }
@@ -1798,7 +1789,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGameStarting = false;
         }).catch(err => { 
             alert("Ошибка чтения ROM: " + err.message); 
-            executeCleanup(true); 
+            executeCleanup(false); 
             isGameStarting = false;
         });
     }
@@ -1820,13 +1811,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let accumulator = 0; 
             const step = 1000 / 60; 
 
-            const startNesProcess = (isReset = false) => {
-                if (isReset) {
-                    if (nes) nes.reset();
-                    return;
-                }
-
+            const startNesProcess = () => {
                 if (nesLoop) cancelAnimationFrame(nesLoop);
+                
                 nes = new Constructor({
                     onFrame: (fb) => { 
                         if (canvas.width !== 256 || canvas.height !== 240) { 
@@ -1842,22 +1829,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     }, 
                     sampleRate: currentSampleRate
                 });
+                
                 nes.loadROM(windowCurrentROMString);
                 
-                if (!isReset) {
-                    const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
-                    if (autoLoadData) { 
-                        try { 
-                            const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
-                            nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
-                        } catch(e) {
-                            try {
-                                if (autoLoadData.startsWith('{')) {
-                                    nes.fromJSON(JSON.parse(autoLoadData));
-                                }
-                            } catch(e2) {}
-                        } 
-                    }
+                const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
+                if (autoLoadData) { 
+                    try { 
+                        const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
+                        nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
+                    } catch(e) {
+                        try {
+                            if (autoLoadData.startsWith('{')) {
+                                nes.fromJSON(JSON.parse(autoLoadData));
+                            }
+                        } catch(e2) {}
+                    } 
                 }
                 
                 lastTime = performance.now(); 
@@ -1889,7 +1875,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             };
 
             nesRestartFn = startNesProcess; 
-            startNesProcess(false); 
+            startNesProcess(); 
             const glLoop = () => { 
                 if (isShuttingDown) return; 
                 if (!isGamePaused) UniversalWebGL.draw(canvas, 0, false); 
@@ -1898,58 +1884,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             glLoop();
         } catch(e) { 
             alert("Ошибка инициализации эмулятора: " + e.message); 
-            executeCleanup(true); 
+            executeCleanup(false); 
         }
     }
 
-    async function handleBackBtn() {
-        if (!currentGame) {
-            executeCleanup(true);
-            return;
-        }
+    // НОВАЯ КНОПКА ЖЕСТКОГО СБРОСА (Hard Reset) - 100% защита от крашей
+    async function hardResetGame() {
+        if (!currentGame) return;
+        await saveGameState(); 
         
-        if (backTapCount === 0) {
-            await saveGameState(); 
-            
-            try {
-                if (nes && nesRestartFn) { 
-                    nesRestartFn(true); 
-                } else if (currentDos) { 
-                    sendKey(27, true); 
-                    setTimeout(() => sendKey(27, false), 50); 
-                } else if (currentGame && currentGame.t === 'l' && window.Module) {
-                    if (typeof window.Module._cmd === 'function' || window.Module.calledRun) {
-                        lrCall('retro_reset', 'void', [], []);
-                    }
-                }
-            } catch (e) {
-                console.error('Ошибка ресета:', e);
-            }
-            
-            backTapCount++; 
-            const btn = document.getElementById('btnBack'); 
-            if (btn) {
-                btn.style.background = 'rgba(239, 68, 68, 0.9)'; 
-                btn.style.fontSize = '10px'; 
-                btn.innerHTML = 'ВЫХОД';
-            }
-            
-            setTimeout(() => { 
-                backTapCount = 0; 
-                if (btn) {
-                    btn.style.background = 'rgba(30, 30, 30, 0.7)'; 
-                    btn.style.fontSize = '18px'; 
-                    btn.innerHTML = '⬅'; 
-                }
-            }, 2000);
-        } else { 
-            executeCleanup(true); 
-        }
+        // Записываем ID игры в кэш браузера и перезагружаем страницу!
+        sessionStorage.setItem('autoRestartGameId', currentGame.id);
+        location.reload();
     }
 
-    function executeCleanup(skipSave = false) {
+    // КНОПКА ВЫХОДА (Всегда выходит в меню за 1 клик)
+    async function handleBackBtn() {
+        if (currentGame) {
+            await saveGameState(); 
+        }
+        executeCleanup(false);
+    }
+
+    // ФУНКЦИЯ ОЧИСТКИ (Вызывается при выходе)
+    function executeCleanup(isResetting = false) {
         isShuttingDown = true; 
-        if (!skipSave) saveGameState();
         
         if (currentGame?._tempUrl) { 
             URL.revokeObjectURL(currentGame._tempUrl); 
@@ -2037,14 +1996,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         fkeysPanel.style.display = 'none'; 
         screenPanel.style.display = 'none'; 
         padPanel.style.display = 'none'; 
-        menuScreen.style.display = 'flex';
+        document.getElementById('btnRestart').style.display = 'none'; 
+
+        if (!isResetting) {
+            menuScreen.style.display = 'flex';
+            try { screen.orientation.unlock(); } catch(e) {}
+        }
+        
         currentGame = null;
-        
-        try { 
-            screen.orientation.unlock(); 
-        } catch(e) {}
         if (window.gc) window.gc();
-        
         isGameStarting = false;
     }
 
@@ -2065,116 +2025,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    async function analyzeZipAndCovers(fileBlob) {
-        try {
-            const buffer = await readBlob(fileBlob); 
-            const arr = new Uint8Array(buffer); 
-            let files = []; 
-            let coverData = null;
-            for(let i = 0; i < arr.length - 30; i++) {
-                if(arr[i] === 0x50 && arr[i+1] === 0x4B && arr[i+2] === 0x03 && arr[i+3] === 0x04) {
-                    const nameLen = arr[i+26] | (arr[i+27] << 8); 
-                    let name = ''; 
-                    for(let n = 0; n < nameLen; n++) name += String.fromCharCode(arr[i+30+n]); 
-                    files.push(name.toLowerCase());
-                }
-            }
-            const unzipped = fflate.unzipSync(arr);
-            for (const filename in unzipped) { 
-                const low = filename.toLowerCase(); 
-                if (low.endsWith('.png') || low.endsWith('.jpg') || low.endsWith('.jpeg')) { 
-                    const mime = low.endsWith('.png') ? 'image/png' : 'image/jpeg'; 
-                    const blob = new Blob([unzipped[filename]], { type: mime }); 
-                    coverData = await new Promise((res) => { 
-                        const reader = new FileReader(); 
-                        reader.onloadend = () => res(reader.result); 
-                        reader.readAsDataURL(blob); 
-                    }); 
-                    break; 
-                } 
-            }
-            let sysData = { type: 'd', ext: '', exec: 'DIR', sys: 'dos', cover: coverData };
-            for (let name of files) { 
-                if (name.endsWith('.nes')) { 
-                    sysData.type = 'n'; 
-                    sysData.ext = 'nes'; 
-                    sysData.sys = 'nes'; 
-                    break; 
-                } 
-                const ext = name.split('.').pop(); 
-                if (coreMap[ext]) { 
-                    sysData.type = 'l'; 
-                    sysData.ext = ext; 
-                    if (['md','smd','gen','bin'].includes(ext)) sysData.sys = 'smd'; 
-                    else if (['sfc','smc'].includes(ext)) sysData.sys = 'snes'; 
-                    else if (['ngp','ngc'].includes(ext)) sysData.sys = 'ngp'; 
-                    else sysData.sys = 'unk'; 
-                    break; 
-                } 
-            }
-            if (sysData.type === 'd') { 
-                const exes = files.filter(name => name.endsWith('.exe') || name.endsWith('.bat') || name.endsWith('.com')).map(n => n.split('/').pop()); 
-                const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
-                for (let p of priority) { 
-                    if (exes.includes(p)) { 
-                        sysData.exec = p; 
-                        break; 
-                    } 
-                } 
-                if(sysData.exec === 'DIR') { 
-                    const filtered = exes.filter(e => !['setup.exe', 'install.exe', 'install.bat', 'setsound.exe', 'setup.bat', 'uninstal.exe'].includes(e)); 
-                    sysData.exec = filtered.length > 0 ? filtered[0] : (exes[0] || 'DIR'); 
-                } 
-            }
-            return sysData;
-        } catch(e) { return null; }
-    }
-
-    function fetchNetCover(gameName, sysType) {
-        const repoFolder = netCoverDB[sysType]; 
-        if (!repoFolder) return Promise.resolve(null);
-
-        let cleanName = gameName.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').replace(/(?:\s*(?:v|V)\s*\d+\.\d+).*$/, '').trim();
-        if (!cleanName) cleanName = gameName.trim();
-
-        const variations = Array.from(new Set([
-            `${cleanName} (USA)`, 
-            `${cleanName} (Europe)`, 
-            gameName.trim(), 
-            cleanName
-        ]));
-
-        return new Promise((resolve) => {
-            let pending = variations.length;
-            let resolved = false;
-
-            variations.forEach(variant => {
-                const safeName = variant.replace(/&/g, '_').replace(/\*/g, '_');
-                const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${repoFolder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-                
-                const controller = window.AbortController ? new AbortController() : null;
-                const timer = setTimeout(() => { if (controller) controller.abort(); }, 1500);
-
-                const fetchParams = { method: 'HEAD' };
-                if (controller) fetchParams.signal = controller.signal;
-
-                fetch(url, fetchParams)
-                    .then(resp => {
-                        clearTimeout(timer);
-                        if (resp.ok && !resolved) {
-                            resolved = true;
-                            resolve(url);
-                        }
-                    })
-                    .catch(() => {})
-                    .finally(() => {
-                        pending--;
-                        if (pending === 0 && !resolved) resolve(null);
-                    });
-            });
-        });
-    }
-
     let db;
     const dbRequest = indexedDB.open("ArcadeHubDB", 2);
     dbRequest.onupgradeneeded = (e) => { 
@@ -2184,11 +2034,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     dbRequest.onsuccess = (e) => { 
         db = e.target.result; 
         renderAllGames(); 
+        
+        // МАГИЯ АВТО-РЕСЕТА: Если мы перезагрузили страницу кнопкой Ресета, запускаем игру обратно!
+        const restartId = sessionStorage.getItem('autoRestartGameId');
+        if (restartId) {
+            sessionStorage.removeItem('autoRestartGameId');
+            const tx = db.transaction(["games"], "readonly");
+            const req = tx.objectStore("games").get(restartId);
+            req.onsuccess = () => {
+                if (req.result) startGame(req.result);
+            };
+        }
     };
     dbRequest.onerror = (e) => {
         console.error('IndexedDB error:', e);
         window.tempGames = [];
-        renderAllGames = function() {
+        window.renderAllGames = function() {
             gameGrid.innerHTML = '<div id="empty-library-msg">Режим инкогнито — игры будут доступны только до закрытия страницы</div>';
             if (window.tempGames) {
                 window.tempGames.forEach(g => createGameBtn(g, true));
@@ -2196,17 +2057,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     };
 
-    function renderAllGames() {
+    // ФУНКЦИЯ ОТРИСОВКИ С СОРТИРОВКОЙ
+    window.renderAllGames = function() {
         gameGrid.innerHTML = '';
         const tx = db.transaction(["games"], "readonly"); 
         const store = tx.objectStore("games"); 
         const req = store.getAll();
         req.onsuccess = () => { 
-            const customGames = req.result; 
+            let customGames = req.result; 
+            
+            // Применяем сортировку
+            const sortType = document.getElementById('sortSelect')?.value || 'newest';
+            if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
+            if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
+            if (sortType === 'sys') customGames.sort((a,b) => a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n));
+            if (sortType === 'newest') customGames.sort((a,b) => {
+                const idA = parseInt(a.id.split('_')[1]) || 0;
+                const idB = parseInt(b.id.split('_')[1]) || 0;
+                return idB - idA;
+            });
+
+            // Применяем фильтр (поиск)
+            const term = document.getElementById('searchInput').value.toLowerCase();
+
             if (customGames.length === 0) { 
                 gameGrid.innerHTML = '<div id="empty-library-msg">Библиотека пуста. Жми огромную синюю кнопку и загружай игры!</div>'; 
             } else { 
-                customGames.forEach(gameData => createGameBtn(gameData, true)); 
+                customGames.forEach(gameData => {
+                    if (term && !gameData.n.toLowerCase().includes(term)) return;
+                    createGameBtn(gameData, true);
+                }); 
             } 
         };
     }
@@ -2217,15 +2097,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btn.className = `game-btn ${sysStyling.css}`;
         if (game.cover) { btn.style.backgroundImage = `url(${game.cover})`; }
         btn.dataset.gameId = game.id;
-        btn.innerHTML = `<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
+        
+        // Отрисовка режима "Выделения/Удаления"
+        const isSelected = selectedGamesForDelete.has(game.id);
+        const overlayHtml = isLibraryEditMode 
+            ? `<div style="position:absolute; inset:0; background:rgba(239,68,68,${isSelected ? '0.6' : '0.1'}); z-index:3; display:flex; align-items:center; justify-content:center; border:${isSelected ? '3px solid #f87171' : 'none'}; border-radius:12px;">${isSelected ? '<div style="background:#ef4444; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:24px;">🗑️</div>' : ''}</div>` 
+            : '';
+
+        btn.innerHTML = `${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
         btn.onclick = (e) => { 
             e.preventDefault(); 
             e.stopPropagation(); 
-            startGame(game); 
+            if (isLibraryEditMode) {
+                if (selectedGamesForDelete.has(game.id)) selectedGamesForDelete.delete(game.id);
+                else selectedGamesForDelete.add(game.id);
+                updateEditCount();
+                renderAllGames(); // Быстрый ререндер чтобы показать галочку
+            } else {
+                startGame(game); 
+            }
         };
         
-        if (isCustom) {
+        // Кнопка одиночного удаления скрыта в режиме массового редактирования
+        if (isCustom && !isLibraryEditMode) {
             const delBtn = document.createElement('div'); 
             delBtn.className = 'del-btn'; 
             delBtn.innerHTML = '✖';
@@ -2233,7 +2128,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 e.stopPropagation(); 
                 if(confirm(`Удалить игру "${game.n}" из памяти эмулятора?`)) {
                     if (game._tempUrl) URL.revokeObjectURL(game._tempUrl);
-                    
                     const tx = db.transaction(["games"], "readwrite"); 
                     tx.objectStore("games").delete(game.id); 
                     tx.oncomplete = () => renderAllGames(); 
@@ -2251,7 +2145,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const input = document.createElement('input'); 
         input.type = 'file'; 
         input.multiple = true; 
-        input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.html';
+        input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip';
         input.style.display = 'none';
         document.body.appendChild(input);
 
@@ -2326,32 +2220,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
         } 
         else if (fileName.endsWith('.zip')) { 
-            const analysis = await analyzeZipAndCovers(persistentBlob);
-            if(analysis) { 
-                gameType = analysis.type; 
-                romExt = analysis.ext; 
-                sysType = analysis.sys; 
-                coverData = analysis.cover; 
-                if(gameType === 'n') gameIcon = '🎮'; 
-                else if(gameType === 'l') gameIcon = '🕹️'; 
-                else if(gameType === 'd') { 
-                    gameIcon = '💾'; 
-                    execCmd = analysis.exec; 
-                    controlMode = 'pad'; 
-                } 
-            } else { 
-                gameType = 'd'; 
-                gameIcon = '💾'; 
-                controlMode = 'pad'; 
-                execCmd = 'DIR'; 
-                sysType = 'dos'; 
-            }
-        } 
-        else if (fileName.endsWith('.html')) { 
-            gameType = 'h'; 
-            gameIcon = '🌐'; 
-            controlMode = 'none'; 
-            sysType = 'html'; 
+            // Это заглушка, так как реальная распаковка идет через arcade-extensions
+            gameType = 'd'; 
+            gameIcon = '💾'; 
+            controlMode = 'pad'; 
+            execCmd = 'DIR'; 
+            sysType = 'dos'; 
         } 
         else { throw new Error('Неподдерживаемый формат'); }
 
@@ -2368,17 +2242,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             fit: 'contain', 
             cover: coverData 
         };
-
-        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
-            fetchNetCover(cleanGameName, sysType).then(netCover => {
-                if (netCover && db) { 
-                    newGame.cover = netCover; 
-                    const tx = db.transaction(["games"], "readwrite"); 
-                    tx.objectStore("games").put(newGame); 
-                    tx.oncomplete = () => { if(typeof renderAllGames === 'function') renderAllGames(); }; 
-                }
-            }); 
-        }
         
         return new Promise((resolve, reject) => { 
             if (!db) {
@@ -2399,4 +2262,4 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
 </body>
-</html
+</html>
