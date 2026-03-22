@@ -63,7 +63,8 @@ function showPermissionModal() {
         <h3 style="margin-top:0; color:#ef4444;">📡 НУЖЕН ДОСТУП</h3>
         <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
             Android заблокировал сканирование папки "Загрузки".<br><br>
-            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и включи тумблер <b>"Доступ ко всем файлам"</b>.
+            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и зайди в:<br><br>
+            <b>Специальные разрешения</b> (или "Спец. права") <b>➔ Доступ ко всем файлам</b>. Включи тумблер для приложения!
         </p>
         <button id="perm-settings-btn" class="action-btn" style="width:100%; background:#38bdf8; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
         <button id="perm-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Спросить позже)</button>
@@ -177,7 +178,6 @@ function promptRadarInstall(files) {
     document.getElementById('radar-install-btn').onclick = async () => {
         let installed = 0;
         let failed = 0;
-        let toDelete = []; 
         let processedFiles = []; 
 
         for (let i = 0; i < files.length; i++) {
@@ -213,9 +213,7 @@ function promptRadarInstall(files) {
                 const fakeFile = new File([blob], fileName, { type: 'application/octet-stream' });
                 
                 await window.processSingleFile(fakeFile); 
-                
                 installed++;
-                toDelete.push(fileName);
             } catch (err) {
                 console.error('Пропущен не-игровой файл:', fileName, err.message);
                 failed++;
@@ -228,35 +226,25 @@ function promptRadarInstall(files) {
 
         if (typeof renderAllGames === 'function') renderAllGames();
 
+        // ИЗМЕНЕНИЕ: Убрал кнопку очистки "Загрузок", оставил только "Закрыть"
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
             <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
                 Успешно обработано архивов/игр: ${installed} шт.<br>
                 ${failed > 0 ? `Отсеяно мусора (пустые архивы): ${failed} шт.<br><br>` : '<br>'}
-                Игры из архивов добавлены в меню.<br>Удалить исходные файлы из "Загрузок", чтобы не занимали место?
+                Игры добавлены в библиотеку эмулятора.<br>Оригинальные архивы в безопасности остались в "Загрузках".
             </p>
-            <button id="radar-delete-yes" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer; display: ${installed > 0 ? 'block' : 'none'};">🗑️ ДА, ОЧИСТИТЬ ПАМЯТЬ</button>
-            <button id="radar-delete-no" class="action-btn" style="width:100%; background:#334155; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ЗАКРЫТЬ</button>
+            <button id="radar-close-final" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, ЗАКРЫТЬ</button>
         `;
         
-        document.getElementById('radar-delete-yes').onclick = async () => {
-            modal.innerHTML = '<h3 style="color:#ef4444;">Удаление...</h3>';
-            for (let f of toDelete) {
-                try {
-                    await Filesystem.deleteFile({ path: `Download/${f}`, directory: Directory.ExternalStorage });
-                } catch(e) {}
-            }
-            overlay.remove();
-        };
-        
-        document.getElementById('radar-delete-no').onclick = () => {
+        document.getElementById('radar-close-final').onclick = () => {
             overlay.remove();
         };
     };
 }
 
 // ==========================================
-// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ (Inception Mode)
+// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
@@ -264,13 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
-            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc', '.html'];
+            // ВАЖНО: Убрал .html из сканера
+            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
             const validDosExts = ['.exe', '.bat', '.com'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
             
-            // ОБРАБОТКА RAR И 7Z
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
-                console.log('Обнаружен архив RAR/7Z. Анализ...');
                 const archive = await Archive.open(file);
                 const extractedFiles = await archive.getFilesObject();
                 
@@ -292,19 +279,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let hasValidContent = false;
 
-                // 1. Сначала проверяем вложенные архивы (РЕКУРСИЯ)
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
                         let newFile = new File([await readBlobSafe(f.file)], cleanName);
-                        // Вызываем функцию саму себя!
                         await window.processSingleFileExtended(newFile); 
                         await new Promise(r => setTimeout(r, 5)); 
                     }
                     hasValidContent = true;
                 }
 
-                // 2. Распаковываем ROM-файлы, если они валяются прямо в корне RAR/7Z
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
@@ -315,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // 3. Обрабатываем DOS-файлы (только если это не сборник архивов)
                 if (dosFiles.length > 0 && nestedArchives.length === 0) {
                     const zipData = {};
                     for(let f of fileList) {
@@ -333,7 +316,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!hasValidContent) throw new Error("Архив пуст или не содержит поддерживаемых игр");
                 return;
             } 
-            // ОБРАБОТКА ZIP
             else if (fileName.endsWith('.zip')) {
                 const buffer = await readBlobSafe(file);
                 const arr = new Uint8Array(buffer);
@@ -360,20 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let hasValidContent = false;
 
-                // 1. Вложенные архивы (РЕКУРСИЯ)
                 if (nestedArchives.length > 0) {
                     for (let arc of nestedArchives) {
                         let cleanName = arc.path.split('/').pop();
                         let blob = new Blob([arc.data]);
                         let newFile = new File([blob], cleanName);
-                        // Вызываем функцию саму себя!
                         await window.processSingleFileExtended(newFile);
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
                 }
 
-                // 2. ROM файлы
                 if (romFiles.length > 0) {
                     for (let rom of romFiles) {
                         let cleanName = rom.path.split('/').pop();
@@ -385,7 +364,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // 3. DOS файлы (Отдаем оригинальный ZIP как есть)
                 if (hasDos && nestedArchives.length === 0 && romFiles.length === 0) {
                     await coreProcessSingleFile(file);
                     hasValidContent = true;
@@ -395,7 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             else {
-                // Если файл без архива, проверим расширение
                 if (!validRomExts.some(ext => fileName.endsWith(ext)) && !fileName.endsWith('.html')) {
                     throw new Error("Неизвестный формат файла");
                 }
