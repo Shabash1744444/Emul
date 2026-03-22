@@ -55,18 +55,24 @@ jobs:
 
       - name: Inject Android Permissions
         run: |
-          sed -i 's/<application/<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
-          
-          # ЖЕСТКОЕ ВНЕДРЕНИЕ РАЗРЕШЕНИЙ
-          sed -i 's/<\/manifest>//g' android/app/src/main/AndroidManifest.xml
-          cat <<EOF >> android/app/src/main/AndroidManifest.xml
-              <uses-permission android:name="android.permission.VIBRATE" />
-              <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-          </manifest>
-          EOF
+          # 100% надежный скрипт на Node.js для модификации Manifest
+          node -e "
+            const fs = require('fs');
+            const file = 'android/app/src/main/AndroidManifest.xml';
+            let data = fs.readFileSync(file, 'utf8');
+            
+            // Включаем поддержку старого хранилища для совместимости
+            data = data.replace('<application', '<application android:requestLegacyExternalStorage=\"true\" android:usesCleartextTraffic=\"true\" ');
+            
+            // Железобетонно вшиваем разрешения перед закрывающим тегом
+            const perms = '\n    <uses-permission android:name=\"android.permission.VIBRATE\" />\n    <uses-permission android:name=\"android.permission.INTERNET\" />\n    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n    <uses-permission android:name=\"android.permission.WRITE_EXTERNAL_STORAGE\" />\n    <uses-permission android:name=\"android.permission.MANAGE_EXTERNAL_STORAGE\" />\n';
+            data = data.replace('</manifest>', perms + '</manifest>');
+            
+            fs.writeFileSync(file, data);
+            console.log('✅ Разрешения успешно внедрены!');
+          "
+          # Выводим в лог, чтобы точно убедиться!
+          cat android/app/src/main/AndroidManifest.xml
 
       - name: Sync and Build APK
         run: |
