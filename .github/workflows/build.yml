@@ -35,13 +35,11 @@ jobs:
           cp node_modules/libarchive.js/main.js public/libarchive.js
           cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
           
-          # Собираем все плагины + Haptics для вибрации
-          echo "import { Filesystem, Directory } from '@capacitor/filesystem'; import { Browser } from '@capacitor/browser'; import { Haptics } from '@capacitor/haptics'; window.NativeFilesystem = Filesystem; window.NativeDirectory = Directory; window.NativeBrowser = Browser; window.Capacitor = { Plugins: { Haptics: Haptics, Browser: Browser, Filesystem: Filesystem }, isNativePlatform: () => true };" > plugins_setup.js
-          npx esbuild plugins_setup.js --bundle --format=iife --outfile=public/plugins.js
+          # Собираем arcade-extensions в чистый бандл со всеми плагинами внутри
+          npx esbuild arcade-extensions.js --bundle --format=iife --outfile=public/arcade-extensions.bundle.js
 
-      - name: Capacitor Init & Sync (Исправление Кимми)
+      - name: Capacitor Init & Sync
         run: |
-          # 1. Явно создаем конфиг, чтобы плагины знали куда цепляться
           echo '{
             "appId": "com.arcade.hub",
             "appName": "Arcade Hub",
@@ -49,7 +47,6 @@ jobs:
             "bundledWebRuntime": false
           }' > capacitor.config.json
           
-          # 2. Добавляем платформу и принудительно синхронизируем нативные плагины
           npx cap add android
           npx cap sync android
 
@@ -66,7 +63,7 @@ jobs:
         run: |
           sed -i 's/<application/<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
           
-          # Жесткое добавление разрешений перед </manifest> через Node.js
+          # Жесткое добавление разрешений
           node -e "
             const fs = require('fs');
             const file = 'android/app/src/main/AndroidManifest.xml';
