@@ -35,7 +35,7 @@ jobs:
           cp node_modules/libarchive.js/main.js public/libarchive.js
           cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
           
-          # Собираем радар и плагины Capacitor в один файл
+          # Собираем радар и плагины Capacitor
           npx esbuild arcade-extensions.js --bundle --format=iife --outfile=public/arcade-extensions.bundle.js
 
       - name: Init Capacitor
@@ -57,12 +57,16 @@ jobs:
         run: |
           sed -i 's/<application/<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
           
-          # Вшиваем права правильно (перед тегом <application)
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml || true
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml || true
+          # ЖЕСТКОЕ ВНЕДРЕНИЕ РАЗРЕШЕНИЙ
+          sed -i 's/<\/manifest>//g' android/app/src/main/AndroidManifest.xml
+          cat <<EOF >> android/app/src/main/AndroidManifest.xml
+              <uses-permission android:name="android.permission.VIBRATE" />
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+          </manifest>
+          EOF
 
       - name: Sync and Build APK
         run: |
