@@ -49,30 +49,32 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => runDownloadRadar(false), 2000);
 });
 
-function showPermissionModal() {
-    if (document.getElementById('radar-perm-overlay')) return;
+// КРАСИВОЕ ОКНО ДЛЯ ПЕРЕХОДА В НАСТРОЙКИ АНДРОИДА (ФИКС ДЛЯ MIUI)
+function showEmptyOrPermissionModal() {
+    if (document.getElementById('radar-empty-overlay')) return;
 
     const overlay = document.createElement('div');
-    overlay.id = 'radar-perm-overlay';
+    overlay.id = 'radar-empty-overlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
     
     const modal = document.createElement('div');
-    modal.style.cssText = 'background:#1f2937; border:2px solid #ef4444; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
+    modal.style.cssText = 'background:#1f2937; border:2px solid #38bdf8; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
     
     modal.innerHTML = `
-        <h3 style="margin-top:0; color:#ef4444;">📡 НУЖЕН ДОСТУП</h3>
+        <h3 style="margin-top:0; color:#38bdf8;">РАДАР ЗАГРУЗОК 📡</h3>
         <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-            Android заблокировал сканирование папки "Загрузки".<br><br>
-            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и зайди в:<br><br>
-            <b>Специальные разрешения</b> (или "Спец. права") <b>➔ Доступ ко всем файлам</b>. Включи тумблер для приложения!
+            В папке "Загрузки" не найдено новых архивов с играми.<br><br>
+            <b style="color:#ef4444;">⚠️ ВАЖНО ДЛЯ ANDROID 11+:</b><br>
+            Если вы <b>точно</b> скачали игры, но эмулятор их не видит — ваша система (Xiaomi/MIUI) скрывает папку!<br><br>
+            Нажмите кнопку ниже и выдайте <b>Специальные разрешения ➔ Доступ ко всем файлам</b>.
         </p>
-        <button id="perm-settings-btn" class="action-btn" style="width:100%; background:#38bdf8; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
-        <button id="perm-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Спросить позже)</button>
+        <button id="empty-settings-btn" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
+        <button id="empty-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ОК, ПОНЯТНО</button>
     `;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    document.getElementById('perm-settings-btn').onclick = () => {
+    document.getElementById('empty-settings-btn').onclick = () => {
         window.location.href = "intent:#Intent;action=android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;package=com.arcade.hub;end";
         setTimeout(() => {
             window.location.href = "intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:com.arcade.hub;end";
@@ -80,7 +82,7 @@ function showPermissionModal() {
         overlay.remove();
     };
 
-    document.getElementById('perm-close-btn').onclick = () => {
+    document.getElementById('empty-close-btn').onclick = () => {
         overlay.remove();
     };
 }
@@ -115,7 +117,7 @@ async function runDownloadRadar(manualTrigger = false) {
         });
         
         if (!result || !Array.isArray(result.files)) {
-            if (manualTrigger) alert('📂 Папка загрузок пуста или недоступна.');
+            if (manualTrigger) showEmptyOrPermissionModal();
             return;
         }
 
@@ -130,12 +132,12 @@ async function runDownloadRadar(manualTrigger = false) {
         if (newFiles.length > 0) {
             promptRadarInstall(newFiles);
         } else {
-            if (manualTrigger) alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
+            if (manualTrigger) showEmptyOrPermissionModal();
         }
     } catch (error) {
         console.error('Радар: Ошибка чтения папки Download:', error);
         if (manualTrigger || !localStorage.getItem('radar_perm_shown')) {
-            showPermissionModal();
+            showEmptyOrPermissionModal();
             localStorage.setItem('radar_perm_shown', 'true'); 
         }
     }
@@ -226,13 +228,12 @@ function promptRadarInstall(files) {
 
         if (typeof renderAllGames === 'function') renderAllGames();
 
-        // ИЗМЕНЕНИЕ: Убрал кнопку очистки "Загрузок", оставил только "Закрыть"
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
             <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
                 Успешно обработано архивов/игр: ${installed} шт.<br>
                 ${failed > 0 ? `Отсеяно мусора (пустые архивы): ${failed} шт.<br><br>` : '<br>'}
-                Игры добавлены в библиотеку эмулятора.<br>Оригинальные архивы в безопасности остались в "Загрузках".
+                Игры добавлены в библиотеку эмулятора.
             </p>
             <button id="radar-close-final" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, ЗАКРЫТЬ</button>
         `;
@@ -252,7 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
-            // ВАЖНО: Убрал .html из сканера
             const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
             const validDosExts = ['.exe', '.bat', '.com'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             else {
-                if (!validRomExts.some(ext => fileName.endsWith(ext)) && !fileName.endsWith('.html')) {
+                if (!validRomExts.some(ext => fileName.endsWith(ext))) {
                     throw new Error("Неизвестный формат файла");
                 }
             }
