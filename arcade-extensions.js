@@ -49,32 +49,30 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => runDownloadRadar(false), 2000);
 });
 
-// КРАСИВОЕ ОКНО ДЛЯ ПЕРЕХОДА В НАСТРОЙКИ АНДРОИДА (ФИКС ДЛЯ MIUI)
-function showEmptyOrPermissionModal() {
-    if (document.getElementById('radar-empty-overlay')) return;
+function showPermissionModal() {
+    if (document.getElementById('radar-perm-overlay')) return;
 
     const overlay = document.createElement('div');
-    overlay.id = 'radar-empty-overlay';
+    overlay.id = 'radar-perm-overlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
     
     const modal = document.createElement('div');
-    modal.style.cssText = 'background:#1f2937; border:2px solid #38bdf8; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
+    modal.style.cssText = 'background:#1f2937; border:2px solid #ef4444; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
     
     modal.innerHTML = `
-        <h3 style="margin-top:0; color:#38bdf8;">РАДАР ЗАГРУЗОК 📡</h3>
+        <h3 style="margin-top:0; color:#ef4444;">📡 НУЖЕН ДОСТУП</h3>
         <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-            В папке "Загрузки" не найдено новых архивов с играми.<br><br>
-            <b style="color:#ef4444;">⚠️ ВАЖНО ДЛЯ ANDROID 11+:</b><br>
-            Если вы <b>точно</b> скачали игры, но эмулятор их не видит — ваша система (Xiaomi/MIUI) скрывает папку!<br><br>
-            Нажмите кнопку ниже и выдайте <b>Специальные разрешения ➔ Доступ ко всем файлам</b>.
+            Android скрыл папку "Загрузки" от сканера.<br><br>
+            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и зайди в:<br><br>
+            <b>Специальные разрешения</b> (или "Спец. права") <b>➔ Доступ ко всем файлам</b>. Найди <b>Arcade Hub</b> и включи тумблер!
         </p>
-        <button id="empty-settings-btn" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
-        <button id="empty-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ОК, ПОНЯТНО</button>
+        <button id="perm-settings-btn" class="action-btn" style="width:100%; background:#38bdf8; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
+        <button id="perm-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Спросить позже)</button>
     `;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    document.getElementById('empty-settings-btn').onclick = () => {
+    document.getElementById('perm-settings-btn').onclick = () => {
         window.location.href = "intent:#Intent;action=android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;package=com.arcade.hub;end";
         setTimeout(() => {
             window.location.href = "intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:com.arcade.hub;end";
@@ -82,7 +80,7 @@ function showEmptyOrPermissionModal() {
         overlay.remove();
     };
 
-    document.getElementById('empty-close-btn').onclick = () => {
+    document.getElementById('perm-close-btn').onclick = () => {
         overlay.remove();
     };
 }
@@ -92,16 +90,13 @@ async function requestStoragePermission() {
         try {
             const result = await window.NativeFilesystem.requestPermissions();
             return result.publicStorage === 'granted';
-        } catch(e) {
-            console.log('Permission request error:', e);
-        }
+        } catch(e) {}
     }
     return true; 
 }
 
 async function runDownloadRadar(manualTrigger = false) {
     if (!Capacitor.isNativePlatform()) {
-        console.log('Радар: Работаем в браузере, сканер отключен.');
         if (manualTrigger) alert('📡 Радар работает только в скомпилированном APK');
         return;
     }
@@ -117,7 +112,7 @@ async function runDownloadRadar(manualTrigger = false) {
         });
         
         if (!result || !Array.isArray(result.files)) {
-            if (manualTrigger) showEmptyOrPermissionModal();
+            if (manualTrigger) showPermissionModal();
             return;
         }
 
@@ -132,12 +127,11 @@ async function runDownloadRadar(manualTrigger = false) {
         if (newFiles.length > 0) {
             promptRadarInstall(newFiles);
         } else {
-            if (manualTrigger) showEmptyOrPermissionModal();
+            if (manualTrigger) showPermissionModal();
         }
     } catch (error) {
-        console.error('Радар: Ошибка чтения папки Download:', error);
         if (manualTrigger || !localStorage.getItem('radar_perm_shown')) {
-            showEmptyOrPermissionModal();
+            showPermissionModal();
             localStorage.setItem('radar_perm_shown', 'true'); 
         }
     }
@@ -166,9 +160,7 @@ function promptRadarInstall(files) {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
 
-    document.getElementById('radar-close-btn').onclick = () => {
-        overlay.remove();
-    };
+    document.getElementById('radar-close-btn').onclick = () => overlay.remove();
 
     document.getElementById('radar-ignore-btn').onclick = () => {
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
@@ -205,16 +197,16 @@ function promptRadarInstall(files) {
                         byteNumbers[j] = byteCharacters.charCodeAt(j);
                     }
                     const byteArray = new Uint8Array(byteNumbers);
-                    blob = new Blob([byteArray]);
+                    blob = new Blob([byteArray], { type: 'application/octet-stream' });
                 } else if (fileData.blob) {
                     blob = fileData.blob;
                 } else {
                     throw new Error('Нет данных файла');
                 }
                 
-                const fakeFile = new File([blob], fileName, { type: 'application/octet-stream' });
-                
-                await window.processSingleFile(fakeFile); 
+                // ИСПРАВЛЕНИЕ WEBVIEW: Duck-typing Blob вместо new File
+                blob.name = fileName;
+                await window.processSingleFile(blob); 
                 installed++;
             } catch (err) {
                 console.error('Пропущен не-игровой файл:', fileName, err.message);
@@ -226,7 +218,7 @@ function promptRadarInstall(files) {
         ignored.push(...processedFiles);
         localStorage.setItem('radar_ignored', JSON.stringify(ignored));
 
-        if (typeof renderAllGames === 'function') renderAllGames();
+        if (typeof window.renderAllGames === 'function') window.renderAllGames();
 
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
@@ -238,15 +230,10 @@ function promptRadarInstall(files) {
             <button id="radar-close-final" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, ЗАКРЫТЬ</button>
         `;
         
-        document.getElementById('radar-close-final').onclick = () => {
-            overlay.remove();
-        };
+        document.getElementById('radar-close-final').onclick = () => overlay.remove();
     };
 }
 
-// ==========================================
-// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
@@ -282,8 +269,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
-                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
-                        await window.processSingleFileExtended(newFile); 
+                        // ИСПРАВЛЕНИЕ WEBVIEW: Duck-typing Blob вместо new File
+                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+                        newBlob.name = cleanName;
+                        await window.processSingleFileExtended(newBlob); 
                         await new Promise(r => setTimeout(r, 5)); 
                     }
                     hasValidContent = true;
@@ -292,8 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
-                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
-                        await coreProcessSingleFile(newFile);
+                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+                        newBlob.name = cleanName;
+                        await coreProcessSingleFile(newBlob);
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
@@ -306,9 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     if (typeof fflate !== 'undefined') {
                         const zipped = fflate.zipSync(zipData);
-                        const zipBlob = new Blob([zipped], {type: 'application/zip'});
-                        const newZipFile = new File([zipBlob], file.name.replace(/\.(rar|7z)$/i, '.zip'), {type: 'application/zip'});
-                        await coreProcessSingleFile(newZipFile);
+                        let zipBlob = new Blob([zipped], {type: 'application/zip'});
+                        zipBlob.name = file.name.replace(/\.(rar|7z)$/i, '.zip');
+                        await coreProcessSingleFile(zipBlob);
                         hasValidContent = true;
                     }
                 }
@@ -345,9 +335,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let arc of nestedArchives) {
                         let cleanName = arc.path.split('/').pop();
-                        let blob = new Blob([arc.data]);
-                        let newFile = new File([blob], cleanName);
-                        await window.processSingleFileExtended(newFile);
+                        let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
+                        newBlob.name = cleanName;
+                        await window.processSingleFileExtended(newBlob);
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
@@ -356,9 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (romFiles.length > 0) {
                     for (let rom of romFiles) {
                         let cleanName = rom.path.split('/').pop();
-                        let blob = new Blob([rom.data]);
-                        let newFile = new File([blob], cleanName);
-                        await coreProcessSingleFile(newFile);
+                        let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
+                        newBlob.name = cleanName;
+                        await coreProcessSingleFile(newBlob);
                         await new Promise(r => setTimeout(r, 5)); 
                     }
                     hasValidContent = true;
