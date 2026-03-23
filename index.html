@@ -204,6 +204,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <div id="editFloatingBar" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(17,24,39,0.95); border:2px solid #ef4444; border-radius:12px; padding:15px; display:none; z-index:10000; box-shadow:0 10px 25px rgba(0,0,0,0.8); flex-direction:column; gap:10px; width:90%; max-width:400px; backdrop-filter:blur(5px);">
     <div style="text-align:center; color:#fff; font-weight:bold; font-size:14px;" id="editCountText">Выбрано: 0</div>
     <div style="display:flex; gap:10px;">
+        <button onclick="selectAllGames()" class="action-btn" style="flex:1; background:#3b82f6; color:#fff; border:none; padding:8px; border-radius:8px; font-weight:bold; font-size:11px;">☑️ ВЫБРАТЬ ВСЕ</button>
+        <button onclick="deselectAllGames()" class="action-btn" style="flex:1; background:#64748b; color:#fff; border:none; padding:8px; border-radius:8px; font-weight:bold; font-size:11px;">☒ СНЯТЬ</button>
+    </div>
+    <div style="display:flex; gap:10px;">
         <button onclick="deleteSelectedGames()" class="action-btn" style="flex:1; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold;">🗑️ УДАЛИТЬ</button>
         <button onclick="toggleLibraryEdit()" class="action-btn" style="flex:1; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold;">ОТМЕНА</button>
     </div>
@@ -312,26 +316,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleY(-0.05)">↕-</button>
     </div>
     <button class="edit-btn action-btn" onclick="resetScale()" style="background:#ef4444; border:none; margin-top: 10px;">Сброс Экрана</button>
-</div>
-
-<div id="pad-edit-panel">
-    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
-    <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
-    <div class="edit-row">
-      <span>Размер:</span>
-      <button class="edit-btn action-btn" onclick="scaleSelectedPad(0.05)">➕</button>
-      <button class="edit-btn action-btn" onclick="scaleSelectedPad(-0.05)">➖</button>
-    </div>
-    <div class="slider-row">
-      <label>Прозрачность: <span id="opacityVal">30%</span></label>
-      <input type="range" min="10" max="100" value="30" id="opacitySlider" oninput="updateOpacity(this.value)">
-    </div>
-    <div class="slider-row">
-      <label>Яркость: <span id="brightnessVal">100%</span></label>
-      <input type="range" min="50" max="200" value="100" id="brightnessSlider" oninput="updateBrightness(this.value)">
-    </div>
-    <button class="edit-btn action-btn" onclick="resetPad()" style="background:#ef4444; margin-top:5px;">Сброс всех настроек</button>
 </div>
 
 <input type="text" id="hiddenInput" autocomplete="off">
@@ -451,6 +435,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function updateEditCount() {
         document.getElementById('editCountText').innerText = `Выбрано: ${selectedGamesForDelete.size}`;
+    }
+
+    // НОВЫЕ ФУНКЦИИ МАССОВОГО ВЫБОРА
+    window.selectAllGames = function() {
+        const tx = db.transaction(["games"], "readonly");
+        tx.objectStore("games").getAllKeys().onsuccess = (e) => {
+            e.target.result.forEach(k => selectedGamesForDelete.add(k));
+            updateEditCount();
+            window.renderAllGames(); 
+        };
+    }
+
+    window.deselectAllGames = function() {
+        selectedGamesForDelete.clear();
+        updateEditCount();
+        window.renderAllGames();
     }
 
     window.deleteSelectedGames = function() {
@@ -1481,14 +1481,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         }
         
-        // Очищаем поле поиска при входе в игру
         document.getElementById('searchInput').value = ''; 
-        
         menuScreen.style.display = 'none'; 
         frameDiv.style.display = 'block'; 
         toolbar.style.display = 'flex';
         
-        document.getElementById('btnRestart').style.display = 'flex'; // Показываем кнопку сброса
+        document.getElementById('btnRestart').style.display = 'flex'; 
         
         btnGamepad.style.display = 'none'; 
         btnKeyboard.style.display = 'none'; 
@@ -1888,17 +1886,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // НОВАЯ КНОПКА ЖЕСТКОГО СБРОСА (Hard Reset) - 100% защита от крашей
     async function hardResetGame() {
         if (!currentGame) return;
         await saveGameState(); 
-        
-        // Записываем ID игры в кэш браузера и перезагружаем страницу!
         sessionStorage.setItem('autoRestartGameId', currentGame.id);
         location.reload();
     }
 
-    // КНОПКА ВЫХОДА (Всегда выходит в меню за 1 клик)
     async function handleBackBtn() {
         if (currentGame) {
             await saveGameState(); 
@@ -1906,7 +1900,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         executeCleanup(false);
     }
 
-    // ФУНКЦИЯ ОЧИСТКИ (Вызывается при выходе)
     function executeCleanup(isResetting = false) {
         isShuttingDown = true; 
         
@@ -2033,9 +2026,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     };
     dbRequest.onsuccess = (e) => { 
         db = e.target.result; 
-        renderAllGames(); 
+        window.renderAllGames(); 
         
-        // МАГИЯ АВТО-РЕСЕТА: Если мы перезагрузили страницу кнопкой Ресета, запускаем игру обратно!
         const restartId = sessionStorage.getItem('autoRestartGameId');
         if (restartId) {
             sessionStorage.removeItem('autoRestartGameId');
@@ -2057,7 +2049,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     };
 
-    // ФУНКЦИЯ ОТРИСОВКИ С СОРТИРОВКОЙ
     window.renderAllGames = function() {
         gameGrid.innerHTML = '';
         const tx = db.transaction(["games"], "readonly"); 
@@ -2066,7 +2057,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => { 
             let customGames = req.result; 
             
-            // Применяем сортировку
             const sortType = document.getElementById('sortSelect')?.value || 'newest';
             if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
             if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
@@ -2077,7 +2067,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 return idB - idA;
             });
 
-            // Применяем фильтр (поиск)
             const term = document.getElementById('searchInput').value.toLowerCase();
 
             if (customGames.length === 0) { 
@@ -2098,10 +2087,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (game.cover) { btn.style.backgroundImage = `url(${game.cover})`; }
         btn.dataset.gameId = game.id;
         
-        // Отрисовка режима "Выделения/Удаления"
         const isSelected = selectedGamesForDelete.has(game.id);
+        const borderStyle = isSelected ? '3px solid #f87171' : '1px solid #374151';
+        btn.style.border = isLibraryEditMode ? borderStyle : '1px solid #374151';
+
         const overlayHtml = isLibraryEditMode 
-            ? `<div style="position:absolute; inset:0; background:rgba(239,68,68,${isSelected ? '0.6' : '0.1'}); z-index:3; display:flex; align-items:center; justify-content:center; border:${isSelected ? '3px solid #f87171' : 'none'}; border-radius:12px;">${isSelected ? '<div style="background:#ef4444; border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; font-size:24px;">🗑️</div>' : ''}</div>` 
+            ? `<div class="edit-overlay" style="position:absolute; inset:0; background:rgba(239,68,68,${isSelected ? '0.6' : '0.1'}); z-index:3; display:flex; align-items:center; justify-content:center; border-radius:12px;"><div class="edit-icon" style="background:#ef4444; border-radius:50%; width:40px; height:40px; display:${isSelected ? 'flex' : 'none'}; align-items:center; justify-content:center; font-size:24px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">🗑️</div></div>` 
             : '';
 
         btn.innerHTML = `${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
@@ -2110,31 +2101,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             e.preventDefault(); 
             e.stopPropagation(); 
             if (isLibraryEditMode) {
-                if (selectedGamesForDelete.has(game.id)) selectedGamesForDelete.delete(game.id);
-                else selectedGamesForDelete.add(game.id);
+                // ИСПРАВЛЕНИЕ: Больше нет скачков вверх! Меняем DOM напрямую.
+                if (selectedGamesForDelete.has(game.id)) {
+                    selectedGamesForDelete.delete(game.id);
+                    btn.style.border = '1px solid #374151';
+                    btn.querySelector('.edit-overlay').style.backgroundColor = 'rgba(239,68,68,0.1)';
+                    btn.querySelector('.edit-icon').style.display = 'none';
+                } else {
+                    selectedGamesForDelete.add(game.id);
+                    btn.style.border = '3px solid #f87171';
+                    btn.querySelector('.edit-overlay').style.backgroundColor = 'rgba(239,68,68,0.6)';
+                    btn.querySelector('.edit-icon').style.display = 'flex';
+                }
                 updateEditCount();
-                renderAllGames(); // Быстрый ререндер чтобы показать галочку
             } else {
                 startGame(game); 
             }
         };
         
-        // Кнопка одиночного удаления скрыта в режиме массового редактирования
-        if (isCustom && !isLibraryEditMode) {
-            const delBtn = document.createElement('div'); 
-            delBtn.className = 'del-btn'; 
-            delBtn.innerHTML = '✖';
-            delBtn.onclick = (e) => { 
-                e.stopPropagation(); 
-                if(confirm(`Удалить игру "${game.n}" из памяти эмулятора?`)) {
-                    if (game._tempUrl) URL.revokeObjectURL(game._tempUrl);
-                    const tx = db.transaction(["games"], "readwrite"); 
-                    tx.objectStore("games").delete(game.id); 
-                    tx.oncomplete = () => renderAllGames(); 
-                } 
-            };
-            btn.appendChild(delBtn);
-        }
         gameGrid.appendChild(btn);
     }
 
@@ -2187,7 +2171,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             await new Promise(r => setTimeout(r, 5)); 
         }
         
-        renderAllGames();
+        window.renderAllGames();
         if (errorCount === 0) btn.innerHTML = `✅ ${successCount} игр добавлено`; 
         else btn.innerHTML = `⚠️ ${successCount} ок, ${errorCount} ошибок`;
         
@@ -2201,7 +2185,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const fileBuffer = await readBlob(file); 
         const persistentBlob = new Blob([fileBuffer], { type: file.type || 'application/octet-stream' });
         const fileName = file.name.toLowerCase(); 
-        const rawExt = fileName.split('.').pop(); 
+        const rawExt = fileName.split('.').pop().toLowerCase(); 
         const cleanGameName = file.name.replace(/\.[^/.]+$/, "");
         let gameType = '', gameIcon = '', execCmd = '', controlMode = 'pad'; 
         let romExt = rawExt, sysType = 'unk', coverData = null;
@@ -2220,7 +2204,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
         } 
         else if (fileName.endsWith('.zip')) { 
-            // Это заглушка, так как реальная распаковка идет через arcade-extensions
             gameType = 'd'; 
             gameIcon = '💾'; 
             controlMode = 'pad'; 
