@@ -103,9 +103,12 @@ async function runDownloadRadar(manualTrigger = false) {
         return;
     }
     
-    if (manualTrigger) {
-        try { await Filesystem.requestPermissions(); } catch(e) {}
-    }
+    try {
+        const permStatus = await Filesystem.checkPermissions();
+        if (permStatus.publicStorage !== 'granted') {
+            await Filesystem.requestPermissions();
+        }
+    } catch(e) {}
     
     try {
         let result = await Filesystem.readdir({
@@ -186,27 +189,19 @@ function promptRadarInstall(files) {
             `;
             
             try {
-                const fileData = await Filesystem.readFile({
+                const fileUri = await Filesystem.getUri({
                     path: `Download/${fileName}`,
                     directory: Directory.ExternalStorage
                 });
                 
-                let blob;
-                if (fileData.data) {
-                    const byteCharacters = atob(fileData.data);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let j = 0; j < byteCharacters.length; j++) {
-                        byteNumbers[j] = byteCharacters.charCodeAt(j);
-                    }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    blob = new Blob([byteArray], { type: 'application/octet-stream' });
-                } else if (fileData.blob) {
-                    blob = fileData.blob;
-                } else {
-                    throw new Error('Нет данных файла');
-                }
+                const webViewUrl = Capacitor.convertFileSrc(fileUri.uri);
+                const response = await fetch(webViewUrl);
                 
+                if (!response.ok) throw new Error('Не удалось прочитать файл через WebView');
+                
+                const blob = await response.blob();
                 const fakeFile = makeFakeFile(blob, fileName);
+                
                 await window.processSingleFile(fakeFile); 
                 
                 installed++;
@@ -238,7 +233,7 @@ function promptRadarInstall(files) {
 }
 
 // ==========================================
-// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ
+// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ И ЗАЩИТОЙ DOS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
@@ -270,8 +265,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 let romFiles = fileList.filter(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
                 let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
 
-                let hasValidContent = false;
+                // ИСПРАВЛЕНИЕ: Если в архиве есть DOS-экзешник, это ПК-игра. 
+                // Мы НЕ распаковываем вложенные архивы, чтобы не сломать её структуру.
+                if (dosFiles.length > 0) {
+                    const zipData = {};
+                    for(let f of fileList) {
+                        zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                    }
+                    if (typeof fflate !== 'undefined') {
+                        const zipped = fflate.zipSync(zipData);
+                        let zipBlob = new Blob([zipped], {type: 'application/zip'});
+                        let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
+                        await coreProcessSingleFile(newZipFile);
+                        return; // Заканчиваем работу, дальше не идем!
+                    }
+                }
 
+                // Если это не DOS-игра, тогда распаковываем Матрешку
+                let hasValidContent = false;
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
@@ -292,20 +303,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
-                }
-
-                if (dosFiles.length > 0 && nestedArchives.length === 0) {
-                    const zipData = {};
-                    for(let f of fileList) {
-                        zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
-                    }
-                    if (typeof fflate !== 'undefined') {
-                        const zipped = fflate.zipSync(zipData);
-                        let zipBlob = new Blob([zipped], {type: 'application/zip'});
-                        let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
-                        await coreProcessSingleFile(newZipFile);
-                        hasValidContent = true;
-                    }
                 }
 
                 if (!hasValidContent) throw new Error("Архив пуст или не содержит поддерживаемых игр");
@@ -335,8 +332,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                let hasValidContent = false;
+                // ИСПРАВЛЕНИЕ: Защита целостности DOS-игр в .zip
+                if (hasDos) {
+                    await coreProcessSingleFile(file);
+                    return; // Заканчиваем!
+                }
 
+                // Если DOS нет, распаковываем Матрешку
+                let hasValidContent = false;
                 if (nestedArchives.length > 0) {
                     for (let arc of nestedArchives) {
                         let cleanName = arc.path.split('/').pop();
@@ -356,11 +359,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 5)); 
                     }
-                    hasValidContent = true;
-                }
-
-                if (hasDos && nestedArchives.length === 0 && romFiles.length === 0) {
-                    await coreProcessSingleFile(file);
                     hasValidContent = true;
                 }
 
