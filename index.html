@@ -240,7 +240,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <div id="toolbar">
     <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px; background:rgba(239,68,68,0.8); border-color:#ef4444;">⬅</div>
     <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
-    
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -316,6 +315,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleY(-0.05)">↕-</button>
     </div>
     <button class="edit-btn action-btn" onclick="resetScale()" style="background:#ef4444; border:none; margin-top: 10px;">Сброс Экрана</button>
+</div>
+
+<div id="pad-edit-panel">
+    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
+    <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <div class="edit-row">
+      <span>Размер:</span>
+      <button class="edit-btn action-btn" onclick="scaleSelectedPad(0.05)">➕</button>
+      <button class="edit-btn action-btn" onclick="scaleSelectedPad(-0.05)">➖</button>
+    </div>
+    <div class="slider-row">
+      <label>Прозрачность: <span id="opacityVal">30%</span></label>
+      <input type="range" min="10" max="100" value="30" id="opacitySlider" oninput="updateOpacity(this.value)">
+    </div>
+    <div class="slider-row">
+      <label>Яркость: <span id="brightnessVal">100%</span></label>
+      <input type="range" min="50" max="200" value="100" id="brightnessSlider" oninput="updateBrightness(this.value)">
+    </div>
+    <button class="edit-btn action-btn" onclick="resetPad()" style="background:#ef4444; margin-top:5px;">Сброс всех настроек</button>
 </div>
 
 <input type="text" id="hiddenInput" autocomplete="off">
@@ -437,7 +456,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         document.getElementById('editCountText').innerText = `Выбрано: ${selectedGamesForDelete.size}`;
     }
 
-    // НОВЫЕ ФУНКЦИИ МАССОВОГО ВЫБОРА
     window.selectAllGames = function() {
         const tx = db.transaction(["games"], "readonly");
         tx.objectStore("games").getAllKeys().onsuccess = (e) => {
@@ -2101,7 +2119,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             e.preventDefault(); 
             e.stopPropagation(); 
             if (isLibraryEditMode) {
-                // ИСПРАВЛЕНИЕ: Больше нет скачков вверх! Меняем DOM напрямую.
                 if (selectedGamesForDelete.has(game.id)) {
                     selectedGamesForDelete.delete(game.id);
                     btn.style.border = '1px solid #374151';
@@ -2181,6 +2198,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }, 3000);
     }
 
+    // ИЗМЕНЕНИЕ: Встроенная проверка на ДУБЛИКАТЫ (Анти-клон)
     window.processSingleFile = async function(file) {
         const fileBuffer = await readBlob(file); 
         const persistentBlob = new Blob([fileBuffer], { type: file.type || 'application/octet-stream' });
@@ -2233,11 +2251,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 resolve();
                 return;
             }
-            const tx = db.transaction(["games"], "readwrite"); 
-            const store = tx.objectStore("games"); 
-            const req = store.put(newGame); 
-            req.onsuccess = resolve; 
-            req.onerror = () => reject(new Error('DB error')); 
+
+            // ПРОВЕРКА НА ДУБЛИКАТЫ
+            const txCheck = db.transaction(["games"], "readonly");
+            const reqCheck = txCheck.objectStore("games").getAll();
+            
+            reqCheck.onsuccess = () => {
+                const existingGames = reqCheck.result;
+                const isDuplicate = existingGames.some(g => g.n === cleanGameName && g.sys === sysType);
+                
+                if (isDuplicate) {
+                    console.log(`Игра "${cleanGameName}" уже есть в библиотеке. Пропускаем.`);
+                    resolve(); // Пропускаем тихо, чтобы сканер не выдал ошибку
+                    return;
+                }
+
+                // Запись уникальной игры
+                const tx = db.transaction(["games"], "readwrite"); 
+                const store = tx.objectStore("games"); 
+                const req = store.put(newGame); 
+                req.onsuccess = resolve; 
+                req.onerror = () => reject(new Error('DB error')); 
+            };
+            reqCheck.onerror = () => reject(new Error('DB read error'));
         });
     };
 </script>
