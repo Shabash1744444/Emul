@@ -2,6 +2,10 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
 
+// ==========================================
+// БАЗОВЫЕ УТИЛИТЫ ДЛЯ РАБОТЫ С ФАЙЛАМИ
+// ==========================================
+
 const readBlobSafe = (b) => {
     if (b.arrayBuffer) return b.arrayBuffer();
     return new Promise((res, rej) => {
@@ -12,6 +16,7 @@ const readBlobSafe = (b) => {
     });
 };
 
+// Функция-спасатель для WebView
 const makeFakeFile = (blob, fileName) => {
     try {
         return new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
@@ -21,6 +26,10 @@ const makeFakeFile = (blob, fileName) => {
         return blob;
     }
 };
+
+// ==========================================
+// ИНИЦИАЛИЗАЦИЯ И ПЕРЕХВАТ ССЫЛОК
+// ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
@@ -59,6 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => runDownloadRadar(false), 2000);
 });
 
+// ==========================================
+// РАДАР ЗАГРУЗОК (СКАНИРОВАНИЕ)
+// ==========================================
+
 function showPermissionModal() {
     if (document.getElementById('radar-perm-overlay')) return;
 
@@ -88,18 +101,57 @@ function showPermissionModal() {
     };
 }
 
-async function requestStoragePermission() {
-    if (window.NativeFilesystem && window.NativeFilesystem.requestPermissions) {
+// Рекурсивный поиск файлов внутри Download (макс глубина = 3)
+async function scanDownloadFolder() {
+    let allFiles = [];
+    
+    async function walk(currentPath, depth) {
+        if (depth > 3) return; 
         try {
-            await window.NativeFilesystem.requestPermissions();
-        } catch(e) {}
+            let dir = await Filesystem.readdir({ 
+                path: currentPath, 
+                directory: Directory.ExternalStorage 
+            });
+            
+            let filesArray = dir.files;
+            for (let i = 0; i < filesArray.length; i++) {
+                let item = filesArray[i];
+                let name = typeof item === 'string' ? item : item.name;
+                let type = typeof item === 'string' ? 'unknown' : item.type;
+                let fullPath = currentPath === 'Download' ? `Download/${name}` : `${currentPath}/${name}`;
+                
+                if (type === 'directory') {
+                    await walk(fullPath, depth + 1);
+                } else if (type === 'file') {
+                    allFiles.push({ name: name, path: fullPath });
+                } else {
+                    try {
+                        let stat = await Filesystem.stat({ 
+                            path: fullPath, 
+                            directory: Directory.ExternalStorage 
+                        });
+                        if (stat.type === 'directory') {
+                            await walk(fullPath, depth + 1);
+                        } else {
+                            allFiles.push({ name: name, path: fullPath });
+                        }
+                    } catch(e) {
+                        allFiles.push({ name: name, path: fullPath });
+                    }
+                }
+            }
+        } catch(e) {
+            console.error("Ошибка чтения папки:", currentPath, e);
+        }
     }
-    return true; 
+    
+    await walk('Download', 0);
+    return allFiles;
 }
 
 async function runDownloadRadar(manualTrigger = false) {
     if (!Capacitor.isNativePlatform()) {
-        if (manualTrigger) alert('📡 Радар работает только в скомпилированном APK');
+        if (manualTrigger) alert('📡 Радар работает только в APK');
         return;
     }
     
@@ -111,12 +163,9 @@ async function runDownloadRadar(manualTrigger = false) {
     } catch(e) {}
     
     try {
-        let result = await Filesystem.readdir({
-            path: 'Download',
-            directory: Directory.ExternalStorage
-        });
+        const allFoundFiles = await scanDownloadFolder();
         
-        if (!result || !Array.isArray(result.files)) {
+        if (!allFoundFiles || allFoundFiles.length === 0) {
             if (manualTrigger) showPermissionModal();
             return;
         }
@@ -124,9 +173,9 @@ async function runDownloadRadar(manualTrigger = false) {
         let ignoredFiles = JSON.parse(localStorage.getItem('radar_ignored')) || [];
         const validExtensions = ['.zip', '.rar', '.7z', '.nes', '.smc', '.sfc', '.md', '.gen', '.bin', '.ngp', '.ngc'];
         
-        const newFiles = result.files.filter(f => {
-            const fileName = (f.name || f).toLowerCase(); 
-            return validExtensions.some(ext => fileName.endsWith(ext)) && !ignoredFiles.includes(f.name || f);
+        const newFiles = allFoundFiles.filter(f => {
+            const fileName = f.name.toLowerCase(); 
+            return validExtensions.some(ext => fileName.endsWith(ext)) && !ignoredFiles.includes(f.name);
         });
 
         if (newFiles.length > 0) {
@@ -135,7 +184,7 @@ async function runDownloadRadar(manualTrigger = false) {
             if (manualTrigger) alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
         }
     } catch (error) {
-        console.error('Радар: Ошибка чтения папки Download:', error);
+        console.error('Радар: Ошибка чтения директории:', error);
         if (manualTrigger || !localStorage.getItem('radar_perm_shown')) {
             showPermissionModal();
             localStorage.setItem('radar_perm_shown', 'true'); 
@@ -145,7 +194,7 @@ async function runDownloadRadar(manualTrigger = false) {
 
 window.runDownloadRadar = runDownloadRadar;
 
-function promptRadarInstall(files) {
+function promptRadarInstall(filesObjects) {
     const overlay = document.createElement('div');
     overlay.id = 'radar-overlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column; backdrop-filter:blur(5px);';
@@ -153,14 +202,14 @@ function promptRadarInstall(files) {
     const modal = document.createElement('div');
     modal.style.cssText = 'background:#1f2937; border:2px solid #38bdf8; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
     
-    let fileNamesHtml = files.slice(0, 3).map(f => `<strong style="color:#fff; word-break:break-all;">${f.name || f}</strong>`).join('<br>');
-    if (files.length > 3) fileNamesHtml += `<br><span style="color:#aaa; font-size:11px;">...и еще ${files.length - 3} файлов</span>`;
+    let fileNamesHtml = filesObjects.slice(0, 3).map(f => `<strong style="color:#fff; word-break:break-all;">${f.name}</strong>`).join('<br>');
+    if (filesObjects.length > 3) fileNamesHtml += `<br><span style="color:#aaa; font-size:11px;">...и еще ${filesObjects.length - 3} файлов</span>`;
 
     modal.innerHTML = `
         <h3 style="margin-top:0; color:#38bdf8;">РАДАР ЗАГРУЗОК 📡</h3>
-        <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">Найдено файлов (архивов/игр): <b>${files.length}</b><br><br>${fileNamesHtml}</p>
+        <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">Найдено файлов: <b>${filesObjects.length}</b><br><br>${fileNamesHtml}</p>
         <button id="radar-install-btn" class="action-btn" style="width:100%; background:#10b981; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">📥 ПРОВЕРИТЬ И УСТАНОВИТЬ ВСЕ</button>
-        <button id="radar-ignore-btn" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">❌ ПРОПУСТИТЬ МУСОР (Больше не предлагать)</button>
+        <button id="radar-ignore-btn" class="action-btn" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">❌ ПРОПУСТИТЬ МУСОР</button>
         <button id="radar-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Отложить)</button>
     `;
     overlay.appendChild(modal);
@@ -170,7 +219,7 @@ function promptRadarInstall(files) {
 
     document.getElementById('radar-ignore-btn').onclick = () => {
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        files.forEach(f => ignored.push(f.name || f));
+        filesObjects.forEach(f => ignored.push(f.name));
         localStorage.setItem('radar_ignored', JSON.stringify(ignored));
         overlay.remove();
     };
@@ -178,42 +227,42 @@ function promptRadarInstall(files) {
     document.getElementById('radar-install-btn').onclick = async () => {
         let installed = 0;
         let failed = 0;
-        let processedFiles = []; 
+        let processedFileNames = []; 
 
-        for (let i = 0; i < files.length; i++) {
-            let fileName = files[i].name || files[i];
+        for (let i = 0; i < filesObjects.length; i++) {
+            let fileObj = filesObjects[i];
 
             modal.innerHTML = `
-                <h3 style="color:#38bdf8; text-shadow: 0 2px 4px #000;">Анализ... ${i + 1}/${files.length}</h3>
-                <p style="font-size:12px; color:#aaa;">${fileName}</p>
+                <h3 style="color:#38bdf8; text-shadow: 0 2px 4px #000;">Анализ... ${i + 1}/${filesObjects.length}</h3>
+                <p style="font-size:12px; color:#aaa;">${fileObj.name}</p>
             `;
             
             try {
                 const fileUri = await Filesystem.getUri({
-                    path: `Download/${fileName}`,
+                    path: fileObj.path,
                     directory: Directory.ExternalStorage
                 });
                 
                 const webViewUrl = Capacitor.convertFileSrc(fileUri.uri);
                 const response = await fetch(webViewUrl);
                 
-                if (!response.ok) throw new Error('Не удалось прочитать файл через WebView');
+                if (!response.ok) throw new Error('Не удалось прочитать файл');
                 
                 const blob = await response.blob();
-                const fakeFile = makeFakeFile(blob, fileName);
+                const fakeFile = makeFakeFile(blob, fileObj.name);
                 
                 await window.processSingleFile(fakeFile); 
                 
                 installed++;
-                processedFiles.push(fileName); 
+                processedFileNames.push(fileObj.name); 
             } catch (err) {
-                console.error('Пропущен файл:', fileName, err.message);
+                console.error('Пропущен файл:', fileObj.name, err.message);
                 failed++;
             }
         }
         
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        ignored.push(...processedFiles);
+        ignored.push(...processedFileNames);
         localStorage.setItem('radar_ignored', JSON.stringify(ignored));
 
         if (typeof window.renderAllGames === 'function') window.renderAllGames();
@@ -221,9 +270,8 @@ function promptRadarInstall(files) {
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
             <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-                Успешно обработано: ${installed} шт.<br>
-                ${failed > 0 ? `Не удалось распаковать/пустые архивы: ${failed} шт.<br><br>` : '<br>'}
-                Игры добавлены в библиотеку эмулятора!
+                Успешно: ${installed} шт.<br>
+                ${failed > 0 ? `Ошибок распаковки: ${failed} шт.<br><br>` : '<br>'}
             </p>
             <button id="radar-close-final" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, ЗАКРЫТЬ</button>
         `;
@@ -235,6 +283,7 @@ function promptRadarInstall(files) {
 // ==========================================
 // УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ И ЗАЩИТОЙ DOS
 // ==========================================
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
@@ -265,8 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let romFiles = fileList.filter(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
                 let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
 
-                // ИСПРАВЛЕНИЕ: Если в архиве есть DOS-экзешник, это ПК-игра. 
-                // Мы НЕ распаковываем вложенные архивы, чтобы не сломать её структуру.
+                // ЗАЩИТА DOS: Собираем ZIP и передаем ядру
                 if (dosFiles.length > 0) {
                     const zipData = {};
                     for(let f of fileList) {
@@ -277,11 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let zipBlob = new Blob([zipped], {type: 'application/zip'});
                         let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
                         await coreProcessSingleFile(newZipFile);
-                        return; // Заканчиваем работу, дальше не идем!
+                        return; 
                     }
                 }
 
-                // Если это не DOS-игра, тогда распаковываем Матрешку
                 let hasValidContent = false;
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
@@ -332,14 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // ИСПРАВЛЕНИЕ: Защита целостности DOS-игр в .zip
+                // ЗАЩИТА DOS: Отдаем ядру
                 if (hasDos) {
                     await coreProcessSingleFile(file);
-                    return; // Заканчиваем!
+                    return; 
                 }
 
-                // Если DOS нет, распаковываем Матрешку
                 let hasValidContent = false;
+
                 if (nestedArchives.length > 0) {
                     for (let arc of nestedArchives) {
                         let cleanName = arc.path.split('/').pop();
@@ -366,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             else {
-                if (!validRomExts.some(ext => fileName.endsWith(ext))) {
+                if (!validRomExts.some(ext => fileName.endsWith(ext)) && !fileName.endsWith('.html')) {
                     throw new Error("Неизвестный формат файла");
                 }
             }
