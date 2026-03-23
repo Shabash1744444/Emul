@@ -12,6 +12,16 @@ const readBlobSafe = (b) => {
     });
 };
 
+const makeFakeFile = (blob, fileName) => {
+    try {
+        return new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+    } catch (e) {
+        blob.name = fileName;
+        blob.lastModified = Date.now();
+        return blob;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
@@ -60,25 +70,18 @@ function showPermissionModal() {
     modal.style.cssText = 'background:#1f2937; border:2px solid #ef4444; border-radius:12px; padding:20px; width:100%; max-width:350px; text-align:center; color:#fff; box-shadow: 0 10px 25px rgba(0,0,0,0.8);';
     
     modal.innerHTML = `
-        <h3 style="margin-top:0; color:#ef4444;">📡 НУЖЕН ДОСТУП</h3>
-        <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-            Android скрыл папку "Загрузки" от сканера.<br><br>
-            Чтобы эмулятор сам находил скачанные игры, нажми кнопку ниже и зайди в:<br><br>
-            <b>Специальные разрешения</b> (или "Спец. права") <b>➔ Доступ ко всем файлам</b>. Найди <b>Arcade Hub</b> и включи тумблер!
+        <h3 style="margin-top:0; color:#ef4444;">📡 ДОСТУП ЗАКРЫТ</h3>
+        <p style="font-size:13px; color:#94a3b8; margin-bottom:20px; text-align:left;">
+            Эмулятор не может прочитать папку "Загрузки". Чтобы всё заработало:<br><br>
+            1. Зайдите в <b>Настройки телефона</b>.<br>
+            2. Найдите <b>Приложения</b> ➔ <b>Специальные разрешения</b> ➔ <b>Доступ ко всем файлам</b>.<br>
+            3. Включите тумблер для <b>Arcade Hub</b>.<br>
+            4. <b style="color:#fcd34d;">ОБЯЗАТЕЛЬНО:</b> Закройте эмулятор (смахните из недавних) и откройте заново!
         </p>
-        <button id="perm-settings-btn" class="action-btn" style="width:100%; background:#38bdf8; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">⚙️ ОТКРЫТЬ НАСТРОЙКИ</button>
-        <button id="perm-close-btn" class="action-btn" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ (Спросить позже)</button>
+        <button id="perm-close-btn" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, СДЕЛАЮ</button>
     `;
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
-
-    document.getElementById('perm-settings-btn').onclick = () => {
-        window.location.href = "intent:#Intent;action=android.settings.MANAGE_APP_ALL_FILES_ACCESS_PERMISSION;package=com.arcade.hub;end";
-        setTimeout(() => {
-            window.location.href = "intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:com.arcade.hub;end";
-        }, 800);
-        overlay.remove();
-    };
 
     document.getElementById('perm-close-btn').onclick = () => {
         overlay.remove();
@@ -88,8 +91,7 @@ function showPermissionModal() {
 async function requestStoragePermission() {
     if (window.NativeFilesystem && window.NativeFilesystem.requestPermissions) {
         try {
-            const result = await window.NativeFilesystem.requestPermissions();
-            return result.publicStorage === 'granted';
+            await window.NativeFilesystem.requestPermissions();
         } catch(e) {}
     }
     return true; 
@@ -127,9 +129,10 @@ async function runDownloadRadar(manualTrigger = false) {
         if (newFiles.length > 0) {
             promptRadarInstall(newFiles);
         } else {
-            if (manualTrigger) showPermissionModal();
+            if (manualTrigger) alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
         }
     } catch (error) {
+        console.error('Радар: Ошибка чтения папки Download:', error);
         if (manualTrigger || !localStorage.getItem('radar_perm_shown')) {
             showPermissionModal();
             localStorage.setItem('radar_perm_shown', 'true'); 
@@ -176,7 +179,6 @@ function promptRadarInstall(files) {
 
         for (let i = 0; i < files.length; i++) {
             let fileName = files[i].name || files[i];
-            processedFiles.push(fileName);
 
             modal.innerHTML = `
                 <h3 style="color:#38bdf8; text-shadow: 0 2px 4px #000;">Анализ... ${i + 1}/${files.length}</h3>
@@ -204,12 +206,13 @@ function promptRadarInstall(files) {
                     throw new Error('Нет данных файла');
                 }
                 
-                // ИСПРАВЛЕНИЕ WEBVIEW: Duck-typing Blob вместо new File
-                blob.name = fileName;
-                await window.processSingleFile(blob); 
+                const fakeFile = makeFakeFile(blob, fileName);
+                await window.processSingleFile(fakeFile); 
+                
                 installed++;
+                processedFiles.push(fileName); 
             } catch (err) {
-                console.error('Пропущен не-игровой файл:', fileName, err.message);
+                console.error('Пропущен файл:', fileName, err.message);
                 failed++;
             }
         }
@@ -223,9 +226,9 @@ function promptRadarInstall(files) {
         modal.innerHTML = `
             <h3 style="margin-top:0; color:#10b981;">✅ АНАЛИЗ ЗАВЕРШЕН!</h3>
             <p style="font-size:13px; color:#94a3b8; margin-bottom:20px;">
-                Успешно обработано архивов/игр: ${installed} шт.<br>
-                ${failed > 0 ? `Отсеяно мусора (пустые архивы): ${failed} шт.<br><br>` : '<br>'}
-                Игры добавлены в библиотеку эмулятора.
+                Успешно обработано: ${installed} шт.<br>
+                ${failed > 0 ? `Не удалось распаковать/пустые архивы: ${failed} шт.<br><br>` : '<br>'}
+                Игры добавлены в библиотеку эмулятора!
             </p>
             <button id="radar-close-final" class="action-btn" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО, ЗАКРЫТЬ</button>
         `;
@@ -234,6 +237,9 @@ function promptRadarInstall(files) {
     };
 }
 
+// ==========================================
+// УМНАЯ РАСПАКОВКА АРХИВОВ С РЕКУРСИЕЙ
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.processSingleFile === 'function') {
         const coreProcessSingleFile = window.processSingleFile;
@@ -269,10 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
-                        // ИСПРАВЛЕНИЕ WEBVIEW: Duck-typing Blob вместо new File
                         let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
-                        newBlob.name = cleanName;
-                        await window.processSingleFileExtended(newBlob); 
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await window.processSingleFileExtended(newFile); 
                         await new Promise(r => setTimeout(r, 5)); 
                     }
                     hasValidContent = true;
@@ -282,8 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
                         let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
-                        newBlob.name = cleanName;
-                        await coreProcessSingleFile(newBlob);
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
@@ -297,8 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof fflate !== 'undefined') {
                         const zipped = fflate.zipSync(zipData);
                         let zipBlob = new Blob([zipped], {type: 'application/zip'});
-                        zipBlob.name = file.name.replace(/\.(rar|7z)$/i, '.zip');
-                        await coreProcessSingleFile(zipBlob);
+                        let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
+                        await coreProcessSingleFile(newZipFile);
                         hasValidContent = true;
                     }
                 }
@@ -336,8 +341,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let arc of nestedArchives) {
                         let cleanName = arc.path.split('/').pop();
                         let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
-                        newBlob.name = cleanName;
-                        await window.processSingleFileExtended(newBlob);
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await window.processSingleFileExtended(newFile);
                         await new Promise(r => setTimeout(r, 5));
                     }
                     hasValidContent = true;
@@ -347,8 +352,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let rom of romFiles) {
                         let cleanName = rom.path.split('/').pop();
                         let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
-                        newBlob.name = cleanName;
-                        await coreProcessSingleFile(newBlob);
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 5)); 
                     }
                     hasValidContent = true;
