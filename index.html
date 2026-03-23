@@ -36,9 +36,7 @@
 <style>
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; }
-/* ИСПРАВЛЕНО: Добавлен padding-bottom: 90px чтобы ссылки не скрывались под наэкранными кнопками */
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
-/* ИСПРАВЛЕНО: Добавлен padding: 40px сверху чтобы пакман не прятался под статус бар */
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
 @keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
@@ -194,6 +192,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </button>
     </div>
 
+    <!-- НОВОЕ: Панель сортировки и редактирования -->
     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
         <select id="sortSelect" class="action-btn" onchange="renderAllGames()" style="flex: 1;">
             <option value="newest">📅 Сначала новые</option>
@@ -251,6 +250,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="toolbar">
     <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px;">⬅</div>
+    <!-- НОВОЕ: Кнопка Hard Reset -->
     <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
@@ -370,6 +370,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
+
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -1503,7 +1504,9 @@ function sendKey(defaultCode, down) {
     }
 }
 
-// ИСПРАВЛЕНИЕ: РАБОЧИЙ ХАРД РЕСЕТ (ДЛЯ ВСЕХ ПРИСТАВОК)
+// ==========================================
+// НОВОЕ: HARD RESET (ПЕРЕЗАГРУЗКА ИГРЫ)
+// ==========================================
 async function hardResetGame() {
     if (!currentGame) return;
     await saveGameState(); 
@@ -1511,7 +1514,6 @@ async function hardResetGame() {
     location.reload();
 }
 
-// ИСПРАВЛЕНИЕ: ЧИСТЫЙ ВЫХОД БЕЗ БАГОВ
 function handleBackBtn() {
     if (!currentGame) {
         executeCleanup(true);
@@ -1647,10 +1649,15 @@ function executeCleanup(skipSave = false) {
     fkeysPanel.style.display = 'none'; 
     screenPanel.style.display = 'none'; 
     padPanel.style.display = 'none'; 
-    document.getElementById('btnRestart').style.display = 'none'; 
-
+    
+    // Скрываем кнопку рестарта
+    document.getElementById('btnRestart').style.display = 'none';
+    
     menuScreen.style.display = 'flex';
-    try { screen.orientation.unlock(); } catch(e) {}
+    
+    try { 
+        screen.orientation.unlock(); 
+    } catch(e) {}
     
     currentGame = null;
     if (window.gc) window.gc();
@@ -1674,7 +1681,442 @@ function injectText() {
     }
 }
 
-// ИСПРАВЛЕНИЕ: АНАЛИЗ DOS И ПОИСК EXE/BAT
+// ==========================================
+// ФУНКЦИИ ЗАПУСКА ИГР (ИЗ СТАРОГО КОДА)
+// ==========================================
+function startGame(game) {
+    if (isGameStarting) return; 
+    isGameStarting = true;
+    
+    try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
+    history.pushState({inGame: true}, "");
+
+    currentGame = game;
+    
+    const savedGameVideo = localStorage.getItem('video_' + game.n);
+    if (savedGameVideo) {
+        try { videoConfig = JSON.parse(savedGameVideo); } catch(e) {}
+    } else {
+        const globalVideo = localStorage.getItem('videoV6');
+        if (globalVideo) {
+            try { videoConfig = JSON.parse(globalVideo); } catch(e) {}
+        }
+    }
+    
+    document.getElementById('searchInput').value = ''; 
+    menuScreen.style.display = 'none'; 
+    frameDiv.style.display = 'block'; 
+    toolbar.style.display = 'flex';
+    
+    // НОВОЕ: Показываем кнопку рестарта
+    document.getElementById('btnRestart').style.display = 'flex';
+    
+    btnGamepad.style.display = 'none'; 
+    btnKeyboard.style.display = 'none'; 
+    btnScreen.style.display = 'none'; 
+    btnPadEdit.style.display = 'none'; 
+    fkeysPanel.style.display = 'none'; 
+    screenPanel.style.display = 'none'; 
+    padPanel.style.display = 'none'; 
+    gamepad.style.display = 'none';
+    
+    const nesOnlySettings = document.getElementById('nes-only-settings');
+    if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
+
+    document.getElementById('save-settings').style.display = (game.t === 'n') ? 'block' : 'none';
+    
+    const btnSelect = document.getElementById('btn-select');
+    if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+    
+    const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
+    document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
+    document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
+    document.getElementById('btn-l').style.display = isSixButton ? 'flex' : 'none'; 
+    document.getElementById('btn-r').style.display = isSixButton ? 'flex' : 'none';
+    
+    isPadEditMode = false; 
+    btnPadEdit.classList.remove('active-tool');
+    
+    const savedLayout = localStorage.getItem('layout_' + game.n);
+    if (savedLayout) { 
+        const l = JSON.parse(savedLayout); 
+        scaleX = l.scaleX; 
+        scaleY = l.scaleY; 
+        screenX = l.screenX; 
+        screenY = l.screenY; 
+    } else { 
+        resetScale(); 
+    }
+    updateScreenTransform();
+
+    isEditMode = false; 
+    btnScreen.classList.remove('active-tool'); 
+    canvasContainer.style.pointerEvents = 'auto';
+    document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
+    
+    backTapCount = 0; 
+    nesRestartFn = null; 
+    isShuttingDown = false; 
+    isGamePaused = false;
+
+    if (game.t === 'h') {
+        const htmlUrl = URL.createObjectURL(game.fileBlob);
+        currentGame._tempUrl = htmlUrl; 
+        htmlIframe.style.display = 'block'; 
+        htmlIframe.src = htmlUrl; 
+        canvasContainer.style.pointerEvents = 'none'; 
+        isGameStarting = false;
+    } 
+    else if (game.t === 'd') {
+        setupDOS(game);
+    } 
+    else if (game.t === 'l') {
+        setupLibretro(game);
+    }
+    else if (game.t === 'n') {
+        setupNES(game);
+    }
+}
+
+function setupDOS(game) {
+    const dosCanvas = document.createElement('canvas'); 
+    dosCanvas.id = 'dos-canvas'; 
+    dosCanvas.width = 640; 
+    dosCanvas.height = 480;
+    dosCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+    canvasContainer.appendChild(dosCanvas);
+    
+    const glCanvas = document.createElement('canvas'); 
+    glCanvas.id = 'universal-gl-canvas';
+    glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+    canvasContainer.appendChild(glCanvas); 
+    UniversalWebGL.init(glCanvas);
+    
+    btnKeyboard.style.display = 'flex'; 
+    btnScreen.style.display = 'flex';
+    
+    if(game.m === 'pad' || game.m === 'touch_hover') { 
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        toggleGamepad(true); 
+        const sp = localStorage.getItem('padV4_' + game.n);
+        if(sp) { 
+            try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+        } else { 
+            padConfig = {}; 
+        }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms();
+    }
+    updateVideoUI();
+    
+    if(game.m === 'touch_hover') {
+        let hx = 0, hy = 0;
+        const updateHover = (e) => { 
+            if(isEditMode) return; 
+            e.preventDefault(); 
+            hx = e.touches[0].clientX; 
+            hy = e.touches[0].clientY; 
+            dosCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: hx, clientY: hy, button: 0, bubbles: true })); 
+        };
+        dosCanvas.addEventListener('touchstart', updateHover, {passive: false}); 
+        dosCanvas.addEventListener('touchmove', updateHover, {passive: false}); 
+        dosCanvas.addEventListener('touchend', e => { if(isEditMode) return; e.preventDefault(); }, {passive: false});
+        dosCanvas.getHoverCoords = () => ({x: hx, y: hy});
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (isShuttingDown) return;
+        Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
+            window.WDOSBOX = { FS: fs }; 
+            fs.extract(e.target.result).then(async () => {
+                await loadGameState(true); 
+                let cmd = ["-c", "cycles auto"]; 
+                if (game.e) cmd.push("-c", game.e);
+                main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
+                const glLoop = () => { 
+                    if (isShuttingDown) return; 
+                    if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
+                    glLoopId = requestAnimationFrame(glLoop); 
+                }; 
+                glLoop();
+                isGameStarting = false;
+            }).catch(err => { 
+                alert("Ошибка распаковки DOS-архива."); 
+                executeCleanup(); 
+                isGameStarting = false;
+            });
+        });
+    };
+    reader.onerror = () => { 
+        alert("Ошибка чтения DOS файла."); 
+        executeCleanup(); 
+        isGameStarting = false;
+    };
+    reader.readAsDataURL(game.fileBlob);
+}
+
+function setupLibretro(game) {
+    document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+    const libCanvas = document.createElement('canvas'); 
+    libCanvas.id = 'canvas'; 
+    let nativeWidth = 256, nativeHeight = 224, systemCode = 0;
+    if (game.sys === 'snes') { nativeWidth = 256; nativeHeight = 224; systemCode = 1; } 
+    else if (game.sys === 'smd') { nativeWidth = 320; nativeHeight = 224; systemCode = 2; } 
+    else if (game.sys === 'ngp') { nativeWidth = 160; nativeHeight = 152; systemCode = 3; }
+
+    libCanvas.width = nativeWidth; 
+    libCanvas.height = nativeHeight;
+    libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+    canvasContainer.appendChild(libCanvas);
+    
+    const glCanvas = document.createElement('canvas'); 
+    glCanvas.id = 'universal-gl-canvas';
+    glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+    canvasContainer.appendChild(glCanvas); 
+    UniversalWebGL.init(glCanvas);
+    
+    btnGamepad.style.display = 'flex'; 
+    btnPadEdit.style.display = 'flex'; 
+    btnScreen.style.display = 'flex'; 
+    toggleGamepad(true);
+    
+    const sp = localStorage.getItem('padV4_' + game.n); 
+    if(sp) { 
+        try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+    } else { 
+        padConfig = {}; 
+    }
+    sanitizePadConfig(); 
+    updateFloatingBtnUI(); 
+    updateStepBtnUI(); 
+    updatePadTransforms(); 
+    updateVideoUI();
+
+    readBlob(game.fileBlob).then(arrayBuffer => {
+        let fileData = new Uint8Array(arrayBuffer); 
+        let romName = game.n + "." + game.ext; 
+        if (game.fileBlob?.name) romName = game.fileBlob.name;
+        if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
+            try { 
+                const unzipped = fflate.unzipSync(fileData); 
+                for (const filename in unzipped) { 
+                    if (coreMap[filename.split('.').pop().toLowerCase()]) { 
+                        fileData = unzipped[filename]; 
+                        romName = filename.split('/').pop(); 
+                        break; 
+                    } 
+                } 
+            } catch(e) {}
+        }
+        currentGame._romName = romName;
+        const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
+        const origGetContext = libCanvas.getContext.bind(libCanvas);
+        libCanvas.getContext = function(type, attrs) { 
+            if (type === 'webgl' || type === 'experimental-webgl') { 
+                attrs = attrs || {}; 
+                attrs.preserveDrawingBuffer = true; 
+            } 
+            return origGetContext(type, attrs); 
+        };
+
+        const glLoop = () => { 
+            if (isShuttingDown) return; 
+            if (!isGamePaused) UniversalWebGL.draw(libCanvas, systemCode, false); 
+            glLoopId = requestAnimationFrame(glLoop); 
+        };
+
+        const emGlobals = ['Module', 'FS', 'GL', 'Browser', 'ERRNO_CODES', 'ERRNO_MESSAGES', 'calledRun', 'runDependencies', 'wasmTable', 'wasmMemory', 'asm', 'ccall', 'cwrap', 'ENV', 'SDL', 'JSEvents', 'HEAP8', 'HEAP16', 'HEAP32', 'HEAPU8', 'STACKTOP'];
+        emGlobals.forEach(g => { 
+            try { delete window[g]; } catch(e) {} 
+            window[g] = undefined; 
+        });
+        const oldScript = document.getElementById('core-script'); 
+        if (oldScript) oldScript.remove();
+
+        setTimeout(() => {
+            window.Module = {
+                canvas: libCanvas, 
+                arguments: [romName],
+                preRun: [function() { 
+                    FS.writeFile(romName, fileData); 
+                    try { 
+                        const b64 = localStorage.getItem('sram_lr_' + currentGame.n); 
+                        if (b64) { 
+                            FS.writeFile(romName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64)); 
+                        } 
+                    } catch(e) {}
+                }],
+                print: function(t) { console.log(t); }, 
+                printErr: function(t) { console.error(t); },
+                onRuntimeInitialized: async function() { 
+                    glLoop(); 
+                    await new Promise(r => setTimeout(r, 500)); 
+                    await loadGameState(true); 
+                }
+            };
+            const script = document.createElement('script'); 
+            script.src = coreName + '.js?v=' + Date.now(); 
+            script.id = 'core-script'; 
+            script.onerror = () => { 
+                alert("Ошибка загрузки ядра: " + coreName); 
+                executeCleanup(); 
+            }; 
+            document.body.appendChild(script);
+            isGameStarting = false;
+        }, 100);
+    }).catch(err => { 
+        alert("Ошибка чтения файла: " + err.message); 
+        executeCleanup(); 
+        isGameStarting = false;
+    });
+}
+
+function setupNES(game) {
+    const nesCanvas = document.createElement('canvas'); 
+    nesCanvas.id = 'nes-canvas'; 
+    nesCanvas.width = 256; 
+    nesCanvas.height = 240;
+    nesCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+    canvasContainer.appendChild(nesCanvas);
+    
+    const glCanvas = document.createElement('canvas'); 
+    glCanvas.id = 'universal-gl-canvas';
+    glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+    canvasContainer.appendChild(glCanvas); 
+    UniversalWebGL.init(glCanvas);
+    
+    btnGamepad.style.display = 'flex'; 
+    btnPadEdit.style.display = 'flex'; 
+    btnScreen.style.display = 'flex'; 
+    toggleGamepad(true);
+    
+    const sp = localStorage.getItem('padV4_' + game.n); 
+    if(sp) { 
+        try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+    } else { 
+        padConfig = {}; 
+    }
+    sanitizePadConfig(); 
+    updateFloatingBtnUI(); 
+    updateStepBtnUI(); 
+    updatePadTransforms(); 
+    updateVideoUI();
+    
+    readBlob(game.fileBlob).then(arrayBuffer => { 
+        launchNes(window.jsnes?.NES || window.NES, arrayBuffer, nesCanvas); 
+        isGameStarting = false;
+    }).catch(err => { 
+        alert("Ошибка чтения ROM: " + err.message); 
+        executeCleanup(); 
+        isGameStarting = false;
+    });
+}
+
+function launchNes(Constructor, arrayBuffer, canvas) {
+    const currentSampleRate = initAudio(); 
+    windowCurrentROMString = null; 
+    try {
+        const u8 = new Uint8Array(arrayBuffer); 
+        let str = ""; 
+        for (let i = 0; i < u8.length; i++) str += String.fromCharCode(u8[i]); 
+        windowCurrentROMString = str;
+        canvas.width = 256; 
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true }); 
+        const imgData = ctx.createImageData(256, 240); 
+        const buf32 = new Uint32Array(imgData.data.buffer);
+        let lastTime = performance.now(); 
+        let accumulator = 0; 
+        const step = 1000 / 60; 
+
+        const startNesProcess = (isReset = false) => {
+            if (isReset) {
+                if (nes) nes.reset();
+                return;
+            }
+            if (nesLoop) cancelAnimationFrame(nesLoop);
+            nes = new Constructor({
+                onFrame: (fb) => { 
+                    if (canvas.width !== 256 || canvas.height !== 240) { 
+                        canvas.width = 256; 
+                        canvas.height = 240; 
+                    } 
+                    for (let i = 0; i < 61440; i++) buf32[i] = 0xFF000000 | fb[i]; 
+                    ctx.putImageData(imgData, 0, 0); 
+                },
+                onAudioSample: (left, right) => { 
+                    audioBufferL.push(left); 
+                    audioBufferR.push(right); 
+                }, 
+                sampleRate: currentSampleRate
+            });
+            nes.loadROM(windowCurrentROMString);
+            
+            if (!isReset) {
+                const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
+                if (autoLoadData) { 
+                    try { 
+                        const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
+                        nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
+                    } catch(e) {
+                        try {
+                            if (autoLoadData.startsWith('{')) {
+                                nes.fromJSON(JSON.parse(autoLoadData));
+                            }
+                        } catch(e2) {}
+                    } 
+                }
+            }
+            
+            lastTime = performance.now(); 
+            accumulator = 0;
+            const frameLoop = (time) => {
+                if (isShuttingDown || !nes) return; 
+                if (isGamePaused) { 
+                    lastTime = time; 
+                    nesLoop = requestAnimationFrame(frameLoop); 
+                    return; 
+                }
+                nesLoop = requestAnimationFrame(frameLoop);
+                accumulator += (time - lastTime); 
+                lastTime = time; 
+                if (accumulator > 200) accumulator = 200; 
+                while (accumulator >= step) { 
+                    try { 
+                        nes.frame(); 
+                    } catch (err) { 
+                        console.error("Ошибка кадра:", err); 
+                        nes = null; 
+                        alert("Сбой в игре: " + err.message); 
+                        return; 
+                    } 
+                    accumulator -= step; 
+                }
+            };
+            nesLoop = requestAnimationFrame(frameLoop);
+        };
+
+        nesRestartFn = startNesProcess; 
+        startNesProcess(false); 
+        const glLoop = () => { 
+            if (isShuttingDown) return; 
+            if (!isGamePaused) UniversalWebGL.draw(canvas, 0, false); 
+            glLoopId = requestAnimationFrame(glLoop); 
+        }; 
+        glLoop();
+    } catch(e) { 
+        alert("Ошибка инициализации эмулятора: " + e.message); 
+        executeCleanup(); 
+    }
+}
+
+// ==========================================
+// АНАЛИЗ ZIP И ОБЛОЖКИ (ИЗ СТАРОГО КОДА)
+// ==========================================
 async function analyzeZipAndCovers(fileBlob) {
     try {
         const buffer = await readBlob(fileBlob); 
@@ -1683,6 +2125,7 @@ async function analyzeZipAndCovers(fileBlob) {
         let coverData = null;
         for(let i = 0; i < arr.length - 30; i++) {
             if(arr[i] === 0x50 && arr[i+1] === 0x4B && arr[i+2] === 0x03 && arr[i+3] === 0x04) {
+                const name
                 const nameLen = arr[i+26] | (arr[i+27] << 8); 
                 let name = ''; 
                 for(let n = 0; n < nameLen; n++) name += String.fromCharCode(arr[i+30+n]); 
@@ -1740,7 +2183,6 @@ async function analyzeZipAndCovers(fileBlob) {
     } catch(e) { return null; }
 }
 
-// ИСПРАВЛЕНИЕ: КЭШИРОВАНИЕ КАРТИНОК В BASE64
 function fetchNetCover(gameName, sysType) {
     const repoFolder = netCoverDB[sysType]; 
     if (!repoFolder) return Promise.resolve(null);
@@ -1755,32 +2197,40 @@ function fetchNetCover(gameName, sysType) {
         cleanName
     ]));
 
-    return new Promise(async (resolve) => {
-        for (let variant of variations) {
+    return new Promise((resolve) => {
+        let pending = variations.length;
+        let resolved = false;
+
+        variations.forEach(variant => {
             const safeName = variant.replace(/&/g, '_').replace(/\*/g, '_');
-            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(repoFolder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${repoFolder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
-            try {
-                const headResp = await fetch(url, { method: 'HEAD' });
-                if (headResp.ok) {
-                    const imgResp = await fetch(url);
-                    const blob = await imgResp.blob();
-                    const base64Data = await new Promise((res) => { 
-                        const reader = new FileReader(); 
-                        reader.onloadend = () => res(reader.result); 
-                        reader.readAsDataURL(blob); 
-                    });
-                    resolve(base64Data);
-                    return;
-                }
-            } catch (e) {
-                break; 
-            }
-        }
-        resolve(null);
+            const controller = window.AbortController ? new AbortController() : null;
+            const timer = setTimeout(() => { if (controller) controller.abort(); }, 1500);
+
+            const fetchParams = { method: 'HEAD' };
+            if (controller) fetchParams.signal = controller.signal;
+
+            fetch(url, fetchParams)
+                .then(resp => {
+                    clearTimeout(timer);
+                    if (resp.ok && !resolved) {
+                        resolved = true;
+                        resolve(url);
+                    }
+                })
+                .catch(() => {})
+                .finally(() => {
+                    pending--;
+                    if (pending === 0 && !resolved) resolve(null);
+                });
+        });
     });
 }
 
+// ==========================================
+// БАЗА ДАННЫХ И ОТОБРАЖЕНИЕ
+// ==========================================
 let db;
 const dbRequest = indexedDB.open("ArcadeHubDB", 2);
 dbRequest.onupgradeneeded = (e) => { 
@@ -1813,6 +2263,9 @@ dbRequest.onerror = (e) => {
     };
 };
 
+// ==========================================
+// НОВОЕ: РЕЖИМ РЕДАКТИРОВАНИЯ БИБЛИОТЕКИ
+// ==========================================
 function toggleLibraryEditMode() {
     isLibraryEditMode = !isLibraryEditMode;
     const btn = document.getElementById('editModeBtn');
@@ -1865,6 +2318,7 @@ function renderAllGames() {
     req.onsuccess = () => { 
         let customGames = req.result; 
         
+        // Сортировка
         const sortType = document.getElementById('sortSelect')?.value || 'newest';
         if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
         if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
@@ -1875,6 +2329,7 @@ function renderAllGames() {
             return idB - idA;
         });
 
+        // Фильтр поиска
         const term = document.getElementById('searchInput').value.toLowerCase();
         customGames = customGames.filter(g => !term || g.n.toLowerCase().includes(term));
 
@@ -1893,6 +2348,7 @@ function createGameBtn(game, isCustom) {
     if (game.cover) { btn.style.backgroundImage = `url(${game.cover})`; }
     btn.dataset.gameId = game.id;
     
+    // Режим редактирования
     const isSelected = selectedGamesForDelete.has(game.id);
     if (isLibraryEditMode) {
         btn.style.border = isSelected ? '3px solid #f87171' : '1px solid #374151';
@@ -1920,6 +2376,7 @@ function createGameBtn(game, isCustom) {
         }
     };
     
+    // Кнопка удаления (только в обычном режиме)
     if (isCustom && !isLibraryEditMode) {
         const delBtn = document.createElement('div'); 
         delBtn.className = 'del-btn'; 
@@ -1938,6 +2395,9 @@ function createGameBtn(game, isCustom) {
     gameGrid.appendChild(btn);
 }
 
+// ==========================================
+// ИМПОРТ ФАЙЛОВ С ПОДДЕРЖКОЙ RAR/7Z
+// ==========================================
 document.getElementById('mainImportBtn').onclick = async (e) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -2029,7 +2489,7 @@ async function processFilesArray(files) {
         const file = files[i]; 
         btn.innerHTML = `⏳ ОБРАБОТКА ${i + 1}/${files.length}: ${file.name.substring(0, 20)}...`;
         try { 
-            await window.processSingleFile(file); 
+            await processSingleFile(file); 
             successCount++; 
         } catch (err) { 
             console.error('Ошибка файла:', file.name, err); 
@@ -2048,9 +2508,31 @@ async function processFilesArray(files) {
     }, 3000);
 }
 
-// ИСПРАВЛЕНИЕ: ЗАЩИТА ОТ ДУБЛИКАТОВ И РАБОЧИЕ ОБЛОЖКИ
-window.processSingleFile = async function(file) {
-    const fileBuffer = await readBlobSafe(file); 
+// ==========================================
+// УМНАЯ РАСПАКОВКА С ЗАЩИТОЙ DOS (ИЗ НОВОГО КОДА)
+// ==========================================
+const readBlobSafe = (b) => {
+    if (b.arrayBuffer) return b.arrayBuffer();
+    return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsArrayBuffer(b);
+    });
+};
+
+const makeFakeFile = (blob, fileName) => {
+    try {
+        return new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+    } catch (e) {
+        blob.name = fileName;
+        blob.lastModified = Date.now();
+        return blob;
+    }
+};
+
+async function processSingleFile(file) {
+    const fileBuffer = await readBlob(file); 
     const persistentBlob = new Blob([fileBuffer], { type: file.type || 'application/octet-stream' });
     const fileName = file.name.toLowerCase(); 
     const rawExt = fileName.split('.').pop(); 
@@ -2058,11 +2540,24 @@ window.processSingleFile = async function(file) {
     let gameType = '', gameIcon = '', execCmd = '', controlMode = 'pad'; 
     let romExt = rawExt, sysType = 'unk', coverData = null;
 
+    // Обработка RAR и 7Z через libarchive
+    if (fileName.endsWith('.rar') || fileName.endsWith('.7z')) {
+        if (typeof Archive !== 'undefined') {
+            return await processArchiveFile(file, cleanGameName);
+        } else {
+            throw new Error('Архивы RAR/7Z не поддерживаются в этом браузере');
+        }
+    }
+
     if (fileName.endsWith('.nes')) { 
-        gameType = 'n'; gameIcon = '🎮'; controlMode = 'pad'; sysType = 'nes'; 
+        gameType = 'n'; 
+        gameIcon = '🎮'; 
+        controlMode = 'pad'; 
+        sysType = 'nes'; 
     } 
     else if (coreMap[rawExt]) { 
-        gameType = 'l'; gameIcon = '🕹️'; 
+        gameType = 'l'; 
+        gameIcon = '🕹️'; 
         if (['md','smd','gen','bin'].includes(rawExt)) sysType = 'smd'; 
         else if (['sfc','smc'].includes(rawExt)) sysType = 'snes'; 
         else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
@@ -2082,11 +2577,18 @@ window.processSingleFile = async function(file) {
                 controlMode = 'pad'; 
             } 
         } else { 
-            gameType = 'd'; gameIcon = '💾'; controlMode = 'pad'; execCmd = 'DIR'; sysType = 'dos'; 
+            gameType = 'd'; 
+            gameIcon = '💾'; 
+            controlMode = 'pad'; 
+            execCmd = 'DIR'; 
+            sysType = 'dos'; 
         }
     } 
     else if (fileName.endsWith('.html')) { 
-        gameType = 'h'; gameIcon = '🌐'; controlMode = 'none'; sysType = 'html'; 
+        gameType = 'h'; 
+        gameIcon = '🌐'; 
+        controlMode = 'none'; 
+        sysType = 'html'; 
     } 
     else { throw new Error('Неподдерживаемый формат'); }
 
@@ -2095,46 +2597,272 @@ window.processSingleFile = async function(file) {
         if (netCover) coverData = netCover; 
     }
 
-    const newGame = { 
+    await saveGameToDB({
         id: "game_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10),
-        n: cleanGameName, t: gameType, ext: romExt, sys: sysType, 
-        fileBlob: persistentBlob, i: gameIcon, m: controlMode, 
-        e: execCmd, fit: 'contain', cover: coverData 
-    };
+        n: cleanGameName, 
+        t: gameType, 
+        ext: romExt, 
+        sys: sysType, 
+        fileBlob: persistentBlob, 
+        i: gameIcon, 
+        m: controlMode, 
+        e: execCmd, 
+        fit: 'contain', 
+        cover: coverData 
+    });
+}
+
+// Обработка RAR/7Z архивов с рекурсией
+async function processArchiveFile(file, originalName) {
+    const archive = await Archive.open(file);
+    const extractedFiles = await archive.getFilesObject();
     
-    return new Promise((resolve, reject) => { 
-        if (!db) {
-            if (!window.tempGames) window.tempGames = [];
-            window.tempGames.push(newGame);
-            resolve();
-            return;
+    const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
+    const validDosExts = ['.exe', '.bat', '.com'];
+    const validArchiveExts = ['.zip', '.rar', '.7z'];
+    
+    let fileList = [];
+    function flatten(obj, path = '') {
+        for (let key in obj) {
+            if (obj[key] instanceof File) {
+                fileList.push({ path: path + key, file: obj[key] });
+            } else {
+                flatten(obj[key], path + key + '/');
+            }
         }
-        
-        const txCheck = db.transaction(["games"], "readonly");
-        const reqCheck = txCheck.objectStore("games").getAll();
-        
+    }
+    flatten(extractedFiles);
+
+    let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+    let romFiles = fileList.filter(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+    let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+
+    // Если DOS-игра - сохраняем как ZIP без распаковки вложенных архивов
+    if (dosFiles.length > 0) {
+        const zipData = {};
+        for(let f of fileList) {
+            zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+        }
+        const zipped = fflate.zipSync(zipData);
+        let zipBlob = new Blob([zipped], {type: 'application/zip'});
+        let newZipFile = makeFakeFile(zipBlob, originalName.replace(/\.(rar|7z)$/i, '.zip'));
+        return await processSingleFile(newZipFile);
+    }
+
+    // Рекурсивная распаковка вложенных архивов
+    let hasValidContent = false;
+    
+    if (nestedArchives.length > 0) {
+        for (let f of nestedArchives) {
+            let cleanName = f.path.split('/').pop();
+            let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+            let newFile = makeFakeFile(newBlob, cleanName);
+            await processArchiveFile(newFile, cleanName);
+            hasValidContent = true;
+        }
+    }
+
+    if (romFiles.length > 0) {
+        for (let f of romFiles) {
+            let cleanName = f.path.split('/').pop();
+            let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+            let newFile = makeFakeFile(newBlob, cleanName);
+            await processSingleFile(newFile);
+            hasValidContent = true;
+        }
+    }
+
+    if (!hasValidContent) throw new Error("Архив пуст или не содержит поддерживаемых игр");
+}
+
+// Сохранение в БД с защитой от дубликатов
+async function saveGameToDB(newGame) {
+    if (!db) {
+        if (!window.tempGames) window.tempGames = [];
+        window.tempGames.push(newGame);
+        return;
+    }
+    
+    // Проверка на дубликаты
+    const txCheck = db.transaction(["games"], "readonly");
+    const reqCheck = txCheck.objectStore("games").getAll();
+    
+    return new Promise((resolve, reject) => {
         reqCheck.onsuccess = () => {
             const existingGames = reqCheck.result;
-            const isDuplicate = existingGames.some(g => g.n === cleanGameName && g.sys === sysType);
+            const isDuplicate = existingGames.some(g => g.n === newGame.n && g.sys === newGame.sys);
             
             if (isDuplicate) {
-                console.log(`Клон обнаружен: "${cleanGameName}". Пропускаем.`);
+                console.log(`Дубликат пропущен: "${newGame.n}"`);
                 resolve(); 
                 return;
             }
 
             const tx = db.transaction(["games"], "readwrite"); 
             const store = tx.objectStore("games"); 
-            const req = store.put(newGame); 
-            req.onsuccess = resolve; 
-            req.onerror = () => reject(new Error('DB error')); 
+            const req = store.put(newGame);
+            
+            // Загрузка обложки асинхронно
+            if (!newGame.cover && newGame.sys !== 'dos' && newGame.sys !== 'unk' && newGame.sys !== 'html') {
+                fetchNetCover(newGame.n, newGame.sys).then(netCover => {
+                    if (netCover) {
+                        newGame.cover = netCover;
+                        const tx2 = db.transaction(["games"], "readwrite");
+                        tx2.objectStore("games").put(newGame);
+                        tx2.oncomplete = () => renderAllGames();
+                    }
+                });
+            }
+            
+            req.onsuccess = resolve;
+            req.onerror = () => reject(new Error('DB error'));
         };
         reqCheck.onerror = () => reject(new Error('DB read error'));
     });
-};
+}
+
+// ==========================================
+// RADAR ЗАГРУЗОК (С RAR/7Z ПОДДЕРЖКОЙ)
+// ==========================================
+async function runDownloadRadar(manualTrigger = false) {
+    if (!window.Capacitor?.isNativePlatform || !Capacitor.isNativePlatform()) {
+        if (manualTrigger) alert('📡 Радар работает только в APK');
+        return;
+    }
+    
+    try {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        
+        const permStatus = await Filesystem.checkPermissions();
+        if (permStatus.publicStorage !== 'granted') {
+            await Filesystem.requestPermissions();
+        }
+        
+        let result = await Filesystem.readdir({
+            path: 'Download',
+            directory: Directory.ExternalStorage
+        });
+        
+        if (!result || !Array.isArray(result.files)) {
+            if (manualTrigger) showRadarPermissionModal();
+            return;
+        }
+
+        let ignoredFiles = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+        const validExtensions = ['.zip', '.rar', '.7z', '.nes', '.smc', '.sfc', '.md', '.gen', '.bin', '.ngp', '.ngc'];
+        
+        const newFiles = result.files.filter(f => {
+            const fileName = (f.name || f).toLowerCase(); 
+            return validExtensions.some(ext => fileName.endsWith(ext)) && !ignoredFiles.includes(f.name || f);
+        });
+
+        if (newFiles.length > 0) {
+            promptRadarInstall(newFiles);
+        } else {
+            if (manualTrigger) alert('✅ Новых игр не найдено!');
+        }
+    } catch (error) {
+        console.error('Радар ошибка:', error);
+        if (manualTrigger) showRadarPermissionModal();
+    }
+}
+
+window.runDownloadRadar = runDownloadRadar;
+
+function showRadarPermissionModal() {
+    if (document.getElementById('radar-perm-overlay')) return;
+    
+    const overlay = document.createElement('div');
+    overlay.id = 'radar-perm-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px; flex-direction:column;';
+    
+    overlay.innerHTML = `
+        <div style="background:#1f2937; border:2px solid #ef4444; border-radius:12px; padding:20px; max-width:350px; text-align:center; color:#fff;">
+            <h3 style="color:#ef4444;">📡 ДОСТУП ЗАКРЫТ</h3>
+            <p style="font-size:13px; color:#94a3b8; text-align:left;">
+                1. Настройки телефона ➔ Приложения<br>
+                2. Специальные разрешения ➔ Доступ ко всем файлам<br>
+                3. Включите для <b>Arcade Hub</b><br>
+                4. <b style="color:#fcd34d;">ПЕРЕЗАПУСТИТЕ</b> приложение!
+            </p>
+            <button onclick="this.closest('#radar-perm-overlay').remove()" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">ПОНЯТНО</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+function promptRadarInstall(files) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;';
+    
+    let fileNamesHtml = files.slice(0, 3).map(f => `<strong style="color:#fff;">${f.name || f}</strong>`).join('<br>');
+    if (files.length > 3) fileNamesHtml += `<br><span style="color:#aaa;">...и еще ${files.length - 3}</span>`;
+
+    overlay.innerHTML = `
+        <div style="background:#1f2937; border:2px solid #38bdf8; border-radius:12px; padding:20px; max-width:350px; text-align:center; color:#fff;">
+            <h3 style="color:#38bdf8;">РАДАР ЗАГРУЗОК 📡</h3>
+            <p style="font-size:13px; color:#94a3b8;">Найдено: <b>${files.length}</b><br><br>${fileNamesHtml}</p>
+            <button id="radar-install" style="width:100%; background:#10b981; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">📥 УСТАНОВИТЬ ВСЕ</button>
+            <button id="radar-ignore" style="width:100%; background:#ef4444; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px; cursor:pointer;">❌ ПРОПУСТИТЬ</button>
+            <button id="radar-close" style="width:100%; background:#475569; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">СВЕРНУТЬ</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#radar-close').onclick = () => overlay.remove();
+    
+    overlay.querySelector('#radar-ignore').onclick = () => {
+        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+        files.forEach(f => ignored.push(f.name || f));
+        localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+        overlay.remove();
+    };
+
+    overlay.querySelector('#radar-install').onclick = async () => {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Capacitor } = await import('@capacitor/core');
+        
+        let installed = 0, failed = 0, processed = [];
+
+        for (let i = 0; i < files.length; i++) {
+            let fileName = files[i].name || files[i];
+            overlay.querySelector('div').innerHTML = `<h3 style="color:#38bdf8;">Анализ... ${i + 1}/${files.length}</h3><p style="color:#aaa;">${fileName}</p>`;
+            
+            try {
+                const fileUri = await Filesystem.getUri({
+                    path: `Download/${fileName}`,
+                    directory: Directory.ExternalStorage
+                });
+                
+                const webViewUrl = Capacitor.convertFileSrc(fileUri.uri);
+                const response = await fetch(webViewUrl);
+                const blob = await response.blob();
+                const fakeFile = makeFakeFile(blob, fileName);
+                
+                await processSingleFile(fakeFile);
+                installed++;
+                processed.push(fileName);
+            } catch (err) {
+                console.error('Ошибка:', fileName, err);
+                failed++;
+            }
+        }
+        
+        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+        ignored.push(...processed);
+        localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+
+        renderAllGames();
+        overlay.querySelector('div').innerHTML = `
+            <h3 style="color:#10b981;">✅ ГОТОВО!</h3>
+            <p style="color:#94a3b8;">Успешно: ${installed}<br>${failed > 0 ? `Ошибок: ${failed}` : ''}</p>
+            <button onclick="this.closest('div').parentElement.remove()" style="width:100%; background:#3b82f6; color:#fff; border:none; padding:12px; border-radius:8px; font-weight:bold;">ЗАКРЫТЬ</button>
+        `;
+    };
+}
 </script>
 
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
-</body>
+</bod<a href=""></a>y>
 </html>
