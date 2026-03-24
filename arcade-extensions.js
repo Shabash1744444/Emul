@@ -22,34 +22,6 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
-// СУРОВЫЙ ФИЛЬТР МУСОРА
-function isRealRom(fileName, fileDataU8) {
-    const lower = fileName.toLowerCase();
-    const ext = lower.split('.').pop();
-    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
-
-    // Убиваем по имени
-    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual'];
-    const baseName = lower.replace(/\.[^/.]+$/, '');
-    if (trashPatterns.some(p => baseName.includes(p))) return false;
-
-    // Слишком легкие файлы в топку (меньше 4 КБ)
-    if (fileDataU8.length < 4096) return false;
-
-    // Убиваем текстовики (если первые 100 байт - сплошной текст)
-    let isText = true;
-    let checkLen = Math.min(fileDataU8.length, 100);
-    for(let i = 0; i < checkLen; i++) {
-        let b = fileDataU8[i];
-        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
-            isText = false; break;
-        }
-    }
-    if (isText) return false;
-
-    return true; // Прошел фейсконтроль
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
@@ -63,8 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Capacitor.isNativePlatform()) {
                 try {
                     await Browser.open({ url: targetUrl, presentationStyle: 'popover', toolbarColor: '#1f2937' });
+                    // Возвращаем слушатель для ручного запуска, если нужно, но без автозапуска
                     if (!window._browserListenerAdded) {
-                        Browser.addListener('browserFinished', () => { setTimeout(() => runDownloadRadar(true), 1500); });
+                        Browser.addListener('browserFinished', () => { 
+                            // Автозапуск после закрытия браузера убран.
+                        });
                         window._browserListenerAdded = true;
                     }
                     return; 
@@ -74,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    setTimeout(() => runDownloadRadar(false), 2000);
+    // АВТОСКАН ОТКЛЮЧЕН
 });
 
 async function scanDownloadFolder() {
@@ -112,9 +87,9 @@ async function scanDownloadFolder() {
 
 window.isRadarRunning = false;
 
-async function runDownloadRadar(manualTrigger = false) {
+async function runDownloadRadar(manualTrigger = true) {
     if (!Capacitor.isNativePlatform()) {
-        if (manualTrigger) alert('📡 Радар работает только в APK');
+        alert('📡 Радар работает только в APK');
         return;
     }
     
@@ -129,7 +104,7 @@ async function runDownloadRadar(manualTrigger = false) {
     try {
         const allFoundFiles = await scanDownloadFolder();
         if (!allFoundFiles || allFoundFiles.length === 0) {
-            if (manualTrigger) alert('📡 Папка Загрузок пуста или нет прав доступа.');
+            alert('📡 Папка Загрузок пуста или нет прав доступа.');
             window.isRadarRunning = false;
             return;
         }
@@ -143,10 +118,10 @@ async function runDownloadRadar(manualTrigger = false) {
         });
 
         if (newFiles.length > 0) promptRadarInstall(newFiles);
-        else if (manualTrigger) alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
+        else alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
     } catch (error) {
         console.error('Радар ошибка:', error);
-        if (manualTrigger) alert('❌ Ошибка сканирования. Проверьте права приложения в настройках Android.');
+        alert('❌ Ошибка сканирования. Проверьте права приложения в настройках Android.');
     } finally {
         window.isRadarRunning = false; 
     }
@@ -161,16 +136,21 @@ function promptRadarInstall(filesObjects) {
     overlay.id = 'radar-overlay';
     overlay.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);`;
     
-    let fileNamesHtml = filesObjects.slice(0, 5).map(f => `<div style="background: rgba(56,189,248,0.1); padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #38bdf8;">${f.name}</div>`).join('');
-    if (filesObjects.length > 5) fileNamesHtml += `<div style="color: #94a3b8; font-size: 11px;">...и ещё ${filesObjects.length - 5} файлов</div>`;
+    // ЧЕКБОКСЫ ДЛЯ РАДАРА
+    let fileNamesHtml = filesObjects.map((f, index) => `
+        <label style="display: flex; align-items: center; background: rgba(56,189,248,0.1); padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #38bdf8; cursor: pointer;">
+            <input type="checkbox" class="radar-file-checkbox" value="${index}" checked style="margin-right: 10px; width: 16px; height: 16px;">
+            <span style="word-break: break-all;">${f.name}</span>
+        </label>
+    `).join('');
     
     overlay.innerHTML = `
         <div style="background: #1f2937; border: 2px solid #38bdf8; border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; color: #fff;">
             <h3 style="color: #38bdf8; margin-top: 0; text-align: center;">📡 РАДАР ЗАГРУЗОК</h3>
-            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-bottom: 16px;">Найдено: <b>${filesObjects.length}</b></p>
-            <div style="max-height: 200px; overflow-y: auto; margin-bottom: 20px;">${fileNamesHtml}</div>
-            <button id="radar-install-btn" style="width: 100%; background: #10b981; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">📥 УСТАНОВИТЬ ВСЕ</button>
-            <button id="radar-ignore-btn" style="width: 100%; background: #ef4444; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">❌ ПРОПУСТИТЬ</button>
+            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-bottom: 16px;">Найдено файлов: <b>${filesObjects.length}</b></p>
+            <div style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">${fileNamesHtml}</div>
+            <button id="radar-install-btn" style="width: 100%; background: #10b981; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">📥 УСТАНОВИТЬ ВЫБРАННЫЕ</button>
+            <button id="radar-ignore-btn" style="width: 100%; background: #ef4444; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">❌ ПРОПУСТИТЬ ВСЕ</button>
             <button id="radar-close-btn" style="width: 100%; background: #475569; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">ОТЛОЖИТЬ</button>
         </div>
     `;
@@ -190,16 +170,41 @@ function promptRadarInstall(filesObjects) {
             alert('❌ Эмулятор не готов. Подождите загрузки.');
             return;
         }
+
+        // Собираем только те файлы, которые отмечены галочкой
+        const checkboxes = document.querySelectorAll('.radar-file-checkbox');
+        const selectedFiles = [];
+        const ignoredFiles = []; // Те, с которых сняли галочку
+
+        checkboxes.forEach(cb => {
+            const file = filesObjects[parseInt(cb.value)];
+            if (cb.checked) {
+                selectedFiles.push(file);
+            } else {
+                ignoredFiles.push(file.name);
+            }
+        });
+
+        if (selectedFiles.length === 0) {
+            // Если ничего не выбрано, просто закрываем и добавляем всё в игнор
+            let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+            ignored.push(...ignoredFiles);
+            localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+            overlay.remove();
+            return;
+        }
         
         let installed = 0, failed = 0;
-        // Загружаем текущий игнор-лист один раз
-        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+        let currentIgnored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
+        // Сразу добавляем снятые галочки в игнор
+        currentIgnored.push(...ignoredFiles);
+        localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
 
-        for (let i = 0; i < filesObjects.length; i++) {
-            const fileObj = filesObjects[i];
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const fileObj = selectedFiles[i];
             overlay.firstElementChild.innerHTML = `
-                <h3 style="color: #38bdf8; margin-top: 0;">⏳ УСТАНОВКА...</h3>
-                <p style="font-size: 14px; color: #fff; text-align: center;">${i + 1} / ${filesObjects.length}<br><span style="color: #94a3b8; font-size: 12px;">${fileObj.name}</span></p>
+                <h3 style="color: #38bdf8; margin-top: 0; text-align: center;">⏳ УСТАНОВКА...</h3>
+                <p style="font-size: 14px; color: #fff; text-align: center;">${i + 1} / ${selectedFiles.length}<br><span style="color: #94a3b8; font-size: 12px; word-break: break-all;">${fileObj.name}</span></p>
             `;
 
             try {
@@ -215,19 +220,16 @@ function promptRadarInstall(filesObjects) {
                 await window.processSingleFile(fakeFile); 
                 installed++;
                 
-                // ЛЕЧЕНИЕ АМНЕЗИИ: Сохраняем прогресс сразу после успешной установки
-                ignored.push(fileObj.name);
-                localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+                // Сохраняем прогресс радара после каждого файла
+                currentIgnored.push(fileObj.name);
+                localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
                 
             } catch (err) {
                 console.error('Ошибка файла:', fileObj.name, err);
                 failed++;
-                // Даже если файл битый, закидываем в игнор, чтобы не пытаться снова
-                ignored.push(fileObj.name);
-                localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+                currentIgnored.push(fileObj.name);
+                localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
             }
-            
-            // ДАЕМ ВРЕМЯ НА ОЧИСТКУ ПАМЯТИ
             await new Promise(r => setTimeout(r, 600));
         }
         
@@ -239,6 +241,31 @@ function promptRadarInstall(filesObjects) {
             <button onclick="this.closest('#radar-overlay').remove()" style="width: 100%; background: #3b82f6; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer;">ОТЛИЧНО!</button>
         `;
     };
+}
+
+// СУРОВЫЙ ФИЛЬТР МУСОРА
+function isRealRom(fileName, fileDataU8) {
+    const lower = fileName.toLowerCase();
+    const ext = lower.split('.').pop();
+    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
+
+    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual', 'caching', 'code_of_conduct', 'changes', 'contributing', 'contributors'];
+    const baseName = lower.replace(/\.[^/.]+$/, '');
+    if (trashPatterns.some(p => baseName.includes(p))) return false;
+
+    if (fileDataU8.length < 4096) return false;
+
+    let isText = true;
+    let checkLen = Math.min(fileDataU8.length, 100);
+    for(let i = 0; i < checkLen; i++) {
+        let b = fileDataU8[i];
+        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
+            isText = false; break;
+        }
+    }
+    if (isText) return false;
+
+    return true; 
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,18 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
             const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
-            const validDosExts = ['.exe', '.bin'];
+            const validDosExts = ['.exe', '.bin', '.bat', '.com'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
             
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
-                // ФИКС 7Z: Используем прямой arrayBuffer, если это возможно, для стабильности
-                let fileToOpen = file;
-                try {
-                    const buf = await file.arrayBuffer();
-                    fileToOpen = new File([buf], file.name, { type: file.type });
-                } catch(e) {}
-                
-                const archive = await Archive.open(fileToOpen);
+                const archive = await Archive.open(file);
                 const extractedFiles = await archive.getFilesObject();
                 
                 let fileList = [];
@@ -281,7 +301,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
                 
                 let romFiles = [];
-                // Прогоняем ROM-файлы через сканер мусора
                 for (let f of fileList) {
                     if (validRomExts.some(ext => f.path.toLowerCase().endsWith(ext))) {
                         const buffer = await readBlobSafe(f.file);
@@ -313,15 +332,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                if (dosFiles.length > 0 && romFiles.length === 0 && nestedArchives.length === 0) {
-                    const zipData = {};
-                    for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
-                    if (typeof fflate !== 'undefined') {
-                        const zipped = fflate.zipSync(zipData);
-                        let zipBlob = new Blob([zipped], {type: 'application/zip'});
-                        let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
-                        await coreProcessSingleFile(newZipFile);
-                        hasValidContent = true;
+                // ЖЕСТКИЙ ФИЛЬТР DOS для архивов внутри .7z / .rar
+                if (!hasValidContent && dosFiles.length > 0) {
+                    const exes = dosFiles.map(f => f.path.split('/').pop().toLowerCase());
+                    const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
+                    let hasExe = exes.some(e => e.endsWith('.exe') || e.endsWith('.bat') || e.endsWith('.com'));
+                    
+                    if (hasExe) {
+                        const zipData = {};
+                        for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                        if (typeof fflate !== 'undefined') {
+                            const zipped = fflate.zipSync(zipData);
+                            let zipBlob = new Blob([zipped], {type: 'application/zip'});
+                            let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
+                            await coreProcessSingleFile(newZipFile);
+                            hasValidContent = true;
+                        }
                     }
                 }
 
@@ -373,9 +399,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                if (hasDos && romFiles.length === 0 && nestedArchives.length === 0) {
-                    await coreProcessSingleFile(file);
-                    hasValidContent = true;
+                // ЖЕСТКИЙ ФИЛЬТР DOS для .zip
+                if (!hasValidContent && hasDos) {
+                    let hasExe = false;
+                    for (const path in unzipped) {
+                        const low = path.toLowerCase();
+                        if (low.endsWith('.exe') || low.endsWith('.bat') || low.endsWith('.com')) {
+                            hasExe = true; break;
+                        }
+                    }
+                    if (hasExe) {
+                        await coreProcessSingleFile(file);
+                        hasValidContent = true;
+                    }
                 }
 
                 if (!hasValidContent) throw new Error("Архив пуст или содержит мусор");
