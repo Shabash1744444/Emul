@@ -27,9 +27,15 @@
     window.addEventListener('error', function(e) {
         if (e.message && (e.message.includes('mainLoop') || e.message.includes('script error'))) e.preventDefault();
     });
+    // ФИКС: Мягкое восстановление WebGL вместо жесткой перезагрузки
     window.addEventListener('webglcontextlost', function(e) {
         e.preventDefault();
-        setTimeout(() => location.reload(), 500);
+        setTimeout(() => {
+            const glCanvas = document.getElementById('universal-gl-canvas');
+            if (glCanvas && typeof UniversalWebGL !== 'undefined') {
+                UniversalWebGL.init(glCanvas);
+            }
+        }, 500);
     });
     document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
@@ -188,7 +194,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <button id="mainImportBtn" class="action-btn" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: 1px solid #0369a1; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
             ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
         </button>
-        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar(true)" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
             📡 СКАНИРОВАТЬ
         </button>
         <button id="infoBtn" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
@@ -602,8 +608,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
+    // ФИКС: Умная кнопка назад с перехватом popstate
     window.addEventListener('popstate', (e) => { 
-        if (frameDiv.style.display === 'block') { executeCleanup(); } 
+        if (currentGame || frameDiv.style.display === 'block') { 
+            handleBackBtn(); 
+            history.pushState({ page: 'menu' }, ""); 
+        }
+        else if (document.getElementById('infoModalOverlay').style.display === 'flex') {
+            document.getElementById('infoModalOverlay').style.display = 'none';
+            history.pushState({ page: 'menu' }, ""); 
+        }
+        else if (isLibraryEditMode) {
+            toggleLibraryEditMode();
+            history.pushState({ page: 'menu' }, ""); 
+        }
     });
     
     window.addEventListener('beforeunload', () => {
@@ -1945,7 +1963,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         
         if (backTapCount === 0) {
-            // ИСПРАВЛЕНИЕ: Просто сохраняем, БЕЗ Soft Reset
             saveGameState(); 
             
             backTapCount++; 
@@ -1966,6 +1983,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }, 2000);
         } else { 
             executeCleanup(true); 
+            // ФИКС: Откатываем историю при экранном нажатии, чтобы треугольник Android не ломался
+            if (history.state && history.state.inGame) history.back(); 
         }
     }
 
@@ -2139,6 +2158,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             if (sysData.type === 'd') { 
                 const exes = files.filter(name => name.endsWith('.exe') || name.endsWith('.bat') || name.endsWith('.com')).map(n => n.split('/').pop()); 
+                
+                // ФИКС: Если нет исполняемых файлов - это мусорный архив, отбрасываем
+                if (exes.length === 0) return null;
+
                 const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
                 for (let p of priority) { 
                     if (exes.includes(p)) { 
@@ -2155,48 +2178,60 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) { return null; }
     }
 
+    // ФИКС: Умная онлайн-подгрузка логотипов
     function fetchNetCover(gameName, sysType) {
         const repoFolder = netCoverDB[sysType]; 
         if (!repoFolder) return Promise.resolve(null);
 
-        let cleanName = gameName.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').replace(/(?:\s*(?:v|V)\s*\d+\.\d+).*$/, '').trim();
-        if (!cleanName) cleanName = gameName.trim();
-
-        const variations = Array.from(new Set([
+        const exactName = gameName.trim();
+        const noSquareTags = exactName.replace(/\[.*?\]/g, '').trim(); 
+        const cleanName = exactName.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim(); 
+        
+        const categories = ['Named_Boxarts', 'Named_Titles', 'Named_Snaps'];
+        const nameTries = [
+            exactName, 
+            noSquareTags, 
+            cleanName, 
             `${cleanName} (USA)`, 
             `${cleanName} (Europe)`, 
-            gameName.trim(), 
-            cleanName
-        ]));
+            `${cleanName} (World)`
+        ];
+
+        let urlsToTry = [];
+        categories.forEach(cat => {
+            nameTries.forEach(name => {
+                if (name) {
+                    const safeName = name.replace(/&/g, '_').replace(/\*/g, '_');
+                    urlsToTry.push(`https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${repoFolder}/${cat}/${encodeURIComponent(safeName)}.png`);
+                }
+            });
+        });
+
+        urlsToTry = [...new Set(urlsToTry)];
 
         return new Promise((resolve) => {
-            let pending = variations.length;
+            let pending = Math.min(urlsToTry.length, 8); 
             let resolved = false;
 
-            variations.forEach(variant => {
-                const safeName = variant.replace(/&/g, '_').replace(/\*/g, '_');
-                const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${repoFolder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-                
+            for (let i = 0; i < pending; i++) {
+                const url = urlsToTry[i];
                 const controller = window.AbortController ? new AbortController() : null;
-                const timer = setTimeout(() => { if (controller) controller.abort(); }, 1500);
+                const timer = setTimeout(() => { if (controller) controller.abort(); }, 2000);
 
-                const fetchParams = { method: 'HEAD' };
-                if (controller) fetchParams.signal = controller.signal;
-
-                fetch(url, fetchParams)
+                fetch(url, { method: 'HEAD', signal: controller ? controller.signal : undefined })
                     .then(resp => {
                         clearTimeout(timer);
                         if (resp.ok && !resolved) {
                             resolved = true;
-                            resolve(url);
+                            resolve(url); 
                         }
                     })
                     .catch(() => {})
                     .finally(() => {
                         pending--;
-                        if (pending === 0 && !resolved) resolve(null);
+                        if (pending === 0 && !resolved) resolve(null); 
                     });
-            });
+            }
         });
     }
 
@@ -2370,8 +2405,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
                 input.onchange = async () => { 
                     const files = Array.from(input.files || []); 
-                    document.body.removeChild(input); 
+                    // ФИКС: Убрали document.body.removeChild(input) отсюда
                     if (files.length > 0) await processFilesArray(files); 
+                    // ФИКС: И перенесли вот сюда, после загрузки всех файлов:
+                    if (document.body.contains(input)) document.body.removeChild(input); 
                     resolve(); 
                 };
                 input.style.position = 'absolute'; 
@@ -2429,8 +2466,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 });
             } catch (err) { console.error('File selection error:', err); }
             
-            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+            // ФИКС: Здесь тоже меняем порядок строк:
             if (files && files.length > 0) await processFilesArray(files);
+            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
         }
     };
 
@@ -2502,11 +2540,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     controlMode = 'pad'; 
                 } 
             } else { 
-                gameType = 'd'; 
-                gameIcon = '💾'; 
-                controlMode = 'pad'; 
-                execCmd = 'DIR'; 
-                sysType = 'dos'; 
+                // ФИКС: Если анализ вернул null (отсутствуют exe), отбрасываем
+                throw new Error('Архив не содержит поддерживаемых игр или пуст');
             }
         } 
         else if (fileName.endsWith('.html')) { 
@@ -2560,6 +2595,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             };
         });
     };
+    
+    // ФИКС: Оживляем быстрый поиск при вводе с клавиатуры
+    document.getElementById('searchInput').addEventListener('input', () => {
+        renderAllGames();
+    });
+    
+    // ФИКС: Инициализация истории для предотвращения закрытия Android WebView
+    document.addEventListener('DOMContentLoaded', () => {
+        history.pushState({ page: 'menu' }, "");
+    });
 </script>
 
 <script src="libarchive.js"></script>
