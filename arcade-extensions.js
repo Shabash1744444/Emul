@@ -22,6 +22,34 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
+// СУРОВЫЙ ФИЛЬТР МУСОРА
+function isRealRom(fileName, fileDataU8) {
+    const lower = fileName.toLowerCase();
+    const ext = lower.split('.').pop();
+    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
+
+    // Убиваем по имени
+    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual'];
+    const baseName = lower.replace(/\.[^/.]+$/, '');
+    if (trashPatterns.some(p => baseName.includes(p))) return false;
+
+    // Слишком легкие файлы в топку (меньше 4 КБ)
+    if (fileDataU8.length < 4096) return false;
+
+    // Убиваем текстовики (если первые 100 байт - сплошной текст)
+    let isText = true;
+    let checkLen = Math.min(fileDataU8.length, 100);
+    for(let i = 0; i < checkLen; i++) {
+        let b = fileDataU8[i];
+        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
+            isText = false; break;
+        }
+    }
+    if (isText) return false;
+
+    return true; // Прошел фейсконтроль
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
@@ -82,7 +110,6 @@ async function scanDownloadFolder() {
     return allFiles;
 }
 
-// ФИКС 3: Блокировка от одновременного запуска автоскана и ручного клика
 window.isRadarRunning = false;
 
 async function runDownloadRadar(manualTrigger = false) {
@@ -91,7 +118,7 @@ async function runDownloadRadar(manualTrigger = false) {
         return;
     }
     
-    if (window.isRadarRunning) return; // Защита от дублей
+    if (window.isRadarRunning) return; 
     window.isRadarRunning = true;
     
     try {
@@ -121,7 +148,7 @@ async function runDownloadRadar(manualTrigger = false) {
         console.error('Радар ошибка:', error);
         if (manualTrigger) alert('❌ Ошибка сканирования. Проверьте права приложения в настройках Android.');
     } finally {
-        window.isRadarRunning = false; // Снимаем блокировку
+        window.isRadarRunning = false; 
     }
 }
 window.runDownloadRadar = runDownloadRadar;
@@ -164,7 +191,9 @@ function promptRadarInstall(filesObjects) {
             return;
         }
         
-        let installed = 0, failed = 0, processedNames = [];
+        let installed = 0, failed = 0;
+        // Загружаем текущий игнор-лист один раз
+        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
 
         for (let i = 0; i < filesObjects.length; i++) {
             const fileObj = filesObjects[i];
@@ -185,18 +214,22 @@ function promptRadarInstall(filesObjects) {
                 
                 await window.processSingleFile(fakeFile); 
                 installed++;
-                processedNames.push(fileObj.name);
+                
+                // ЛЕЧЕНИЕ АМНЕЗИИ: Сохраняем прогресс сразу после успешной установки
+                ignored.push(fileObj.name);
+                localStorage.setItem('radar_ignored', JSON.stringify(ignored));
+                
             } catch (err) {
                 console.error('Ошибка файла:', fileObj.name, err);
                 failed++;
+                // Даже если файл битый, закидываем в игнор, чтобы не пытаться снова
+                ignored.push(fileObj.name);
+                localStorage.setItem('radar_ignored', JSON.stringify(ignored));
             }
-            // ФИКС 1: Увеличена пауза, чтобы файлы не "перебивали" друг друга
+            
+            // ДАЕМ ВРЕМЯ НА ОЧИСТКУ ПАМЯТИ
             await new Promise(r => setTimeout(r, 600));
         }
-        
-        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        ignored.push(...processedNames);
-        localStorage.setItem('radar_ignored', JSON.stringify(ignored));
         
         if (typeof window.renderAllGames === 'function') window.renderAllGames();
         
@@ -221,12 +254,18 @@ document.addEventListener('DOMContentLoaded', () => {
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
             const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
-            // ФИКС 2: DOS теперь берет только .exe и .bin
             const validDosExts = ['.exe', '.bin'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
             
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
-                const archive = await Archive.open(file);
+                // ФИКС 7Z: Используем прямой arrayBuffer, если это возможно, для стабильности
+                let fileToOpen = file;
+                try {
+                    const buf = await file.arrayBuffer();
+                    fileToOpen = new File([buf], file.name, { type: file.type });
+                } catch(e) {}
+                
+                const archive = await Archive.open(fileToOpen);
                 const extractedFiles = await archive.getFilesObject();
                 
                 let fileList = [];
@@ -239,8 +278,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 flatten(extractedFiles);
 
                 let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
-                let romFiles = fileList.filter(f => validRomExts.some(ext => f.path.toLowerCase().endsWith(ext)));
                 let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                
+                let romFiles = [];
+                // Прогоняем ROM-файлы через сканер мусора
+                for (let f of fileList) {
+                    if (validRomExts.some(ext => f.path.toLowerCase().endsWith(ext))) {
+                        const buffer = await readBlobSafe(f.file);
+                        if (isRealRom(f.path.split('/').pop(), new Uint8Array(buffer))) {
+                            romFiles.push({ path: f.path, file: f.file });
+                        }
+                    }
+                }
 
                 let hasValidContent = false;
 
@@ -249,7 +298,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         let cleanName = f.path.split('/').pop();
                         let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         await window.processSingleFileExtended(newFile);
-                        // ФИКС 1: Пауза для паков внутри архива
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -260,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         let cleanName = f.path.split('/').pop();
                         let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         await coreProcessSingleFile(newFile);
-                        // ФИКС 1: Пауза для паков
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -290,9 +337,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 let hasDos = false, romFiles = [], nestedArchives = [];
                 for (const path in unzipped) {
                     const lowPath = path.toLowerCase();
+                    const data = unzipped[path];
+                    
                     if (validDosExts.some(ext => lowPath.endsWith(ext))) hasDos = true;
-                    if (validRomExts.some(ext => lowPath.endsWith(ext))) romFiles.push({ path, data: unzipped[path] });
-                    if (validArchiveExts.some(ext => lowPath.endsWith(ext))) nestedArchives.push({ path, data: unzipped[path] });
+                    if (validArchiveExts.some(ext => lowPath.endsWith(ext))) nestedArchives.push({ path, data });
+                    
+                    if (validRomExts.some(ext => lowPath.endsWith(ext))) {
+                        if (isRealRom(path.split('/').pop(), data)) {
+                            romFiles.push({ path, data });
+                        }
+                    }
                 }
 
                 let hasValidContent = false;
@@ -303,7 +357,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, cleanName);
                         await window.processSingleFileExtended(newFile);
-                        // ФИКС 1: Пауза
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -315,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, cleanName);
                         await coreProcessSingleFile(newFile);
-                        // ФИКС 1: Пауза
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
