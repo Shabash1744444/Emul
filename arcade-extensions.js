@@ -233,7 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
-                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        // ФИКС: Используем безопасный makeFakeFile для Android
+                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+                        let newFile = makeFakeFile(newBlob, cleanName);
                         await window.processSingleFileExtended(newFile);
                         await new Promise(r => setTimeout(r, 10));
                     }
@@ -243,14 +245,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
-                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        // ФИКС: Используем безопасный makeFakeFile для Android
+                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
+                        let newFile = makeFakeFile(newBlob, cleanName);
                         await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 10));
                     }
                     hasValidContent = true;
                 }
 
-                // ИСПРАВЛЕНИЕ: Считаем архив DOS-игрой, ТОЛЬКО ЕСЛИ в нём нет ROM-ов!
                 if (dosFiles.length > 0 && romFiles.length === 0 && nestedArchives.length === 0) {
                     const zipData = {};
                     for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
@@ -304,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // ИСПРАВЛЕНИЕ: Передаем архив как DOS, только если нет вложенных игр!
                 if (hasDos && romFiles.length === 0 && nestedArchives.length === 0) {
                     await coreProcessSingleFile(file);
                     hasValidContent = true;
