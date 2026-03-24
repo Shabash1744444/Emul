@@ -386,9 +386,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </script>
 
 <script>
-    // ==========================================
-    // УТИЛИТЫ ДЛЯ ФАЙЛОВ
-    // ==========================================
     function readBlob(blob) {
         if (blob.arrayBuffer) return blob.arrayBuffer();
         return new Promise((res, rej) => {
@@ -399,9 +396,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    // ==========================================
-    // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-    // ==========================================
     const menuScreen = document.getElementById('menuScreen');
     const gameGrid = document.getElementById('gameGrid');
     const frameDiv = document.getElementById('gameFrame');
@@ -601,11 +595,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // ФИКС 3: Перехват системной кнопки "Назад" на Android
     window.addEventListener('popstate', (e) => { 
         if (frameDiv.style.display === 'block') { 
             handleBackBtn();
-            // Возвращаем state, чтобы кнопка назад сработала еще раз, если надо
             history.pushState({inGame: true}, "");
         } 
     });
@@ -1518,8 +1510,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isGameStarting = true;
         
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
-        
-        // ФИКС: Добавляем состояние для перехвата кнопки Назад
         history.pushState({inGame: true}, "");
 
         currentGame = game;
@@ -2122,33 +2112,34 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     break; 
                 } 
             }
+            
             let sysData = { type: 'd', ext: '', exec: 'DIR', sys: 'dos', cover: coverData };
+            let foundRom = false;
+            
             for (let name of files) { 
                 if (name.endsWith('.nes')) { 
-                    sysData.type = 'n'; 
-                    sysData.ext = 'nes'; 
-                    sysData.sys = 'nes'; 
-                    break; 
+                    sysData.type = 'n'; sysData.ext = 'nes'; sysData.sys = 'nes'; foundRom = true; break; 
                 } 
                 const ext = name.split('.').pop(); 
                 if (coreMap[ext]) { 
-                    sysData.type = 'l'; 
-                    sysData.ext = ext; 
+                    sysData.type = 'l'; sysData.ext = ext; 
                     if (['md','smd','gen','bin'].includes(ext)) sysData.sys = 'smd'; 
                     else if (['sfc','smc'].includes(ext)) sysData.sys = 'snes'; 
                     else if (['ngp','ngc'].includes(ext)) sysData.sys = 'ngp'; 
                     else sysData.sys = 'unk'; 
-                    break; 
+                    foundRom = true; break; 
                 } 
             }
-            if (sysData.type === 'd') { 
+            
+            // ЖЕСТКИЙ ФИЛЬТР DOS: Только если есть exe/bat/com
+            if (!foundRom) { 
                 const exes = files.filter(name => name.endsWith('.exe') || name.endsWith('.bat') || name.endsWith('.com')).map(n => n.split('/').pop()); 
+                if (exes.length === 0) return null; // Отбрасываем пустые архивы и мусор
+                
+                sysData.type = 'd';
                 const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
                 for (let p of priority) { 
-                    if (exes.includes(p)) { 
-                        sysData.exec = p; 
-                        break; 
-                    } 
+                    if (exes.includes(p)) { sysData.exec = p; break; } 
                 } 
                 if(sysData.exec === 'DIR') { 
                     const filtered = exes.filter(e => !['setup.exe', 'install.exe', 'install.bat', 'setsound.exe', 'setup.bat', 'uninstal.exe'].includes(e)); 
@@ -2161,6 +2152,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     const coverQueue = [];
     let isFetchingCover = false;
+
+    // ЖИВЫЕ ОБЛОЖКИ (Обход блокировки CORS через Image.onload)
+    function checkImageExists(url) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
+    }
 
     function fetchNetCover(gameName, sysType) {
         return new Promise((resolve) => {
@@ -2203,19 +2204,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const safeName = name.replace(/&/g, '_').replace(/\*/g, '_');
             const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(repoFolder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
-            try {
-                await new Promise(r => setTimeout(r, 200)); 
-                
-                const resp = await fetch(url, { method: 'HEAD' });
-                if (resp.ok) {
-                    foundUrl = url;
-                    break searchLoop; 
-                }
-            } catch(e) {}
+            if (await checkImageExists(url)) {
+                foundUrl = url;
+                break searchLoop; 
+            }
+            await new Promise(r => setTimeout(r, 100)); 
         }
 
         resolve(foundUrl);
-        setTimeout(processCoverQueue, 500);
+        setTimeout(processCoverQueue, 400);
     }
 
     let db;
@@ -2375,55 +2372,53 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         gameGrid.appendChild(btn);
     }
 
-    // ФИКС 2: Моментальное клонирование Blob до закрытия окна выбора
     document.getElementById('mainImportBtn').onclick = async (e) => {
         e.preventDefault(); 
         e.stopPropagation();
         
-        const input = document.createElement('input'); 
-        input.type = 'file'; 
-        input.multiple = true; 
-        input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
+        const fileInput = document.createElement('input'); 
+        fileInput.type = 'file'; 
+        fileInput.multiple = true; 
+        fileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
+        fileInput.style.position = 'absolute'; 
+        fileInput.style.opacity = '0'; 
+        fileInput.style.pointerEvents = 'none'; 
         
-        input.onchange = async (event) => { 
-            const files = Array.from(event.target.files || []); 
-            if (files.length === 0) return;
-
-            const btn = document.getElementById('mainImportBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `⏳ ЧТЕНИЕ ФАЙЛОВ В ПАМЯТЬ...`;
-            btn.style.pointerEvents = 'none';
-
-            // Клонируем файлы в оперативную память (ArrayBuffer) до того как Android отнимет права
-            const clonedFiles = [];
-            for (const f of files) {
-                try {
-                    const buf = await f.arrayBuffer();
-                    const fakeFile = new File([buf], f.name, { type: f.type || 'application/octet-stream' });
-                    clonedFiles.push(fakeFile);
-                } catch(err) {
-                    console.error('Ошибка клонирования:', f.name, err);
-                }
+        document.body.appendChild(fileInput);
+        
+        let resolved = false;
+        const onChange = async (event) => { 
+            if (resolved) return; 
+            resolved = true; 
+            const selectedFiles = Array.from(event.target.files || []); 
+            if (selectedFiles.length > 0) {
+                await new Promise(r => setTimeout(r, 200));
+                await processFilesArray(selectedFiles);
             }
-            
-            if (document.body.contains(input)) document.body.removeChild(input); 
-            
-            btn.innerHTML = originalText;
-            btn.style.pointerEvents = 'auto';
-            
-            if (clonedFiles.length > 0) {
-                await processFilesArray(clonedFiles); 
-            }
+            cleanup(); 
         };
         
-        input.style.position = 'absolute'; 
-        input.style.opacity = '0'; 
-        input.style.pointerEvents = 'none'; 
-        document.body.appendChild(input);
+        const onCancel = () => { 
+            setTimeout(() => { 
+                if (!resolved) { resolved = true; cleanup(); } 
+            }, 500); 
+        };
         
-        input.click(); 
-        // Fallback для некоторых версий WebView
-        setTimeout(() => { if (document.body.contains(input)) input.click(); }, 100);
+        const cleanup = () => { 
+            fileInput.removeEventListener('change', onChange); 
+            window.removeEventListener('focus', onCancel); 
+            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
+        };
+        
+        fileInput.addEventListener('change', onChange, { once: true }); 
+        window.addEventListener('focus', onCancel, { once: true });
+        
+        setTimeout(() => { 
+            if (!resolved) { resolved = true; cleanup(); } 
+        }, 60000); 
+        
+        fileInput.click();
+        setTimeout(() => { if (document.body.contains(fileInput) && !resolved) fileInput.click(); }, 100);
     };
 
     async function processFilesArray(files) {
@@ -2494,11 +2489,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     controlMode = 'pad'; 
                 } 
             } else { 
-                gameType = 'd'; 
-                gameIcon = '💾'; 
-                controlMode = 'pad'; 
-                execCmd = 'DIR'; 
-                sysType = 'dos'; 
+                throw new Error('Архив пуст или содержит мусор'); 
             }
         } 
         else if (fileName.endsWith('.html')) { 
@@ -2523,7 +2514,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             cover: coverData 
         };
 
-        // ФИКС 3: Обложки запрашиваются только если их нет в архиве. Живое обновление картинки без сброса меню!
         if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
             fetchNetCover(cleanGameName, sysType).then(netCover => {
                 if (netCover) {
@@ -2535,10 +2525,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (existing) {
                             existing.cover = netCover;
                             store.put(existing).onsuccess = () => {
-                                // Находим кнопку по data-game-id и меняем фон без полной перерисовки меню
                                 const btn = document.querySelector(`[data-game-id="${existing.id}"]`);
                                 if (btn) {
-                                    btn.style.backgroundImage = `url(${netCover})`;
+                                    btn.style.backgroundImage = `url('${netCover}')`;
                                     const icon = btn.querySelector('.icon');
                                     if (icon) icon.style.display = 'none';
                                 }
