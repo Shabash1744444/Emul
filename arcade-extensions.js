@@ -82,11 +82,17 @@ async function scanDownloadFolder() {
     return allFiles;
 }
 
+// ФИКС 3: Блокировка от одновременного запуска автоскана и ручного клика
+window.isRadarRunning = false;
+
 async function runDownloadRadar(manualTrigger = false) {
     if (!Capacitor.isNativePlatform()) {
         if (manualTrigger) alert('📡 Радар работает только в APK');
         return;
     }
+    
+    if (window.isRadarRunning) return; // Защита от дублей
+    window.isRadarRunning = true;
     
     try {
         const permStatus = await Filesystem.checkPermissions();
@@ -97,6 +103,7 @@ async function runDownloadRadar(manualTrigger = false) {
         const allFoundFiles = await scanDownloadFolder();
         if (!allFoundFiles || allFoundFiles.length === 0) {
             if (manualTrigger) alert('📡 Папка Загрузок пуста или нет прав доступа.');
+            window.isRadarRunning = false;
             return;
         }
 
@@ -113,11 +120,16 @@ async function runDownloadRadar(manualTrigger = false) {
     } catch (error) {
         console.error('Радар ошибка:', error);
         if (manualTrigger) alert('❌ Ошибка сканирования. Проверьте права приложения в настройках Android.');
+    } finally {
+        window.isRadarRunning = false; // Снимаем блокировку
     }
 }
 window.runDownloadRadar = runDownloadRadar;
 
 function promptRadarInstall(filesObjects) {
+    const existing = document.getElementById('radar-overlay');
+    if (existing) existing.remove();
+
     const overlay = document.createElement('div');
     overlay.id = 'radar-overlay';
     overlay.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);`;
@@ -178,7 +190,8 @@ function promptRadarInstall(filesObjects) {
                 console.error('Ошибка файла:', fileObj.name, err);
                 failed++;
             }
-            await new Promise(r => setTimeout(r, 50));
+            // ФИКС 1: Увеличена пауза, чтобы файлы не "перебивали" друг друга
+            await new Promise(r => setTimeout(r, 600));
         }
         
         let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
@@ -208,7 +221,8 @@ document.addEventListener('DOMContentLoaded', () => {
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
             const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
-            const validDosExts = ['.exe', '.bat', '.com'];
+            // ФИКС 2: DOS теперь берет только .exe и .bin
+            const validDosExts = ['.exe', '.bin'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
             
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
@@ -233,11 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
-                        // ФИКС: Используем безопасный makeFakeFile для Android
-                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
-                        let newFile = makeFakeFile(newBlob, cleanName);
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         await window.processSingleFileExtended(newFile);
-                        await new Promise(r => setTimeout(r, 10));
+                        // ФИКС 1: Пауза для паков внутри архива
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
@@ -245,11 +258,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
-                        // ФИКС: Используем безопасный makeFakeFile для Android
-                        let newBlob = new Blob([await readBlobSafe(f.file)], {type: 'application/octet-stream'});
-                        let newFile = makeFakeFile(newBlob, cleanName);
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         await coreProcessSingleFile(newFile);
-                        await new Promise(r => setTimeout(r, 10));
+                        // ФИКС 1: Пауза для паков
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
@@ -291,7 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, cleanName);
                         await window.processSingleFileExtended(newFile);
-                        await new Promise(r => setTimeout(r, 10));
+                        // ФИКС 1: Пауза
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
@@ -302,7 +315,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, cleanName);
                         await coreProcessSingleFile(newFile);
-                        await new Promise(r => setTimeout(r, 10));
+                        // ФИКС 1: Пауза
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
