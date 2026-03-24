@@ -1519,7 +1519,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
         
-        // ФИКС 3: Добавляем состояние для перехвата кнопки Назад
+        // ФИКС: Добавляем состояние для перехвата кнопки Назад
         history.pushState({inGame: true}, "");
 
         currentGame = game;
@@ -2159,7 +2159,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) { return null; }
     }
 
-    // ФИКС 1: УМНАЯ ОЧЕРЕДЬ ДЛЯ ОБЛОЖЕК (без банов GitHub)
     const coverQueue = [];
     let isFetchingCover = false;
 
@@ -2205,19 +2204,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(repoFolder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
             try {
-                // Пауза перед запросом, чтобы обойти защиту GitHub
                 await new Promise(r => setTimeout(r, 200)); 
                 
                 const resp = await fetch(url, { method: 'HEAD' });
                 if (resp.ok) {
                     foundUrl = url;
-                    break searchLoop; // Нашли, обрываем поиск
+                    break searchLoop; 
                 }
             } catch(e) {}
         }
 
         resolve(foundUrl);
-        // Пауза перед обработкой следующей игры
         setTimeout(processCoverQueue, 500);
     }
 
@@ -2378,91 +2375,55 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         gameGrid.appendChild(btn);
     }
 
-    // ФИКС 2: Добавлена микро-задержка (await new Promise) перед чтением, 
-    // чтобы Android WebView 100% успел смонтировать файл.
+    // ФИКС 2: Моментальное клонирование Blob до закрытия окна выбора
     document.getElementById('mainImportBtn').onclick = async (e) => {
         e.preventDefault(); 
         e.stopPropagation();
-        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        const input = document.createElement('input'); 
+        input.type = 'file'; 
+        input.multiple = true; 
+        input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
+        
+        input.onchange = async (event) => { 
+            const files = Array.from(event.target.files || []); 
+            if (files.length === 0) return;
 
-        if (isAndroid) {
-            return new Promise((resolve) => {
-                const input = document.createElement('input'); 
-                input.type = 'file'; 
-                input.multiple = true; 
-                input.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
-                input.onchange = async () => { 
-                    const files = Array.from(input.files || []); 
-                    document.body.removeChild(input); 
-                    if (files.length > 0) {
-                        // Даем Android 200мс на монтирование файлов в память
-                        await new Promise(r => setTimeout(r, 200));
-                        await processFilesArray(files); 
-                    }
-                    resolve(); 
-                };
-                input.style.position = 'absolute'; 
-                input.style.opacity = '0'; 
-                input.style.pointerEvents = 'none'; 
-                document.body.appendChild(input);
-                input.click(); 
-                setTimeout(() => { if (document.body.contains(input)) input.click(); }, 100);
-            });
-        } else {
-            const fileInput = document.createElement('input'); 
-            fileInput.type = 'file'; 
-            fileInput.multiple = true; 
-            fileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
-            fileInput.style.position = 'absolute'; 
-            fileInput.style.opacity = '0'; 
-            fileInput.style.pointerEvents = 'none'; 
-            document.body.appendChild(fileInput);
-            
-            let files = [];
-            try {
-                files = await new Promise((resolve) => {
-                    let resolved = false;
-                    const onChange = async (event) => { 
-                        if (resolved) return; 
-                        resolved = true; 
-                        const selectedFiles = event.target.files; 
-                        if (!selectedFiles || selectedFiles.length === 0) resolve([]); 
-                        else resolve(Array.from(selectedFiles)); 
-                        cleanup(); 
-                    };
-                    const onCancel = () => { 
-                        setTimeout(() => { 
-                            if (!resolved) { 
-                                resolved = true; 
-                                resolve([]); 
-                                cleanup(); 
-                            } 
-                        }, 100); 
-                    };
-                    const cleanup = () => { 
-                        fileInput.removeEventListener('change', onChange); 
-                        window.removeEventListener('focus', onCancel); 
-                    };
-                    fileInput.addEventListener('change', onChange, { once: true }); 
-                    window.addEventListener('focus', onCancel, { once: true });
-                    setTimeout(() => { 
-                        if (!resolved) { 
-                            resolved = true; 
-                            resolve([]); 
-                            cleanup(); 
-                        } 
-                    }, 60000); 
-                    fileInput.click();
-                });
-            } catch (err) { console.error('File selection error:', err); }
-            
-            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
-            if (files && files.length > 0) {
-                // Пауза перед обработкой для не-Android платформ тоже
-                await new Promise(r => setTimeout(r, 200));
-                await processFilesArray(files);
+            const btn = document.getElementById('mainImportBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `⏳ ЧТЕНИЕ ФАЙЛОВ В ПАМЯТЬ...`;
+            btn.style.pointerEvents = 'none';
+
+            // Клонируем файлы в оперативную память (ArrayBuffer) до того как Android отнимет права
+            const clonedFiles = [];
+            for (const f of files) {
+                try {
+                    const buf = await f.arrayBuffer();
+                    const fakeFile = new File([buf], f.name, { type: f.type || 'application/octet-stream' });
+                    clonedFiles.push(fakeFile);
+                } catch(err) {
+                    console.error('Ошибка клонирования:', f.name, err);
+                }
             }
-        }
+            
+            if (document.body.contains(input)) document.body.removeChild(input); 
+            
+            btn.innerHTML = originalText;
+            btn.style.pointerEvents = 'auto';
+            
+            if (clonedFiles.length > 0) {
+                await processFilesArray(clonedFiles); 
+            }
+        };
+        
+        input.style.position = 'absolute'; 
+        input.style.opacity = '0'; 
+        input.style.pointerEvents = 'none'; 
+        document.body.appendChild(input);
+        
+        input.click(); 
+        // Fallback для некоторых версий WebView
+        setTimeout(() => { if (document.body.contains(input)) input.click(); }, 100);
     };
 
     async function processFilesArray(files) {
@@ -2483,7 +2444,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 console.error('Ошибка файла:', file.name, err); 
                 errorCount++; 
             }
-            await new Promise(r => setTimeout(r, 50)); // Увеличил паузу между файлами
+            await new Promise(r => setTimeout(r, 50)); 
         }
         
         renderAllGames();
@@ -2548,26 +2509,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } 
         else { throw new Error('Неподдерживаемый формат'); }
 
-        // Обложки запрашиваются только если их нет в архиве
-        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
-            // Запрашиваем через новую очередь (не блочит загрузку файла!)
-            fetchNetCover(cleanGameName, sysType).then(netCover => {
-                if (netCover) {
-                    // Если нашли обложку, обновляем запись в БД и рендерим
-                    const tx = db.transaction(["games"], "readwrite");
-                    const store = tx.objectStore("games");
-                    const req = store.get(newGame.id);
-                    req.onsuccess = () => {
-                        const existing = req.result;
-                        if (existing) {
-                            existing.cover = netCover;
-                            store.put(existing).onsuccess = () => renderAllGames();
-                        }
-                    };
-                }
-            });
-        }
-
         const newGame = { 
             id: "game_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10),
             n: cleanGameName, 
@@ -2581,6 +2522,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             fit: 'contain', 
             cover: coverData 
         };
+
+        // ФИКС 3: Обложки запрашиваются только если их нет в архиве. Живое обновление картинки без сброса меню!
+        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
+            fetchNetCover(cleanGameName, sysType).then(netCover => {
+                if (netCover) {
+                    const tx = db.transaction(["games"], "readwrite");
+                    const store = tx.objectStore("games");
+                    const req = store.get(newGame.id);
+                    req.onsuccess = () => {
+                        const existing = req.result;
+                        if (existing) {
+                            existing.cover = netCover;
+                            store.put(existing).onsuccess = () => {
+                                // Находим кнопку по data-game-id и меняем фон без полной перерисовки меню
+                                const btn = document.querySelector(`[data-game-id="${existing.id}"]`);
+                                if (btn) {
+                                    btn.style.backgroundImage = `url(${netCover})`;
+                                    const icon = btn.querySelector('.icon');
+                                    if (icon) icon.style.display = 'none';
+                                }
+                            };
+                        }
+                    };
+                }
+            });
+        }
         
         return new Promise((resolve, reject) => { 
             if (!db) {
