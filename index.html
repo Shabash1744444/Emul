@@ -153,6 +153,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
 .action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
 
+/* БАРЬЕР */
+#bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: rgba(239,68,68,0.1); border-top: 2px dashed rgba(239,68,68,0.3); z-index: 1000; pointer-events: none; display: none; }
+#bottom-shield.edit-visible { display: block; }
+
 /* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА РЕДАКТИРОВАНИЯ И СОРТИРОВКИ */
 #editModeBtn { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; }
 #editModeBtn.active { background: linear-gradient(135deg, #10b981, #059669) !important; }
@@ -188,7 +192,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <button id="mainImportBtn" class="action-btn" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: 1px solid #0369a1; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
             ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
         </button>
-        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
             📡 СКАНИРОВАТЬ
         </button>
         <button id="infoBtn" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
@@ -216,7 +220,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </button>
     </div>
 
-    <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off">
+    <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" oninput="renderAllGames()">
     <div class="grid" id="gameGrid"></div>
 
     <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8;">
@@ -333,6 +337,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="pad-edit-panel">
+    <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
     <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
@@ -351,6 +356,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     <button class="edit-btn action-btn" onclick="resetPad()" style="background:#ef4444; margin-top:5px;">Сброс всех настроек</button>
 </div>
+
+<div id="bottom-shield"></div>
 
 <input type="text" id="hiddenInput" autocomplete="off">
 
@@ -422,8 +429,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let isGameStarting = false;
     const GAMES = []; 
 
+    // Добавлена isBottomBarrier
     let padConfig = {};
-    let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false;
+    let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false, isBottomBarrier = false;
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
     let isEditMode = false;
@@ -595,11 +603,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
+    // ПУШ СОСТОЯНИЯ ДЛЯ КНОПКИ НАЗАД
+    window.addEventListener('load', () => {
+        history.pushState({page: 'main'}, "");
+    });
+
     window.addEventListener('popstate', (e) => { 
         if (frameDiv.style.display === 'block') { 
             handleBackBtn();
-            history.pushState({inGame: true}, "");
         } 
+        history.pushState({page: 'main'}, "");
     });
     
     window.addEventListener('beforeunload', () => {
@@ -1037,13 +1050,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
         if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
         if (padConfig.autoStop === undefined) padConfig.autoStop = false;
+        if (padConfig.barrier === undefined) padConfig.barrier = false;
         
         isFloatingDpad = padConfig.dpad.f; 
         isStepDpad = padConfig.dpad.step; 
         isAutoStop = padConfig.autoStop;
+        isBottomBarrier = padConfig.barrier;
         
         const btnAS = document.getElementById('toggleAutoStopBtn');
         if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
+
+        const btnBar = document.getElementById('toggleBarrierBtn');
+        if (btnBar) {
+            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
+            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+        }
+    }
+
+    function toggleBarrier() {
+        isBottomBarrier = !isBottomBarrier;
+        const btn = document.getElementById('toggleBarrierBtn');
+        const shield = document.getElementById('bottom-shield');
+        if (btn) {
+            btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
+            btn.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+        }
+        if (shield) shield.classList.toggle('edit-visible', isBottomBarrier && isPadEditMode);
+        if (currentGame) {
+            padConfig.barrier = isBottomBarrier;
+            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+        }
     }
 
     function toggleAutoStop() { 
@@ -1096,6 +1132,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isPadEditMode = !isPadEditMode;
         btnPadEdit.classList.toggle('active-tool', isPadEditMode);
         padPanel.style.display = isPadEditMode ? 'flex' : 'none';
+        
+        const shield = document.getElementById('bottom-shield');
+        if (shield) shield.classList.toggle('edit-visible', isPadEditMode && isBottomBarrier);
         
         if (isPadEditMode) {
             updateStepBtnUI(); 
@@ -1187,8 +1226,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         document.addEventListener('touchmove', e => { 
             if (!isPadEditMode || !padDragTarget) return; 
-            padConfig[padDragTarget].x = e.touches[0].clientX - padDragStartX; 
-            padConfig[padDragTarget].y = e.touches[0].clientY - padDragStartY; 
+            
+            let newX = e.touches[0].clientX - padDragStartX;
+            let newY = e.touches[0].clientY - padDragStartY;
+            
+            if (isBottomBarrier) {
+                if (e.touches[0].clientY > window.innerHeight - 80) return;
+            }
+
+            padConfig[padDragTarget].x = newX; 
+            padConfig[padDragTarget].y = newY; 
             updatePadTransforms(); 
         }, {passive: false});
         
@@ -1301,6 +1348,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let angle = Math.atan2(dy, dx) * 180 / Math.PI; 
         if (angle < 0) angle += 360;
         const newKeys = new Set();
+        
+        if (isStepDpad) {
+            if (angle >= 315 || angle < 45) newKeys.add(39); 
+            else if (angle >= 45 && angle < 135) newKeys.add(40); 
+            else if (angle >= 135 && angle < 225) newKeys.add(37); 
+            else if (angle >= 225 && angle < 315) newKeys.add(38); 
+            return newKeys;
+        }
+        
         if (angle >= 337.5 || angle < 22.5) newKeys.add(39); 
         else if (angle >= 22.5 && angle < 67.5) { newKeys.add(40); newKeys.add(39); } 
         else if (angle >= 67.5 && angle < 112.5) newKeys.add(40); 
@@ -1364,12 +1420,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             activeDpadKeys.forEach(k => sendKey(k, false)); 
             activeDpadKeys.clear(); 
         } else { 
+            if (isStepDpad) {
+                activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
+            }
             newKeys.forEach(k => { 
                 if (!activeDpadKeys.has(k)) sendKey(k, true); 
             }); 
-            activeDpadKeys.forEach(k => { 
-                if (!newKeys.has(k)) sendKey(k, false); 
-            }); 
+            if (!isStepDpad) {
+               activeDpadKeys.forEach(k => { 
+                   if (!newKeys.has(k)) sendKey(k, false); 
+               }); 
+            }
             activeDpadKeys = new Set(newKeys); 
         }
         updateDpadVisuals();
@@ -1513,16 +1574,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         history.pushState({inGame: true}, "");
 
         currentGame = game;
-        
-        const savedGameVideo = localStorage.getItem('video_' + game.n);
-        if (savedGameVideo) {
-            try { videoConfig = JSON.parse(savedGameVideo); } catch(e) {}
-        } else {
-            const globalVideo = localStorage.getItem('videoV6');
-            if (globalVideo) {
-                try { videoConfig = JSON.parse(globalVideo); } catch(e) {}
-            }
-        }
         
         document.getElementById('searchInput').value = ''; 
         menuScreen.style.display = 'none'; 
@@ -1934,14 +1985,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    function handleBackBtn() {
+    async function handleBackBtn() {
         if (!currentGame) {
-            executeCleanup(true);
+            await executeCleanup(true);
             return;
         }
         
         if (backTapCount === 0) {
-            saveGameState(); 
             backTapCount++; 
             const btn = document.getElementById('btnBack'); 
             if (btn) {
@@ -1949,6 +1999,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.style.fontSize = '10px'; 
                 btn.innerHTML = 'ВЫХОД';
             }
+            
+            await saveGameState(); 
             
             setTimeout(() => { 
                 backTapCount = 0; 
@@ -1959,13 +2011,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }, 2000);
         } else { 
-            executeCleanup(true); 
+            await executeCleanup(true); 
         }
     }
 
-    function executeCleanup(skipSave = false) {
+    async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
-        if (!skipSave) saveGameState();
+        
+        if (!skipSave) {
+            await saveGameState(); 
+        }
         
         if (currentGame?._tempUrl) { 
             URL.revokeObjectURL(currentGame._tempUrl); 
@@ -2065,6 +2120,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         currentGame = null;
         if (window.gc) window.gc();
         isGameStarting = false;
+        
+        location.reload(); 
     }
 
     function injectText() {
@@ -2131,10 +2188,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 } 
             }
             
-            // ЖЕСТКИЙ ФИЛЬТР DOS: Только если есть exe/bat/com
             if (!foundRom) { 
                 const exes = files.filter(name => name.endsWith('.exe') || name.endsWith('.bat') || name.endsWith('.com')).map(n => n.split('/').pop()); 
-                if (exes.length === 0) return null; // Отбрасываем пустые архивы и мусор
+                if (exes.length === 0) return null; 
                 
                 sysData.type = 'd';
                 const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
@@ -2153,12 +2209,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const coverQueue = [];
     let isFetchingCover = false;
 
-    // ЖИВЫЕ ОБЛОЖКИ (Обход блокировки CORS через Image.onload)
-    function checkImageExists(url) {
+    function checkImageExists(url, timeout = 20000) { 
         return new Promise(resolve => {
             const img = new Image();
-            img.onload = () => resolve(true);
-            img.onerror = () => resolve(false);
+            let timer = setTimeout(() => {
+                img.src = ''; 
+                resolve(false);
+            }, timeout);
+            img.onload = () => { clearTimeout(timer); resolve(true); };
+            img.onerror = () => { clearTimeout(timer); resolve(false); };
             img.src = url;
         });
     }
@@ -2186,16 +2245,35 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return;
         }
 
-        const exactName = gameName.trim();
-        const cleanName = exactName.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').replace(/(?:\s*(?:v|V)\s*\d+\.\d+).*$/, '').trim(); 
+        let base = gameName.replace(/_/g, ' ').replace(/-/g, ' ');
+        base = base.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, ''); 
+        base = base.replace(/\{.*?\}/g, '');
+        base = base.replace(/(?:\s*(?:v|V)\s*\d+\.\d+).*$/, ''); 
+        base = base.replace(/\s+/g, ' ').trim(); 
+
+        let guesses = new Set();
         
-        const nameTries = [
-            exactName, 
-            cleanName, 
-            `${cleanName} (USA)`, 
-            `${cleanName} (Europe)`
-        ];
-        
+        guesses.add(`${base} (USA)`);
+        guesses.add(`${base} (Europe)`);
+        guesses.add(`${base} (Japan)`);
+        guesses.add(base);
+
+        if (base.toLowerCase().startsWith('the ')) {
+            let theName = base.substring(4) + ', The';
+            guesses.add(`${theName} (USA)`);
+            guesses.add(`${theName} (Europe)`);
+            guesses.add(theName);
+        }
+
+        if (gameName.includes('-')) {
+            let firstPart = gameName.split('-')[0].replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
+            if (firstPart && firstPart.length > 2 && firstPart !== base) {
+                guesses.add(`${firstPart} (USA)`);
+                guesses.add(firstPart);
+            }
+        }
+
+        const nameTries = Array.from(guesses);
         let foundUrl = null;
 
         searchLoop:
@@ -2208,11 +2286,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 foundUrl = url;
                 break searchLoop; 
             }
-            await new Promise(r => setTimeout(r, 100)); 
+            await new Promise(r => setTimeout(r, 150)); 
         }
 
         resolve(foundUrl);
-        setTimeout(processCoverQueue, 400);
+        setTimeout(processCoverQueue, 300);
     }
 
     let db;
@@ -2239,9 +2317,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         console.error('IndexedDB error:', e);
         window.tempGames = [];
         renderAllGames = function() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
             gameGrid.innerHTML = '<div id="empty-library-msg">Режим инкогнито — игры будут доступны только до закрытия страницы</div>';
             if (window.tempGames) {
-                window.tempGames.forEach(g => createGameBtn(g, true));
+                window.tempGames
+                    .filter(g => !term || g.n.toLowerCase().includes(term))
+                    .forEach(g => createGameBtn(g, true));
             }
         };
     };
@@ -2324,7 +2405,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btn.classList.add('selected');
         }
         
-        if (game.cover) { btn.style.backgroundImage = `url(${game.cover})`; }
+        if (game.cover) { btn.style.backgroundImage = `url('${game.cover}')`; }
         btn.dataset.gameId = game.id;
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
@@ -2372,54 +2453,40 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         gameGrid.appendChild(btn);
     }
 
-    document.getElementById('mainImportBtn').onclick = async (e) => {
-        e.preventDefault(); 
-        e.stopPropagation();
+    let globalFileInput = document.getElementById('global-file-input');
+    if (!globalFileInput) {
+        globalFileInput = document.createElement('input');
+        globalFileInput.id = 'global-file-input';
+        globalFileInput.type = 'file';
+        globalFileInput.multiple = true;
+        globalFileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
         
-        const fileInput = document.createElement('input'); 
-        fileInput.type = 'file'; 
-        fileInput.multiple = true; 
-        fileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
-        fileInput.style.position = 'absolute'; 
-        fileInput.style.opacity = '0'; 
-        fileInput.style.pointerEvents = 'none'; 
+        globalFileInput.style.position = 'absolute';
+        globalFileInput.style.left = '-9999px';
+        globalFileInput.style.opacity = '0';
         
-        document.body.appendChild(fileInput);
-        
-        let resolved = false;
-        const onChange = async (event) => { 
-            if (resolved) return; 
-            resolved = true; 
-            const selectedFiles = Array.from(event.target.files || []); 
-            if (selectedFiles.length > 0) {
+        document.body.appendChild(globalFileInput);
+
+        globalFileInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
                 await new Promise(r => setTimeout(r, 200));
-                await processFilesArray(selectedFiles);
+                if (typeof processFilesArray === 'function') {
+                    await processFilesArray(files);
+                }
             }
-            cleanup(); 
+            globalFileInput.value = ''; 
+        });
+    }
+
+    const mainImportBtn = document.getElementById('mainImportBtn');
+    if (mainImportBtn) {
+        mainImportBtn.onclick = (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            globalFileInput.click();
         };
-        
-        const onCancel = () => { 
-            setTimeout(() => { 
-                if (!resolved) { resolved = true; cleanup(); } 
-            }, 500); 
-        };
-        
-        const cleanup = () => { 
-            fileInput.removeEventListener('change', onChange); 
-            window.removeEventListener('focus', onCancel); 
-            if (fileInput.parentNode) fileInput.parentNode.removeChild(fileInput);
-        };
-        
-        fileInput.addEventListener('change', onChange, { once: true }); 
-        window.addEventListener('focus', onCancel, { once: true });
-        
-        setTimeout(() => { 
-            if (!resolved) { resolved = true; cleanup(); } 
-        }, 60000); 
-        
-        fileInput.click();
-        setTimeout(() => { if (document.body.contains(fileInput) && !resolved) fileInput.click(); }, 100);
-    };
+    }
 
     async function processFilesArray(files) {
         const btn = document.getElementById('mainImportBtn'); 
@@ -2498,6 +2565,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             controlMode = 'none'; 
             sysType = 'html'; 
         } 
+        else if (fileName.endsWith('.7z') || fileName.endsWith('.rar')) {
+             alert('⚠️ Android WebView блокирует фоновую распаковку .7z и .rar из-за политик безопасности. Пожалуйста, перепакуйте игру в .zip!');
+             throw new Error('Неподдерживаемый формат на мобильных устройствах');
+        }
         else { throw new Error('Неподдерживаемый формат'); }
 
         const newGame = { 
