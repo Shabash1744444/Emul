@@ -153,9 +153,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
 .action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
 
-/* БАРЬЕР */
-#bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: rgba(239,68,68,0.1); border-top: 2px dashed rgba(239,68,68,0.3); z-index: 1000; pointer-events: none; display: none; }
-#bottom-shield.edit-visible { display: block; }
+/* БАРЬЕР (Фикс перехвата) */
+#bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
+#bottom-shield.active { display: block; pointer-events: auto; }
+#bottom-shield.edit-mode { background: rgba(239,68,68,0.15); border-top: 2px dashed #ef4444; }
 
 /* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА РЕДАКТИРОВАНИЯ И СОРТИРОВКИ */
 #editModeBtn { background: linear-gradient(135deg, #ef4444, #b91c1c) !important; }
@@ -358,7 +359,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="bottom-shield"></div>
-
 <input type="text" id="hiddenInput" autocomplete="off">
 
 <div id="gamepad">
@@ -429,7 +429,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let isGameStarting = false;
     const GAMES = []; 
 
-    // Добавлена isBottomBarrier
     let padConfig = {};
     let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false, isBottomBarrier = false;
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
@@ -603,16 +602,37 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // ПУШ СОСТОЯНИЯ ДЛЯ КНОПКИ НАЗАД
+    // ФИКС КНОПКИ НАЗАД (Браузер + Capacitor APK)
     window.addEventListener('load', () => {
         history.pushState({page: 'main'}, "");
     });
 
     window.addEventListener('popstate', (e) => { 
-        if (frameDiv.style.display === 'block') { 
-            handleBackBtn();
+        const gameFrame = document.getElementById('gameFrame');
+        if (gameFrame && gameFrame.style.display === 'block') { 
+            if (typeof handleBackBtn === 'function') handleBackBtn();
         } 
         history.pushState({page: 'main'}, "");
+    });
+
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+        window.Capacitor.Plugins.App.addListener('backButton', () => {
+            const gameFrame = document.getElementById('gameFrame');
+            if (gameFrame && gameFrame.style.display === 'block') {
+                if (typeof handleBackBtn === 'function') handleBackBtn();
+            }
+        });
+    }
+
+    // ЖЕСТКИЙ ПЕРЕХВАТ ТАПОВ ДЛЯ БАРЬЕРА
+    document.addEventListener('DOMContentLoaded', () => {
+        const shield = document.getElementById('bottom-shield');
+        if (shield) {
+            const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+            shield.addEventListener('touchstart', stop, {passive: false});
+            shield.addEventListener('touchmove', stop, {passive: false});
+            shield.addEventListener('touchend', stop, {passive: false});
+        }
     });
     
     window.addEventListener('beforeunload', () => {
@@ -1065,17 +1085,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
             btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
         }
+        updateBarrierVisuals();
+    }
+
+    function updateBarrierVisuals() {
+        const shield = document.getElementById('bottom-shield');
+        if (!shield) return;
+        if (isBottomBarrier) {
+            shield.classList.add('active');
+            if (isPadEditMode) shield.classList.add('edit-mode');
+            else shield.classList.remove('edit-mode');
+        } else {
+            shield.classList.remove('active', 'edit-mode');
+        }
     }
 
     function toggleBarrier() {
         isBottomBarrier = !isBottomBarrier;
         const btn = document.getElementById('toggleBarrierBtn');
-        const shield = document.getElementById('bottom-shield');
         if (btn) {
             btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
             btn.style.background = isBottomBarrier ? '#047857' : '#991b1b';
         }
-        if (shield) shield.classList.toggle('edit-visible', isBottomBarrier && isPadEditMode);
+        updateBarrierVisuals();
         if (currentGame) {
             padConfig.barrier = isBottomBarrier;
             localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
@@ -1133,8 +1165,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btnPadEdit.classList.toggle('active-tool', isPadEditMode);
         padPanel.style.display = isPadEditMode ? 'flex' : 'none';
         
-        const shield = document.getElementById('bottom-shield');
-        if (shield) shield.classList.toggle('edit-visible', isPadEditMode && isBottomBarrier);
+        updateBarrierVisuals();
         
         if (isPadEditMode) {
             updateStepBtnUI(); 
@@ -1226,12 +1257,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         document.addEventListener('touchmove', e => { 
             if (!isPadEditMode || !padDragTarget) return; 
+            e.preventDefault();
             
             let newX = e.touches[0].clientX - padDragStartX;
             let newY = e.touches[0].clientY - padDragStartY;
             
             if (isBottomBarrier) {
-                if (e.touches[0].clientY > window.innerHeight - 80) return;
+                const el = document.getElementById(padDragTarget === 'dpad' ? 'joystick-dpad' : 'btn-' + padDragTarget);
+                const rect = el.getBoundingClientRect();
+                const predictedBottom = rect.bottom + (newY - padConfig[padDragTarget].y);
+                const limit = window.innerHeight - 75; 
+                if (predictedBottom > limit) {
+                    newY = padConfig[padDragTarget].y + (limit - rect.bottom);
+                }
             }
 
             padConfig[padDragTarget].x = newX; 
@@ -1571,9 +1609,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isGameStarting = true;
         
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
+        try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
+        
         history.pushState({inGame: true}, "");
 
         currentGame = game;
+        
+        const savedGameVideo = localStorage.getItem('video_' + game.n);
+        if (savedGameVideo) {
+            try { videoConfig = JSON.parse(savedGameVideo); } catch(e) {}
+        } else {
+            const globalVideo = localStorage.getItem('videoV6');
+            if (globalVideo) {
+                try { videoConfig = JSON.parse(globalVideo); } catch(e) {}
+            }
+        }
         
         document.getElementById('searchInput').value = ''; 
         menuScreen.style.display = 'none'; 
@@ -1702,7 +1752,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         reader.onload = function(e) {
             if (isShuttingDown) return;
             Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
-                window.WDOSBOX = { FS: fs }; 
                 fs.extract(e.target.result).then(async () => {
                     await loadGameState(true); 
                     let cmd = ["-c", "cycles auto"]; 
@@ -2115,6 +2164,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         try { 
             screen.orientation.unlock(); 
+            if (document.exitFullscreen) document.exitFullscreen().catch(()=>{});
         } catch(e) {}
         
         currentGame = null;
