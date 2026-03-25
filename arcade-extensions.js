@@ -35,10 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Capacitor.isNativePlatform()) {
                 try {
                     await Browser.open({ url: targetUrl, presentationStyle: 'popover', toolbarColor: '#1f2937' });
-                    // Возвращаем слушатель для ручного запуска, если нужно, но без автозапуска
                     if (!window._browserListenerAdded) {
                         Browser.addListener('browserFinished', () => { 
-                            // Автозапуск после закрытия браузера убран.
+                            // Автозапуск радара отключен
                         });
                         window._browserListenerAdded = true;
                     }
@@ -87,163 +86,19 @@ async function scanDownloadFolder() {
 
 window.isRadarRunning = false;
 
+// ФИКС: РАДАР ПОЛНОСТЬЮ ОТКЛЮЧЕН (Оставлена заглушка)
 async function runDownloadRadar(manualTrigger = true) {
-    if (!Capacitor.isNativePlatform()) {
-        alert('📡 Радар работает только в APK');
-        return;
-    }
-    
-    if (window.isRadarRunning) return; 
-    window.isRadarRunning = true;
-    
-    try {
-        const permStatus = await Filesystem.checkPermissions();
-        if (permStatus.publicStorage !== 'granted') await Filesystem.requestPermissions();
-    } catch(e) {}
-    
-    try {
-        const allFoundFiles = await scanDownloadFolder();
-        if (!allFoundFiles || allFoundFiles.length === 0) {
-            alert('📡 Папка Загрузок пуста или нет прав доступа.');
-            window.isRadarRunning = false;
-            return;
-        }
-
-        let ignoredFiles = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        const validExtensions = ['.zip', '.rar', '.7z', '.nes', '.smc', '.sfc', '.md', '.gen', '.bin', '.ngp', '.ngc'];
-        
-        const newFiles = allFoundFiles.filter(f => {
-            const fileName = f.name.toLowerCase(); 
-            return validExtensions.some(ext => fileName.endsWith(ext)) && !ignoredFiles.includes(f.name);
-        });
-
-        if (newFiles.length > 0) promptRadarInstall(newFiles);
-        else alert('✅ Новых игр (и архивов) в Загрузках не найдено!');
-    } catch (error) {
-        console.error('Радар ошибка:', error);
-        alert('❌ Ошибка сканирования. Проверьте права приложения в настройках Android.');
-    } finally {
-        window.isRadarRunning = false; 
-    }
+    console.log("📡 Сканер загрузок временно отключен. Используйте ручное добавление игр.");
+    return;
 }
 window.runDownloadRadar = runDownloadRadar;
 
 function promptRadarInstall(filesObjects) {
-    const existing = document.getElementById('radar-overlay');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'radar-overlay';
-    overlay.style.cssText = `position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);`;
-    
-    // ЧЕКБОКСЫ ДЛЯ РАДАРА
-    let fileNamesHtml = filesObjects.map((f, index) => `
-        <label style="display: flex; align-items: center; background: rgba(56,189,248,0.1); padding: 8px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #38bdf8; cursor: pointer;">
-            <input type="checkbox" class="radar-file-checkbox" value="${index}" checked style="margin-right: 10px; width: 16px; height: 16px;">
-            <span style="word-break: break-all;">${f.name}</span>
-        </label>
-    `).join('');
-    
-    overlay.innerHTML = `
-        <div style="background: #1f2937; border: 2px solid #38bdf8; border-radius: 16px; padding: 24px; max-width: 400px; width: 100%; color: #fff;">
-            <h3 style="color: #38bdf8; margin-top: 0; text-align: center;">📡 РАДАР ЗАГРУЗОК</h3>
-            <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-bottom: 16px;">Найдено файлов: <b>${filesObjects.length}</b></p>
-            <div style="max-height: 250px; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">${fileNamesHtml}</div>
-            <button id="radar-install-btn" style="width: 100%; background: #10b981; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">📥 УСТАНОВИТЬ ВЫБРАННЫЕ</button>
-            <button id="radar-ignore-btn" style="width: 100%; background: #ef4444; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">❌ ПРОПУСТИТЬ ВСЕ</button>
-            <button id="radar-close-btn" style="width: 100%; background: #475569; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;">ОТЛОЖИТЬ</button>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-
-    document.getElementById('radar-close-btn').onclick = () => overlay.remove();
-
-    document.getElementById('radar-ignore-btn').onclick = () => {
-        let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        filesObjects.forEach(f => ignored.push(f.name));
-        localStorage.setItem('radar_ignored', JSON.stringify(ignored));
-        overlay.remove();
-    };
-
-    document.getElementById('radar-install-btn').onclick = async () => {
-        if (typeof window.processSingleFile !== 'function') {
-            alert('❌ Эмулятор не готов. Подождите загрузки.');
-            return;
-        }
-
-        // Собираем только те файлы, которые отмечены галочкой
-        const checkboxes = document.querySelectorAll('.radar-file-checkbox');
-        const selectedFiles = [];
-        const ignoredFiles = []; // Те, с которых сняли галочку
-
-        checkboxes.forEach(cb => {
-            const file = filesObjects[parseInt(cb.value)];
-            if (cb.checked) {
-                selectedFiles.push(file);
-            } else {
-                ignoredFiles.push(file.name);
-            }
-        });
-
-        if (selectedFiles.length === 0) {
-            // Если ничего не выбрано, просто закрываем и добавляем всё в игнор
-            let ignored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-            ignored.push(...ignoredFiles);
-            localStorage.setItem('radar_ignored', JSON.stringify(ignored));
-            overlay.remove();
-            return;
-        }
-        
-        let installed = 0, failed = 0;
-        let currentIgnored = JSON.parse(localStorage.getItem('radar_ignored')) || [];
-        // Сразу добавляем снятые галочки в игнор
-        currentIgnored.push(...ignoredFiles);
-        localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
-
-        for (let i = 0; i < selectedFiles.length; i++) {
-            const fileObj = selectedFiles[i];
-            overlay.firstElementChild.innerHTML = `
-                <h3 style="color: #38bdf8; margin-top: 0; text-align: center;">⏳ УСТАНОВКА...</h3>
-                <p style="font-size: 14px; color: #fff; text-align: center;">${i + 1} / ${selectedFiles.length}<br><span style="color: #94a3b8; font-size: 12px; word-break: break-all;">${fileObj.name}</span></p>
-            `;
-
-            try {
-                const fileData = await Filesystem.readFile({
-                    path: fileObj.path,
-                    directory: Directory.ExternalStorage
-                });
-                
-                const base64Response = await fetch(`data:application/octet-stream;base64,${fileData.data}`);
-                const blob = await base64Response.blob();
-                const fakeFile = makeFakeFile(blob, fileObj.name);
-                
-                await window.processSingleFile(fakeFile); 
-                installed++;
-                
-                // Сохраняем прогресс радара после каждого файла
-                currentIgnored.push(fileObj.name);
-                localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
-                
-            } catch (err) {
-                console.error('Ошибка файла:', fileObj.name, err);
-                failed++;
-                currentIgnored.push(fileObj.name);
-                localStorage.setItem('radar_ignored', JSON.stringify(currentIgnored));
-            }
-            await new Promise(r => setTimeout(r, 600));
-        }
-        
-        if (typeof window.renderAllGames === 'function') window.renderAllGames();
-        
-        overlay.firstElementChild.innerHTML = `
-            <h3 style="color: ${failed === 0 ? '#10b981' : '#f59e0b'}; margin-top: 0; text-align: center;">${failed === 0 ? '✅ ГОТОВО!' : '⚠️ ЧАСТИЧНО ГОТОВО'}</h3>
-            <p style="color: #94a3b8; text-align: center;">Успешно: <b style="color: #10b981;">${installed}</b><br>${failed > 0 ? `Ошибок: <b style="color: #ef4444;">${failed}</b>` : ''}</p>
-            <button onclick="this.closest('#radar-overlay').remove()" style="width: 100%; background: #3b82f6; color: #fff; border: none; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer;">ОТЛИЧНО!</button>
-        `;
-    };
+    // Функция оставлена для совместимости, но вызываться не будет из-за заглушки выше
+    console.log("📡 Окно установки радара заблокировано.");
 }
 
-// СУРОВЫЙ ФИЛЬТР МУСОРА
+// СУРОВЫЙ ФИЛЬТР МУСОРА (Без изменений)
 function isRealRom(fileName, fileDataU8) {
     const lower = fileName.toLowerCase();
     const ext = lower.split('.').pop();
