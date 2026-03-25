@@ -168,6 +168,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected { border: 3px solid #f87171; }
 .game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
 .game-btn.selected .edit-icon { display: flex !important; }
+
+/* РЕЖИМ: СПИСОК */
+.grid.list-view { display: flex; flex-direction: column; gap: 8px; }
+.grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
+.grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
+.grid.list-view .game-title { padding-left: 15px; font-size: 15px; white-space: normal; }
+.grid.list-view .sys-badge { right: 15px; top: 50%; transform: translateY(-50%); }
+
+/* РЕЖИМ: КРУПНЫЕ ОБЛОЖКИ */
+.grid.large-view { grid-template-columns: 1fr; }
+.grid.large-view .game-btn { height: 220px; font-size: 18px; }
+.grid.large-view .game-title { font-size: 20px; white-space: normal; background: rgba(0,0,0,0.7); }
 </style>
 </head>
 <body>
@@ -208,6 +220,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <option value="name_desc">🔤 По имени Я-А</option>
             <option value="sys">🎮 По системе</option>
         </select>
+        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; font-size: 18px; padding: 0;">🔲</button>
         <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; font-size: 16px;">
             ✏️
         </button>
@@ -462,13 +475,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE' } 
     };
 
-    const netCoverDB = {
-        'nes': 'Nintendo - Nintendo Entertainment System',
-        'md': 'Sega - Mega Drive - Genesis', 'gen': 'Sega - Mega Drive - Genesis', 'smd': 'Sega - Mega Drive - Genesis', 'bin': 'Sega - Mega Drive - Genesis',
-        'sfc': 'Nintendo - Super Nintendo Entertainment System', 'smc': 'Nintendo - Super Nintendo Entertainment System',
-        'ngp': 'SNK - Neo Geo Pocket', 'ngc': 'SNK - Neo Geo Pocket Color'
-    };
-    
     const systemButtonMap = {
         'nes': { brake: 88, jump: 90 },
         'smd': { brake: 88, jump: 90 },
@@ -602,7 +608,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // --- ЖЕСТКАЯ ЛОВУШКА ДЛЯ СИСТЕМНОЙ КНОПКИ НАЗАД ---
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
         history.pushState({ trap: true }, ""); 
@@ -630,7 +635,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // ГЛУШИЛКА ТАПОВ ДЛЯ БАРЬЕРА
     document.addEventListener('DOMContentLoaded', () => {
         const shield = document.getElementById('bottom-shield');
         if (shield) {
@@ -2264,93 +2268,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) { return null; }
     }
 
-    const coverQueue = [];
-    let isFetchingCover = false;
-
-    function checkImageExists(url, timeout = 20000) { 
-        return new Promise(resolve => {
-            const img = new Image();
-            let timer = setTimeout(() => {
-                img.src = ''; 
-                resolve(false);
-            }, timeout);
-            img.onload = () => { clearTimeout(timer); resolve(true); };
-            img.onerror = () => { clearTimeout(timer); resolve(false); };
-            img.src = url;
-        });
-    }
-
-    function fetchNetCover(gameName, sysType) {
-        return new Promise((resolve) => {
-            coverQueue.push({ gameName, sysType, resolve });
-            if (!isFetchingCover) processCoverQueue();
-        });
-    }
-
-    async function processCoverQueue() {
-        if (coverQueue.length === 0) {
-            isFetchingCover = false;
-            return;
-        }
-        isFetchingCover = true;
-
-        const { gameName, sysType, resolve } = coverQueue.shift();
-        const repoFolder = netCoverDB[sysType]; 
-        
-        if (!repoFolder) {
-            resolve(null);
-            setTimeout(processCoverQueue, 100); 
-            return;
-        }
-
-        let base = gameName.replace(/_/g, ' ').replace(/-/g, ' ');
-        base = base.replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, ''); 
-        base = base.replace(/\{.*?\}/g, '');
-        base = base.replace(/(?:\s*(?:v|V)\s*\d+\.\d+).*$/, ''); 
-        base = base.replace(/\s+/g, ' ').trim(); 
-
-        let guesses = new Set();
-        
-        guesses.add(`${base} (USA)`);
-        guesses.add(`${base} (Europe)`);
-        guesses.add(`${base} (Japan)`);
-        guesses.add(base);
-
-        if (base.toLowerCase().startsWith('the ')) {
-            let theName = base.substring(4) + ', The';
-            guesses.add(`${theName} (USA)`);
-            guesses.add(`${theName} (Europe)`);
-            guesses.add(theName);
-        }
-
-        if (gameName.includes('-')) {
-            let firstPart = gameName.split('-')[0].replace(/\(.*?\)/g, '').replace(/\[.*?\]/g, '').trim();
-            if (firstPart && firstPart.length > 2 && firstPart !== base) {
-                guesses.add(`${firstPart} (USA)`);
-                guesses.add(firstPart);
-            }
-        }
-
-        const nameTries = Array.from(guesses);
-        let foundUrl = null;
-
-        searchLoop:
-        for (const name of nameTries) {
-            if (!name) continue;
-            const safeName = name.replace(/&/g, '_').replace(/\*/g, '_');
-            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(repoFolder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-            
-            if (await checkImageExists(url)) {
-                foundUrl = url;
-                break searchLoop; 
-            }
-            await new Promise(r => setTimeout(r, 150)); 
-        }
-
-        resolve(foundUrl);
-        setTimeout(processCoverQueue, 300);
-    }
-
     let db;
     const dbRequest = indexedDB.open("ArcadeHubDB", 2);
     dbRequest.onupgradeneeded = (e) => { 
@@ -2382,6 +2299,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     .filter(g => !term || g.n.toLowerCase().includes(term))
                     .forEach(g => createGameBtn(g, true));
             }
+            applyViewMode();
         };
     };
 
@@ -2450,6 +2368,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 customGames.forEach(gameData => createGameBtn(gameData, true)); 
             } 
             
+            applyViewMode();
             menuScreen.scrollTop = scrollPos;
         };
     }
@@ -2577,6 +2496,100 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }, 3000);
     }
 
+    // ==========================================
+    // 1. АЛГОРИТМ ТОЧНОГО ПОИСКА ОБЛОЖЕК
+    // ==========================================
+    let githubCovers = [];
+
+    fetch('covers_list.txt')
+        .then(r => {
+            if (!r.ok) throw new Error("HTTP error " + r.status);
+            return r.text();
+        })
+        .then(text => {
+            githubCovers = text.split('\n').map(s => s.trim()).filter(Boolean);
+            console.log(`УРА! Файл covers_list.txt найден! Загружено ${githubCovers.length} названий.`);
+        })
+        .catch(e => alert("ОШИБКА: Файл covers_list.txt НЕ НАЙДЕН в собранном APK! Причина: " + e.message));
+
+    function getCleanKey(name) {
+        let clean = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
+        clean = clean.replace(/\.[^/.]+$/, ""); 
+        return clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ''); 
+    }
+
+    function fetchNetCover(gameName, sysType) {
+        return new Promise((resolve) => {
+            const repoMap = {
+                "nes": "Nintendo_-_Nintendo_Entertainment_System",
+                "snes": "Nintendo_-_Super_Nintendo_Entertainment_System",
+                "sfc": "Nintendo_-_Super_Nintendo_Entertainment_System",
+                "smd": "Sega_-_Mega_Drive_-_Genesis",
+                "md": "Sega_-_Mega_Drive_-_Genesis",
+                "gen": "Sega_-_Mega_Drive_-_Genesis",
+                "bin": "Sega_-_Mega_Drive_-_Genesis",
+                "ngp": "SNK_-_Neo_Geo_Pocket",
+                "ngc": "SNK_-_Neo_Geo_Pocket_Color"
+            };
+            
+            const folder = repoMap[sysType];
+            if (!folder || githubCovers.length === 0) return resolve(null);
+
+            const localKey = getCleanKey(gameName);
+            if (!localKey) return resolve(null);
+
+            // Ищем 100% совпадение ключей
+            let exactMatch = githubCovers.find(name => getCleanKey(name) === localKey);
+            
+            // Если нет полного, ищем частичное
+            if (!exactMatch) {
+                exactMatch = githubCovers.find(name => getCleanKey(name).startsWith(localKey));
+            }
+
+            if (exactMatch) {
+                const safeName = exactMatch.replace(/\.png$/i, ''); 
+                const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${folder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                resolve(url);
+            } else {
+                resolve(null);
+            }
+        });
+    }
+
+    // ==========================================
+    // 2. ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ИНТЕРФЕЙСА
+    // ==========================================
+    let currentViewMode = localStorage.getItem('libraryView') || 'grid';
+
+    function applyViewMode() {
+        const grid = document.getElementById('gameGrid');
+        const btn = document.getElementById('viewToggleBtn');
+        if (!grid || !btn) return;
+        
+        grid.className = 'grid'; 
+        
+        if (currentViewMode === 'list') {
+            grid.classList.add('list-view');
+            btn.innerHTML = '📄'; 
+        } else if (currentViewMode === 'large') {
+            grid.classList.add('large-view');
+            btn.innerHTML = '🖼️'; 
+        } else {
+            btn.innerHTML = '🔲'; 
+        }
+    }
+
+    function toggleViewMode() {
+        if (currentViewMode === 'grid') currentViewMode = 'list';
+        else if (currentViewMode === 'list') currentViewMode = 'large';
+        else currentViewMode = 'grid';
+        
+        localStorage.setItem('libraryView', currentViewMode);
+        applyViewMode();
+    }
+
+    document.addEventListener('DOMContentLoaded', applyViewMode);
+
     window.processSingleFile = async function(file) {
         const fileBuffer = await readBlob(file); 
         const persistentBlob = new Blob([fileBuffer], { type: file.type || 'application/octet-stream' });
@@ -2697,5 +2710,3 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
-
-Это ты только что написал, буду тестировать
