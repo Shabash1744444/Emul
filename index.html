@@ -2269,10 +2269,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     // ==========================================
-    // УМНЫЙ ПОИСК ОБЛОЖЕК (С ОТЛАДКОЙ ДЛЯ ANDROID)
+    // УМНЫЙ ПОИСК ОБЛОЖЕК
     // ==========================================
     let githubCovers = [];
-    
+
     let coversReady = fetch('covers_list.txt')
         .then(r => {
             if (!r.ok) throw new Error("HTTP error " + r.status);
@@ -2280,11 +2280,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         })
         .then(text => {
             githubCovers = text.split('\n').map(s => s.trim()).filter(Boolean);
+            console.log("База обложек загружена: " + githubCovers.length);
         })
-        .catch(e => {
-            // Если файл не загрузился (например, из-за путей в Android)
-            console.error("covers_list.txt не найден", e);
-        });
+        .catch(e => console.error("covers_list.txt не найден", e));
 
     function getBaseName(name) {
         let base = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
@@ -2324,21 +2322,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const { gameName, sysType, resolve } = coverQueue.shift();
         
         const repoMap = {
-            "nes": "Nintendo_-_Nintendo_Entertainment_System",
-            "snes": "Nintendo_-_Super_Nintendo_Entertainment_System",
-            "sfc": "Nintendo_-_Super_Nintendo_Entertainment_System",
-            "smd": "Sega_-_Mega_Drive_-_Genesis",
-            "md": "Sega_-_Mega_Drive_-_Genesis",
-            "gen": "Sega_-_Mega_Drive_-_Genesis",
-            "bin": "Sega_-_Mega_Drive_-_Genesis",
-            "ngp": "SNK_-_Neo_Geo_Pocket",
-            "ngc": "SNK_-_Neo_Geo_Pocket_Color"
+            "nes": "Nintendo - Nintendo Entertainment System",
+            "snes": "Nintendo - Super Nintendo Entertainment System",
+            "sfc": "Nintendo - Super Nintendo Entertainment System",
+            "smd": "Sega - Mega Drive - Genesis",
+            "md": "Sega - Mega Drive - Genesis",
+            "gen": "Sega - Mega Drive - Genesis",
+            "bin": "Sega - Mega Drive - Genesis",
+            "ngp": "SNK - Neo Geo Pocket",
+            "ngc": "SNK - Neo Geo Pocket Color"
         };
         
         const folder = repoMap[sysType];
         
         if (!folder || githubCovers.length === 0) {
-            alert(`ОШИБКА БАЗЫ:\nПапка: ${folder}\nРазмер базы: ${githubCovers.length}\nФайл covers_list.txt прочитался?`);
             resolve(null);
             setTimeout(processCoverQueue, 50); 
             return;
@@ -2351,33 +2348,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             matches = githubCovers.filter(name => getBaseName(name).startsWith(localBase));
         }
 
-        if (matches.length === 0) {
-            alert(`ОШИБКА ПОИСКА:\nИмя "${localBase}" вообще не найдено в covers_list.txt! Проверь, как игра записана в текстовике.`);
-        }
-
         matches = matches.slice(0, 3);
         let foundUrl = null;
-        let triedUrls = [];
 
-        searchLoop:
         for (const match of matches) {
             const safeName = match.replace(/\.png$/i, '');
-            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${folder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-            triedUrls.push(url);
+            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
             if (await checkImageExists(url)) {
                 foundUrl = url;
-                break searchLoop; 
+                break; 
             }
             await new Promise(r => setTimeout(r, 100));
         }
 
-        if (!foundUrl && matches.length > 0) {
-            alert(`ОШИБКА ГИТХАБА для "${gameName}"!\nВ txt нашли:\n${matches.join(', ')}\n\nСтучались по ссылкам, но там пусто (404):\n${triedUrls.join('\n\n')}`);
-        }
-
         resolve(foundUrl);
-        setTimeout(processCoverQueue, 200);
+        setTimeout(processCoverQueue, 150);
     }
 
     // ==========================================
