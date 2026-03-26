@@ -169,7 +169,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
 .game-btn.selected .edit-icon { display: flex !important; }
 
-/* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА СПИСКА И КРУПНЫХ ОБЛОЖЕК */
+/* РЕЖИМ: СПИСОК И КРУПНЫЕ ОБЛОЖКИ */
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
@@ -2277,9 +2277,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     // ==========================================
-    // УМНЫЙ ПОИСК ОБЛОЖЕК
+    // УМНЫЙ ПОИСК ОБЛОЖЕК (МЯГКИЙ + ИСКЛЮЧЕНИЯ)
     // ==========================================
     let githubCovers = [];
+    window.usedCovers = window.usedCovers || new Set();
     
     let coversReady = fetch('covers_list.txt')
         .then(r => {
@@ -2288,25 +2289,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         })
         .then(text => {
             githubCovers = text.split('\n').map(s => s.trim()).filter(Boolean);
-            console.log("База обложек загружена: " + githubCovers.length);
+            console.log("Загружено обложек в базу: " + githubCovers.length);
         })
         .catch(e => console.error("covers_list.txt не найден", e));
 
-    // Разбиваем название на слова для мягкого поиска
     function getWords(name) {
         let clean = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
         clean = clean.replace(/\.[^/.]+$/, ""); 
-        return clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ' ').split(/\s+/).filter(Boolean);
+        if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        clean = clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ' ');
+
+        // Отделяем цифры от букв (MegaMan2 -> Mega Man 2)
+        clean = clean.replace(/([a-zа-яё])([0-9]+)/g, '$1 $2').replace(/([0-9]+)([a-zа-яё])/g, '$1 $2');
+        
+        let words = clean.split(/\s+/).filter(Boolean);
+        
+        // Переводим римские цифры
+        const romanMap = { 'i': '1', 'ii': '2', 'iii': '3', 'iv': '4', 'v': '5', 'vi': '6', 'vii': '7', 'viii': '8' };
+        return words.map(w => romanMap[w] || w);
     }
 
-    function checkImageExists(url, timeout = 5000) { 
-        return new Promise(resolve => {
-            const img = new Image();
-            let timer = setTimeout(() => { img.src = ''; resolve(false); }, timeout);
-            img.onload = () => { clearTimeout(timer); resolve(true); };
-            img.onerror = () => { clearTimeout(timer); resolve(false); };
-            img.src = url;
-        });
+    async function checkImageExists(url) { 
+        try {
+            const r = await fetch(url, { method: 'HEAD' });
+            return r.ok;
+        } catch (e) { return false; }
     }
 
     const coverQueue = [];
@@ -2321,15 +2328,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function processCoverQueue() {
         if (coverQueue.length === 0) {
-            isFetchingCover = false;
-            return;
+            isFetchingCover = false; return;
         }
         isFetchingCover = true;
-
         await coversReady;
 
         const { gameName, sysType, resolve } = coverQueue.shift();
-        
         const repoMap = {
             "nes": "Nintendo - Nintendo Entertainment System",
             "snes": "Nintendo - Super Nintendo Entertainment System",
@@ -2341,51 +2345,62 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             "ngp": "SNK - Neo Geo Pocket",
             "ngc": "SNK - Neo Geo Pocket Color"
         };
-        
         const folder = repoMap[sysType];
         
         if (!folder || githubCovers.length === 0) {
-            resolve(null);
-            setTimeout(processCoverQueue, 50); 
-            return;
+            resolve(null); setTimeout(processCoverQueue, 50); return;
         }
 
         const localWords = getWords(gameName);
-        
-        // 1. Ищем игры, где есть ВСЕ слова из локального названия (например "sonic", "3")
-        let matches = githubCovers.filter(name => {
-            const dbWords = getWords(name);
-            return localWords.every(w => dbWords.includes(w));
-        });
-        
-        // 2. Если не нашли, ищем хотя бы по 50%+ совпадению слов
-        if (matches.length === 0) {
-            matches = githubCovers.filter(name => {
-                const dbWords = getWords(name);
-                const matchedCount = localWords.filter(w => dbWords.includes(w)).length;
-                return matchedCount > 0 && matchedCount >= Math.ceil(localWords.length / 2);
-            });
-            // Сортируем так, чтобы те, где совпало больше слов, были первыми
-            matches.sort((a, b) => {
-                const aCount = localWords.filter(w => getWords(a).includes(w)).length;
-                const bCount = localWords.filter(w => getWords(b).includes(w)).length;
-                return bCount - aCount;
-            });
-        }
+        const localSquashed = localWords.join('');
+        const localNumbers = localWords.filter(w => !isNaN(w));
 
-        matches = matches.slice(0, 4); // Проверяем топ-4 вариантов
+        let scoredMatches = githubCovers.map(name => {
+            const dbWords = getWords(name);
+            const dbSquashed = dbWords.join('');
+            const dbNumbers = dbWords.filter(w => !isNaN(w));
+            let score = 0;
+
+            if (dbSquashed === localSquashed) score += 100;
+            else if (dbSquashed.includes(localSquashed) || localSquashed.includes(dbSquashed)) score += 40;
+
+            const matchedWords = localWords.filter(w => dbWords.includes(w));
+            score += matchedWords.length * 10;
+            if (matchedWords.length > 0 && matchedWords.length === localWords.length) score += 50;
+
+            // Штрафы и бонусы за цифры
+            if (localNumbers.length > 0 && dbNumbers.length > 0) {
+                if (localNumbers[0] === dbNumbers[0]) score += 40;
+                else score -= 100; // Жесткий штраф: Mega Man 3 не должен заменять Mega Man 2
+            }
+
+            return { name, score };
+        }).filter(m => m.score > 0);
+
+        scoredMatches.sort((a, b) => b.score - a.score);
+        let matches = scoredMatches.map(m => m.name).slice(0, 5);
+
         let foundUrl = null;
+        let fallbackUrl = null;
 
         for (const match of matches) {
             const safeName = match.replace(/\.png$/i, '');
             const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
             if (await checkImageExists(url)) {
-                foundUrl = url;
-                break; 
+                if (window.usedCovers.has(url)) {
+                    if (!fallbackUrl) fallbackUrl = url; 
+                    continue; 
+                } else {
+                    foundUrl = url;
+                    window.usedCovers.add(url);
+                    break;
+                }
             }
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => setTimeout(r, 50));
         }
+
+        if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
 
         resolve(foundUrl);
         setTimeout(processCoverQueue, 150);
