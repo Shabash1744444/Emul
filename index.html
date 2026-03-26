@@ -169,7 +169,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
 .game-btn.selected .edit-icon { display: flex !important; }
 
-/* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА СПИСКА И КРУПНЫХ ОБЛОЖЕК */
+/* РЕЖИМ: СПИСОК И КРУПНЫЕ ОБЛОЖКИ */
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
@@ -2282,7 +2282,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function getCleanKey(name) {
         let clean = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
-        clean = clean.replace(/\.[^/.]+$/, ""); 
+        clean = clean.replace(/\.png$/i, ""); 
         return clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ''); 
     }
 
@@ -2313,7 +2313,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         isFetchingCover = true;
 
-        // ЖДЕМ, пока текстовый файл гарантированно загрузится в память
         await coversReady;
 
         const { gameName, sysType, resolve } = coverQueue.shift();
