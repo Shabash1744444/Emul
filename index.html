@@ -169,7 +169,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
 .game-btn.selected .edit-icon { display: flex !important; }
 
-/* РЕЖИМ: СПИСОК И КРУПНЫЕ ОБЛОЖКИ */
+/* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА СПИСКА И КРУПНЫХ ОБЛОЖЕК */
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
@@ -2274,26 +2274,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let githubCovers = [];
     
     let coversReady = fetch('covers_list.txt')
-        .then(r => r.text())
+        .then(r => {
+            if (!r.ok) throw new Error("HTTP error " + r.status);
+            return r.text();
+        })
         .then(text => {
             githubCovers = text.split('\n').map(s => s.trim()).filter(Boolean);
+            console.log("Загружено обложек в базу: " + githubCovers.length);
         })
-        .catch(e => console.error("covers_list.txt не найден"));
+        .catch(e => console.error("covers_list.txt не найден", e));
 
-    function getCleanKey(name) {
-        let clean = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
-        clean = clean.replace(/\.png$/i, ""); 
-        return clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ''); 
+    // Новая функция: вырезает ЛЮБЫЕ скобки () и [] и расширения
+    function getBaseName(name) {
+        let base = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
+        base = base.replace(/\.[^/.]+$/, ""); 
+        return base.toLowerCase().replace(/[^a-z0-9а-яё]/g, ''); 
     }
 
-    function checkImageExists(url, timeout = 5000) { 
-        return new Promise(resolve => {
-            const img = new Image();
-            let timer = setTimeout(() => { img.src = ''; resolve(false); }, timeout);
-            img.onload = () => { clearTimeout(timer); resolve(true); };
-            img.onerror = () => { clearTimeout(timer); resolve(false); };
-            img.src = url;
-        });
+    // Надежная проверка через HEAD-запрос
+    async function checkImageExists(url) { 
+        try {
+            const r = await fetch(url, { method: 'HEAD' });
+            return r.ok;
+        } catch (e) {
+            return false;
+        }
     }
 
     const coverQueue = [];
@@ -2313,7 +2318,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         isFetchingCover = true;
 
-        await coversReady;
+        await coversReady; // Ждем загрузки базы
 
         const { gameName, sysType, resolve } = coverQueue.shift();
         
@@ -2333,34 +2338,35 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         if (!folder || githubCovers.length === 0) {
             resolve(null);
-            setTimeout(processCoverQueue, 100); 
+            setTimeout(processCoverQueue, 50); 
             return;
         }
 
-        const localKey = getCleanKey(gameName);
-        let matches = githubCovers.filter(name => getCleanKey(name) === localKey);
+        const localBase = getBaseName(gameName);
+        
+        // Сравниваем очищенные базовые имена
+        let matches = githubCovers.filter(name => getBaseName(name) === localBase);
         
         if (matches.length === 0) {
-            matches = githubCovers.filter(name => getCleanKey(name).startsWith(localKey));
+            matches = githubCovers.filter(name => getBaseName(name).startsWith(localBase));
         }
 
-        matches = matches.slice(0, 4);
+        matches = matches.slice(0, 3);
         let foundUrl = null;
 
-        searchLoop:
         for (const match of matches) {
             const safeName = match.replace(/\.png$/i, '');
             const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${folder}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
             if (await checkImageExists(url)) {
                 foundUrl = url;
-                break searchLoop; 
+                break; 
             }
             await new Promise(r => setTimeout(r, 100));
         }
 
         resolve(foundUrl);
-        setTimeout(processCoverQueue, 200);
+        setTimeout(processCoverQueue, 150);
     }
 
     // ==========================================
