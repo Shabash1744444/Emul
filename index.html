@@ -65,11 +65,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
 .game-btn { padding: 15px 5px; font-size: 13px; font-weight: bold; text-align: center; background: linear-gradient(145deg, #1f2937, #111827); color: #fff; border: 1px solid #374151; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; }
 .game-btn:active { transform: translateY(4px) scale(0.96); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0,0,0,0.5); }
-.game-btn::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.65); z-index: 1; pointer-events: none; transition: background 0.2s; }
-.game-btn:hover::before { background: rgba(0,0,0,0.4); }
+.game-btn::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.2); z-index: 1; pointer-events: none; transition: background 0.2s; }
+.game-btn:hover::before { background: rgba(0,0,0,0.1); }
 .game-btn-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
 .icon { font-size: 36px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px; }
-.game-title { padding: 0 5px; width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 3px #000, 0 0 5px rgba(0,0,0,0.5); letter-spacing: 0.5px; }
+.game-title { padding: 0 5px; width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 3px #000, 0 0 5px rgba(0,0,0,0.5); letter-spacing: 0.5px; z-index: 3; }
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: 900; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
 .sys-nes:active { box-shadow: 0 2px 0 #991b1b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
@@ -92,7 +92,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
 .sys-html:active { box-shadow: 0 2px 0 #78350f, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
-.del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
+.del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
 #infoModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
 #infoModal { background: #1f2937; border: 2px solid #38bdf8; border-radius: 12px; padding: 20px; max-width: 400px; width: 100%; color: #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
@@ -173,11 +173,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
-.grid.list-view .game-title { padding-left: 15px; font-size: 15px; white-space: normal; }
+.grid.list-view .game-title { padding-left: 15px; font-size: 15px; white-space: normal; background: none; }
 .grid.list-view .sys-badge { right: 15px; top: 50%; transform: translateY(-50%); }
+
 .grid.large-view { grid-template-columns: 1fr; }
-.grid.large-view .game-btn { height: 220px; font-size: 18px; }
-.grid.large-view .game-title { font-size: 20px; white-space: normal; background: rgba(0,0,0,0.7); }
+.grid.large-view .game-btn { height: 250px; padding: 0; align-items: flex-end; border-radius: 16px; }
+.grid.large-view .game-btn-content { justify-content: flex-end; }
+.grid.large-view .game-title { 
+    font-size: 18px; 
+    white-space: normal; 
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%); 
+    padding: 30px 15px 15px 15px; 
+    text-align: left; 
+}
 </style>
 </head>
 <body>
@@ -2272,7 +2280,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     // УМНЫЙ ПОИСК ОБЛОЖЕК
     // ==========================================
     let githubCovers = [];
-
+    
     let coversReady = fetch('covers_list.txt')
         .then(r => {
             if (!r.ok) throw new Error("HTTP error " + r.status);
@@ -2284,10 +2292,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         })
         .catch(e => console.error("covers_list.txt не найден", e));
 
-    function getBaseName(name) {
-        let base = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
-        base = base.replace(/\.[^/.]+$/, ""); 
-        return base.toLowerCase().replace(/[^a-z0-9а-яё]/g, ''); 
+    // Разбиваем название на слова для мягкого поиска
+    function getWords(name) {
+        let clean = name.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, ''); 
+        clean = clean.replace(/\.[^/.]+$/, ""); 
+        return clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ' ').split(/\s+/).filter(Boolean);
     }
 
     function checkImageExists(url, timeout = 5000) { 
@@ -2341,14 +2350,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return;
         }
 
-        const localBase = getBaseName(gameName);
-        let matches = githubCovers.filter(name => getBaseName(name) === localBase);
+        const localWords = getWords(gameName);
         
+        // 1. Ищем игры, где есть ВСЕ слова из локального названия (например "sonic", "3")
+        let matches = githubCovers.filter(name => {
+            const dbWords = getWords(name);
+            return localWords.every(w => dbWords.includes(w));
+        });
+        
+        // 2. Если не нашли, ищем хотя бы по 50%+ совпадению слов
         if (matches.length === 0) {
-            matches = githubCovers.filter(name => getBaseName(name).startsWith(localBase));
+            matches = githubCovers.filter(name => {
+                const dbWords = getWords(name);
+                const matchedCount = localWords.filter(w => dbWords.includes(w)).length;
+                return matchedCount > 0 && matchedCount >= Math.ceil(localWords.length / 2);
+            });
+            // Сортируем так, чтобы те, где совпало больше слов, были первыми
+            matches.sort((a, b) => {
+                const aCount = localWords.filter(w => getWords(a).includes(w)).length;
+                const bCount = localWords.filter(w => getWords(b).includes(w)).length;
+                return bCount - aCount;
+            });
         }
 
-        matches = matches.slice(0, 3);
+        matches = matches.slice(0, 4); // Проверяем топ-4 вариантов
         let foundUrl = null;
 
         for (const match of matches) {
