@@ -2273,7 +2273,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     // ==========================================
     let githubCovers = [];
     
-    fetch('covers_list.txt')
+    let coversReady = fetch('covers_list.txt')
         .then(r => r.text())
         .then(text => {
             githubCovers = text.split('\n').map(s => s.trim()).filter(Boolean);
@@ -2312,6 +2312,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return;
         }
         isFetchingCover = true;
+
+        // ЖДЕМ, пока текстовый файл гарантированно загрузится в память
+        await coversReady;
 
         const { gameName, sysType, resolve } = coverQueue.shift();
         
