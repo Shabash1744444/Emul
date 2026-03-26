@@ -1090,7 +1090,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
-
     function sanitizePadConfig() {
         const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
         if (!padConfig || typeof padConfig !== 'object') padConfig = {};
@@ -2351,20 +2350,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         await coversReady;
 
         const { gameName, sysType, resolve } = coverQueue.shift();
-        const repoMap = {
-            "nes": "Nintendo - Nintendo Entertainment System",
-            "snes": "Nintendo - Super Nintendo Entertainment System",
-            "sfc": "Nintendo - Super Nintendo Entertainment System",
-            "smd": "Sega - Mega Drive - Genesis",
-            "md": "Sega - Mega Drive - Genesis",
-            "gen": "Sega - Mega Drive - Genesis",
-            "bin": "Sega - Mega Drive - Genesis",
-            "ngp": "SNK - Neo Geo Pocket",
-            "ngc": "SNK - Neo Geo Pocket Color"
-        };
-        const folder = repoMap[sysType];
         
-        if (!folder || githubCovers.length === 0) {
+        // --- ПРАВКА ЗДЕСЬ: МАССИВЫ ПАПОК ДЛЯ КАСКАДНОГО ПОИСКА ---
+        const repoMap = {
+            "nes": ["Nintendo - Nintendo Entertainment System"],
+            "snes": ["Nintendo - Super Nintendo Entertainment System"],
+            "sfc": ["Nintendo - Super Nintendo Entertainment System"],
+            "smd": ["Sega - Mega Drive - Genesis"],
+            "md": ["Sega - Mega Drive - Genesis"],
+            "gen": ["Sega - Mega Drive - Genesis"],
+            "bin": ["Sega - Mega Drive - Genesis"],
+            "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], // Сначала ищет в ч/б, потом в цвете
+            "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"]  // Наоборот
+        };
+        const folders = repoMap[sysType] || [];
+        
+        if (folders.length === 0 || githubCovers.length === 0) {
             resolve(null); setTimeout(processCoverQueue, 50); return;
         }
 
@@ -2401,7 +2402,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (matches.length === 0) {
             for (let name of githubCovers) {
                 let safeName = name.replace(/\.png$/i, '');
-                let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                // Проверяем по первой (основной) папке для метода исключения
+                let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folders[0])}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
                 if (!window.usedCovers.has(url)) {
                     matches.push(name);
                     if (matches.length >= 3) break;
@@ -2418,19 +2420,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         for (const match of matches) {
             const safeName = match.replace(/\.png$/i, '');
-            const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
             
-            if (await checkImageExists(url)) {
-                if (window.usedCovers.has(url)) {
-                    if (!fallbackUrl) fallbackUrl = url; 
-                    continue; 
-                } else {
-                    foundUrl = url;
-                    window.usedCovers.add(url);
-                    break;
+            // --- ПРАВКА ЗДЕСЬ: ПРОВЕРЯЕМ ВСЕ ДОСТУПНЫЕ ПАПКИ ИЗ МАССИВА ---
+            for (const folder of folders) {
+                const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                
+                if (await checkImageExists(url)) {
+                    if (window.usedCovers.has(url)) {
+                        if (!fallbackUrl) fallbackUrl = url; 
+                        continue; 
+                    } else {
+                        foundUrl = url;
+                        window.usedCovers.add(url);
+                        break;
+                    }
                 }
+                await new Promise(r => setTimeout(r, 50));
             }
-            await new Promise(r => setTimeout(r, 50));
+            if (foundUrl) break; // Если нашли картинку, переходим к следующей игре
         }
 
         if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
