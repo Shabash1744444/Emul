@@ -63,13 +63,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #searchInput:focus { border-color: #38bdf8; }
 #searchInput::placeholder { color: #64748b; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
-.game-btn { padding: 15px 5px; font-size: 13px; font-weight: bold; text-align: center; background: linear-gradient(145deg, #1f2937, #111827); color: #fff; border: 1px solid #374151; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; }
+.game-btn { padding: 0; font-size: 13px; font-weight: bold; text-align: center; background: linear-gradient(145deg, #1f2937, #111827); color: #fff; border: 1px solid #374151; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; min-height: 120px; }
 .game-btn:active { transform: translateY(4px) scale(0.96); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0,0,0,0.5); }
 .game-btn::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.2); z-index: 1; pointer-events: none; transition: background 0.2s; }
 .game-btn:hover::before { background: rgba(0,0,0,0.1); }
-.game-btn-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+.game-btn-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; padding-bottom: 25px; }
 .icon { font-size: 36px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px; }
-.game-title { padding: 0 5px; width: 100%; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 3px #000, 0 0 5px rgba(0,0,0,0.5); letter-spacing: 0.5px; z-index: 3; }
+.game-title { position: absolute; bottom: 0; left: 0; width: 100%; padding: 6px 4px; font-size: 10px; background: rgba(0,0,0,0.8); border-radius: 0 0 11px 11px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; z-index: 3; }
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: 900; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
 .sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
 .sys-nes:active { box-shadow: 0 2px 0 #991b1b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
@@ -172,18 +172,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* РЕЖИМ: СПИСОК И КРУПНЫЕ ОБЛОЖКИ */
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
-.grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; }
-.grid.list-view .game-title { padding-left: 15px; font-size: 15px; white-space: normal; background: none; }
+.grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; padding-bottom: 0; }
+.grid.list-view .game-title { position: static; background: none; padding-left: 15px; font-size: 15px; white-space: normal; border-radius: 0; }
 .grid.list-view .sys-badge { right: 15px; top: 50%; transform: translateY(-50%); }
 
-.grid.large-view { grid-template-columns: 1fr; }
-.grid.large-view .game-btn { height: 250px; padding: 0; align-items: flex-end; border-radius: 16px; }
-.grid.large-view .game-btn-content { justify-content: flex-end; }
+.grid.large-view { grid-template-columns: 1fr; gap: 20px; }
+.grid.large-view .game-btn { height: 350px; padding: 0; align-items: flex-end; border-radius: 16px; background-size: cover; background-repeat: no-repeat; background-position: top center; background-color: #050505; }
+.grid.large-view .game-btn-content { justify-content: flex-end; padding-bottom: 0; }
 .grid.large-view .game-title { 
+    position: absolute; bottom: 0; left: 0; width: 100%;
     font-size: 18px; 
     white-space: normal; 
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%); 
-    padding: 30px 15px 15px 15px; 
+    background: linear-gradient(to top, transparent 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.95) 100%); 
+    padding: 40px 15px 15px 15px; 
+    border-radius: 0 0 16px 16px;
     text-align: left; 
 }
 </style>
@@ -226,9 +228,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <option value="name_desc">🔤 По имени Я-А</option>
             <option value="sys">🎮 По системе</option>
         </select>
-        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; font-size: 18px; padding: 0;">🔲</button>
-        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; font-size: 16px;">
-            ✏️
+        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; display: flex; align-items: center; justify-content: center; padding: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; display: flex; align-items: center; justify-content: center; padding: 0;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
     <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
@@ -2380,6 +2384,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         scoredMatches.sort((a, b) => b.score - a.score);
         let matches = scoredMatches.map(m => m.name).slice(0, 5);
 
+        // --- НОВАЯ ЛОГИКА ФОЛЛБЕКА (МЕТОД ИСКЛЮЧЕНИЯ ДЛЯ ЦИФР И МУСОРА) ---
+        if (matches.length === 0) {
+            for (let name of githubCovers) {
+                let safeName = name.replace(/\.png$/i, '');
+                let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                if (!window.usedCovers.has(url)) {
+                    matches.push(name);
+                    if (matches.length >= 3) break;
+                }
+            }
+            if (matches.length === 0) {
+                matches = githubCovers.slice(0, 3); // Резервный дубль
+            }
+        }
+        // ------------------------------------------------------------------
+
         let foundUrl = null;
         let fallbackUrl = null;
 
@@ -2418,14 +2438,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         grid.className = 'grid'; 
         
+        const svgGrid = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+        const svgList = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
+        const svgLarge = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
+        
         if (currentViewMode === 'list') {
             grid.classList.add('list-view');
-            btn.innerHTML = '📄'; 
+            btn.innerHTML = svgList; 
         } else if (currentViewMode === 'large') {
             grid.classList.add('large-view');
-            btn.innerHTML = '🖼️'; 
+            btn.innerHTML = svgLarge; 
         } else {
-            btn.innerHTML = '🔲'; 
+            btn.innerHTML = svgGrid; 
         }
     }
 
@@ -2583,6 +2607,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const delBtn = document.createElement('div'); 
             delBtn.className = 'del-btn'; 
             delBtn.innerHTML = '✖';
+            delBtn.style.display = 'none'; // Полностью скрываем старые маленькие крестики
             delBtn.onclick = (e) => { 
                 e.stopPropagation(); 
                 if(confirm(`Удалить игру "${game.n}" из памяти эмулятора?`)) {
