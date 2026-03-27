@@ -1494,9 +1494,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
         if (newKeys === null) { 
-            activeDpadKeys.forEach(k => sendKey(k, false)); 
-            activeDpadKeys.clear(); 
+            if (activeDpadKeys.size > 0) {
+                activeDpadKeys.forEach(k => sendKey(k, false)); 
+                activeDpadKeys.clear(); 
+            }
         } else { 
+            // ФИКС ВИБРАЦИИ ПРИ СКОЛЬЖЕНИИ:
+            let changed = false;
+            if (newKeys.size !== activeDpadKeys.size) {
+                changed = true;
+            } else {
+                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
+            }
+
+            if (changed) {
+                doVibrate(10); // Легкая отдача при переходе на другую стрелку
+            }
+
             if (isStepDpad) {
                 activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
             }
@@ -1626,9 +1640,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 88: { keyCode: 88, code: 'KeyX', key: 'x' }, 65: { keyCode: 65, code: 'KeyA', key: 'a' }, 83: { keyCode: 83, code: 'KeyS', key: 's' }, 81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 87: { keyCode: 87, code: 'KeyW', key: 'w' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftRight', key: 'Shift' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
             }
             if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
-            let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true };
+            
+            // ФИКС УПРАВЛЕНИЯ: Добавлено composed: true
+            let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true, composed: true };
             if (keyMap[finalCode]) { evData.code = keyMap[finalCode].code; evData.key = keyMap[finalCode].key; }
-            document.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', evData));
+            
+            const event = new KeyboardEvent(down ? 'keydown' : 'keyup', evData);
+            document.dispatchEvent(event);
+            
+            // ФИКС УПРАВЛЕНИЯ: Дублируем нажатие прямо в canvas для нового ES6 ядра (mGBA)
+            const cvs = document.getElementById('canvas');
+            if (cvs) {
+                cvs.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', evData));
+            }
         }
         if (nes) {
             const nesMap = {38:4, 40:5, 37:6, 39:7, 90:0, 88:1, 16:2, 13:3, 27:3}; 
@@ -1745,14 +1769,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // ИСПРАВЛЕННЫЙ ES6 ЗАГРУЗЧИК ДЛЯ GBA С ФИКСОМ WebGL
     function setupModernLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
         
-        // --- ФИКС №1: Делаем канвас блочным и готовим WebGL контекст ---
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated;';
+        // ФИКС УПРАВЛЕНИЯ: Разрешаем фокус для канваса
+        libCanvas.tabIndex = -1;
+        
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated; outline: none;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
@@ -1761,13 +1786,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
         
-        // --- ФИКС №2: Явная инициализация WebGL контекста до загрузки ядра ---
         const glContext = libCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false, preserveDrawingBuffer: true });
-        if (glContext) {
-             console.log("ES6 REFIX: WebGL контекст принудительно подготовлен.");
-        } else {
-             console.error("ES6 REFIX: Не удалось подготовить WebGL контекст.");
-        }
 
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
@@ -1822,6 +1841,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const moduleFactory = (await import('./' + coreName + '.js')).default;
                 window.Module = await moduleFactory({
                     canvas: libCanvas,
+                    keyboardListeningElement: window.document, // ФИКС УПРАВЛЕНИЯ: Ядро слушает весь документ
                     arguments: [virtualFileName],
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
@@ -1837,6 +1857,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 });
 
                 glLoop();
+                setTimeout(() => libCanvas.focus(), 100); // ФИКС УПРАВЛЕНИЯ: Насильный фокус
                 await new Promise(r => setTimeout(r, 500));
                 await loadGameState(true);
                 isGameStarting = false;
