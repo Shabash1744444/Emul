@@ -132,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 50px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 75px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -146,14 +146,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
 /* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
-#btn-select { bottom: 20px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 20px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 45px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 100px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 100px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 155px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
-#btn-l { top: 70px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
-#btn-r { top: 70px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-select { bottom: 45px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 45px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 70px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 125px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 125px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 180px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-l { top: 95px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-r { top: 95px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
@@ -1340,6 +1340,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
+                
+                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ (СДВИГ НА 5ММ) ДЛЯ СБРОСА ===
+                if (id === 'dpad') { el.style.bottom = '75px'; el.style.left = '20px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'a') { el.style.bottom = '125px'; el.style.right = '20px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'b') { el.style.bottom = '70px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'x') { el.style.bottom = '180px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'y') { el.style.bottom = '125px'; el.style.right = '150px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } // +25px вниз (было 70)
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } // +25px вниз
+                else if (id === 'select') { el.style.bottom = '45px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } // +25px
+                else if (id === 'start') { el.style.bottom = '45px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } // +25px
+                
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
                 applyVisuals(id);
@@ -1735,7 +1747,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         libCanvas.tabIndex = -1;
         
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated; outline: none;';
+        // === ФИКС СЛОЕВ (z-index: 1 вместо 10) ===
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 1; display: block !important; image-rendering: pixelated; outline: none;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
@@ -1744,10 +1757,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
         
+        // === ФИКС ЗАХВАТА WEBGL (preserveDrawingBuffer) ===
         const glContext = libCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false, preserveDrawingBuffer: true });
 
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
+        // === СЛОЙ РЕЗУЛЬТАТА (z-index: 5) ТЕПЕРЬ ВИДЕН ===
         glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
@@ -2659,6 +2674,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     }
 
+    // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
+    function toggleFavorite(id, e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const tx = db.transaction(["games"], "readwrite");
+        const store = tx.objectStore("games");
+        const req = store.get(id);
+        req.onsuccess = () => {
+            const g = req.result;
+            if (g) {
+                g.fav = !g.fav; // Меняем флаг на противоположный
+                store.put(g).onsuccess = () => renderAllGames();
+            }
+        };
+    }
+
     function renderAllGames() {
         const scrollPos = menuScreen.scrollTop; 
         
@@ -2676,16 +2706,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => { 
             let customGames = req.result; 
             
-            if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
-            else if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
-            else if (sortType === 'sys') customGames.sort((a,b) => a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n));
-            else if (sortType === 'newest') customGames.sort((a,b) => {
-                const idA = parseInt(a.id.split('_')[1]) || 0;
-                const idB = parseInt(b.id.split('_')[1]) || 0;
-                return idB - idA;
+            // === ОБНОВЛЕННАЯ СОРТИРОВКА (С УЧЕТОМ ИЗБРАННОГО) ===
+            customGames.sort((a, b) => {
+                // Сначала всегда сортируем по "Избранному"
+                if (a.fav && !b.fav) return -1;
+                if (!a.fav && b.fav) return 1;
+
+                // Затем применяем выбранную пользователем сортировку
+                if (sortType === 'name_asc') return a.n.localeCompare(b.n);
+                if (sortType === 'name_desc') return b.n.localeCompare(a.n);
+                if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
+                if (sortType === 'newest') {
+                    const idA = parseInt(a.id.split('_')[1]) || 0;
+                    const idB = parseInt(b.id.split('_')[1]) || 0;
+                    return idB - idA;
+                }
+                return 0; // Для random оставляем так, он перемешает ниже
             });
-            else if (sortType === 'random') {
-                customGames.sort(() => Math.random() - 0.5);
+
+            if (sortType === 'random') {
+                // Если рандом, перемешиваем только внутри "своих" групп (избранные с избранными, остальные с остальными)
+                let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
+                let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
+                customGames = favs.concat(nonFavs);
             }
 
             const term = document.getElementById('searchInput').value.toLowerCase();
@@ -2716,7 +2759,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
         
-        btn.innerHTML = `${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
+        // === ДОБАВЛЕНА КНОПКА ИЗБРАННОГО НА КАРТОЧКУ ===
+        const favIcon = game.fav ? '⭐' : '☆';
+        const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
+        
+        btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
         btn.onclick = (e) => { 
             e.preventDefault(); 
@@ -2890,7 +2937,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             m: controlMode, 
             e: execCmd, 
             fit: 'contain', 
-            cover: coverData 
+            cover: coverData,
+            fav: false // Новые игры по умолчанию не в избранном
         };
 
         if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
