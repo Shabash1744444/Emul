@@ -92,7 +92,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
 .sys-html:active { box-shadow: 0 2px 0 #78350f, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
-/* ДОБАВЛЕН CSS ДЛЯ НОВЫХ ФОРМАТОВ (GBA) */
 .sys-gba { box-shadow: 0 6px 0 #a21caf, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #d946ef; }
 .sys-gba:active { box-shadow: 0 2px 0 #a21caf, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-gba { background: linear-gradient(135deg, #d946ef, #a21caf); color: white; }
@@ -133,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 40px; left: 30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 50px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -145,14 +144,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.right { top: 38%; right: 8%; }
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
-#btn-select { bottom: 35px; left: calc(50% - 45px); transform: translateX(-50%); width: 80px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px; color: #fff; text-align: center; font-weight: bold; font-size: 12px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 35px; left: calc(50% + 45px); transform: translateX(-50%); width: 80px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px; color: #fff; text-align: center; font-weight: bold; font-size: 12px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 50px; right: 120px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 90px; right: 30px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 100px; right: 160px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 140px; right: 70px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
-#btn-l { top: 90px; left: 20px; width: 80px; height: 40px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
-#btn-r { top: 90px; right: 20px; width: 80px; height: 40px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+
+/* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
+#btn-select { bottom: 20px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 20px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 45px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 100px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 100px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 155px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-l { top: 70px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-r { top: 70px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
@@ -245,6 +247,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <option value="name_asc">🔤 По имени А-Я</option>
             <option value="name_desc">🔤 По имени Я-А</option>
             <option value="sys">🎮 По системе</option>
+            <option value="random">🎲 Вперемешку</option>
         </select>
         <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; padding: 0;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
@@ -257,10 +260,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
             Выбрано: <span id="selectedCount">0</span> игр
         </div>
-        <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="width: 100%; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
-            🗑️ УДАЛИТЬ ВЫБРАННЫЕ
-        </button>
+        <div style="display: flex; gap: 10px;">
+            <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
+                🖼️ ОБЛОЖКА
+            </button>
+            <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
+                🗑️ УДАЛИТЬ
+            </button>
+        </div>
     </div>
+    <input type="file" id="customCoverInput" accept="image/*" style="display:none">
 
     <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" oninput="renderAllGames()">
     <div class="grid" id="gameGrid"></div>
@@ -285,9 +294,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <li><span>MS-DOS (Компьютер)</span> <span class="info-ext">.zip (внутри .exe/.bat)</span></li>
             <li><span>Браузерные игры</span> <span class="info-ext">.html</span></li>
         </ul>
-        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 20px;">
+        <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 15px;">
             Поддерживается загрузка как чистых файлов, так и <strong>.ZIP архивов</strong>.<br>Эмулятор сам найдет нужный файл и скачает обложку.
         </p>
+        <button id="exportLibraryBtn" onclick="exportLibrary()" class="action-btn" style="width: 100%; background: #0f766e; color: white; border: 1px solid #047857; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; margin-bottom: 10px;">📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)</button>
         <button id="closeInfoBtn" class="action-btn" style="width: 100%; background: #334155; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;">ЗАКРЫТЬ</button>
     </div>
 </div>
@@ -955,7 +965,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord;
                 void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
-
             const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
                 uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
                 uniform vec2 u_tex_size; uniform int u_system;
@@ -1331,53 +1340,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
-                
-                if (id === 'dpad') { 
-                    el.style.bottom = '40px'; 
-                    el.style.left = '30px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'a') { 
-                    el.style.bottom = '90px'; 
-                    el.style.right = '30px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'b') { 
-                    el.style.bottom = '50px'; 
-                    el.style.right = '120px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'x') { 
-                    el.style.bottom = '140px'; 
-                    el.style.right = '70px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'y') { 
-                    el.style.bottom = '100px'; 
-                    el.style.right = '160px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'l') { 
-                    el.style.top = 'auto'; 
-                    el.style.bottom = '140px'; 
-                    el.style.left = '20px';      
-                }
-                else if (id === 'r') { 
-                    el.style.top = 'auto';
-                    el.style.bottom = '140px'; 
-                    el.style.right = '20px';     
-                }
-                else if (id === 'select') { 
-                    el.style.bottom = '35px'; 
-                    el.style.left = 'calc(50% - 45px)'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'start') { 
-                    el.style.bottom = '35px'; 
-                    el.style.left = 'calc(50% + 45px)'; 
-                    el.style.top = 'auto'; 
-                }
-                
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
                 applyVisuals(id);
@@ -1499,7 +1461,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 activeDpadKeys.clear(); 
             }
         } else { 
-            // ФИКС ВИБРАЦИИ ПРИ СКОЛЬЖЕНИИ:
             let changed = false;
             if (newKeys.size !== activeDpadKeys.size) {
                 changed = true;
@@ -1508,7 +1469,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
 
             if (changed) {
-                doVibrate(10); // Легкая отдача при переходе на другую стрелку
+                doVibrate(10); 
             }
 
             if (isStepDpad) {
@@ -1641,14 +1602,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
             
-            // ФИКС УПРАВЛЕНИЯ: Добавлено composed: true
             let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true, composed: true };
             if (keyMap[finalCode]) { evData.code = keyMap[finalCode].code; evData.key = keyMap[finalCode].key; }
             
             const event = new KeyboardEvent(down ? 'keydown' : 'keyup', evData);
             document.dispatchEvent(event);
             
-            // ФИКС УПРАВЛЕНИЯ: Дублируем нажатие прямо в canvas для нового ES6 ядра (mGBA)
             const cvs = document.getElementById('canvas');
             if (cvs) {
                 cvs.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', evData));
@@ -1774,7 +1733,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
         
-        // ФИКС УПРАВЛЕНИЯ: Разрешаем фокус для канваса
         libCanvas.tabIndex = -1;
         
         libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated; outline: none;';
@@ -1841,7 +1799,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const moduleFactory = (await import('./' + coreName + '.js')).default;
                 window.Module = await moduleFactory({
                     canvas: libCanvas,
-                    keyboardListeningElement: window.document, // ФИКС УПРАВЛЕНИЯ: Ядро слушает весь документ
+                    keyboardListeningElement: window.document, 
                     arguments: [virtualFileName],
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
@@ -1857,7 +1815,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 });
 
                 glLoop();
-                setTimeout(() => libCanvas.focus(), 100); // ФИКС УПРАВЛЕНИЯ: Насильный фокус
+                setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
                 await loadGameState(true);
                 isGameStarting = false;
@@ -2610,7 +2568,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         applyViewMode();
     }
     
-    document.addEventListener('DOMContentLoaded', applyViewMode);
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedSort = localStorage.getItem('librarySort');
+        const sortSelectEl = document.getElementById('sortSelect');
+        if (savedSort && sortSelectEl) {
+            sortSelectEl.value = savedSort;
+        }
+        applyViewMode();
+    });
 
     let db;
     const dbRequest = indexedDB.open("ArcadeHubDB", 2);
@@ -2620,6 +2585,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     };
     dbRequest.onsuccess = (e) => { 
         db = e.target.result; 
+        
+        const savedSort = localStorage.getItem('librarySort');
+        const sortSelectEl = document.getElementById('sortSelect');
+        if (savedSort && sortSelectEl) {
+            sortSelectEl.value = savedSort;
+        }
+
         renderAllGames(); 
         
         const restartId = sessionStorage.getItem('autoRestartGameId');
@@ -2664,6 +2636,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function updateEditCount() {
         document.getElementById('selectedCount').textContent = selectedGamesForDelete.size;
+        const coverBtn = document.getElementById('changeCoverBtn');
+        if (coverBtn) {
+            coverBtn.style.display = selectedGamesForDelete.size === 1 ? 'block' : 'none';
+        }
     }
 
     function deleteSelectedGames() {
@@ -2686,6 +2662,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     function renderAllGames() {
         const scrollPos = menuScreen.scrollTop; 
         
+        const sortSelectEl = document.getElementById('sortSelect');
+        let sortType = 'newest';
+        if (sortSelectEl) {
+            sortType = sortSelectEl.value;
+            localStorage.setItem('librarySort', sortType);
+        }
+        
         gameGrid.innerHTML = '';
         const tx = db.transaction(["games"], "readonly"); 
         const store = tx.objectStore("games"); 
@@ -2693,15 +2676,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => { 
             let customGames = req.result; 
             
-            const sortType = document.getElementById('sortSelect')?.value || 'newest';
             if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
-            if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
-            if (sortType === 'sys') customGames.sort((a,b) => a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n));
-            if (sortType === 'newest') customGames.sort((a,b) => {
+            else if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
+            else if (sortType === 'sys') customGames.sort((a,b) => a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n));
+            else if (sortType === 'newest') customGames.sort((a,b) => {
                 const idA = parseInt(a.id.split('_')[1]) || 0;
                 const idB = parseInt(b.id.split('_')[1]) || 0;
                 return idB - idA;
             });
+            else if (sortType === 'random') {
+                customGames.sort(() => Math.random() - 0.5);
+            }
 
             const term = document.getElementById('searchInput').value.toLowerCase();
             customGames = customGames.filter(g => !term || g.n.toLowerCase().includes(term));
@@ -2956,6 +2941,97 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             };
         });
     };
+
+    // ФУНКЦИЯ КАСТОМНЫХ ОБЛОЖЕК
+    function triggerCoverChange() {
+        if (selectedGamesForDelete.size !== 1) return;
+        document.getElementById('customCoverInput').click();
+    }
+
+    document.getElementById('customCoverInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file || selectedGamesForDelete.size !== 1) return;
+        
+        const gameId = Array.from(selectedGamesForDelete)[0];
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const base64Cover = evt.target.result;
+            const tx = db.transaction(["games"], "readwrite");
+            const store = tx.objectStore("games");
+            const req = store.get(gameId);
+            req.onsuccess = () => {
+                const g = req.result;
+                if (g) {
+                    g.cover = base64Cover;
+                    store.put(g).onsuccess = () => {
+                        renderAllGames();
+                        toggleLibraryEditMode(); // Выходим из режима редактора после смены обложки
+                    };
+                }
+            };
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    });
+
+    // ФУНКЦИЯ ЭКСПОРТА БИБЛИОТЕКИ В ZIP
+    async function exportLibrary() {
+        if (!confirm('Собрать все игры в один ZIP архив? Это может занять время.')) return;
+        
+        const btn = document.getElementById('exportLibraryBtn');
+        const origTxt = btn.innerHTML;
+        btn.innerHTML = '⏳ СОБИРАЮ АРХИВ...';
+        btn.style.pointerEvents = 'none';
+
+        try {
+            const tx = db.transaction(["games"], "readonly");
+            const store = tx.objectStore("games");
+            const req = store.getAll();
+            
+            req.onsuccess = async () => {
+                const games = req.result;
+                if (games.length === 0) {
+                    alert('Библиотека пуста!');
+                    btn.innerHTML = origTxt;
+                    btn.style.pointerEvents = 'auto';
+                    return;
+                }
+
+                let zipData = {};
+                for (let g of games) {
+                    const buffer = await readBlob(g.fileBlob);
+                    let fname = g.n + '.' + g.ext;
+                    // Для DOS возвращаем расширение zip, для HTML - html
+                    if (g.t === 'd') fname = g.n + '.zip';
+                    else if (g.t === 'h') fname = g.n + '.html';
+                    
+                    zipData[fname] = new Uint8Array(buffer);
+                }
+
+                const zipped = fflate.zipSync(zipData);
+                const blob = new Blob([zipped], { type: 'application/zip' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ArcadeHub_Backup.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                btn.innerHTML = '✅ ГОТОВО!';
+                setTimeout(() => { 
+                    btn.innerHTML = origTxt; 
+                    btn.style.pointerEvents = 'auto'; 
+                }, 3000);
+            };
+        } catch(e) {
+            alert('Ошибка при выгрузке: ' + e.message);
+            btn.innerHTML = origTxt;
+            btn.style.pointerEvents = 'auto';
+        }
+    }
 </script>
 
 <script src="libarchive.js"></script>
