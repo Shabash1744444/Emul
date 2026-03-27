@@ -92,6 +92,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
 .sys-html:active { box-shadow: 0 2px 0 #78350f, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
+/* ДОБАВЛЕН CSS ДЛЯ НОВЫХ ФОРМАТОВ (GBA) */
+.sys-gba { box-shadow: 0 6px 0 #a21caf, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #d946ef; }
+.sys-gba:active { box-shadow: 0 2px 0 #a21caf, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
+.badge-gba { background: linear-gradient(135deg, #d946ef, #a21caf); color: white; }
+
 .del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
 #infoModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
@@ -275,6 +280,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <li><span>Денди / NES</span> <span class="info-ext">.nes</span></li>
             <li><span>SEGA Mega Drive / Genesis</span> <span class="info-ext">.md, .gen, .smd, .bin</span></li>
             <li><span>Super Nintendo (SNES)</span> <span class="info-ext">.sfc, .smc</span></li>
+            <li><span>Game Boy (GBA / GBC / GB)</span> <span class="info-ext">.gba, .gbc, .gb</span></li>
             <li><span>Neo Geo Pocket (Color)</span> <span class="info-ext">.ngp, .ngc</span></li>
             <li><span>MS-DOS (Компьютер)</span> <span class="info-ext">.zip (внутри .exe/.bat)</span></li>
             <li><span>Браузерные игры</span> <span class="info-ext">.html</span></li>
@@ -416,7 +422,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
-
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -485,7 +490,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const coreMap = {
         'md': 'genesis_plus_gx_libretro', 'gen': 'genesis_plus_gx_libretro', 'smd': 'genesis_plus_gx_libretro', 'bin': 'genesis_plus_gx_libretro',
         'smc': 'snes9x_libretro', 'sfc': 'snes9x_libretro',
-        'ngp': 'mednafen_ngp_libretro', 'ngc': 'mednafen_ngp_libretro'
+        'ngp': 'mednafen_ngp_libretro', 'ngc': 'mednafen_ngp_libretro',
+        // ДОБАВЛЕНО ЯДРО ДЛЯ GBA / GBC / GB
+        'gba': 'mgba_libretro', 'gbc': 'mgba_libretro', 'gb': 'mgba_libretro'
     };
 
     const sysColors = {
@@ -493,6 +500,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA' },
         'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES' },
         'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP' },
+        'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA' }, // ДОБАВЛЕНО
         'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS' },
         'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML' },
         'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE' } 
@@ -503,6 +511,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'smd': { brake: 88, jump: 90 },
         'snes': { brake: 65, jump: 88 },
         'ngp': { brake: 88, jump: 90 },
+        'gba': { brake: 88, jump: 90 }, // ДОБАВЛЕНО (A/B)
         'dos': { brake: 90, jump: 88 },
         'unk': { brake: 88, jump: 90 }
     };
@@ -631,7 +640,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // --- ЖЕСТКАЯ ЛОВУШКА ДЛЯ СИСТЕМНОЙ КНОПКИ НАЗАД ---
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
         history.pushState({ trap: true }, ""); 
@@ -639,7 +647,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     window.addEventListener('popstate', (e) => { 
         history.pushState({ trap: true }, "");
-        
         const gameFrame = document.getElementById('gameFrame');
         if (gameFrame && gameFrame.style.display === 'block') { 
             if (typeof handleBackBtn === 'function') handleBackBtn();
@@ -659,7 +666,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // ГЛУШИЛКА ТАПОВ ДЛЯ БАРЬЕРА
     document.addEventListener('DOMContentLoaded', () => {
         const shield = document.getElementById('bottom-shield');
         if (shield) {
@@ -870,7 +876,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function getMaxScaleForSystem(sys) { 
-        const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4}; 
+        const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4, 'gba': 8}; 
         return limits[sys] || 8; 
     }
     
@@ -985,7 +991,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         else if (u_system == 1) { scanlineStrength = 0.12; maskStrength = 0.10; }
                         else if (u_system == 2) { scanlineStrength = 0.14; maskStrength = 0.12; }
                         else if (u_system == 4) { scanlineStrength = 0.25; maskStrength = 0.15; }
-                        else if (u_system == 3) { 
+                        else if (u_system == 3 || u_system == 5) { 
                             scanlineStrength = 0.0; maskStrength = 0.0; 
                             float scaleFactor = u_res; float gridThickness = 0.03 / scaleFactor * 8.0; gridThickness = clamp(gridThickness, 0.01, 0.05);
                             vec2 highResGrid = uv * u_tex_size * u_res; vec2 cellPos = fract(highResGrid);
@@ -995,7 +1001,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             vec3 subpixel = vec3(texture2D(u_image, uv + vec2(0.3 / (u_tex_size.x * u_res), 0.0)).r, texture2D(u_image, uv).g, texture2D(u_image, uv - vec2(0.3 / (u_tex_size.x * u_res), 0.0)).b);
                             color.rgb *= mix(subpixel * 0.9, subpixel, lcdGrid);
                         }
-                        if (u_system != 3) {
+                        if (u_system != 3 && u_system != 5) {
                             float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
                             color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
                             float mask = fract(uv.x * u_tex_size.x * u_res);
@@ -1643,7 +1649,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isGameStarting = true;
         
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
-        
         try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
 
         history.pushState({inGame: true}, "");
@@ -1687,8 +1692,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
         document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
         document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
-        document.getElementById('btn-l').style.display = isSixButton ? 'flex' : 'none'; 
-        document.getElementById('btn-r').style.display = isSixButton ? 'flex' : 'none';
+        
+        const isGba = game.sys === 'gba';
+        document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
+        document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
         
         isPadEditMode = false; 
         btnPadEdit.classList.remove('active-tool');
@@ -1727,20 +1734,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             setupDOS(game);
         } 
         else if (game.t === 'l') {
-            setupLibretro(game);
+            // РОУТЕР: Отправляем новые ядра в ES6 загрузчик, а старые в старый
+            const cName = coreMap[game.ext];
+            if (cName === 'mgba_libretro') {
+                setupModernLibretro(game);
+            } else {
+                setupLibretro(game);
+            }
         }
         else if (game.t === 'n') {
             setupNES(game);
         }
     }
 
-    function setupDOS(game) {
-        const dosCanvas = document.createElement('canvas'); 
-        dosCanvas.id = 'dos-canvas'; 
-        dosCanvas.width = 640; 
-        dosCanvas.height = 480;
-        dosCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
-        canvasContainer.appendChild(dosCanvas);
+    // НОВЫЙ ES6 ЗАГРУЗЧИК (ДЛЯ НОВЫХ ЯДЕР, НАПРИМЕР GBA)
+    function setupModernLibretro(game) {
+        document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        const libCanvas = document.createElement('canvas'); 
+        libCanvas.id = 'canvas'; 
+        
+        let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
+        if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
+
+        libCanvas.width = nativeWidth; 
+        libCanvas.height = nativeHeight;
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+        canvasContainer.appendChild(libCanvas);
         
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
@@ -1748,73 +1767,86 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
         
-        btnKeyboard.style.display = 'flex'; 
-        btnScreen.style.display = 'flex';
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        btnScreen.style.display = 'flex'; 
+        toggleGamepad(true);
         
-        if(game.m === 'pad' || game.m === 'touch_hover') { 
-            btnGamepad.style.display = 'flex'; 
-            btnPadEdit.style.display = 'flex'; 
-            toggleGamepad(true); 
-            const sp = localStorage.getItem('padV4_' + game.n);
-            if(sp) { 
-                try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
-            } else { 
-                padConfig = {}; 
-            }
-            sanitizePadConfig(); 
-            updateFloatingBtnUI(); 
-            updateStepBtnUI(); 
-            updatePadTransforms();
+        const sp = localStorage.getItem('padV4_' + game.n); 
+        if(sp) { 
+            try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+        } else { 
+            padConfig = {}; 
         }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
         updateVideoUI();
-        
-        if(game.m === 'touch_hover') {
-            let hx = 0, hy = 0;
-            const updateHover = (e) => { 
-                if(isEditMode) return; 
-                e.preventDefault(); 
-                hx = e.touches[0].clientX; 
-                hy = e.touches[0].clientY; 
-                dosCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: hx, clientY: hy, button: 0, bubbles: true })); 
-            };
-            dosCanvas.addEventListener('touchstart', updateHover, {passive: false}); 
-            dosCanvas.addEventListener('touchmove', updateHover, {passive: false}); 
-            dosCanvas.addEventListener('touchend', e => { if(isEditMode) return; e.preventDefault(); }, {passive: false});
-            dosCanvas.getHoverCoords = () => ({x: hx, y: hy});
-        }
 
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            if (isShuttingDown) return;
-            Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
-                window.WDOSBOX = { FS: fs }; 
-                fs.extract(e.target.result).then(async () => {
-                    await loadGameState(true); 
-                    let cmd = ["-c", "cycles auto"]; 
-                    if (game.e) cmd.push("-c", game.e);
-                    main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
-                    const glLoop = () => { 
-                        if (isShuttingDown) return; 
-                        if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
-                        glLoopId = requestAnimationFrame(glLoop); 
-                    }; 
-                    glLoop();
-                    isGameStarting = false;
-                }).catch(err => { 
-                    alert("Ошибка распаковки DOS-архива."); 
-                    executeCleanup(); 
-                    isGameStarting = false;
+        readBlob(game.fileBlob).then(async arrayBuffer => {
+            let fileData = new Uint8Array(arrayBuffer); 
+            let romName = game.n + "." + game.ext; 
+            if (game.fileBlob?.name) romName = game.fileBlob.name;
+            if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
+                try { 
+                    const unzipped = fflate.unzipSync(fileData); 
+                    for (const filename in unzipped) { 
+                        if (coreMap[filename.split('.').pop().toLowerCase()]) { 
+                            fileData = unzipped[filename]; 
+                            romName = filename.split('/').pop(); 
+                            break; 
+                        } 
+                    } 
+                } catch(e) {}
+            }
+            currentGame._romName = romName;
+            const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
+            const virtualFileName = '/' + romName;
+
+            const glLoop = () => { 
+                if (isShuttingDown) return; 
+                if (!isGamePaused) UniversalWebGL.draw(libCanvas, systemCode, false); 
+                glLoopId = requestAnimationFrame(glLoop); 
+            };
+
+            try {
+                // Динамический импорт ES6
+                const moduleFactory = (await import('./' + coreName + '.js')).default;
+                window.Module = await moduleFactory({
+                    canvas: libCanvas,
+                    arguments: [virtualFileName],
+                    preRun: [function(mod) {
+                        mod.FS.writeFile(virtualFileName, fileData);
+                        try {
+                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
+                            if (b64) {
+                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
+                            }
+                        } catch(e) {}
+                    }],
+                    print: (t) => console.log('CORE:', t),
+                    printErr: (t) => console.error('CORE ERR:', t)
                 });
-            });
-        };
-        reader.onerror = () => { 
-            alert("Ошибка чтения DOS файла."); 
+
+                glLoop();
+                await new Promise(r => setTimeout(r, 500));
+                await loadGameState(true);
+                isGameStarting = false;
+
+            } catch (err) {
+                alert("Ошибка инициализации современного ядра: " + err.message);
+                executeCleanup();
+                isGameStarting = false;
+            }
+        }).catch(err => { 
+            alert("Ошибка чтения файла: " + err.message); 
             executeCleanup(); 
             isGameStarting = false;
-        };
-        reader.readAsDataURL(game.fileBlob);
+        });
     }
 
+    // СТАРЫЙ ЗАГРУЗЧИК (ОСТАВЛЕН БЕЗ ИЗМЕНЕНИЙ)
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
@@ -1929,6 +1961,87 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             executeCleanup(); 
             isGameStarting = false;
         });
+    }
+
+    function setupDOS(game) {
+        const dosCanvas = document.createElement('canvas'); 
+        dosCanvas.id = 'dos-canvas'; 
+        dosCanvas.width = 640; 
+        dosCanvas.height = 480;
+        dosCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+        canvasContainer.appendChild(dosCanvas);
+        
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
+        
+        btnKeyboard.style.display = 'flex'; 
+        btnScreen.style.display = 'flex';
+        
+        if(game.m === 'pad' || game.m === 'touch_hover') { 
+            btnGamepad.style.display = 'flex'; 
+            btnPadEdit.style.display = 'flex'; 
+            toggleGamepad(true); 
+            const sp = localStorage.getItem('padV4_' + game.n);
+            if(sp) { 
+                try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+            } else { 
+                padConfig = {}; 
+            }
+            sanitizePadConfig(); 
+            updateFloatingBtnUI(); 
+            updateStepBtnUI(); 
+            updatePadTransforms();
+        }
+        updateVideoUI();
+        
+        if(game.m === 'touch_hover') {
+            let hx = 0, hy = 0;
+            const updateHover = (e) => { 
+                if(isEditMode) return; 
+                e.preventDefault(); 
+                hx = e.touches[0].clientX; 
+                hy = e.touches[0].clientY; 
+                dosCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: hx, clientY: hy, button: 0, bubbles: true })); 
+            };
+            dosCanvas.addEventListener('touchstart', updateHover, {passive: false}); 
+            dosCanvas.addEventListener('touchmove', updateHover, {passive: false}); 
+            dosCanvas.addEventListener('touchend', e => { if(isEditMode) return; e.preventDefault(); }, {passive: false});
+            dosCanvas.getHoverCoords = () => ({x: hx, y: hy});
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (isShuttingDown) return;
+            Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
+                window.WDOSBOX = { FS: fs }; 
+                fs.extract(e.target.result).then(async () => {
+                    await loadGameState(true); 
+                    let cmd = ["-c", "cycles auto"]; 
+                    if (game.e) cmd.push("-c", game.e);
+                    main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
+                    const glLoop = () => { 
+                        if (isShuttingDown) return; 
+                        if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
+                        glLoopId = requestAnimationFrame(glLoop); 
+                    }; 
+                    glLoop();
+                    isGameStarting = false;
+                }).catch(err => { 
+                    alert("Ошибка распаковки DOS-архива."); 
+                    executeCleanup(); 
+                    isGameStarting = false;
+                });
+            });
+        };
+        reader.onerror = () => { 
+            alert("Ошибка чтения DOS файла."); 
+            executeCleanup(); 
+            isGameStarting = false;
+        };
+        reader.readAsDataURL(game.fileBlob);
     }
 
     function setupNES(game) {
@@ -2269,6 +2382,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (['md','smd','gen','bin'].includes(ext)) sysData.sys = 'smd'; 
                     else if (['sfc','smc'].includes(ext)) sysData.sys = 'snes'; 
                     else if (['ngp','ngc'].includes(ext)) sysData.sys = 'ngp'; 
+                    else if (['gba','gbc','gb'].includes(ext)) sysData.sys = 'gba'; // ДОБАВЛЕНО GBA
                     else sysData.sys = 'unk'; 
                     foundRom = true; break; 
                 } 
@@ -2292,9 +2406,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) { return null; }
     }
 
-    // ==========================================
-    // УМНЫЙ ПОИСК ОБЛОЖЕК (МЯГКИЙ + ИСКЛЮЧЕНИЯ)
-    // ==========================================
     let githubCovers = [];
     window.usedCovers = window.usedCovers || new Set();
     
@@ -2315,12 +2426,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (clean.normalize) clean = clean.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         clean = clean.toLowerCase().replace(/[^a-z0-9а-яё]/g, ' ');
 
-        // Отделяем цифры от букв (MegaMan2 -> Mega Man 2)
         clean = clean.replace(/([a-zа-яё])([0-9]+)/g, '$1 $2').replace(/([0-9]+)([a-zа-яё])/g, '$1 $2');
         
         let words = clean.split(/\s+/).filter(Boolean);
         
-        // Переводим римские цифры
         const romanMap = { 'i': '1', 'ii': '2', 'iii': '3', 'iv': '4', 'v': '5', 'vi': '6', 'vii': '7', 'viii': '8' };
         return words.map(w => romanMap[w] || w);
     }
@@ -2351,7 +2460,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         const { gameName, sysType, resolve } = coverQueue.shift();
         
-        // --- ПРАВКА ЗДЕСЬ: МАССИВЫ ПАПОК ДЛЯ КАСКАДНОГО ПОИСКА ---
         const repoMap = {
             "nes": ["Nintendo - Nintendo Entertainment System"],
             "snes": ["Nintendo - Super Nintendo Entertainment System"],
@@ -2360,8 +2468,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             "md": ["Sega - Mega Drive - Genesis"],
             "gen": ["Sega - Mega Drive - Genesis"],
             "bin": ["Sega - Mega Drive - Genesis"],
-            "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], // Сначала ищет в ч/б, потом в цвете
-            "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"]  // Наоборот
+            "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], 
+            "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"],
+            // ДОБАВЛЕНЫ ПАПКИ ДЛЯ GBA / GBC / GB
+            "gba": ["Nintendo - Game Boy Advance", "Nintendo - Game Boy Color", "Nintendo - Game Boy"]
         };
         const folders = repoMap[sysType] || [];
         
@@ -2386,10 +2496,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             score += matchedWords.length * 10;
             if (matchedWords.length > 0 && matchedWords.length === localWords.length) score += 50;
 
-            // Штрафы и бонусы за цифры
             if (localNumbers.length > 0 && dbNumbers.length > 0) {
                 if (localNumbers[0] === dbNumbers[0]) score += 40;
-                else score -= 100; // Жесткий штраф: Mega Man 3 не должен заменять Mega Man 2
+                else score -= 100; 
             }
 
             return { name, score };
@@ -2398,11 +2507,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         scoredMatches.sort((a, b) => b.score - a.score);
         let matches = scoredMatches.map(m => m.name).slice(0, 5);
 
-        // --- НОВАЯ ЛОГИКА ФОЛЛБЕКА (МЕТОД ИСКЛЮЧЕНИЯ ДЛЯ ЦИФР И МУСОРА) ---
         if (matches.length === 0) {
             for (let name of githubCovers) {
                 let safeName = name.replace(/\.png$/i, '');
-                // Проверяем по первой (основной) папке для метода исключения
                 let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folders[0])}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
                 if (!window.usedCovers.has(url)) {
                     matches.push(name);
@@ -2410,10 +2517,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             if (matches.length === 0) {
-                matches = githubCovers.slice(0, 3); // Резервный дубль
+                matches = githubCovers.slice(0, 3); 
             }
         }
-        // ------------------------------------------------------------------
 
         let foundUrl = null;
         let fallbackUrl = null;
@@ -2421,7 +2527,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         for (const match of matches) {
             const safeName = match.replace(/\.png$/i, '');
             
-            // --- ПРАВКА ЗДЕСЬ: ПРОВЕРЯЕМ ВСЕ ДОСТУПНЫЕ ПАПКИ ИЗ МАССИВА ---
             for (const folder of folders) {
                 const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
                 
@@ -2437,7 +2542,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
                 await new Promise(r => setTimeout(r, 50));
             }
-            if (foundUrl) break; // Если нашли картинку, переходим к следующей игре
+            if (foundUrl) break; 
         }
 
         if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
@@ -2446,9 +2551,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         setTimeout(processCoverQueue, 150);
     }
 
-    // ==========================================
-    // ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ИНТЕРФЕЙСА
-    // ==========================================
     let currentViewMode = localStorage.getItem('libraryView') || 'grid';
 
     function applyViewMode() {
@@ -2627,7 +2729,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const delBtn = document.createElement('div'); 
             delBtn.className = 'del-btn'; 
             delBtn.innerHTML = '✖';
-            delBtn.style.display = 'none'; // Полностью скрываем старые маленькие крестики
+            delBtn.style.display = 'none'; 
             delBtn.onclick = (e) => { 
                 e.stopPropagation(); 
                 if(confirm(`Удалить игру "${game.n}" из памяти эмулятора?`)) {
@@ -2653,7 +2755,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         globalFileInput.id = 'global-file-input';
         globalFileInput.type = 'file';
         globalFileInput.multiple = true;
-        globalFileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.zip,.rar,.7z,.html';
+        globalFileInput.accept = '.nes,.sfc,.smc,.md,.gen,.smd,.bin,.ngp,.ngc,.gba,.gbc,.gb,.zip,.rar,.7z,.html';
         
         globalFileInput.style.position = 'absolute';
         globalFileInput.style.left = '-9999px';
@@ -2734,6 +2836,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (['md','smd','gen','bin'].includes(rawExt)) sysType = 'smd'; 
             else if (['sfc','smc'].includes(rawExt)) sysType = 'snes'; 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
+            else if (['gba','gbc','gb'].includes(rawExt)) sysType = 'gba'; // РАСПОЗНАВАНИЕ GBA
         } 
         else if (fileName.endsWith('.zip')) { 
             const analysis = await analyzeZipAndCovers(persistentBlob);
