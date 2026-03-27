@@ -491,7 +491,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'md': 'genesis_plus_gx_libretro', 'gen': 'genesis_plus_gx_libretro', 'smd': 'genesis_plus_gx_libretro', 'bin': 'genesis_plus_gx_libretro',
         'smc': 'snes9x_libretro', 'sfc': 'snes9x_libretro',
         'ngp': 'mednafen_ngp_libretro', 'ngc': 'mednafen_ngp_libretro',
-        // ДОБАВЛЕНО ЯДРО ДЛЯ GBA / GBC / GB
         'gba': 'mgba_libretro', 'gbc': 'mgba_libretro', 'gb': 'mgba_libretro'
     };
 
@@ -500,7 +499,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA' },
         'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES' },
         'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP' },
-        'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA' }, // ДОБАВЛЕНО
+        'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA' },
         'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS' },
         'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML' },
         'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE' } 
@@ -511,7 +510,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'smd': { brake: 88, jump: 90 },
         'snes': { brake: 65, jump: 88 },
         'ngp': { brake: 88, jump: 90 },
-        'gba': { brake: 88, jump: 90 }, // ДОБАВЛЕНО (A/B)
+        'gba': { brake: 88, jump: 90 },
         'dos': { brake: 90, jump: 88 },
         'unk': { brake: 88, jump: 90 }
     };
@@ -1734,7 +1733,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             setupDOS(game);
         } 
         else if (game.t === 'l') {
-            // РОУТЕР: Отправляем новые ядра в ES6 загрузчик, а старые в старый
             const cName = coreMap[game.ext];
             if (cName === 'mgba_libretro') {
                 setupModernLibretro(game);
@@ -1747,20 +1745,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // НОВЫЙ ES6 ЗАГРУЗЧИК (ДЛЯ НОВЫХ ЯДЕР, НАПРИМЕР GBA)
+    // ИСПРАВЛЕННЫЙ ES6 ЗАГРУЗЧИК ДЛЯ GBA С ФИКСОМ WebGL
     function setupModernLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
+        
+        // --- ФИКС №1: Делаем канвас блочным и готовим WebGL контекст ---
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
 
         libCanvas.width = nativeWidth; 
         libCanvas.height = nativeHeight;
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
         canvasContainer.appendChild(libCanvas);
         
+        // --- ФИКС №2: Явная инициализация WebGL контекста до загрузки ядра ---
+        const glContext = libCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false, preserveDrawingBuffer: true });
+        if (glContext) {
+             console.log("ES6 REFIX: WebGL контекст принудительно подготовлен.");
+        } else {
+             console.error("ES6 REFIX: Не удалось подготовить WebGL контекст.");
+        }
+
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
         glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
@@ -1811,7 +1819,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             };
 
             try {
-                // Динамический импорт ES6
                 const moduleFactory = (await import('./' + coreName + '.js')).default;
                 window.Module = await moduleFactory({
                     canvas: libCanvas,
@@ -1846,7 +1853,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    // СТАРЫЙ ЗАГРУЗЧИК (ОСТАВЛЕН БЕЗ ИЗМЕНЕНИЙ)
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
@@ -2382,7 +2388,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (['md','smd','gen','bin'].includes(ext)) sysData.sys = 'smd'; 
                     else if (['sfc','smc'].includes(ext)) sysData.sys = 'snes'; 
                     else if (['ngp','ngc'].includes(ext)) sysData.sys = 'ngp'; 
-                    else if (['gba','gbc','gb'].includes(ext)) sysData.sys = 'gba'; // ДОБАВЛЕНО GBA
+                    else if (['gba','gbc','gb'].includes(ext)) sysData.sys = 'gba'; 
                     else sysData.sys = 'unk'; 
                     foundRom = true; break; 
                 } 
@@ -2470,7 +2476,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             "bin": ["Sega - Mega Drive - Genesis"],
             "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], 
             "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"],
-            // ДОБАВЛЕНЫ ПАПКИ ДЛЯ GBA / GBC / GB
             "gba": ["Nintendo - Game Boy Advance", "Nintendo - Game Boy Color", "Nintendo - Game Boy"]
         };
         const folders = repoMap[sysType] || [];
@@ -2836,7 +2841,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (['md','smd','gen','bin'].includes(rawExt)) sysType = 'smd'; 
             else if (['sfc','smc'].includes(rawExt)) sysType = 'snes'; 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
-            else if (['gba','gbc','gb'].includes(rawExt)) sysType = 'gba'; // РАСПОЗНАВАНИЕ GBA
+            else if (['gba','gbc','gb'].includes(rawExt)) sysType = 'gba'; 
         } 
         else if (fileName.endsWith('.zip')) { 
             const analysis = await analyzeZipAndCovers(persistentBlob);
