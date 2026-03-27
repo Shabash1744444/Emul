@@ -132,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 100px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -146,12 +146,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
 /* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
-#btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 145px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 145px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 200px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-select { bottom: 60px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 60px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 95px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 150px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 150px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 205px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
 #btn-l { top: 95px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 #btn-r { top: 95px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 
@@ -357,7 +357,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 <option value="4">4x (1024p HD)</option>
                 <option value="8">8x (2048p 2K)</option>
                 <option value="16">16x (4096p 4K) 🔥</option>
-                <option value="32">32x (8192p 8K) ☠️ ВЗРЫВ</option>
             </select>
         </div>
     </div>
@@ -408,6 +407,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="slider-row">
       <label>Яркость: <span id="brightnessVal">100%</span></label>
       <input type="range" min="50" max="200" value="100" id="brightnessSlider" oninput="updateBrightness(this.value)">
+    </div>
+    <div class="slider-row">
+      <label>Отдача кнопок: <span id="vibrationVal">15мс</span></label>
+      <input type="range" min="0" max="60" value="15" id="vibrationSlider" oninput="updateVibration(this.value)">
     </div>
     <button class="edit-btn action-btn" onclick="resetPad()" style="background:#ef4444; margin-top:5px;">Сброс всех настроек</button>
 </div>
@@ -486,10 +489,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false, isBottomBarrier = false;
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
-    let isEditMode = false;
-    let scaleX = 1, scaleY = 1, screenX = 0, screenY = 0;
-    let isDragging = false, startDragX = 0, startDragY = 0;
-
     let audioCtx = null, audioScriptNode = null;
     let audioBufferL = [], audioBufferR = [];
     
@@ -550,35 +549,45 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return fflate.unzlibSync(compressed);
     }
 
-    function doVibrate(pattern = 15) {
+    function doVibrate(pattern) {
         const now = Date.now();
         if (now - lastVibrateTime < VIBRATE_COOLDOWN) return false;
         lastVibrateTime = now;
         
+        // Читаем силу вибрации из padConfig или используем переданное значение (для дефолтов)
+        let vibStrength = pattern;
+        if (pattern === 15 && padConfig.vib !== undefined) {
+            vibStrength = padConfig.vib; 
+        } else if (pattern === 10 && padConfig.vib !== undefined) {
+             vibStrength = Math.max(0, padConfig.vib - 5); // Dpad чуть слабее основных кнопок
+        }
+        
+        if (vibStrength <= 0) return false;
+
         if (typeof navigator === 'undefined') return false;
         if (navigator.vibrate) { 
-            try { if (navigator.vibrate(pattern) !== false) return true; } catch (e) {} 
+            try { if (navigator.vibrate(vibStrength) !== false) return true; } catch (e) {} 
         }
         if (window.navigator?.notification?.vibrate) {
-            try { window.navigator.notification.vibrate(pattern); return true; } catch (e) {}
+            try { window.navigator.notification.vibrate(vibStrength); return true; } catch (e) {}
         }
         if (window.Capacitor?.Plugins?.Haptics) {
             try {
                 if (typeof window.Capacitor.Plugins.Haptics.vibrate === 'function') { 
-                    window.Capacitor.Plugins.Haptics.vibrate({ duration: pattern }); 
+                    window.Capacitor.Plugins.Haptics.vibrate({ duration: vibStrength }); 
                     return true; 
                 }
-                if (pattern < 50 && typeof window.Capacitor.Plugins.Haptics.impact === 'function') { 
+                if (vibStrength < 50 && typeof window.Capacitor.Plugins.Haptics.impact === 'function') { 
                     window.Capacitor.Plugins.Haptics.impact({ style: window.Capacitor.Plugins.Haptics.ImpactStyle.Light }); 
                     return true; 
                 }
             } catch (e) {}
         }
         if (window.Android?.vibrate) { 
-            try { window.Android.vibrate(pattern); return true; } catch (e) {} 
+            try { window.Android.vibrate(vibStrength); return true; } catch (e) {} 
         }
         if (window.webkit?.messageHandlers?.vibrate) { 
-            try { window.webkit.messageHandlers.vibrate.postMessage({ duration: pattern }); return true; } catch (e) {} 
+            try { window.webkit.messageHandlers.vibrate.postMessage({ duration: vibStrength }); return true; } catch (e) {} 
         }
         return false;
     }
@@ -1170,6 +1179,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
+
+    function updateVibration(val) {
+        document.getElementById('vibrationVal').textContent = val + 'мс';
+        padConfig.vib = parseInt(val);
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+    }
+
     function sanitizePadConfig() {
         const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
         if (!padConfig || typeof padConfig !== 'object') padConfig = {};
@@ -1185,6 +1201,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
         if (padConfig.autoStop === undefined) padConfig.autoStop = false;
         if (padConfig.barrier === undefined) padConfig.barrier = false;
+        if (padConfig.vib === undefined) padConfig.vib = 15;
         
         isFloatingDpad = padConfig.dpad.f; 
         isStepDpad = padConfig.dpad.step; 
@@ -1199,6 +1216,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
             btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
         }
+        
+        const btnVib = document.getElementById('vibrationSlider');
+        if(btnVib) {
+            btnVib.value = padConfig.vib;
+            document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс';
+        }
+        
         updateBarrierVisuals();
     }
 
@@ -1407,7 +1431,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
                 
-                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ ДЛЯ СБРОСА ===
+                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ (+20px для основных, +12px для Start/Select, L/R не трогаем) ===
                 if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
                 else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
@@ -1808,10 +1832,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function setupModernLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        
+        // 🔥 ПЛАН А+Б: Спрятанный холст (opacity 0.01 + offscreen)
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
         libCanvas.tabIndex = -1;
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;';
+        libCanvas.style.cssText = 'position: absolute; top: -1000px; left: -1000px; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
@@ -1820,7 +1846,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
 
-        // 🔥 ХАК "ЗАМОРОЗКА": Заставляем mGBA рендерить строго 240x160
+        // 🔥 ПЛАН А+Б: ХАК "ЗАМОРОЗКА РАЗМЕРОВ" 
+        // Если ядро начнет мерить экран, оно увидит крошечный размер и отрендерит софтово 240x160 без тормозов
         libCanvas.getBoundingClientRect = function() {
             return { top: 0, left: 0, width: nativeWidth, height: nativeHeight, right: nativeWidth, bottom: nativeHeight };
         };
@@ -1833,11 +1860,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
 
+        // 🔥 ПЛАН А+Б: ЖЕСТКИЙ БЛОК WEBGL
+        // Вынуждаем mGBA выводить кадры в 2D Context, который UniversalWebGL.draw легко прочитает без черных экранов
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
             if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
-                attributes = attributes || {};
-                attributes.preserveDrawingBuffer = true; 
+                console.warn("WebGL заблокирован для GBA! Переключаем на софтовый рендер.");
+                return null; 
             }
             return originalGetContext(type, attributes);
         };
@@ -1881,7 +1910,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isShuttingDown) return; 
                 if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) { 
                     try {
-                        const currentScale = Math.min(videoConfig.res, 8);
                         UniversalWebGL.draw(libCanvas, systemCode, false); 
                     } catch (e) {
                         if (e.message && e.message.includes('memory')) {
