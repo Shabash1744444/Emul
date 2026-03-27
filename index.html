@@ -106,8 +106,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gameFrame { position: fixed; inset: 0; background: #000; display: none; z-index: 100; overflow: hidden; }
 #html-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; background: #000; }
 #canvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center; transition: transform 0.1s ease-out; }
-/* === ИСПРАВЛЕНИЕ: z-index 1 для исходных холстов, чтобы шейдер был всегда сверху === */
-#dos-canvas, #nes-canvas, #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; object-fit: contain; opacity: 0.01; z-index: 1; image-rendering: pixelated; }
+#dos-canvas, #nes-canvas, #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; object-fit: contain; opacity: 0.01; z-index: 10; image-rendering: pixelated; }
 #nes-canvas { width: 100% !important; height: 100% !important; }
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
@@ -146,7 +145,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
-/* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК ИЗ ЭТАЛОНА */
+/* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
 #btn-select { bottom: 45px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-start { bottom: 45px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-b { bottom: 70px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
@@ -433,6 +432,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
+<script src="js-dos.js"></script>
+<script>
+    if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
+    window._tempModule = window.module; window._tempExports = window.exports; window._tempDefine = window.define;
+    window.module = undefined; window.exports = undefined; window.define = undefined; 
+</script>
+<script src="jsnes.min.js"></script>
+<script>
+    window.module = window._tempModule; window.exports = window._tempExports; window.define = window._tempDefine;
+</script>
+
 <script>
     function readBlob(blob) {
         if (blob.arrayBuffer) return blob.arrayBuffer();
@@ -1052,32 +1062,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             return true;
         },
-
-        // === ИСПРАВЛЕНИЕ: GL loop с readPixels для GBA ===
-        draw: function(sourceCanvas, systemCode, forceReadback = false) {
-            if (!this.gl || !sourceCanvas) return;
-            
+        draw: function(sourceCanvas, systemCode) {
+            if (!this.gl || !sourceCanvas.width || !sourceCanvas.height) return;
             const gl = this.gl;
-            
-            if (forceReadback || systemCode === 5) {
-                const glCtx = sourceCanvas.getContext('webgl') || sourceCanvas.getContext('experimental-webgl');
-                if (glCtx && glCtx !== this.gl) {
-                    const w = sourceCanvas.width;
-                    const h = sourceCanvas.height;
-                    const pixels = new Uint8Array(w * h * 4);
-                    glCtx.readPixels(0, 0, w, h, glCtx.RGBA, glCtx.UNSIGNED_BYTE, pixels);
-                    
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-                } else {
-                    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
-                }
-            } else {
-                gl.bindTexture(gl.TEXTURE_2D, this.texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
-            }
-
             let scaleMult = videoConfig.res;
             if (currentGame && currentGame.t === 'd') scaleMult = Math.min(videoConfig.res, 4); 
             
@@ -1100,9 +1087,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
             }
 
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
             const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
 
             gl.uniform1i(this.uCrtLoc, videoConfig.crt ? 1 : 0); 
             gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
@@ -1115,7 +1104,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
-
     function sanitizePadConfig() {
         const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
         if (!padConfig || typeof padConfig !== 'object') padConfig = {};
@@ -1353,16 +1341,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
                 
-                // === КООРДИНАТЫ: Шифты вниз на 15px, остальные вверх на 15px ===
-                if (id === 'dpad') { el.style.bottom = '75px'; el.style.left = '20px'; el.style.top = 'auto'; } 
-                else if (id === 'a') { el.style.bottom = '125px'; el.style.right = '20px'; el.style.top = 'auto'; } 
-                else if (id === 'b') { el.style.bottom = '70px'; el.style.right = '85px'; el.style.top = 'auto'; } 
-                else if (id === 'x') { el.style.bottom = '180px'; el.style.right = '85px'; el.style.top = 'auto'; } 
-                else if (id === 'y') { el.style.bottom = '125px'; el.style.right = '150px'; el.style.top = 'auto'; } 
-                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'select') { el.style.bottom = '45px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
-                else if (id === 'start') { el.style.bottom = '45px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
+                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ (СДВИГ НА 5ММ) ДЛЯ СБРОСА ===
+                if (id === 'dpad') { el.style.bottom = '75px'; el.style.left = '20px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'a') { el.style.bottom = '125px'; el.style.right = '20px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'b') { el.style.bottom = '70px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'x') { el.style.bottom = '180px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'y') { el.style.bottom = '125px'; el.style.right = '150px'; el.style.top = 'auto'; } // +25px
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } // +25px вниз (было 70)
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } // +25px вниз
+                else if (id === 'select') { el.style.bottom = '45px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } // +25px
+                else if (id === 'start') { el.style.bottom = '45px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } // +25px
                 
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
@@ -1756,11 +1744,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
-        
         libCanvas.tabIndex = -1;
-        
-        // === ИСПРАВЛЕНИЕ: z-index 1, чтобы холст GBA лежал ПОД шейдером ===
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 1; display: block !important; image-rendering: pixelated; outline: none;';
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
@@ -1769,15 +1754,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
         
-        // === ВАЖНО: preserveDrawingBuffer = true для захвата пикселей без черного экрана ===
-        const glContext = libCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false, preserveDrawingBuffer: true });
-
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
-        // === СЛОЙ РЕЗУЛЬТАТА (z-index: 5) ТЕПЕРЬ ВИДЕН ===
         glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
+
+        const originalGetContext = libCanvas.getContext.bind(libCanvas);
+        libCanvas.getContext = function(type, attributes) {
+            if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
+                attributes = attributes || {};
+                attributes.preserveDrawingBuffer = true; 
+            }
+            return originalGetContext(type, attributes);
+        };
         
         btnGamepad.style.display = 'flex'; 
         btnPadEdit.style.display = 'flex'; 
@@ -1785,11 +1775,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         toggleGamepad(true);
         
         const sp = localStorage.getItem('padV4_' + game.n); 
-        if(sp) { 
-            try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
-        } else { 
-            padConfig = {}; 
-        }
+        if(sp) { try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } } else { padConfig = {}; }
         sanitizePadConfig(); 
         updateFloatingBtnUI(); 
         updateStepBtnUI(); 
@@ -1800,6 +1786,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let fileData = new Uint8Array(arrayBuffer); 
             let romName = game.n + "." + game.ext; 
             if (game.fileBlob?.name) romName = game.fileBlob.name;
+            
             if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
                 try { 
                     const unzipped = fflate.unzipSync(fileData); 
@@ -1812,17 +1799,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     } 
                 } catch(e) {}
             }
+            
             currentGame._romName = romName;
             const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
             const virtualFileName = '/' + romName;
 
             const glLoop = () => { 
                 if (isShuttingDown) return; 
-                if (!isGamePaused) UniversalWebGL.draw(libCanvas, systemCode, false); 
+                if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) { 
+                    try {
+                        const currentScale = Math.min(videoConfig.res, 8);
+                        UniversalWebGL.draw(libCanvas, systemCode, false); 
+                    } catch (e) {
+                        if (e.message && e.message.includes('memory')) {
+                            console.error("ОЗУ переполнено апскейлом, сбрасываем разрешение:", e);
+                            videoConfig.res = 1;
+                            saveVideoConfig();
+                        }
+                    }
+                } 
                 glLoopId = requestAnimationFrame(glLoop); 
             };
 
             try {
+                ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
+                
                 const moduleFactory = (await import('./' + coreName + '.js')).default;
                 window.Module = await moduleFactory({
                     canvas: libCanvas,
@@ -1848,7 +1849,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 isGameStarting = false;
 
             } catch (err) {
-                alert("Ошибка инициализации современного ядра: " + err.message);
+                alert("Ошибка инициализации ядра GBA: " + err.message);
                 executeCleanup();
                 isGameStarting = false;
             }
@@ -1858,7 +1859,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGameStarting = false;
         });
     }
-
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
@@ -1870,7 +1870,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         libCanvas.width = nativeWidth; 
         libCanvas.height = nativeHeight;
-        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated;';
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
         canvasContainer.appendChild(libCanvas);
         
         const glCanvas = document.createElement('canvas'); 
@@ -2686,6 +2686,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     }
 
+    // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
+    function toggleFavorite(id, e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
+        const tx = db.transaction(["games"], "readwrite");
+        const store = tx.objectStore("games");
+        const req = store.get(id);
+        req.onsuccess = () => {
+            const g = req.result;
+            if (g) {
+                g.fav = !g.fav; // Меняем флаг на противоположный
+                store.put(g).onsuccess = () => renderAllGames();
+            }
+        };
+    }
+
     function renderAllGames() {
         const scrollPos = menuScreen.scrollTop; 
         
@@ -2703,16 +2718,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => { 
             let customGames = req.result; 
             
-            if (sortType === 'name_asc') customGames.sort((a,b) => a.n.localeCompare(b.n));
-            else if (sortType === 'name_desc') customGames.sort((a,b) => b.n.localeCompare(a.n));
-            else if (sortType === 'sys') customGames.sort((a,b) => a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n));
-            else if (sortType === 'newest') customGames.sort((a,b) => {
-                const idA = parseInt(a.id.split('_')[1]) || 0;
-                const idB = parseInt(b.id.split('_')[1]) || 0;
-                return idB - idA;
+            // === ОБНОВЛЕННАЯ СОРТИРОВКА (С УЧЕТОМ ИЗБРАННОГО) ===
+            customGames.sort((a, b) => {
+                // Сначала всегда сортируем по "Избранному"
+                if (a.fav && !b.fav) return -1;
+                if (!a.fav && b.fav) return 1;
+
+                // Затем применяем выбранную пользователем сортировку
+                if (sortType === 'name_asc') return a.n.localeCompare(b.n);
+                if (sortType === 'name_desc') return b.n.localeCompare(a.n);
+                if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
+                if (sortType === 'newest') {
+                    const idA = parseInt(a.id.split('_')[1]) || 0;
+                    const idB = parseInt(b.id.split('_')[1]) || 0;
+                    return idB - idA;
+                }
+                return 0; // Для random оставляем так, он перемешает ниже
             });
-            else if (sortType === 'random') {
-                customGames.sort(() => Math.random() - 0.5);
+
+            if (sortType === 'random') {
+                // Если рандом, перемешиваем только внутри "своих" групп (избранные с избранными, остальные с остальными)
+                let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
+                let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
+                customGames = favs.concat(nonFavs);
             }
 
             const term = document.getElementById('searchInput').value.toLowerCase();
@@ -2743,7 +2771,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
         
-        btn.innerHTML = `${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
+        // === ДОБАВЛЕНА КНОПКА ИЗБРАННОГО НА КАРТОЧКУ ===
+        const favIcon = game.fav ? '⭐' : '☆';
+        const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
+        
+        btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
         btn.onclick = (e) => { 
             e.preventDefault(); 
@@ -2917,7 +2949,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             m: controlMode, 
             e: execCmd, 
             fit: 'contain', 
-            cover: coverData 
+            cover: coverData,
+            fav: false // Новые игры по умолчанию не в избранном
         };
 
         if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
