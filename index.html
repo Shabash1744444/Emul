@@ -132,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 75px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -146,12 +146,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
 /* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
-#btn-select { bottom: 45px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 45px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 70px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 125px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 125px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 180px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 145px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 145px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 200px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
 #btn-l { top: 95px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 #btn-r { top: 95px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 
@@ -370,9 +370,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <div class="hint-text">АЛГОРИТМ СГЛАЖИВАНИЯ</div>
         <select id="filterSelector" onchange="changeFilter()" style="width: 100%; background: #1e293b; color: white; border: 1px solid #475569; padding: 5px; border-radius: 5px; font-size: 12px; margin-bottom: 5px;">
             <option value="0">ВЫКЛ (Пиксели)</option>
-            <option value="1">ОСТРОЕ (Sharp / Вылизывает 4K)</option>
+            <option value="1">ОСТРОЕ (Sharp Bilinear)</option>
             <option value="2">МЯГКОЕ (Ретро-Мыло)</option>
+            <option value="3">FSR (Умная резкость)</option>
         </select>
+        <button class="edit-btn action-btn" id="btnToggleColors" onclick="toggleColors()" style="margin-top: 5px;">Цветокоррекция (Гамма): ВЫКЛ</button>
     </div>
     <div>
       <div class="hint-text">Мягкое неоновое свечение ярких зон</div>
@@ -525,10 +527,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'unk': { brake: 88, jump: 90 }
     };
 
-    let videoConfig = { crt: true, curve: true, filter: 1, rgb: false, bloom: false, res: 1 };
+    let videoConfig = { crt: true, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
     try {
         const savedVc = localStorage.getItem('videoV6');
-        if (savedVc) videoConfig = JSON.parse(savedVc);
+        if (savedVc) videoConfig = { ...videoConfig, ...JSON.parse(savedVc) };
     } catch(e) {}
 
     function packData(u8arr) {
@@ -871,19 +873,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) { console.error("Load error:", e); }
     }
 
+    function toggleColors() { 
+        videoConfig.colors = !videoConfig.colors; 
+        saveVideoConfig(); 
+    }
+
     function updateVideoUI() {
-        const btnCrt = document.getElementById('btnToggleCRT'), btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom');
+        const btnCrt = document.getElementById('btnToggleCRT'), btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
         const resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
         
         if (btnCrt) { btnCrt.innerHTML = videoConfig.crt ? 'Эффект CRT: ВКЛ' : 'Эффект CRT: ВЫКЛ'; btnCrt.style.background = videoConfig.crt ? '#3b82f6' : '#1e293b'; }
         if (btnCurve) { btnCurve.innerHTML = videoConfig.curve ? 'Выпуклость: ВКЛ' : 'Выпуклость: ВЫКЛ'; btnCurve.style.background = videoConfig.curve ? '#3b82f6' : '#1e293b'; }
         if (btnRgb) { btnRgb.innerHTML = videoConfig.rgb ? 'RGB Сдвиг: ВКЛ' : 'RGB Сдвиг: ВЫКЛ'; btnRgb.style.background = videoConfig.rgb ? '#8b5cf6' : '#1e293b'; }
         if (btnBloom) { btnBloom.innerHTML = videoConfig.bloom ? 'Свечение: ВКЛ' : 'Свечение: ВЫКЛ'; btnBloom.style.background = videoConfig.bloom ? '#f59e0b' : '#1e293b'; }
+        if (btnColors) { btnColors.innerHTML = videoConfig.colors ? 'Цветокоррекция (Гамма): ВКЛ' : 'Цветокоррекция (Гамма): ВЫКЛ'; btnColors.style.background = videoConfig.colors ? '#10b981' : '#1e293b'; }
+        
         if (resSel) { resSel.value = videoConfig.res; }
         if (filterSel) { filterSel.value = videoConfig.filter; }
         if (glCanvas) { glCanvas.style.imageRendering = videoConfig.filter === 0 ? 'pixelated' : 'auto'; }
     }
-
     function getMaxScaleForSystem(sys) { 
         const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4, 'gba': 8}; 
         return limits[sys] || 8; 
@@ -953,7 +961,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
-        uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, 
+        uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
         maxTexSize: 4096,
         currentWidth: 256, currentHeight: 240,
         
@@ -967,9 +975,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
             const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
                 uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
-                uniform vec2 u_tex_size; uniform int u_system;
+                uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
+
+                // Быстрая Гамма-коррекция
+                vec3 toLinear(vec3 c) { return c * c; }
+                vec3 toSRGB(vec3 c) { return sqrt(c); }
+
+                // Алгоритм FSR RCAS (Умная резкость)
+                vec3 FSR_RCAS(vec3 color, vec2 uv) {
+                    float sharpness = 0.4; 
+                    vec3 d = vec3(0.0);
+                    d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
+                    d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
+                    d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
+                    d += toLinear(texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb);
+                    
+                    vec3 linearColor = toLinear(color);
+                    vec3 delta = abs(d - linearColor * 4.0);
+                    float contrast = max(max(delta.r, delta.g), delta.b);
+                    
+                    return mix(linearColor, linearColor * 2.0 - d * 0.5, sharpness * contrast);
+                }
+
                 void main() {
                     vec2 uv = v_texCoord; float vignette = 1.0;
+                    
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
                         float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
@@ -977,22 +1007,56 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vignette = smoothstep(1.05, 0.95, edgeDist) * (1.0 - dist * 1.8);
                         if (vignette <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
                     }
-                    vec2 p = uv * u_tex_size; vec4 color;
-                    if (u_filter == 1) {
+                    
+                    vec4 color;
+                    
+                    // ФИЛЬТР 3: FSR RCAS
+                    if (u_filter == 3) {
+                        vec3 rawColor = texture2D(u_image, uv).rgb;
+                        if (u_colors == 1) {
+                            color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
+                        } else {
+                            // FSR без гаммы (смешивание в sRGB)
+                            float sharpness = 0.4; 
+                            vec3 d = vec3(0.0);
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            vec3 delta = abs(d - rawColor * 4.0);
+                            float contrast = max(max(delta.r, delta.g), delta.b);
+                            color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
+                        }
+                    } 
+                    // ФИЛЬТР 1 (Sharp) и 2 (Soft)
+                    else if (u_filter == 1 || u_filter == 2) {
+                        vec2 p = uv * u_tex_size;
                         vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
-                        f = f * f * (3.0 - 2.0 * f); color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } else { color = texture2D(u_image, uv); }
+                        
+                        if (u_filter == 1) {
+                            f = f * f * (3.0 - 2.0 * f); 
+                        }
+                        
+                        color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
+                    } 
+                    // ФИЛЬТР 0 (Оригинальные пиксели)
+                    else { 
+                        color = texture2D(u_image, uv); 
+                    }
                     
                     if (u_rgb == 1) { 
                         float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
+                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
+                    
                     if (u_bloom == 1) {
                         vec4 sum = vec4(0.0); float stepX = 1.2 / (u_tex_size.x * u_res); float stepY = 1.2 / (u_tex_size.y * u_res);
                         sum += texture2D(u_image, uv + vec2(-stepX, -stepY)); sum += texture2D(u_image, uv + vec2(stepX, -stepY));
                         sum += texture2D(u_image, uv + vec2(-stepX, stepY)); sum += texture2D(u_image, uv + vec2(stepX, stepY));
                         color += (sum / 4.0) * 0.3; 
                     }
+                    
                     if (u_crt == 1) {
                         float scanlineStrength = 0.15; float maskStrength = 0.15;
                         if (u_system == 0) { scanlineStrength = 0.20; maskStrength = 0.20; }
@@ -1041,6 +1105,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             this.uResLoc = gl.getUniformLocation(program, "u_res");
             this.uTexSizeLoc = gl.getUniformLocation(program, "u_tex_size"); 
             this.uSystemLoc = gl.getUniformLocation(program, "u_system"); 
+            this.uColorsLoc = gl.getUniformLocation(program, "u_colors");
 
             const posBuffer = gl.createBuffer(); 
             gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
@@ -1100,6 +1165,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
             gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
             gl.uniform1i(this.uSystemLoc, systemCode); 
+            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
             
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
@@ -1341,16 +1407,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
                 
-                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ (СДВИГ НА 5ММ) ДЛЯ СБРОСА ===
-                if (id === 'dpad') { el.style.bottom = '75px'; el.style.left = '20px'; el.style.top = 'auto'; } // +25px
-                else if (id === 'a') { el.style.bottom = '125px'; el.style.right = '20px'; el.style.top = 'auto'; } // +25px
-                else if (id === 'b') { el.style.bottom = '70px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
-                else if (id === 'x') { el.style.bottom = '180px'; el.style.right = '85px'; el.style.top = 'auto'; } // +25px
-                else if (id === 'y') { el.style.bottom = '125px'; el.style.right = '150px'; el.style.top = 'auto'; } // +25px
-                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } // +25px вниз (было 70)
-                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } // +25px вниз
-                else if (id === 'select') { el.style.bottom = '45px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } // +25px
-                else if (id === 'start') { el.style.bottom = '45px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } // +25px
+                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ ДЛЯ СБРОСА ===
+                if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
+                else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
+                else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
+                else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
+                else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
+                else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
                 
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
@@ -1753,6 +1819,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.width = nativeWidth; 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
+
+        // 🔥 ХАК "ЗАМОРОЗКА": Заставляем mGBA рендерить строго 240x160
+        libCanvas.getBoundingClientRect = function() {
+            return { top: 0, left: 0, width: nativeWidth, height: nativeHeight, right: nativeWidth, bottom: nativeHeight };
+        };
+        Object.defineProperty(libCanvas, 'clientWidth', { get: () => nativeWidth });
+        Object.defineProperty(libCanvas, 'clientHeight', { get: () => nativeHeight });
         
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
