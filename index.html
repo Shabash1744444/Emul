@@ -132,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 100px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -146,12 +146,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
 /* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
-#btn-select { bottom: 60px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 60px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 95px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 150px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 150px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 205px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 145px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 145px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 200px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
 #btn-l { top: 95px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 #btn-r { top: 95px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 
@@ -489,6 +489,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false, isBottomBarrier = false;
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
+    let isEditMode = false;
+    let scaleX = 1, scaleY = 1, screenX = 0, screenY = 0;
+    let isDragging = false, startDragX = 0, startDragY = 0;
+
     let audioCtx = null, audioScriptNode = null;
     let audioBufferL = [], audioBufferR = [];
     
@@ -554,12 +558,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (now - lastVibrateTime < VIBRATE_COOLDOWN) return false;
         lastVibrateTime = now;
         
-        // Читаем силу вибрации из padConfig или используем переданное значение (для дефолтов)
         let vibStrength = pattern;
         if (pattern === 15 && padConfig.vib !== undefined) {
             vibStrength = padConfig.vib; 
         } else if (pattern === 10 && padConfig.vib !== undefined) {
-             vibStrength = Math.max(0, padConfig.vib - 5); // Dpad чуть слабее основных кнопок
+             vibStrength = Math.max(0, padConfig.vib - 5); 
         }
         
         if (vibStrength <= 0) return false;
@@ -1831,132 +1834,127 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function setupModernLibretro(game) {
-    document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        
+        // 🔥 ПЛАН "ЭЛЕГАНТНОСТЬ": Спрятанный холст, фиксированный размер
+        const libCanvas = document.createElement('canvas'); 
+        libCanvas.id = 'canvas'; 
+        libCanvas.tabIndex = -1;
+        
+        let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
+        if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
 
-    const nativeWidth = 240;
-    const nativeHeight = 160;
-    const systemCode = 5; // GBA в твоём шейдере
+        libCanvas.style.cssText = `position: absolute; top: -3000px; left: -3000px; width: ${nativeWidth}px; height: ${nativeHeight}px; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;`;
+        
+        libCanvas.width = nativeWidth; 
+        libCanvas.height = nativeHeight;
+        canvasContainer.appendChild(libCanvas);
+        
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
 
-        // ==================== 1. ОСНОВНОЙ ХОЛСТ ДЛЯ ЯДРА (native 240×160) ====================
-    function setupModernLibretro(game) {
-    document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
-
-    const nativeWidth = 240;
-    const nativeHeight = 160;
-    const systemCode = 5;
-
-    const libCanvas = document.createElement('canvas');
-    libCanvas.id = 'canvas';
-    libCanvas.width = nativeWidth;
-    libCanvas.height = nativeHeight;
-    libCanvas.tabIndex = -1;
-    libCanvas.style.cssText = `position:absolute;top:-1000px;left:-1000px;opacity:0.01;z-index:1;display:block;image-rendering:pixelated;outline:none;width:\( {nativeWidth}px;height: \){nativeHeight}px;`;
-    canvasContainer.appendChild(libCanvas);
-
-    libCanvas.getBoundingClientRect = () => ({left:0,top:0,width:nativeWidth,height:nativeHeight,right:nativeWidth,bottom:nativeHeight});
-    Object.defineProperty(libCanvas, 'clientWidth', {get:()=>nativeWidth});
-    Object.defineProperty(libCanvas, 'clientHeight', {get:()=>nativeHeight});
-
-    const originalGetContext = libCanvas.getContext.bind(libCanvas);
-    libCanvas.getContext = function(type, attributes) {
-        if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
-            attributes = attributes || {};
-            attributes.preserveDrawingBuffer = true;
-        }
-        return originalGetContext(type, attributes);
-    };
-
-    const glCanvas = document.createElement('canvas');
-    glCanvas.id = 'universal-gl-canvas';
-    glCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:5;display:block;';
-    canvasContainer.appendChild(glCanvas);
-    UniversalWebGL.init(glCanvas);
-
-    btnGamepad.style.display = 'flex';
-    btnPadEdit.style.display = 'flex';
-    btnScreen.style.display = 'flex';
-    toggleGamepad(true);
-
-    const sp = localStorage.getItem('padV4_' + game.n);
-    padConfig = sp ? JSON.parse(sp) : {};
-    sanitizePadConfig();
-    updateFloatingBtnUI();
-    updateStepBtnUI();
-    updatePadTransforms();
-    updateVideoUI();
-
-    readBlob(game.fileBlob).then(async arrayBuffer => {
-        let fileData = new Uint8Array(arrayBuffer);
-        let romName = game.n + "." + game.ext;
-        if (game.fileBlob?.name) romName = game.fileBlob.name;
-
-        if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
-            try {
-                const unzipped = fflate.unzipSync(fileData);
-                for (const filename in unzipped) {
-                    const ext = filename.split('.').pop().toLowerCase();
-                    if (coreMap[ext]) {
-                        fileData = unzipped[filename];
-                        romName = filename.split('/').pop();
-                        break;
-                    }
-                }
-            } catch(e) {}
-        }
-
-        currentGame._romName = romName;
-        const virtualFileName = '/' + romName;
-
-        const glLoop = () => {
-            if (isShuttingDown) return;
-            if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) {
-                try { UniversalWebGL.draw(libCanvas, systemCode); }
-                catch (e) { if (e.message.includes('memory')) { videoConfig.res = 1; saveVideoConfig(); } }
+        // Оставляем только мягкий перехват для WebGL (чтобы не было черного экрана)
+        const originalGetContext = libCanvas.getContext.bind(libCanvas);
+        libCanvas.getContext = function(type, attributes) {
+            if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
+                attributes = attributes || {};
+                attributes.preserveDrawingBuffer = true; 
             }
-            glLoopId = requestAnimationFrame(glLoop);
+            return originalGetContext(type, attributes);
         };
+        
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        btnScreen.style.display = 'flex'; 
+        toggleGamepad(true);
+        
+        const sp = localStorage.getItem('padV4_' + game.n); 
+        if(sp) { try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } } else { padConfig = {}; }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
+        updateVideoUI();
 
-        try {
-            ['Module','FS','Browser'].forEach(g => window[g]=undefined);
-            const moduleFactory = (await import('./mgba_libretro.js')).default;
-            window.Module = await moduleFactory({
-                canvas: libCanvas,
-                keyboardListeningElement: window.document,
-                arguments: [virtualFileName],
-                preRun: [function(mod) {
-                    mod.FS.writeFile(virtualFileName, fileData);
+        readBlob(game.fileBlob).then(async arrayBuffer => {
+            let fileData = new Uint8Array(arrayBuffer); 
+            let romName = game.n + "." + game.ext; 
+            if (game.fileBlob?.name) romName = game.fileBlob.name;
+            
+            if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
+                try { 
+                    const unzipped = fflate.unzipSync(fileData); 
+                    for (const filename in unzipped) { 
+                        if (coreMap[filename.split('.').pop().toLowerCase()]) { 
+                            fileData = unzipped[filename]; 
+                            romName = filename.split('/').pop(); 
+                            break; 
+                        } 
+                    } 
+                } catch(e) {}
+            }
+            
+            currentGame._romName = romName;
+            const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
+            const virtualFileName = '/' + romName;
+
+            const glLoop = () => { 
+                if (isShuttingDown) return; 
+                if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) { 
                     try {
-                        const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
-                        if (b64) mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
-                    } catch(e) {}
-                }],
-                print: t => console.log('mGBA:', t),
-                printErr: t => console.error('mGBA ERR:', t)
-            });
+                        UniversalWebGL.draw(libCanvas, systemCode, false); 
+                    } catch (e) {
+                        if (e.message && e.message.includes('memory')) {
+                            console.error("ОЗУ переполнено апскейлом, сбрасываем разрешение:", e);
+                            videoConfig.res = 1;
+                            saveVideoConfig();
+                        }
+                    }
+                } 
+                glLoopId = requestAnimationFrame(glLoop); 
+            };
 
-            // ←←← НОВАЯ ПОВТОРНАЯ ЗАМОРОЗКА (самое важное)
-            libCanvas.width = nativeWidth;
-            libCanvas.height = nativeHeight;
-            libCanvas.style.width = nativeWidth + 'px';
-            libCanvas.style.height = nativeHeight + 'px';
+            try {
+                ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
+                
+                const moduleFactory = (await import('./' + coreName + '.js')).default;
+                window.Module = await moduleFactory({
+                    canvas: libCanvas,
+                    keyboardListeningElement: window.document, 
+                    arguments: [virtualFileName],
+                    preRun: [function(mod) {
+                        mod.FS.writeFile(virtualFileName, fileData);
+                        try {
+                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
+                            if (b64) {
+                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
+                            }
+                        } catch(e) {}
+                    }],
+                    print: (t) => console.log('CORE:', t),
+                    printErr: (t) => console.error('CORE ERR:', t)
+                });
 
-            glLoop();
-            setTimeout(() => libCanvas.focus(), 100);
-            await new Promise(r => setTimeout(r, 500));
-            await loadGameState(true);
+                glLoop();
+                setTimeout(() => libCanvas.focus(), 100); 
+                await new Promise(r => setTimeout(r, 500));
+                await loadGameState(true);
+                isGameStarting = false;
+
+            } catch (err) {
+                alert("Ошибка инициализации ядра GBA: " + err.message);
+                executeCleanup();
+                isGameStarting = false;
+            }
+        }).catch(err => { 
+            alert("Ошибка чтения файла: " + err.message); 
+            executeCleanup(); 
             isGameStarting = false;
-        } catch (err) {
-            console.error(err);
-            alert("Ошибка mGBA: " + err.message);
-            executeCleanup();
-            isGameStarting = false;
-        }
-    }).catch(err => {
-        alert("Ошибка чтения ROM: " + err.message);
-        executeCleanup();
-        isGameStarting = false;
-    });
-}
+        });
+    }
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
