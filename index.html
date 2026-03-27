@@ -1028,7 +1028,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (u_colors == 1) {
                             color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
                         } else {
-                            // FSR без гаммы (смешивание в sRGB)
                             float sharpness = 0.4; 
                             vec3 d = vec3(0.0);
                             d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
@@ -1169,6 +1168,50 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
+
+            gl.uniform1i(this.uCrtLoc, videoConfig.crt ? 1 : 0); 
+            gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
+            gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
+            gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
+            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
+            gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
+            gl.uniform1i(this.uSystemLoc, systemCode); 
+            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
+            
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        },
+        // 🔥 ПЛАН В: Новая функция для прямого рендера из массива памяти HEAPU8
+        drawRaw: function(pixels, width, height, format, type, systemCode) {
+            if (!this.gl || !pixels) return;
+            const gl = this.gl;
+            let scaleMult = videoConfig.res;
+            
+            let targetW = width * scaleMult, targetH = height * scaleMult;
+            const maxArea = 16777216;
+            if (targetW > this.maxTexSize || targetH > this.maxTexSize || (targetW * targetH) > maxArea) {
+                let limitScaleTex = Math.min(this.maxTexSize / width, this.maxTexSize / height);
+                let limitScaleArea = Math.sqrt(maxArea / (width * height));
+                scaleMult = Math.max(1, Math.min(limitScaleTex, limitScaleArea));
+                targetW = width * scaleMult; 
+                targetH = height * scaleMult;
+            }
+
+            if (width !== this.currentWidth || height !== this.currentHeight || gl.canvas.width !== Math.floor(targetW)) {
+                this.currentWidth = width; 
+                this.currentHeight = height;
+                gl.canvas.width = Math.floor(targetW); 
+                gl.canvas.height = Math.floor(targetH);
+                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
+                gl.uniform2f(this.uTexSizeLoc, width, height);
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
+            
+            // Вливаем сырой массив байтов напрямую в видеокарту
+            gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, type, pixels);
 
             gl.uniform1i(this.uCrtLoc, videoConfig.crt ? 1 : 0); 
             gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
@@ -1835,8 +1878,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function setupModernLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
-        
-        // 🔥 ПЛАН "ЭЛЕГАНТНОСТЬ": Спрятанный холст, фиксированный размер
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
         libCanvas.tabIndex = -1;
@@ -1845,25 +1886,51 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
 
         libCanvas.style.cssText = `position: absolute; top: -3000px; left: -3000px; width: ${nativeWidth}px; height: ${nativeHeight}px; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;`;
-        
         libCanvas.width = nativeWidth; 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
-        
+
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
         glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
 
-        // Оставляем только мягкий перехват для WebGL (чтобы не было черного экрана)
+        // 🔥 ПЛАН В: Хардкорный перехват HEAPU8 через WebGL команды!
+        let capturedPixels = null, capturedW = 0, capturedH = 0;
+        let capturedFormat = UniversalWebGL.gl ? UniversalWebGL.gl.RGBA : 0x1908;
+        let capturedType = UniversalWebGL.gl ? UniversalWebGL.gl.UNSIGNED_BYTE : 0x1401;
+
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
-            if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
-                attributes = attributes || {};
-                attributes.preserveDrawingBuffer = true; 
+            let ctx = originalGetContext(type, attributes);
+            if (ctx && (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl')) {
+                const origTexImage2D = ctx.texImage2D.bind(ctx);
+                const origTexSubImage2D = ctx.texSubImage2D.bind(ctx);
+
+                ctx.texImage2D = function() {
+                    if (arguments.length === 9) { 
+                        capturedW = arguments[3];
+                        capturedH = arguments[4];
+                        capturedFormat = arguments[6];
+                        capturedType = arguments[7];
+                        capturedPixels = arguments[8]; 
+                    }
+                    return origTexImage2D.apply(this, arguments);
+                };
+
+                ctx.texSubImage2D = function() {
+                    if (arguments.length === 9) { 
+                        capturedW = arguments[4];
+                        capturedH = arguments[5];
+                        capturedFormat = arguments[6];
+                        capturedType = arguments[7];
+                        capturedPixels = arguments[8];
+                    }
+                    return origTexSubImage2D.apply(this, arguments);
+                };
             }
-            return originalGetContext(type, attributes);
+            return ctx;
         };
         
         btnGamepad.style.display = 'flex'; 
@@ -1903,9 +1970,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             const glLoop = () => { 
                 if (isShuttingDown) return; 
-                if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) { 
+                if (!isGamePaused) { 
                     try {
-                        UniversalWebGL.draw(libCanvas, systemCode, false); 
+                        // Используем перехваченный кадр, если он есть
+                        if (capturedPixels && capturedW > 0 && capturedH > 0) {
+                            UniversalWebGL.drawRaw(capturedPixels, capturedW, capturedH, capturedFormat, capturedType, systemCode);
+                        } else if (libCanvas.width > 0 && libCanvas.height > 0) {
+                            // Резервный вариант, если ядро рендерит софтово или мы не поймали кадр
+                            UniversalWebGL.draw(libCanvas, systemCode, false); 
+                        }
                     } catch (e) {
                         if (e.message && e.message.includes('memory')) {
                             console.error("ОЗУ переполнено апскейлом, сбрасываем разрешение:", e);
@@ -1955,6 +2028,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGameStarting = false;
         });
     }
+
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
