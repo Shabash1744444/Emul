@@ -1831,135 +1831,150 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function setupModernLibretro(game) {
-        document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
-        
-        // 🔥 ПЛАН А+Б: Спрятанный холст (opacity 0.01 + offscreen)
-        const libCanvas = document.createElement('canvas'); 
-        libCanvas.id = 'canvas'; 
-        libCanvas.tabIndex = -1;
-        libCanvas.style.cssText = 'position: absolute; top: -1000px; left: -1000px; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;';
-        
-        let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
-        if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
+    document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
 
-        libCanvas.width = nativeWidth; 
-        libCanvas.height = nativeHeight;
-        canvasContainer.appendChild(libCanvas);
+    const nativeWidth = 240;
+    const nativeHeight = 160;
+    const systemCode = 5; // GBA в твоём шейдере
 
-        // 🔥 ПЛАН А+Б: ХАК "ЗАМОРОЗКА РАЗМЕРОВ" 
-        // Если ядро начнет мерить экран, оно увидит крошечный размер и отрендерит софтово 240x160 без тормозов
-        libCanvas.getBoundingClientRect = function() {
-            return { top: 0, left: 0, width: nativeWidth, height: nativeHeight, right: nativeWidth, bottom: nativeHeight };
-        };
-        Object.defineProperty(libCanvas, 'clientWidth', { get: () => nativeWidth });
-        Object.defineProperty(libCanvas, 'clientHeight', { get: () => nativeHeight });
-        
-        const glCanvas = document.createElement('canvas'); 
-        glCanvas.id = 'universal-gl-canvas';
-        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
-        canvasContainer.appendChild(glCanvas); 
-        UniversalWebGL.init(glCanvas);
+    // 1. Создаём холст строго native-размера
+    const libCanvas = document.createElement('canvas');
+    libCanvas.id = 'canvas';
+    libCanvas.width = nativeWidth;
+    libCanvas.height = nativeHeight;
+    libCanvas.tabIndex = -1;
+    libCanvas.style.cssText = `
+        position: absolute; 
+        top: -1000px; 
+        left: -1000px; 
+        opacity: 0.01; 
+        z-index: 1; 
+        display: block; 
+        image-rendering: pixelated; 
+        outline: none;
+        width: ${nativeWidth}px;     /* важно! */
+        height: ${nativeHeight}px;
+    `;
+    canvasContainer.appendChild(libCanvas);
 
-        // 🔥 ПЛАН А+Б: ЖЕСТКИЙ БЛОК WEBGL
-        // Вынуждаем mGBA выводить кадры в 2D Context, который UniversalWebGL.draw легко прочитает без черных экранов
-        const originalGetContext = libCanvas.getContext.bind(libCanvas);
-        libCanvas.getContext = function(type, attributes) {
-            if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
-                console.warn("WebGL заблокирован для GBA! Переключаем на софтовый рендер.");
-                return null; 
-            }
-            return originalGetContext(type, attributes);
-        };
-        
-        btnGamepad.style.display = 'flex'; 
-        btnPadEdit.style.display = 'flex'; 
-        btnScreen.style.display = 'flex'; 
-        toggleGamepad(true);
-        
-        const sp = localStorage.getItem('padV4_' + game.n); 
-        if(sp) { try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } } else { padConfig = {}; }
-        sanitizePadConfig(); 
-        updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
-        updatePadTransforms(); 
-        updateVideoUI();
+    // 2. Жёсткая заморозка размеров (перехватываем ВСЕ возможные запросы размера)
+    libCanvas.getBoundingClientRect = function() {
+        return { left: 0, top: 0, width: nativeWidth, height: nativeHeight,
+                 right: nativeWidth, bottom: nativeHeight };
+    };
+    Object.defineProperty(libCanvas, 'clientWidth',  { get: () => nativeWidth });
+    Object.defineProperty(libCanvas, 'clientHeight', { get: () => nativeHeight });
 
-        readBlob(game.fileBlob).then(async arrayBuffer => {
-            let fileData = new Uint8Array(arrayBuffer); 
-            let romName = game.n + "." + game.ext; 
-            if (game.fileBlob?.name) romName = game.fileBlob.name;
-            
-            if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
-                try { 
-                    const unzipped = fflate.unzipSync(fileData); 
-                    for (const filename in unzipped) { 
-                        if (coreMap[filename.split('.').pop().toLowerCase()]) { 
-                            fileData = unzipped[filename]; 
-                            romName = filename.split('/').pop(); 
-                            break; 
-                        } 
-                    } 
-                } catch(e) {}
-            }
-            
-            currentGame._romName = romName;
-            const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
-            const virtualFileName = '/' + romName;
+    // 3. Только preserveDrawingBuffer — НЕ блокируем WebGL!
+    const originalGetContext = libCanvas.getContext.bind(libCanvas);
+    libCanvas.getContext = function(type, attributes) {
+        if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
+            attributes = attributes || {};
+            attributes.preserveDrawingBuffer = true;   // ← КЛЮЧЕВОЕ
+            // НЕ возвращаем null!
+        }
+        return originalGetContext(type, attributes);
+    };
 
-            const glLoop = () => { 
-                if (isShuttingDown) return; 
-                if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) { 
-                    try {
-                        UniversalWebGL.draw(libCanvas, systemCode, false); 
-                    } catch (e) {
-                        if (e.message && e.message.includes('memory')) {
-                            console.error("ОЗУ переполнено апскейлом, сбрасываем разрешение:", e);
-                            videoConfig.res = 1;
-                            saveVideoConfig();
-                        }
-                    }
-                } 
-                glLoopId = requestAnimationFrame(glLoop); 
-            };
+    // 4. GL-постобработка
+    const glCanvas = document.createElement('canvas');
+    glCanvas.id = 'universal-gl-canvas';
+    glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+    canvasContainer.appendChild(glCanvas);
+    UniversalWebGL.init(glCanvas);
 
+    // UI-кнопки
+    btnGamepad.style.display = 'flex';
+    btnPadEdit.style.display = 'flex';
+    btnScreen.style.display = 'flex';
+    toggleGamepad(true);
+
+    // Pad-настройки (как было)
+    const sp = localStorage.getItem('padV4_' + game.n);
+    padConfig = sp ? JSON.parse(sp) : {};
+    sanitizePadConfig();
+    updateFloatingBtnUI();
+    updateStepBtnUI();
+    updatePadTransforms();
+    updateVideoUI();
+
+    readBlob(game.fileBlob).then(async arrayBuffer => {
+        let fileData = new Uint8Array(arrayBuffer);
+        let romName = game.n + "." + game.ext;
+        if (game.fileBlob?.name) romName = game.fileBlob.name;
+
+        // Распаковка ZIP внутри, если нужно
+        if (fileData[0] === 0x50 && fileData[1] === 0x4B) {
             try {
-                ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
-                
-                const moduleFactory = (await import('./' + coreName + '.js')).default;
-                window.Module = await moduleFactory({
-                    canvas: libCanvas,
-                    keyboardListeningElement: window.document, 
-                    arguments: [virtualFileName],
-                    preRun: [function(mod) {
-                        mod.FS.writeFile(virtualFileName, fileData);
-                        try {
-                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
-                            if (b64) {
-                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
-                            }
-                        } catch(e) {}
-                    }],
-                    print: (t) => console.log('CORE:', t),
-                    printErr: (t) => console.error('CORE ERR:', t)
-                });
+                const unzipped = fflate.unzipSync(fileData);
+                for (const filename in unzipped) {
+                    if (coreMap[filename.split('.').pop().toLowerCase()]) {
+                        fileData = unzipped[filename];
+                        romName = filename.split('/').pop();
+                        break;
+                    }
+                }
+            } catch(e) {}
+        }
 
-                glLoop();
-                setTimeout(() => libCanvas.focus(), 100); 
-                await new Promise(r => setTimeout(r, 500));
-                await loadGameState(true);
-                isGameStarting = false;
+        currentGame._romName = romName;
+        const virtualFileName = '/' + romName;
 
-            } catch (err) {
-                alert("Ошибка инициализации ядра GBA: " + err.message);
-                executeCleanup();
-                isGameStarting = false;
+        const glLoop = () => {
+            if (isShuttingDown) return;
+            if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) {
+                try {
+                    UniversalWebGL.draw(libCanvas, systemCode);
+                } catch (e) {
+                    if (e.message.includes('memory')) {
+                        videoConfig.res = 1;
+                        saveVideoConfig();
+                    }
+                }
             }
-        }).catch(err => { 
-            alert("Ошибка чтения файла: " + err.message); 
-            executeCleanup(); 
+            glLoopId = requestAnimationFrame(glLoop);
+        };
+
+        try {
+            // Очистка глобальных Emscripten-объектов
+            ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
+
+            const moduleFactory = (await import('./mgba_libretro.js')).default;  // ← твой файл ядра
+
+            window.Module = await moduleFactory({
+                canvas: libCanvas,
+                keyboardListeningElement: window.document,
+                arguments: [virtualFileName],
+                preRun: [function(mod) {
+                    mod.FS.writeFile(virtualFileName, fileData);
+                    // Загрузка SRAM, если есть
+                    try {
+                        const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
+                        if (b64) mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
+                    } catch(e) {}
+                }],
+                print: t => console.log('mGBA:', t),
+                printErr: t => console.error('mGBA ERR:', t)
+            });
+
+            glLoop();
+            setTimeout(() => libCanvas.focus(), 100);
+            await new Promise(r => setTimeout(r, 500));
+            await loadGameState(true);
             isGameStarting = false;
-        });
-    }
+
+        } catch (err) {
+            console.error(err);
+            alert("Ошибка mGBA: " + err.message);
+            executeCleanup();
+            isGameStarting = false;
+        }
+    }).catch(err => {
+        alert("Ошибка чтения ROM: " + err.message);
+        executeCleanup();
+        isGameStarting = false;
+    });
+}
     function setupLibretro(game) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
