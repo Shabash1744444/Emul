@@ -132,7 +132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
-#joystick-dpad { bottom: 40px; left: 30px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 50px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -144,14 +144,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.right { top: 38%; right: 8%; }
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
-#btn-select { bottom: 35px; left: calc(50% - 45px); transform: translateX(-50%); width: 80px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px; color: #fff; text-align: center; font-weight: bold; font-size: 12px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 35px; left: calc(50% + 45px); transform: translateX(-50%); width: 80px; padding: 10px; background: rgba(255,255,255,0.3); border-radius: 8px; color: #fff; text-align: center; font-weight: bold; font-size: 12px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 50px; right: 120px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 90px; right: 30px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 100px; right: 160px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 140px; right: 70px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
-#btn-l { top: 90px; left: 20px; width: 80px; height: 40px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
-#btn-r { top: 90px; right: 20px; width: 80px; height: 40px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+
+/* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
+#btn-select { bottom: 20px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 20px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-b { bottom: 45px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
+#btn-a { bottom: 100px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
+#btn-y { bottom: 100px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
+#btn-x { bottom: 155px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
+#btn-l { top: 70px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-r { top: 70px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
@@ -1337,53 +1340,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
-                
-                if (id === 'dpad') { 
-                    el.style.bottom = '40px'; 
-                    el.style.left = '30px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'a') { 
-                    el.style.bottom = '90px'; 
-                    el.style.right = '30px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'b') { 
-                    el.style.bottom = '50px'; 
-                    el.style.right = '120px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'x') { 
-                    el.style.bottom = '140px'; 
-                    el.style.right = '70px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'y') { 
-                    el.style.bottom = '100px'; 
-                    el.style.right = '160px'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'l') { 
-                    el.style.top = 'auto'; 
-                    el.style.bottom = '140px'; 
-                    el.style.left = '20px';      
-                }
-                else if (id === 'r') { 
-                    el.style.top = 'auto';
-                    el.style.bottom = '140px'; 
-                    el.style.right = '20px';     
-                }
-                else if (id === 'select') { 
-                    el.style.bottom = '35px'; 
-                    el.style.left = 'calc(50% - 45px)'; 
-                    el.style.top = 'auto'; 
-                }
-                else if (id === 'start') { 
-                    el.style.bottom = '35px'; 
-                    el.style.left = 'calc(50% + 45px)'; 
-                    el.style.top = 'auto'; 
-                }
-                
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
                 applyVisuals(id);
@@ -1505,7 +1461,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 activeDpadKeys.clear(); 
             }
         } else { 
-            // ФИКС ВИБРАЦИИ ПРИ СКОЛЬЖЕНИИ:
             let changed = false;
             if (newKeys.size !== activeDpadKeys.size) {
                 changed = true;
@@ -1514,7 +1469,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
 
             if (changed) {
-                doVibrate(10); // Легкая отдача при переходе на другую стрелку
+                doVibrate(10); 
             }
 
             if (isStepDpad) {
