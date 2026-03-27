@@ -1837,7 +1837,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const nativeHeight = 160;
     const systemCode = 5; // GBA в твоём шейдере
 
-    // 1. Создаём холст строго native-размера
+        // ==================== 1. ОСНОВНОЙ ХОЛСТ ДЛЯ ЯДРА (native 240×160) ====================
     const libCanvas = document.createElement('canvas');
     libCanvas.id = 'canvas';
     libCanvas.width = nativeWidth;
@@ -1845,17 +1845,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     libCanvas.tabIndex = -1;
     libCanvas.style.cssText = `
         position: absolute; 
-        top: -1000px; 
-        left: -1000px; 
+        inset: 0; 
+        width: 100%; 
+        height: 100%; 
         opacity: 0.01; 
         z-index: 1; 
         display: block; 
         image-rendering: pixelated; 
         outline: none;
-        width: ${nativeWidth}px;     /* важно! */
-        height: ${nativeHeight}px;
     `;
     canvasContainer.appendChild(libCanvas);
+
 
     // 2. Жёсткая заморозка размеров (перехватываем ВСЕ возможные запросы размера)
     libCanvas.getBoundingClientRect = function() {
