@@ -1838,60 +1838,45 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const systemCode = 5; // GBA в твоём шейдере
 
         // ==================== 1. ОСНОВНОЙ ХОЛСТ ДЛЯ ЯДРА (native 240×160) ====================
+    function setupModernLibretro(game) {
+    document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+
+    const nativeWidth = 240;
+    const nativeHeight = 160;
+    const systemCode = 5;
+
     const libCanvas = document.createElement('canvas');
     libCanvas.id = 'canvas';
     libCanvas.width = nativeWidth;
     libCanvas.height = nativeHeight;
     libCanvas.tabIndex = -1;
-    libCanvas.style.cssText = `
-        position: absolute; 
-        top: 0; 
-        left: 0; 
-        width: ${nativeWidth}px; 
-        height: ${nativeHeight}px; 
-        opacity: 0.01; 
-        z-index: 1; 
-        display: block; 
-        image-rendering: pixelated; 
-        outline: none;
-    `;
-
+    libCanvas.style.cssText = `position:absolute;top:-1000px;left:-1000px;opacity:0.01;z-index:1;display:block;image-rendering:pixelated;outline:none;width:\( {nativeWidth}px;height: \){nativeHeight}px;`;
     canvasContainer.appendChild(libCanvas);
 
+    libCanvas.getBoundingClientRect = () => ({left:0,top:0,width:nativeWidth,height:nativeHeight,right:nativeWidth,bottom:nativeHeight});
+    Object.defineProperty(libCanvas, 'clientWidth', {get:()=>nativeWidth});
+    Object.defineProperty(libCanvas, 'clientHeight', {get:()=>nativeHeight});
 
-    // 2. Жёсткая заморозка размеров (перехватываем ВСЕ возможные запросы размера)
-    libCanvas.getBoundingClientRect = function() {
-        return { left: 0, top: 0, width: nativeWidth, height: nativeHeight,
-                 right: nativeWidth, bottom: nativeHeight };
-    };
-    Object.defineProperty(libCanvas, 'clientWidth',  { get: () => nativeWidth });
-    Object.defineProperty(libCanvas, 'clientHeight', { get: () => nativeHeight });
-
-    // 3. Только preserveDrawingBuffer — НЕ блокируем WebGL!
     const originalGetContext = libCanvas.getContext.bind(libCanvas);
     libCanvas.getContext = function(type, attributes) {
         if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
             attributes = attributes || {};
-            attributes.preserveDrawingBuffer = true;   // ← КЛЮЧЕВОЕ
-            // НЕ возвращаем null!
+            attributes.preserveDrawingBuffer = true;
         }
         return originalGetContext(type, attributes);
     };
 
-    // 4. GL-постобработка
     const glCanvas = document.createElement('canvas');
     glCanvas.id = 'universal-gl-canvas';
-    glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+    glCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:5;display:block;';
     canvasContainer.appendChild(glCanvas);
     UniversalWebGL.init(glCanvas);
 
-    // UI-кнопки
     btnGamepad.style.display = 'flex';
     btnPadEdit.style.display = 'flex';
     btnScreen.style.display = 'flex';
     toggleGamepad(true);
 
-    // Pad-настройки (как было)
     const sp = localStorage.getItem('padV4_' + game.n);
     padConfig = sp ? JSON.parse(sp) : {};
     sanitizePadConfig();
@@ -1905,12 +1890,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let romName = game.n + "." + game.ext;
         if (game.fileBlob?.name) romName = game.fileBlob.name;
 
-        // Распаковка ZIP внутри, если нужно
-        if (fileData[0] === 0x50 && fileData[1] === 0x4B) {
+        if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
             try {
                 const unzipped = fflate.unzipSync(fileData);
                 for (const filename in unzipped) {
-                    if (coreMap[filename.split('.').pop().toLowerCase()]) {
+                    const ext = filename.split('.').pop().toLowerCase();
+                    if (coreMap[ext]) {
                         fileData = unzipped[filename];
                         romName = filename.split('/').pop();
                         break;
@@ -1925,31 +1910,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const glLoop = () => {
             if (isShuttingDown) return;
             if (!isGamePaused && libCanvas.width > 0 && libCanvas.height > 0) {
-                try {
-                    UniversalWebGL.draw(libCanvas, systemCode);
-                } catch (e) {
-                    if (e.message.includes('memory')) {
-                        videoConfig.res = 1;
-                        saveVideoConfig();
-                    }
-                }
+                try { UniversalWebGL.draw(libCanvas, systemCode); }
+                catch (e) { if (e.message.includes('memory')) { videoConfig.res = 1; saveVideoConfig(); } }
             }
             glLoopId = requestAnimationFrame(glLoop);
         };
 
         try {
-            // Очистка глобальных Emscripten-объектов
-            ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
-
-            const moduleFactory = (await import('./mgba_libretro.js')).default;  // ← твой файл ядра
-
+            ['Module','FS','Browser'].forEach(g => window[g]=undefined);
+            const moduleFactory = (await import('./mgba_libretro.js')).default;
             window.Module = await moduleFactory({
                 canvas: libCanvas,
                 keyboardListeningElement: window.document,
                 arguments: [virtualFileName],
                 preRun: [function(mod) {
                     mod.FS.writeFile(virtualFileName, fileData);
-                    // Загрузка SRAM, если есть
                     try {
                         const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
                         if (b64) mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
@@ -1959,12 +1934,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 printErr: t => console.error('mGBA ERR:', t)
             });
 
+            // ←←← НОВАЯ ПОВТОРНАЯ ЗАМОРОЗКА (самое важное)
+            libCanvas.width = nativeWidth;
+            libCanvas.height = nativeHeight;
+            libCanvas.style.width = nativeWidth + 'px';
+            libCanvas.style.height = nativeHeight + 'px';
+
             glLoop();
             setTimeout(() => libCanvas.focus(), 100);
             await new Promise(r => setTimeout(r, 500));
             await loadGameState(true);
             isGameStarting = false;
-
         } catch (err) {
             console.error(err);
             alert("Ошибка mGBA: " + err.message);
