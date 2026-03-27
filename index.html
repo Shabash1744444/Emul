@@ -146,14 +146,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
 /* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
-#btn-select { bottom: 20px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 20px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-select { bottom: 45px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
+#btn-start { bottom: 45px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-b { bottom: 45px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
 #btn-a { bottom: 100px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
 #btn-y { bottom: 100px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
 #btn-x { bottom: 155px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
-#btn-l { top: 70px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
-#btn-r { top: 70px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-l { top: 85px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+#btn-r { top: 85px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
 
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
@@ -1340,6 +1340,53 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
+                
+                if (id === 'dpad') { 
+                    el.style.bottom = '40px'; 
+                    el.style.left = '30px'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'a') { 
+                    el.style.bottom = '90px'; 
+                    el.style.right = '30px'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'b') { 
+                    el.style.bottom = '50px'; 
+                    el.style.right = '120px'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'x') { 
+                    el.style.bottom = '140px'; 
+                    el.style.right = '70px'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'y') { 
+                    el.style.bottom = '100px'; 
+                    el.style.right = '160px'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'l') { 
+                    el.style.top = 'auto'; 
+                    el.style.bottom = '220px'; 
+                    el.style.left = '20px';      
+                }
+                else if (id === 'r') { 
+                    el.style.top = 'auto';
+                    el.style.bottom = '220px'; 
+                    el.style.right = '20px';     
+                }
+                else if (id === 'select') { 
+                    el.style.bottom = '45px'; 
+                    el.style.left = 'calc(50% - 40px)'; 
+                    el.style.top = 'auto'; 
+                }
+                else if (id === 'start') { 
+                    el.style.bottom = '45px'; 
+                    el.style.left = 'calc(50% + 40px)'; 
+                    el.style.top = 'auto'; 
+                }
+                
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
                 el.style.pointerEvents = 'auto'; 
                 applyVisuals(id);
@@ -1732,9 +1779,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
-        
         libCanvas.tabIndex = -1;
-        
         libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block !important; image-rendering: pixelated; outline: none;';
         
         let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
@@ -1744,7 +1789,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         libCanvas.height = nativeHeight;
         canvasContainer.appendChild(libCanvas);
         
-        const glContext = libCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false, preserveDrawingBuffer: true });
+        // --- ФИКС АПСКЕЙЛА GBA ---
+        const origGetContext = libCanvas.getContext.bind(libCanvas);
+        libCanvas.getContext = function(type, attrs) { 
+            if (type === 'webgl' || type === 'experimental-webgl') { 
+                attrs = attrs || {}; 
+                attrs.preserveDrawingBuffer = true; 
+            } 
+            return origGetContext(type, attrs); 
+        };
 
         const glCanvas = document.createElement('canvas'); 
         glCanvas.id = 'universal-gl-canvas';
@@ -3001,7 +3054,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 for (let g of games) {
                     const buffer = await readBlob(g.fileBlob);
                     let fname = g.n + '.' + g.ext;
-                    // Для DOS возвращаем расширение zip, для HTML - html
                     if (g.t === 'd') fname = g.n + '.zip';
                     else if (g.t === 'h') fname = g.n + '.html';
                     
