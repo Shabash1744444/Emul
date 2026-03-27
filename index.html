@@ -1845,15 +1845,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     libCanvas.tabIndex = -1;
     libCanvas.style.cssText = `
         position: absolute; 
-        inset: 0; 
-        width: 100%; 
-        height: 100%; 
+        top: 0; 
+        left: 0; 
+        width: ${nativeWidth}px; 
+        height: ${nativeHeight}px; 
         opacity: 0.01; 
         z-index: 1; 
         display: block; 
         image-rendering: pixelated; 
         outline: none;
     `;
+
     canvasContainer.appendChild(libCanvas);
 
 
