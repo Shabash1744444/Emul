@@ -472,6 +472,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
+    // --- ВСПЛЫВАЮЩИЕ ЛОГИ ДЛЯ APK (TOAST) ---
+    function showLog(msg, isError = false) {
+        let toast = document.getElementById('hub-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'hub-toast';
+            toast.style.cssText = 'position:fixed; top:env(safe-area-inset-top, 20px); left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:8px; z-index:99999; font-weight:bold; font-size:12px; color:#fff; pointer-events:none; transition:opacity 0.3s; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.5); opacity:0; margin-top:10px;';
+            document.body.appendChild(toast);
+        }
+        toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+        toast.innerHTML = msg;
+        toast.style.opacity = '1';
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
+    }
+
     const menuScreen = document.getElementById('menuScreen');
     const gameGrid = document.getElementById('gameGrid');
     const frameDiv = document.getElementById('gameFrame');
@@ -552,20 +568,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     } catch(e) {}
 
+    // --- ОБНОВЛЕННАЯ СЕРИАЛИЗАЦИЯ БЕЗ BASE64 ---
     function packData(u8arr) {
-        const compressed = fflate.zlibSync(u8arr);
-        let bin = '';
-        const chunkSize = 8192;
-        for (let i = 0; i < compressed.length; i += chunkSize) {
-            bin += String.fromCharCode.apply(null, compressed.subarray(i, i + chunkSize));
-        }
-        return window.btoa(bin);
+        return fflate.zlibSync(u8arr); 
     }
 
-    function unpackData(b64) {
-        const binary = window.atob(b64);
-        const compressed = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) compressed[i] = binary.charCodeAt(i);
+    function unpackData(compressed) {
+        // Обратная совместимость со старыми сохранениями (Base64)
+        if (typeof compressed === 'string') {
+            const binary = window.atob(compressed);
+            const arr = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+            return fflate.unzlibSync(arr);
+        }
         return fflate.unzlibSync(compressed);
     }
 
@@ -752,19 +767,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function loadSramDirectly(gameName) {
         if (!window.Module) return;
-        const sram64 = await SaveStorage.get('sram_lr_' + gameName) || localStorage.getItem('sram_lr_' + gameName);
-        if (sram64) {
+        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName) || localStorage.getItem('sram_lr_' + gameName);
+        if (sramCompressed) {
             try {
-                const sramArray = unpackData(sram64);
-                const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                if (sramSize > 0) {
-                    const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                    if (sramPtr) {
-                        const len = Math.min(sramArray.length, sramSize);
-                        window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
+                const sramArray = unpackData(sramCompressed);
+                
+                // Умное ожидание: Ядрам (GBA) нужно время, чтобы инициализировать EEPROM
+                let attempts = 0;
+                const checkSram = setInterval(() => {
+                    attempts++;
+                    const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                    if (sramSize > 0) {
+                        clearInterval(checkSram);
+                        const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                        if (sramPtr) {
+                            const len = Math.min(sramArray.length, sramSize);
+                            window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
+                            showLog('🔋 Батарейка загружена');
+                        }
+                    } else if (attempts > 50) { 
+                        clearInterval(checkSram); 
                     }
-                }
-            } catch(e) {}
+                }, 100);
+            } catch(e) { console.error("SRAM load err:", e); }
         }
     }
 
@@ -782,6 +807,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (sramLastHash !== 0 && currentHash !== sramLastHash) {
                         const sramCopy = new Uint8Array(view); // Изолируем дамп из HEAPU8
                         await SaveStorage.set('sram_lr_' + gameName, packData(sramCopy));
+                        showLog('💾 Автосохранение (Батарейка)');
                     }
                     sramLastHash = currentHash;
                 }
@@ -790,12 +816,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
     // ============================================
 
-    // === БЛОК СОХРАНЕНИЙ ПРИ СВОРАЧИВАНИИ ВКЛАДКИ ===
+    // === ЭКСТРЕННОЕ СОХРАНЕНИЕ (Сворачивание APK) ===
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             isGamePaused = true; 
             saveGameState(true); 
-            // Мгновенный сброс SRAM без таймера
+            // Мгновенный сброс SRAM
             if (currentGame && currentGame.t === 'l' && window.Module) {
                 const size = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
                 if (size > 0) {
@@ -817,6 +843,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
         }
     });
+
+    // Бронебойный поиск функций WASM
+    function getWasmMalloc() {
+        if (window.Module._malloc) return window.Module._malloc;
+        if (window.Module.asm && window.Module.asm.malloc) return window.Module.asm.malloc;
+        return null;
+    }
+
+    function getWasmFree() {
+        if (window.Module._free) return window.Module._free;
+        if (window.Module.asm && window.Module.asm.free) return window.Module.asm.free;
+        return null;
+    }
 
     function lrCall(funcName, returnType, argTypes, args) {
         const m = window.Module;
@@ -847,16 +886,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } 
             else if (currentGame.t === 'l' && window.Module) {
                 const stateSize = lrCall('retro_serialize_size', 'number', [], []);
-                if (stateSize > 0) {
-                    const statePtr = window.Module._malloc(stateSize);
+                const wasmMalloc = getWasmMalloc();
+                const wasmFree = getWasmFree();
+
+                if (stateSize > 0 && wasmMalloc && wasmFree) {
+                    const statePtr = wasmMalloc(stateSize);
                     if (statePtr) {
                         lrCall('retro_serialize', 'void', ['number', 'number'], [statePtr, stateSize]);
                         const stateData = new Uint8Array(window.Module.HEAPU8.subarray(statePtr, statePtr + stateSize));
                         const stateCopy = new Uint8Array(stateData);
-                        window.Module._free(statePtr);
+                        wasmFree(statePtr);
                         await SaveStorage.set('savestate_lr_' + currentGame.n, packData(stateCopy));
                         success = true;
                     }
+                } else {
+                    console.error("Save state failed: Missing malloc/free or state size 0");
                 }
             }
             else if (currentGame.t === 'd') {
@@ -893,9 +937,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (success) { 
                         btn.innerHTML = '✅ СОХРАНЕНО!'; 
                         btn.style.background = '#059669'; 
+                        showLog('✅ Состояние сохранено');
                     } else { 
                         btn.innerHTML = '⚠️ ОШИБКА'; 
                         btn.style.background = '#ef4444'; 
+                        showLog('⚠️ Ошибка сохранения', true);
                     }
                     setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 2000);
                 }
@@ -921,22 +967,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             } 
             else if (currentGame.t === 'l' && window.Module) { 
-                const state64 = await SaveStorage.get('savestate_lr_' + currentGame.n) || localStorage.getItem('savestate_lr_' + currentGame.n);
-                if (state64) {
+                const stateCompressed = await SaveStorage.get('savestate_lr_' + currentGame.n) || localStorage.getItem('savestate_lr_' + currentGame.n);
+                if (stateCompressed) {
                     try {
-                        const stateArray = unpackData(state64);
+                        const stateArray = unpackData(stateCompressed);
                         const stateSize = lrCall('retro_serialize_size', 'number', [], []);
-                        if (stateSize > 0) {
-                            const statePtr = window.Module._malloc(stateSize);
+                        const wasmMalloc = getWasmMalloc();
+                        const wasmFree = getWasmFree();
+
+                        if (stateSize > 0 && wasmMalloc && wasmFree) {
+                            const statePtr = wasmMalloc(stateSize);
                             if (statePtr) {
                                 const len = Math.min(stateArray.length, stateSize);
                                 window.Module.HEAPU8.set(stateArray.subarray(0, len), statePtr);
                                 lrCall('retro_unserialize', 'boolean', ['number', 'number'], [statePtr, stateSize]);
-                                window.Module._free(statePtr);
+                                wasmFree(statePtr);
                                 success = true;
                             }
                         }
-                    } catch(e) {}
+                    } catch(e) { console.error("Load state LR err:", e); }
                 }
             }
             else if (currentGame.t === 'd') {
@@ -968,11 +1017,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         const oldText = btn.innerHTML; 
                         btn.innerHTML = '✅ ЗАГРУЖЕНО!'; 
                         btn.style.background = '#d97706';
+                        showLog('✅ Состояние загружено');
                         setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
                     } else {
                         const oldText = btn.innerHTML; 
                         btn.innerHTML = '⚠️ НЕТ СОХРАНЕНИЙ'; 
                         btn.style.background = '#ef4444';
+                        showLog('⚠️ Нет сохранений', true);
                         setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
                     }
                 }
@@ -2355,19 +2406,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 nes.loadROM(windowCurrentROMString);
                 
                 if (!isReset) {
-                    const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
-                    if (autoLoadData) { 
-                        try { 
-                            const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
-                            nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
-                        } catch(e) {
-                            try {
-                                if (autoLoadData.startsWith('{')) {
-                                    nes.fromJSON(JSON.parse(autoLoadData));
-                                }
-                            } catch(e2) {}
-                        } 
-                    }
+                    loadGameState(true);
                 }
                 
                 lastTime = performance.now(); 
