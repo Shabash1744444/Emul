@@ -668,17 +668,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.preventDefault();
     }, { passive: false });
 
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            isGamePaused = true; 
-            saveGameState(); 
-            stopAudio(); 
-        } else {
-            isGamePaused = false;
-            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
-        }
-    });
-
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
         history.pushState({ trap: true }, ""); 
@@ -716,7 +705,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
     
     window.addEventListener('beforeunload', () => {
-        if (currentGame) saveGameState();
+        if (currentGame) saveGameState(true);
     });
 
     const SaveStorage = {
@@ -748,6 +737,87 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     };
 
+    // === БЛОК ПЕРСИСТЕНТНОСТИ SRAM (БАТАРЕЙКИ) ===
+    let sramPollInterval = null;
+    let sramLastHash = 0;
+
+    function fastHash(arr) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < arr.length; i++) {
+            h ^= arr[i];
+            h = (h * 0x01000193) >>> 0;
+        }
+        return h;
+    }
+
+    async function loadSramDirectly(gameName) {
+        if (!window.Module) return;
+        const sram64 = await SaveStorage.get('sram_lr_' + gameName) || localStorage.getItem('sram_lr_' + gameName);
+        if (sram64) {
+            try {
+                const sramArray = unpackData(sram64);
+                const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                if (sramSize > 0) {
+                    const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                    if (sramPtr) {
+                        const len = Math.min(sramArray.length, sramSize);
+                        window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
+                    }
+                }
+            } catch(e) {}
+        }
+    }
+
+    function startSramPolling(gameName) {
+        if (sramPollInterval) clearInterval(sramPollInterval);
+        sramLastHash = 0;
+        sramPollInterval = setInterval(async () => {
+            if (!window.Module || !currentGame || isGamePaused || isShuttingDown) return;
+            const size = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+            if (size > 0) {
+                const ptr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                if (ptr) {
+                    const view = window.Module.HEAPU8.subarray(ptr, ptr + size);
+                    const currentHash = fastHash(view);
+                    if (sramLastHash !== 0 && currentHash !== sramLastHash) {
+                        const sramCopy = new Uint8Array(view); // Изолируем дамп из HEAPU8
+                        await SaveStorage.set('sram_lr_' + gameName, packData(sramCopy));
+                    }
+                    sramLastHash = currentHash;
+                }
+            }
+        }, 3000);
+    }
+    // ============================================
+
+    // === БЛОК СОХРАНЕНИЙ ПРИ СВОРАЧИВАНИИ ВКЛАДКИ ===
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            isGamePaused = true; 
+            saveGameState(true); 
+            // Мгновенный сброс SRAM без таймера
+            if (currentGame && currentGame.t === 'l' && window.Module) {
+                const size = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                if (size > 0) {
+                    const ptr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                    if (ptr) {
+                        const view = window.Module.HEAPU8.subarray(ptr, ptr + size);
+                        const currentHash = fastHash(view);
+                        if (sramLastHash !== 0 && currentHash !== sramLastHash) {
+                            const sramCopy = new Uint8Array(view);
+                            SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy));
+                            sramLastHash = currentHash;
+                        }
+                    }
+                }
+            }
+            stopAudio(); 
+        } else {
+            isGamePaused = false;
+            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
+        }
+    });
+
     function lrCall(funcName, returnType, argTypes, args) {
         const m = window.Module;
         if (!m) return null;
@@ -763,7 +833,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return null;
     }
 
-    async function saveGameState() {
+    async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
             let success = false;
@@ -776,12 +846,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 success = true;
             } 
             else if (currentGame.t === 'l' && window.Module) {
-                const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                if (sramSize > 0) {
-                    const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                    if (sramPtr) {
-                        const sramData = new Uint8Array(window.Module.HEAPU8.buffer.slice(sramPtr, sramPtr + sramSize));
-                        await SaveStorage.set('sram_lr_' + currentGame.n, packData(sramData));
+                const stateSize = lrCall('retro_serialize_size', 'number', [], []);
+                if (stateSize > 0) {
+                    const statePtr = window.Module._malloc(stateSize);
+                    if (statePtr) {
+                        lrCall('retro_serialize', 'void', ['number', 'number'], [statePtr, stateSize]);
+                        const stateData = new Uint8Array(window.Module.HEAPU8.subarray(statePtr, statePtr + stateSize));
+                        const stateCopy = new Uint8Array(stateData);
+                        window.Module._free(statePtr);
+                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(stateCopy));
                         success = true;
                     }
                 }
@@ -813,17 +886,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             
-            const btn = document.querySelector('.save-btn');
-            if(btn) {
-                const oldText = btn.innerHTML;
-                if (success) { 
-                    btn.innerHTML = '✅ СОХРАНЕНО!'; 
-                    btn.style.background = '#059669'; 
-                } else { 
-                    btn.innerHTML = '⚠️ ОШИБКА'; 
-                    btn.style.background = '#ef4444'; 
+            if (!isAuto) {
+                const btn = document.querySelector('.save-btn');
+                if(btn) {
+                    const oldText = btn.innerHTML;
+                    if (success) { 
+                        btn.innerHTML = '✅ СОХРАНЕНО!'; 
+                        btn.style.background = '#059669'; 
+                    } else { 
+                        btn.innerHTML = '⚠️ ОШИБКА'; 
+                        btn.style.background = '#ef4444'; 
+                    }
+                    setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 2000);
                 }
-                setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
@@ -846,16 +921,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             } 
             else if (currentGame.t === 'l' && window.Module) { 
-                const sram64 = await SaveStorage.get('sram_lr_' + currentGame.n) || localStorage.getItem('sram_lr_' + currentGame.n);
-                if (sram64) {
+                const state64 = await SaveStorage.get('savestate_lr_' + currentGame.n) || localStorage.getItem('savestate_lr_' + currentGame.n);
+                if (state64) {
                     try {
-                        const sramArray = unpackData(sram64);
-                        const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                        if (sramSize > 0) {
-                            const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                            if (sramPtr) {
-                                const len = Math.min(sramArray.length, sramSize);
-                                new Uint8Array(window.Module.HEAPU8.buffer, sramPtr, len).set(sramArray.subarray(0, len));
+                        const stateArray = unpackData(state64);
+                        const stateSize = lrCall('retro_serialize_size', 'number', [], []);
+                        if (stateSize > 0) {
+                            const statePtr = window.Module._malloc(stateSize);
+                            if (statePtr) {
+                                const len = Math.min(stateArray.length, stateSize);
+                                window.Module.HEAPU8.set(stateArray.subarray(0, len), statePtr);
+                                lrCall('retro_unserialize', 'boolean', ['number', 'number'], [statePtr, stateSize]);
+                                window.Module._free(statePtr);
                                 success = true;
                             }
                         }
@@ -884,18 +961,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isAuto && !b64) success = true; 
             }
             
-            const btn = document.querySelector('.load-btn');
-            if(btn) {
-                if (success) {
-                    const oldText = btn.innerHTML; 
-                    btn.innerHTML = '✅ ЗАГРУЖЕНО!'; 
-                    btn.style.background = '#d97706';
-                    setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
-                } else if (!isAuto) {
-                    const oldText = btn.innerHTML; 
-                    btn.innerHTML = '⚠️ НЕТ СОХРАНЕНИЙ'; 
-                    btn.style.background = '#ef4444';
-                    setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
+            if (!isAuto) {
+                const btn = document.querySelector('.load-btn');
+                if(btn) {
+                    if (success) {
+                        const oldText = btn.innerHTML; 
+                        btn.innerHTML = '✅ ЗАГРУЖЕНО!'; 
+                        btn.style.background = '#d97706';
+                        setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
+                    } else {
+                        const oldText = btn.innerHTML; 
+                        btn.innerHTML = '⚠️ НЕТ СОХРАНЕНИЙ'; 
+                        btn.style.background = '#ef4444';
+                        setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
+                    }
                 }
             }
         } catch(e) { console.error("Load error:", e); }
@@ -1805,7 +1884,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const nesOnlySettings = document.getElementById('nes-only-settings');
         if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
 
-        document.getElementById('save-settings').style.display = (game.t === 'n') ? 'block' : 'none';
+        document.getElementById('save-settings').style.display = (game.t === 'n' || game.t === 'l') ? 'block' : 'none';
         
         const btnSelect = document.getElementById('btn-select');
         if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
@@ -1968,12 +2047,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [virtualFileName],
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
-                        try {
-                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
-                            if (b64) {
-                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
-                            }
-                        } catch(e) {}
                     }],
                     print: (t) => console.log('CORE:', t),
                     printErr: (t) => console.error('CORE ERR:', t)
@@ -1982,6 +2055,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 glLoop();
                 setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
+                
+                await loadSramDirectly(currentGame.n);
+                startSramPolling(currentGame.n);
                 await loadGameState(true);
                 isGameStarting = false;
 
@@ -2081,19 +2157,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [romName],
                     preRun: [function() { 
                         FS.writeFile(romName, fileData); 
-                        try { 
-                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n); 
-                            if (b64) { 
-                                FS.writeFile(romName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64)); 
-                            } 
-                        } catch(e) {}
                     }],
                     print: function(t) { console.log(t); }, 
                     printErr: function(t) { console.error(t); },
                     onRuntimeInitialized: async function() { 
                         glLoop(); 
                         await new Promise(r => setTimeout(r, 500)); 
+                        await loadSramDirectly(currentGame.n);
+                        startSramPolling(currentGame.n);
                         await loadGameState(true); 
+                        isGameStarting = false;
                     }
                 };
                 const script = document.createElement('script'); 
@@ -2104,7 +2177,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     executeCleanup(); 
                 }; 
                 document.body.appendChild(script);
-                isGameStarting = false;
             }, 100);
         }).catch(err => { 
             alert("Ошибка чтения файла: " + err.message); 
@@ -2171,7 +2243,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     await loadGameState(true); 
                     let cmd = ["-c", "cycles auto"]; 
                     if (game.e) cmd.push("-c", game.e);
-                    main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
+                    main(cmd).then(ci => {
+                        currentDos = ci;
+                        if (window.dosAutoSaveInterval) clearInterval(window.dosAutoSaveInterval);
+                        window.dosAutoSaveInterval = setInterval(() => {
+                            if (!isShuttingDown && !isGamePaused) saveGameState(true);
+                        }, 15000);
+                    }).catch(err => console.log("DOS:", err));
+                    
                     const glLoop = () => { 
                         if (isShuttingDown) return; 
                         if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
@@ -2348,7 +2427,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.innerHTML = 'ВЫХОД';
             }
             
-            await saveGameState(); 
+            await saveGameState(true); 
             
             setTimeout(() => { 
                 backTapCount = 0; 
@@ -2366,8 +2445,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
         
+        if (sramPollInterval) {
+            clearInterval(sramPollInterval);
+            sramPollInterval = null;
+        }
+        if (window.dosAutoSaveInterval) {
+            clearInterval(window.dosAutoSaveInterval);
+            window.dosAutoSaveInterval = null;
+        }
+        
         if (!skipSave) {
-            await saveGameState(); 
+            await saveGameState(true); 
         }
         
         if (currentGame?._tempUrl) { 
