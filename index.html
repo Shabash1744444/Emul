@@ -39,13 +39,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
-@keyframes eat1 { 0%, 13% { opacity: 1; } 14%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat2 { 0%, 25% { opacity: 1; } 26%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat3 { 0%, 37% { opacity: 1; } 38%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat4 { 0%, 49% { opacity: 1; } 50%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat5 { 0%, 61% { opacity: 1; } 62%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat6 { 0%, 73% { opacity: 1; } 74%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat7 { 0%, 85% { opacity: 1; } 86%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat3 { 0%, 42% { opacity: 1; } 43%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat4 { 0%, 56% { opacity: 1; } 57%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat5 { 0%, 70% { opacity: 1; } 71%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat6 { 0%, 84% { opacity: 1; } 85%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat7 { 0%, 98% { opacity: 1; } 99%, 100% { opacity: 0; transform: scale(0.5); } }
 .t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
 .t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
 .t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
@@ -259,7 +259,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
-    
     <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
         <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
             Выбрано: <span id="selectedCount">0</span> игр
@@ -994,6 +993,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }, {passive: false});
     
     frameDiv.addEventListener('touchend', () => isDragging = false);
+
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
@@ -1082,34 +1082,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
-                    // НОВЫЕ МАТРИЦЫ (ТРИГОНОМЕТРИЯ БЕЗ МУАРА)
                     if (u_crt > 0) {
-                        if (u_crt == 3) { 
+                        if (u_crt == 3 || u_crt == 4) { 
                             vec2 pix_uv = uv * u_tex_size;
-                            float gridX = 0.75 + 0.25 * cos(pix_uv.x * 6.2831);
-                            float gridY = 0.75 + 0.25 * cos(pix_uv.y * 6.2831);
-                            color.rgb *= vec3(gridX * gridY);
-                            float subR = 0.95 + 0.05 * cos(pix_uv.x * 6.2831 * 3.0);
-                            float subG = 0.95 + 0.05 * cos((pix_uv.x * 6.2831 * 3.0) + 2.094);
-                            float subB = 0.95 + 0.05 * cos((pix_uv.x * 6.2831 * 3.0) + 4.188);
-                            color.rgb *= vec3(subR, subG, subB);
-                        } else if (u_crt == 4) {
-                            vec2 pix_uv = uv * u_tex_size;
-                            float gridX = 0.85 + 0.15 * cos(pix_uv.x * 6.2831);
-                            float gridY = 0.85 + 0.15 * cos(pix_uv.y * 6.2831);
-                            color.rgb *= vec3(gridX * gridY);
+                            vec2 grid = fract(pix_uv);
+                            float gap = (u_crt == 4) ? 0.08 : 0.15;
+                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x);
+                            float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
+                            color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
+                            
+                            if (u_crt == 3) {
+                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x);
+                                float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
+                                float subB = smoothstep(0.66, 1.0, grid.x);
+                                color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
+                            }
                         } else if (u_crt == 2) {
-                            vec2 pos = uv * u_tex_size * u_res;
-                            float cell = 0.9 + 0.1 * cos(pos.y * 6.2831); 
-                            color.rgb *= vec3(cell);
-                            float r = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0);
-                            float g = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0 + 2.094);
-                            float b = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0 + 4.188);
-                            color.rgb *= vec3(r, g, b);
+                            vec2 pos = fract(uv * u_tex_size * u_res);
+                            float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415);
+                            color.rgb *= cell;
+                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0);
+                            vec3 phosphor = vec3(
+                                triad < 0.33 ? 1.08 : 0.92,
+                                (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92,
+                                triad >= 0.66 ? 1.08 : 0.92
+                            );
+                            color.rgb *= phosphor;
                         } else if (u_crt == 1) {
                             float scanlineStrength = 0.20; float maskStrength = 0.20;
                             float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
-                            color.rgb *= vec3(1.0 - (scanline > 0.5 ? scanlineStrength : 0.0));
+                            color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
                             float mask = fract(uv.x * u_tex_size.x * u_res);
                             vec3 maskColor = vec3(
                                 mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
@@ -1119,8 +1121,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             color.rgb *= maskColor;
                         }
                     }
-
-                    color.rgb *= vec3(vignette); gl_FragColor = color;
+                    color.rgb *= vignette; gl_FragColor = color;
                 }`;
 
             const compileShader = (type, source) => { 
@@ -2489,43 +2490,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- НОВЫЕ ФУНКЦИИ ВЫДЕЛЕНИЯ ---
-    function selectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        const tx = db.transaction(["games"], "readonly");
-        const req = tx.objectStore("games").getAllKeys();
-        req.onsuccess = () => {
-            const keys = req.result;
-            keys.forEach(k => selectedGamesForDelete.add(k));
-            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
-            updateEditCount();
-        };
-    }
-
-    function deselectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        selectedGamesForDelete.clear();
-        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
-        updateEditCount();
-    }
-
-    function deleteSelectedGames() {
-        if (selectedGamesForDelete.size === 0) return;
-        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
-        
-        const tx = db.transaction(["games"], "readwrite");
-        const store = tx.objectStore("games");
-        
-        selectedGamesForDelete.forEach(id => {
-            store.delete(id);
-        });
-        
-        tx.oncomplete = () => {
-            selectedGamesForDelete.clear();
-            toggleLibraryEditMode(); 
-        };
-    }
-
     async function analyzeZipAndCovers(fileBlob) {
         try {
             const buffer = await readBlob(fileBlob); 
@@ -2843,6 +2807,43 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ---
+    function selectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        const tx = db.transaction(["games"], "readonly");
+        const req = tx.objectStore("games").getAllKeys();
+        req.onsuccess = () => {
+            const keys = req.result;
+            keys.forEach(k => selectedGamesForDelete.add(k));
+            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
+            updateEditCount();
+        };
+    }
+
+    function deselectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        selectedGamesForDelete.clear();
+        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+        updateEditCount();
+    }
+
+    function deleteSelectedGames() {
+        if (selectedGamesForDelete.size === 0) return;
+        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
+        
+        const tx = db.transaction(["games"], "readwrite");
+        const store = tx.objectStore("games");
+        
+        selectedGamesForDelete.forEach(id => {
+            store.delete(id);
+        });
+        
+        tx.oncomplete = () => {
+            selectedGamesForDelete.clear();
+            toggleLibraryEditMode(); 
+        };
+    }
+
     // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
     function toggleFavorite(id, e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2877,9 +2878,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             
             // === ОБНОВЛЕННАЯ СОРТИРОВКА (С УЧЕТОМ ИЗБРАННОГО) ===
             customGames.sort((a, b) => {
+                // Сначала всегда сортируем по "Избранному"
                 if (a.fav && !b.fav) return -1;
                 if (!a.fav && b.fav) return 1;
 
+                // Затем применяем выбранную пользователем сортировку
                 if (sortType === 'name_asc') return a.n.localeCompare(b.n);
                 if (sortType === 'name_desc') return b.n.localeCompare(a.n);
                 if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
@@ -2888,10 +2891,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     const idB = parseInt(b.id.split('_')[1]) || 0;
                     return idB - idA;
                 }
-                return 0; 
+                return 0; // Для random оставляем так, он перемешает ниже
             });
 
             if (sortType === 'random') {
+                // Если рандом, перемешиваем только внутри "своих" групп (избранные с избранными, остальные с остальными)
                 let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
                 let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
                 customGames = favs.concat(nonFavs);
@@ -2925,6 +2929,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
         
+        // === ДОБАВЛЕНА КНОПКА ИЗБРАННОГО НА КАРТОЧКУ ===
         const favIcon = game.fav ? '⭐' : '☆';
         const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
         
