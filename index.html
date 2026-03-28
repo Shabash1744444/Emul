@@ -395,11 +395,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="pad-edit-panel">
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px;">
-        <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; font-size:10px; margin:0;">Барьер: ВЫКЛ</button>
-        <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="background: #3b82f6; font-size:10px; margin:0;">Грузчик: ВЫКЛ</button>
-        <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size:10px; margin:0;">D-Pad: ФИКС</button>
-        <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size:10px; margin:0;">Режим: СВАЙП</button>
+    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+        <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; font-size:9px; margin:0; padding:8px 4px; flex:1;">Барьер: ВЫКЛ</button>
+        <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="background: #3b82f6; font-size:9px; margin:0; padding:8px 4px; flex:1;">Грузчик: ВЫКЛ</button>
+        <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size:9px; margin:0; padding:8px 4px; flex:1;">D-Pad: ФИКС</button>
+        <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size:9px; margin:0; padding:8px 4px; flex:1;">Режим: СВАЙП</button>
     </div>
     <div class="edit-row" style="margin-top: 10px;">
       <span>Размер:</span>
@@ -442,8 +442,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-x" data-id="x" data-k="83">X</div>
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
-</div>
-<script src="js-dos.js"></script>
+</div><script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
     window._tempModule = window.module; window._tempExports = window.exports; window._tempDefine = window.define;
@@ -561,7 +560,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     } catch(e) {}
 
-    // --- УПАКОВКА БЕЗ BASE64 ---
+    // --- ОБНОВЛЕННАЯ СЕРИАЛИЗАЦИЯ БЕЗ BASE64 ---
     function packData(u8arr) {
         return fflate.zlibSync(u8arr); 
     }
@@ -676,6 +675,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+            window.Capacitor.Plugins.App.addListener('backButton', (data) => {
+                const gameFrame = document.getElementById('gameFrame');
+                if (gameFrame && gameFrame.style.display === 'block') {
+                    if (typeof handleBackBtn === 'function') handleBackBtn();
+                } else if (data.canGoBack) {
+                    window.history.back();
+                }
+            });
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
         const shield = document.getElementById('bottom-shield');
         if (shield) {
             const blockTap = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -685,10 +697,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
     
-    window.addEventListener('beforeunload', () => {
-        if (currentGame) saveGameState(true);
-    });
-
     // --- БРОНЕБОЙНОЕ ХРАНИЛИЩЕ ---
     const SaveStorage = {
         _db: null,
@@ -751,56 +759,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     };
 
-    // === ПЕРЕХВАТЧИК ФАЙЛОВОЙ СИСТЕМЫ (MONKEY PATCHING) ===
-    function applyFSPatch() {
-        if (!window.FS || window._fsPatched) return;
-        const origWrite = window.FS.writeFile;
-        window.FS.writeFile = function(path, data, opts) {
-            // Сначала позволяем ядру записать файл в виртуальную память (MEMFS)
-            const result = origWrite.apply(this, arguments);
-            
-            // Ловим сохранения
-            if (currentGame && (path.endsWith('.srm') || path.endsWith('.sav') || path.endsWith('.rtc'))) {
-                console.log("[FS Patch] Перехвачено сохранение:", path);
-                const sramCopy = new Uint8Array(data); // Копируем данные
-                SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy)).then(() => {
-                    showLog('💾 Батарейка сохранена');
-                });
-            }
-            return result;
-        };
-        window._fsPatched = true;
-    }
-
-    async function loadSramDirectly(gameName) {
-        if (!window.Module) return;
-        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName);
-        if (sramCompressed) {
-            try {
-                const sramArray = unpackData(sramCompressed);
-                
-                // Для GBA/SNES: ждем пока выделится память под SRAM
-                let attempts = 0;
-                const checkSram = setInterval(() => {
-                    attempts++;
-                    const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                    if (sramSize > 0) {
-                        clearInterval(checkSram);
-                        const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                        if (sramPtr) {
-                            const len = Math.min(sramArray.length, sramSize);
-                            window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
-                            showLog('🔋 Батарейка загружена');
-                        }
-                    } else if (attempts > 50) { 
-                        clearInterval(checkSram); 
-                    }
-                }, 100);
-            } catch(e) { console.error("SRAM load err:", e); }
-        }
-    }
-
-    // === ЭКСТРЕННОЕ СОХРАНЕНИЕ ===
+    // === ЭКСТРЕННОЕ СОХРАНЕНИЕ ПРИ СВОРАЧИВАНИИ ===
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
             isGamePaused = true; 
@@ -810,6 +769,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGamePaused = false;
             if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
         }
+    });
+    
+    window.addEventListener('beforeunload', () => {
+        if (currentGame) saveGameState(true);
     });
 
     function lrCall(funcName, returnType, argTypes, args) {
@@ -827,7 +790,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return null;
     }
 
-    // --- СОХРАНЕНИЯ СОСТОЯНИЙ (С ИСПОЛЬЗОВАНИЕМ ХВОСТА КУЧИ) ---
+    // --- СОХРАНЕНИЕ СОСТОЯНИЙ (С ХАКОМ BORROWED BUFFER) ---
     async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
@@ -844,7 +807,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const stateSize = lrCall('retro_serialize_size', 'number', [], []);
                 
                 if (stateSize > 0) {
-                    // ХАК: Используем конец кучи (Borrowed Buffer), так как _malloc вырезан
+                    // Используем хвост кучи, так как _malloc удален компилятором
                     const statePtr = window.Module.HEAPU8.length - stateSize - 1024; 
                     
                     if (statePtr > 0) {
@@ -920,7 +883,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         const stateSize = lrCall('retro_serialize_size', 'number', [], []);
                         
                         if (stateSize > 0) {
-                            // ХАК: Одолженный буфер для загрузки
+                            // Одолженный буфер для загрузки
                             const statePtr = window.Module.HEAPU8.length - stateSize - 1024;
                             if (statePtr > 0) {
                                 const len = Math.min(stateArray.length, stateSize);
@@ -1820,8 +1783,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         await saveGameState(); 
         sessionStorage.setItem('autoRestartGameId', currentGame.id);
         location.reload();
-    }
-    function startGame(game) {
+    }function startGame(game) {
         if (isGameStarting) return; 
         isGameStarting = true;
         
@@ -1905,7 +1867,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         nesRestartFn = null; 
         isShuttingDown = false; 
         isGamePaused = false;
-        window._fsPatched = false;
+        window._fsPatched = false; // Сбрасываем флаг патча ФС
 
         if (game.t === 'h') {
             const htmlUrl = URL.createObjectURL(game.fileBlob);
@@ -1951,6 +1913,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
 
+        // Сохраняем оригинальный перехват рендера GBA (ЭТАЛОН)
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
             let ctx = originalGetContext(type, attributes);
@@ -2033,13 +1996,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
                         
-                        // --- MONKEY PATCHING FS.writeFile ДЛЯ ПЕРЕХВАТА SRAM ---
+                        // --- MONKEY PATCHING ФАЙЛОВОЙ СИСТЕМЫ ДЛЯ GBA ---
                         if (!window._fsPatched && mod.FS && mod.FS.writeFile) {
                             const origWrite = mod.FS.writeFile;
                             mod.FS.writeFile = function(path, data, opts) {
                                 const result = origWrite.apply(this, arguments);
                                 if (currentGame && (path.endsWith('.srm') || path.endsWith('.sav') || path.endsWith('.rtc'))) {
-                                    console.log("[FS Patch] Ядро обновило SRAM:", path);
+                                    console.log("[FS Patch] Поймали сохранение:", path);
                                     const sramCopy = new Uint8Array(data);
                                     SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy)).then(() => {
                                         showLog('💾 Батарейка сохранена');
@@ -2058,6 +2021,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
                 
+                // Пробуем загрузить SRAM и State
                 await loadSramDirectly(currentGame.n);
                 await loadGameState(true);
                 isGameStarting = false;
@@ -2159,13 +2123,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     preRun: [function() { 
                         FS.writeFile(romName, fileData); 
                         
-                        // --- MONKEY PATCHING FS.writeFile ДЛЯ ПЕРЕХВАТА SRAM ---
+                        // --- MONKEY PATCHING ФАЙЛОВОЙ СИСТЕМЫ ДЛЯ SNES/SEGA ---
                         if (!window._fsPatched && typeof FS !== 'undefined' && FS.writeFile) {
                             const origWrite = FS.writeFile;
                             FS.writeFile = function(path, data, opts) {
                                 const result = origWrite.apply(this, arguments);
                                 if (currentGame && (path.endsWith('.srm') || path.endsWith('.sav') || path.endsWith('.rtc'))) {
-                                    console.log("[FS Patch] Ядро обновило SRAM:", path);
+                                    console.log("[FS Patch] Поймали сохранение:", path);
                                     const sramCopy = new Uint8Array(data);
                                     SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy)).then(() => {
                                         showLog('💾 Батарейка сохранена');
