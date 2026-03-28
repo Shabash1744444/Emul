@@ -478,7 +478,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (!toast) {
             toast = document.createElement('div');
             toast.id = 'hub-toast';
-            toast.style.cssText = 'position:fixed; top:env(safe-area-inset-top, 20px); left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:8px; z-index:99999; font-weight:bold; font-size:12px; color:#fff; pointer-events:none; transition:opacity 0.3s; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.5); opacity:0; margin-top:10px;';
+            toast.style.cssText = 'position:fixed; top:calc(15px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:8px; z-index:99999; font-weight:bold; font-size:12px; color:#fff; pointer-events:none; transition:opacity 0.3s; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.5); opacity:0;';
             document.body.appendChild(toast);
         }
         toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
@@ -723,31 +723,69 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (currentGame) saveGameState(true);
     });
 
+    // --- ОБНОВЛЕННЫЙ SaveStorage (Бронебойный Fallback на localStorage) ---
     const SaveStorage = {
         _db: null,
+        _useLocalStorage: false,
         init() {
-            return new Promise((resolve, reject) => {
-                if (this._db) { resolve(); return; }
-                const req = indexedDB.open('ArcadeHubSaves', 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
-                req.onsuccess = e => { this._db = e.target.result; resolve(); };
-                req.onerror = e => reject(e);
+            return new Promise((resolve) => {
+                if (this._db || this._useLocalStorage) { resolve(); return; }
+                try {
+                    const req = indexedDB.open('ArcadeHubSaves', 1);
+                    req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
+                    req.onsuccess = e => { this._db = e.target.result; resolve(); };
+                    req.onerror = e => { 
+                        console.warn("IndexedDB недоступна, используем localStorage"); 
+                        this._useLocalStorage = true; 
+                        resolve(); 
+                    };
+                } catch (e) {
+                    console.warn("IndexedDB заблокирована, используем localStorage");
+                    this._useLocalStorage = true;
+                    resolve();
+                }
             });
         },
         async set(key, val) {
             await this.init();
+            if (this._useLocalStorage) {
+                try {
+                    // Если fallback, переводим Uint8Array в Base64, так как localStorage не ест бинарники
+                    let b64 = '';
+                    if (val instanceof Uint8Array) {
+                        const chunkSize = 8192;
+                        for (let i = 0; i < val.length; i += chunkSize) {
+                            b64 += String.fromCharCode.apply(null, val.subarray(i, i + chunkSize));
+                        }
+                        b64 = window.btoa(b64);
+                    } else {
+                        b64 = val; // Если это старый формат
+                    }
+                    localStorage.setItem(key, b64);
+                    return true;
+                } catch(e) { return false; }
+            }
             return new Promise(r => {
-                const tx = this._db.transaction(['saves'], 'readwrite');
-                tx.objectStore('saves').put(val, key);
-                tx.oncomplete = () => r(true);
+                try {
+                    const tx = this._db.transaction(['saves'], 'readwrite');
+                    tx.objectStore('saves').put(val, key);
+                    tx.oncomplete = () => r(true);
+                    tx.onerror = () => r(false);
+                } catch(e) { r(false); }
             });
         },
         async get(key) {
             await this.init();
+            if (this._useLocalStorage) {
+                const data = localStorage.getItem(key);
+                return data || null;
+            }
             return new Promise(r => {
-                const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
-                req.onsuccess = () => r(req.result || null);
-                req.onerror = () => r(null);
+                try {
+                    const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
+                    req.onsuccess = () => r(req.result || null);
+                    req.onerror = () => r(null);
+                } catch(e) { r(null); }
             });
         }
     };
@@ -767,7 +805,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function loadSramDirectly(gameName) {
         if (!window.Module) return;
-        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName) || localStorage.getItem('sram_lr_' + gameName);
+        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName);
         if (sramCompressed) {
             try {
                 const sramArray = unpackData(sramCompressed);
@@ -954,7 +992,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         try {
             let success = false;
             if (currentGame.t === 'n' && nes) { 
-                const savedData = await SaveStorage.get('savestate_' + currentGame.n) || localStorage.getItem('savestate_' + currentGame.n);
+                const savedData = await SaveStorage.get('savestate_' + currentGame.n);
                 if (savedData) {
                     try { 
                         const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
@@ -967,7 +1005,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             } 
             else if (currentGame.t === 'l' && window.Module) { 
-                const stateCompressed = await SaveStorage.get('savestate_lr_' + currentGame.n) || localStorage.getItem('savestate_lr_' + currentGame.n);
+                const stateCompressed = await SaveStorage.get('savestate_lr_' + currentGame.n);
                 if (stateCompressed) {
                     try {
                         const stateArray = unpackData(stateCompressed);
@@ -990,7 +1028,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             else if (currentGame.t === 'd') {
                 const dosFS = window.FS || (window.WDOSBOX && window.WDOSBOX.FS);
-                const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n) || localStorage.getItem('savestate_dos_' + currentGame.n);
+                const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n);
                 if (b64 && dosFS && typeof dosFS.writeFile === 'function') {
                     try {
                         const unzipped = fflate.unzipSync(unpackData(b64));
@@ -1597,7 +1635,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
                 else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
-                else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
+                else if (id === 'y') { el.style.bottom = '145px'; right = '150px'; el.style.top = 'auto'; } 
                 else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
                 else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
                 else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
