@@ -45,12 +45,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 @keyframes eat4 { 0%, 56% { opacity: 1; } 57%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 @keyframes eat5 { 0%, 70% { opacity: 1; } 71%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 @keyframes eat6 { 0%, 84% { opacity: 1; } 85%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat7 { 0%, 98% { opacity: 1; } 99%, 100% { opacity: 0; transform: scale(0.5); } }
 .t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
 .t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
 .t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
 .t-ngp { color: #06b6d4; transform: rotate(4deg); animation: eat4 5s linear infinite; }
 .t-dos { color: #10b981; transform: rotate(-2deg); animation: eat5 5s linear infinite; }
 .t-html { color: #f59e0b; font-size: 14px; transform: rotate(-4deg) translateY(2px); animation: eat6 5s linear infinite; }
+.t-gba { color: #d946ef; transform: rotate(3deg) translateY(-2px); animation: eat7 5s linear infinite; }
 .pacman-container { position: absolute; top: 50%; left: 0; width: 100%; height: 35px; margin-top: -17px; overflow: hidden; z-index: 4; pointer-events: none; }
 .pacman { width: 26px; height: 26px; border-radius: 50%; background: #eab308; position: absolute; top: 2px; left: 0; z-index: 5; clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); animation: chomp 0.25s infinite alternate, movePacman 5s linear infinite; }
 .dot-track { position: absolute; top: 13px; left: 0; width: 100%; height: 4px; background-image: radial-gradient(#fff 2px, transparent 2px); background-size: 30px 4px; z-index: 1; opacity: 0.5; }
@@ -226,6 +228,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <span class="t-ngp">НЕО ГЕО</span>
             <span class="t-dos">ДОС</span>
             <span class="t-html">HTML</span>
+            <span class="t-gba">ГБА</span>
         </div>
     </div>
     
@@ -259,6 +262,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
         <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
             Выбрано: <span id="selectedCount">0</span> игр
+        </div>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <button class="action-btn" onclick="selectAllGamesForDelete()" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">✅ ВСЕ</button>
+            <button class="action-btn" onclick="deselectAllGamesForDelete()" style="flex: 1; background: #64748b; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">❌ СНЯТЬ</button>
         </div>
         <div style="display: flex; gap: 10px;">
             <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
@@ -341,9 +348,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #888; font-weight: bold;">ГРАФИКА И ЭФФЕКТЫ</div>
     
     <div id="nes-only-settings">
-        <div>
-          <div class="hint-text">Эмуляция сетки телевизора</div>
-          <button class="edit-btn action-btn" id="btnToggleCRT" onclick="toggleCRT()">Эффект CRT: ВКЛ</button>
+        <div style="margin-bottom: 5px;">
+            <div class="hint-text">ТИП ЭКРАНА (МАТРИЦА)</div>
+            <select id="crtSelector" onchange="changeCrtMode()" style="width: 100%; background: #1e293b; color: white; border: 1px solid #475569; padding: 5px; border-radius: 5px; font-size: 12px; margin-bottom: 5px;">
+                <option value="0">ВЫКЛ (Чистая картинка)</option>
+                <option value="1">Сканлайны (Старый ТВ)</option>
+                <option value="2">Тринитрон (Премиум ЭЛТ)</option>
+                <option value="3">LCD-матрица (Портативки)</option>
+                <option value="4">VGA-сетка (Монитор ПК)</option>
+            </select>
         </div>
         <div>
           <div class="hint-text">Искажение углов пузатого ЭЛТ</div>
@@ -530,10 +543,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'unk': { brake: 88, jump: 90 }
     };
 
-    let videoConfig = { crt: true, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
+    let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
     try {
         const savedVc = localStorage.getItem('videoV6');
-        if (savedVc) videoConfig = { ...videoConfig, ...JSON.parse(savedVc) };
+        if (savedVc) {
+            videoConfig = { ...videoConfig, ...JSON.parse(savedVc) };
+            if (typeof videoConfig.crt === 'boolean') videoConfig.crt = videoConfig.crt ? 1 : 0;
+        }
     } catch(e) {}
 
     function packData(u8arr) {
@@ -891,10 +907,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function updateVideoUI() {
-        const btnCrt = document.getElementById('btnToggleCRT'), btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
-        const resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
+        const btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
+        const crtSel = document.getElementById('crtSelector'), resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
         
-        if (btnCrt) { btnCrt.innerHTML = videoConfig.crt ? 'Эффект CRT: ВКЛ' : 'Эффект CRT: ВЫКЛ'; btnCrt.style.background = videoConfig.crt ? '#3b82f6' : '#1e293b'; }
+        let currentCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
+        
+        if (crtSel) { crtSel.value = currentCrt; }
         if (btnCurve) { btnCurve.innerHTML = videoConfig.curve ? 'Выпуклость: ВКЛ' : 'Выпуклость: ВЫКЛ'; btnCurve.style.background = videoConfig.curve ? '#3b82f6' : '#1e293b'; }
         if (btnRgb) { btnRgb.innerHTML = videoConfig.rgb ? 'RGB Сдвиг: ВКЛ' : 'RGB Сдвиг: ВЫКЛ'; btnRgb.style.background = videoConfig.rgb ? '#8b5cf6' : '#1e293b'; }
         if (btnBloom) { btnBloom.innerHTML = videoConfig.bloom ? 'Свечение: ВКЛ' : 'Свечение: ВЫКЛ'; btnBloom.style.background = videoConfig.bloom ? '#f59e0b' : '#1e293b'; }
@@ -904,12 +922,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (filterSel) { filterSel.value = videoConfig.filter; }
         if (glCanvas) { glCanvas.style.imageRendering = videoConfig.filter === 0 ? 'pixelated' : 'auto'; }
     }
+    
     function getMaxScaleForSystem(sys) { 
         const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4, 'gba': 8}; 
         return limits[sys] || 8; 
     }
     
-    function toggleCRT() { videoConfig.crt = !videoConfig.crt; saveVideoConfig(); }
+    function changeCrtMode() { 
+        videoConfig.crt = parseInt(document.getElementById('crtSelector').value); 
+        saveVideoConfig(); 
+    }
+    
     function toggleCurve() { videoConfig.curve = !videoConfig.curve; saveVideoConfig(); }
     function toggleRGB() { videoConfig.rgb = !videoConfig.rgb; saveVideoConfig(); }
     function toggleBloom() { videoConfig.bloom = !videoConfig.bloom; saveVideoConfig(); }
@@ -989,11 +1012,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
                 uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
 
-                // Быстрая Гамма-коррекция
                 vec3 toLinear(vec3 c) { return c * c; }
                 vec3 toSRGB(vec3 c) { return sqrt(c); }
 
-                // Алгоритм FSR RCAS (Умная резкость)
                 vec3 FSR_RCAS(vec3 color, vec2 uv) {
                     float sharpness = 0.4; 
                     vec3 d = vec3(0.0);
@@ -1022,7 +1043,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     
                     vec4 color;
                     
-                    // ФИЛЬТР 3: FSR RCAS
                     if (u_filter == 3) {
                         vec3 rawColor = texture2D(u_image, uv).rgb;
                         if (u_colors == 1) {
@@ -1039,18 +1059,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
                     } 
-                    // ФИЛЬТР 1 (Sharp) и 2 (Soft)
                     else if (u_filter == 1 || u_filter == 2) {
                         vec2 p = uv * u_tex_size;
                         vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
-                        
-                        if (u_filter == 1) {
-                            f = f * f * (3.0 - 2.0 * f); 
-                        }
-                        
+                        if (u_filter == 1) { f = f * f * (3.0 - 2.0 * f); }
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
                     } 
-                    // ФИЛЬТР 0 (Оригинальные пиксели)
                     else { 
                         color = texture2D(u_image, uv); 
                     }
@@ -1068,27 +1082,42 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
-                    if (u_crt == 1) {
-                        float scanlineStrength = 0.15; float maskStrength = 0.15;
-                        if (u_system == 0) { scanlineStrength = 0.20; maskStrength = 0.20; }
-                        else if (u_system == 1) { scanlineStrength = 0.12; maskStrength = 0.10; }
-                        else if (u_system == 2) { scanlineStrength = 0.14; maskStrength = 0.12; }
-                        else if (u_system == 4) { scanlineStrength = 0.25; maskStrength = 0.15; }
-                        else if (u_system == 3 || u_system == 5) { 
-                            scanlineStrength = 0.0; maskStrength = 0.0; 
-                            float scaleFactor = u_res; float gridThickness = 0.03 / scaleFactor * 8.0; gridThickness = clamp(gridThickness, 0.01, 0.05);
-                            vec2 highResGrid = uv * u_tex_size * u_res; vec2 cellPos = fract(highResGrid);
-                            float lineX = smoothstep(0.0, gridThickness, cellPos.x) - smoothstep(1.0 - gridThickness, 1.0, cellPos.x);
-                            float lineY = smoothstep(0.0, gridThickness, cellPos.y) - smoothstep(1.0 - gridThickness, 1.0, cellPos.y);
-                            float lcdGrid = 1.0 - max(lineX, lineY);
-                            vec3 subpixel = vec3(texture2D(u_image, uv + vec2(0.3 / (u_tex_size.x * u_res), 0.0)).r, texture2D(u_image, uv).g, texture2D(u_image, uv - vec2(0.3 / (u_tex_size.x * u_res), 0.0)).b);
-                            color.rgb *= mix(subpixel * 0.9, subpixel, lcdGrid);
-                        }
-                        if (u_system != 3 && u_system != 5) {
+                    if (u_crt > 0) {
+                        if (u_crt == 3 || u_crt == 4) { 
+                            vec2 pix_uv = uv * u_tex_size;
+                            vec2 grid = fract(pix_uv);
+                            float gap = (u_crt == 4) ? 0.08 : 0.15;
+                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x);
+                            float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
+                            color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
+                            
+                            if (u_crt == 3) {
+                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x);
+                                float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
+                                float subB = smoothstep(0.66, 1.0, grid.x);
+                                color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
+                            }
+                        } else if (u_crt == 2) {
+                            vec2 pos = fract(uv * u_tex_size * u_res);
+                            float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415);
+                            color.rgb *= cell;
+                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0);
+                            vec3 phosphor = vec3(
+                                triad < 0.33 ? 1.08 : 0.92,
+                                (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92,
+                                triad >= 0.66 ? 1.08 : 0.92
+                            );
+                            color.rgb *= phosphor;
+                        } else if (u_crt == 1) {
+                            float scanlineStrength = 0.20; float maskStrength = 0.20;
                             float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
                             color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
                             float mask = fract(uv.x * u_tex_size.x * u_res);
-                            vec3 maskColor = vec3(mask < 0.33 ? 1.0 : (1.0 - maskStrength), mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), mask >= 0.66 ? 1.0 : (1.0 - maskStrength));
+                            vec3 maskColor = vec3(
+                                mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
+                                mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), 
+                                mask >= 0.66 ? 1.0 : (1.0 - maskStrength)
+                            );
                             color.rgb *= maskColor;
                         }
                     }
@@ -1169,51 +1198,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
 
-            gl.uniform1i(this.uCrtLoc, videoConfig.crt ? 1 : 0); 
-            gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
-            gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
-            gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
-            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
-            gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
-            gl.uniform1i(this.uSystemLoc, systemCode); 
-            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
-            
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-        },
-        // 🔥 ПЛАН В: Новая функция для прямого рендера из массива памяти HEAPU8
-        drawRaw: function(pixels, width, height, format, type, systemCode) {
-            if (!this.gl || !pixels) return;
-            const gl = this.gl;
-            let scaleMult = videoConfig.res;
-            
-            let targetW = width * scaleMult, targetH = height * scaleMult;
-            const maxArea = 16777216;
-            if (targetW > this.maxTexSize || targetH > this.maxTexSize || (targetW * targetH) > maxArea) {
-                let limitScaleTex = Math.min(this.maxTexSize / width, this.maxTexSize / height);
-                let limitScaleArea = Math.sqrt(maxArea / (width * height));
-                scaleMult = Math.max(1, Math.min(limitScaleTex, limitScaleArea));
-                targetW = width * scaleMult; 
-                targetH = height * scaleMult;
-            }
-
-            if (width !== this.currentWidth || height !== this.currentHeight || gl.canvas.width !== Math.floor(targetW)) {
-                this.currentWidth = width; 
-                this.currentHeight = height;
-                gl.canvas.width = Math.floor(targetW); 
-                gl.canvas.height = Math.floor(targetH);
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
-                gl.uniform2f(this.uTexSizeLoc, width, height);
-            }
-
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
-            
-            // Вливаем сырой массив байтов напрямую в видеокарту
-            gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, type, pixels);
-
-            gl.uniform1i(this.uCrtLoc, videoConfig.crt ? 1 : 0); 
+            let passCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
+            gl.uniform1i(this.uCrtLoc, passCrt); 
             gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
             gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
             gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
@@ -1477,7 +1463,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
                 
-                // === ОБНОВЛЕННЫЕ КООРДИНАТЫ (+20px для основных, +12px для Start/Select, L/R не трогаем) ===
                 if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
                 else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
@@ -1787,11 +1772,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const savedGameVideo = localStorage.getItem('video_' + game.n);
         if (savedGameVideo) {
-            try { videoConfig = JSON.parse(savedGameVideo); } catch(e) {}
+            try { 
+                videoConfig = JSON.parse(savedGameVideo); 
+                if (typeof videoConfig.crt === 'boolean') videoConfig.crt = videoConfig.crt ? 1 : 0;
+            } catch(e) {}
         } else {
             const globalVideo = localStorage.getItem('videoV6');
             if (globalVideo) {
-                try { videoConfig = JSON.parse(globalVideo); } catch(e) {}
+                try { 
+                    videoConfig = JSON.parse(globalVideo); 
+                    if (typeof videoConfig.crt === 'boolean') videoConfig.crt = videoConfig.crt ? 1 : 0;
+                } catch(e) {}
             }
         }
         
@@ -1896,11 +1887,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
 
-        // 🔥 ПЛАН В: Хардкорный перехват HEAPU8 через WebGL команды!
-        let capturedPixels = null, capturedW = 0, capturedH = 0;
-        let capturedFormat = UniversalWebGL.gl ? UniversalWebGL.gl.RGBA : 0x1908;
-        let capturedType = UniversalWebGL.gl ? UniversalWebGL.gl.UNSIGNED_BYTE : 0x1401;
-
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
             let ctx = originalGetContext(type, attributes);
@@ -1909,24 +1895,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const origTexSubImage2D = ctx.texSubImage2D.bind(ctx);
 
                 ctx.texImage2D = function() {
-                    if (arguments.length === 9) { 
-                        capturedW = arguments[3];
-                        capturedH = arguments[4];
-                        capturedFormat = arguments[6];
-                        capturedType = arguments[7];
-                        capturedPixels = arguments[8]; 
-                    }
                     return origTexImage2D.apply(this, arguments);
                 };
 
                 ctx.texSubImage2D = function() {
-                    if (arguments.length === 9) { 
-                        capturedW = arguments[4];
-                        capturedH = arguments[5];
-                        capturedFormat = arguments[6];
-                        capturedType = arguments[7];
-                        capturedPixels = arguments[8];
-                    }
                     return origTexSubImage2D.apply(this, arguments);
                 };
             }
@@ -1972,11 +1944,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isShuttingDown) return; 
                 if (!isGamePaused) { 
                     try {
-                        // Используем перехваченный кадр, если он есть
-                        if (capturedPixels && capturedW > 0 && capturedH > 0) {
-                            UniversalWebGL.drawRaw(capturedPixels, capturedW, capturedH, capturedFormat, capturedType, systemCode);
-                        } else if (libCanvas.width > 0 && libCanvas.height > 0) {
-                            // Резервный вариант, если ядро рендерит софтово или мы не поймали кадр
+                        if (libCanvas.width > 0 && libCanvas.height > 0) {
                             UniversalWebGL.draw(libCanvas, systemCode, false); 
                         }
                     } catch (e) {
@@ -2839,6 +2807,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ---
+    function selectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        const tx = db.transaction(["games"], "readonly");
+        const req = tx.objectStore("games").getAllKeys();
+        req.onsuccess = () => {
+            const keys = req.result;
+            keys.forEach(k => selectedGamesForDelete.add(k));
+            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
+            updateEditCount();
+        };
+    }
+
+    function deselectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        selectedGamesForDelete.clear();
+        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+        updateEditCount();
+    }
+
     function deleteSelectedGames() {
         if (selectedGamesForDelete.size === 0) return;
         if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
@@ -3002,18 +2990,61 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         globalFileInput.style.opacity = '0';
         
         document.body.appendChild(globalFileInput);
+    }
 
-        globalFileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length > 0) {
-                await new Promise(r => setTimeout(r, 200));
-                if (typeof processFilesArray === 'function') {
-                    await processFilesArray(files);
+    // --- УМНЫЙ РЕНТГЕН ZIP-МАТРЕШЕК ---
+    async function flattenAndProcessFiles(files) {
+        const extractedFiles = [];
+        
+        async function processEntry(fileData, filename) {
+            const lowName = filename.toLowerCase();
+            if (lowName.endsWith('.zip')) {
+                try {
+                    const unzipped = fflate.unzipSync(fileData);
+                    let hasExe = false;
+                    for (const f in unzipped) {
+                        if (f.toLowerCase().endsWith('.exe') || f.toLowerCase().endsWith('.bat')) hasExe = true;
+                    }
+                    if (hasExe) {
+                        extractedFiles.push(new File([fileData], filename, {type: 'application/zip'}));
+                    } else {
+                        for (const f in unzipped) {
+                            if (!f.endsWith('/')) {
+                                await processEntry(unzipped[f], f.split('/').pop());
+                            }
+                        }
+                    }
+                } catch(e) {
+                    extractedFiles.push(new File([fileData], filename, {type: 'application/zip'}));
                 }
+            } else {
+                extractedFiles.push(new File([fileData], filename));
             }
-            globalFileInput.value = ''; 
+        }
+
+        for (const f of files) {
+            const buffer = await readBlob(f);
+            await processEntry(new Uint8Array(buffer), f.name);
+        }
+        
+        return extractedFiles.filter(f => {
+            const ext = f.name.split('.').pop().toLowerCase();
+            return coreMap[ext] || ext === 'nes' || ext === 'zip' || ext === 'html';
         });
     }
+
+    // Обновляем вызов загрузки файлов
+    globalFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            await new Promise(r => setTimeout(r, 200));
+            if (typeof processFilesArray === 'function') {
+                const flatFiles = await flattenAndProcessFiles(files);
+                await processFilesArray(flatFiles);
+            }
+        }
+        globalFileInput.value = ''; 
+    });
 
     const mainImportBtn = document.getElementById('mainImportBtn');
     if (mainImportBtn) {
@@ -3204,11 +3235,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    // ФУНКЦИЯ ЭКСПОРТА БИБЛИОТЕКИ В ZIP
+    // --- ПЕРЕДЕЛАННАЯ ЛОГИКА БЕКАПОВ (ДВОЙНОЕ ПОДТВЕРЖДЕНИЕ) ---
     async function exportLibrary() {
+        const btn = document.getElementById('exportLibraryBtn');
+        
+        if (btn.dataset.readyToDownload === 'true') {
+            const url = btn.dataset.blobUrl;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ArcadeHub_Backup.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            btn.innerHTML = '✅ СКАЧАНО!';
+            btn.style.background = '#0f766e';
+            setTimeout(() => { 
+                btn.innerHTML = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)'; 
+                btn.dataset.readyToDownload = 'false';
+                URL.revokeObjectURL(url);
+            }, 3000);
+            return;
+        }
+        
         if (!confirm('Собрать все игры в один ZIP архив? Это может занять время.')) return;
         
-        const btn = document.getElementById('exportLibraryBtn');
         const origTxt = btn.innerHTML;
         btn.innerHTML = '⏳ СОБИРАЮ АРХИВ...';
         btn.style.pointerEvents = 'none';
@@ -3231,7 +3282,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 for (let g of games) {
                     const buffer = await readBlob(g.fileBlob);
                     let fname = g.n + '.' + g.ext;
-                    // Для DOS возвращаем расширение zip, для HTML - html
                     if (g.t === 'd') fname = g.n + '.zip';
                     else if (g.t === 'h') fname = g.n + '.html';
                     
@@ -3242,19 +3292,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
                 
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'ArcadeHub_Backup.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                btn.innerHTML = '✅ ГОТОВО!';
-                setTimeout(() => { 
-                    btn.innerHTML = origTxt; 
-                    btn.style.pointerEvents = 'auto'; 
-                }, 3000);
+                btn.innerHTML = '✅ СКАЧАТЬ АРХИВ';
+                btn.style.background = '#d97706';
+                btn.style.pointerEvents = 'auto';
+                btn.dataset.readyToDownload = 'true';
+                btn.dataset.blobUrl = url;
             };
         } catch(e) {
             alert('Ошибка при выгрузке: ' + e.message);
