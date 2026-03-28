@@ -758,6 +758,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             });
         }
     };
+    // === ЗАГРУЗКА SRAM В ПАМЯТЬ ===
+    async function loadSramDirectly(gameName) {
+        if (!window.Module) return;
+        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName);
+        if (sramCompressed) {
+            try {
+                const sramArray = unpackData(sramCompressed);
+                
+                // Умное ожидание: Ядрам (GBA/SNES) нужно время, чтобы инициализировать память
+                let attempts = 0;
+                const checkSram = setInterval(() => {
+                    attempts++;
+                    const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                    if (sramSize > 0) {
+                        clearInterval(checkSram);
+                        const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                        
+                        // ВАЛИДАЦИЯ УКАЗАТЕЛЯ: Защита от Out-Of-Bounds в WebView
+                        if (sramPtr && sramPtr > 0 && (sramPtr + sramSize) <= window.Module.HEAPU8.length) {
+                            const len = Math.min(sramArray.length, sramSize);
+                            window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
+                            showLog('🔋 Батарейка загружена');
+                        } else {
+                            console.error("[SRAM] Игнорируем кривой указатель от ядра:", sramPtr);
+                        }
+                    } else if (attempts > 50) { 
+                        clearInterval(checkSram); // Сдаемся после 5 секунд
+                    }
+                }, 100);
+            } catch(e) { console.error("SRAM load err:", e); }
+        }
+    }
 
     // === ЭКСТРЕННОЕ СОХРАНЕНИЕ ПРИ СВОРАЧИВАНИИ ===
     document.addEventListener("visibilitychange", () => {
