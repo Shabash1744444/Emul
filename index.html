@@ -39,13 +39,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
-@keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat3 { 0%, 42% { opacity: 1; } 43%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat4 { 0%, 56% { opacity: 1; } 57%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat5 { 0%, 70% { opacity: 1; } 71%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat6 { 0%, 84% { opacity: 1; } 85%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat7 { 0%, 98% { opacity: 1; } 99%, 100% { opacity: 0; transform: scale(0.5); } }
+@keyframes eat1 { 0%, 13% { opacity: 1; } 14%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat2 { 0%, 25% { opacity: 1; } 26%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat3 { 0%, 37% { opacity: 1; } 38%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat4 { 0%, 49% { opacity: 1; } 50%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat5 { 0%, 61% { opacity: 1; } 62%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat6 { 0%, 73% { opacity: 1; } 74%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat7 { 0%, 85% { opacity: 1; } 86%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 .t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
 .t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
 .t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
@@ -259,6 +259,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
+    
     <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
         <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
             Выбрано: <span id="selectedCount">0</span> игр
@@ -899,864 +900,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
         } catch(e) { console.error("Load error:", e); }
-    }
-
-    function toggleColors() { 
-        videoConfig.colors = !videoConfig.colors; 
-        saveVideoConfig(); 
-    }
-
-    function updateVideoUI() {
-        const btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
-        const crtSel = document.getElementById('crtSelector'), resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
-        
-        let currentCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
-        
-        if (crtSel) { crtSel.value = currentCrt; }
-        if (btnCurve) { btnCurve.innerHTML = videoConfig.curve ? 'Выпуклость: ВКЛ' : 'Выпуклость: ВЫКЛ'; btnCurve.style.background = videoConfig.curve ? '#3b82f6' : '#1e293b'; }
-        if (btnRgb) { btnRgb.innerHTML = videoConfig.rgb ? 'RGB Сдвиг: ВКЛ' : 'RGB Сдвиг: ВЫКЛ'; btnRgb.style.background = videoConfig.rgb ? '#8b5cf6' : '#1e293b'; }
-        if (btnBloom) { btnBloom.innerHTML = videoConfig.bloom ? 'Свечение: ВКЛ' : 'Свечение: ВЫКЛ'; btnBloom.style.background = videoConfig.bloom ? '#f59e0b' : '#1e293b'; }
-        if (btnColors) { btnColors.innerHTML = videoConfig.colors ? 'Цветокоррекция (Гамма): ВКЛ' : 'Цветокоррекция (Гамма): ВЫКЛ'; btnColors.style.background = videoConfig.colors ? '#10b981' : '#1e293b'; }
-        
-        if (resSel) { resSel.value = videoConfig.res; }
-        if (filterSel) { filterSel.value = videoConfig.filter; }
-        if (glCanvas) { glCanvas.style.imageRendering = videoConfig.filter === 0 ? 'pixelated' : 'auto'; }
-    }
-    
-    function getMaxScaleForSystem(sys) { 
-        const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4, 'gba': 8}; 
-        return limits[sys] || 8; 
-    }
-    
-    function changeCrtMode() { 
-        videoConfig.crt = parseInt(document.getElementById('crtSelector').value); 
-        saveVideoConfig(); 
-    }
-    
-    function toggleCurve() { videoConfig.curve = !videoConfig.curve; saveVideoConfig(); }
-    function toggleRGB() { videoConfig.rgb = !videoConfig.rgb; saveVideoConfig(); }
-    function toggleBloom() { videoConfig.bloom = !videoConfig.bloom; saveVideoConfig(); }
-    function changeFilter() { videoConfig.filter = parseInt(document.getElementById('filterSelector').value); saveVideoConfig(); }
-    
-    function saveVideoConfig() { 
-        localStorage.setItem('videoV6', JSON.stringify(videoConfig)); 
-        if (currentGame) {
-            localStorage.setItem('video_' + currentGame.n, JSON.stringify(videoConfig));
-        }
-        updateVideoUI(); 
-    }
-    
-    function changeRes() { 
-        const rawVal = parseInt(document.getElementById('resSelector').value);
-        const maxAllowed = getMaxScaleForSystem(currentGame ? currentGame.sys : 'unk');
-        videoConfig.res = Math.min(rawVal, maxAllowed);
-        if (rawVal > maxAllowed) {
-            const btn = document.getElementById('resSelector'); 
-            const oldColor = btn.style.background;
-            btn.style.background = '#991b1b'; 
-            setTimeout(() => btn.style.background = oldColor, 500);
-        }
-        saveVideoConfig(); 
-    }
-
-    function updateScreenTransform() { 
-        canvasContainer.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scaleX}, ${scaleY})`; 
-    }
-    function adjustScaleX(delta) { scaleX += delta; updateScreenTransform(); }
-    function adjustScaleY(delta) { scaleY += delta; updateScreenTransform(); }
-    function resetScale() { scaleX = 1; scaleY = 1; screenX = 0; screenY = 0; updateScreenTransform(); }
-    
-    function toggleScreenEdit() {
-        isEditMode = !isEditMode;
-        btnScreen.classList.toggle('active-tool', isEditMode);
-        screenPanel.style.display = isEditMode ? 'flex' : 'none';
-        canvasContainer.style.pointerEvents = isEditMode ? 'none' : 'auto';
-        updateVideoUI();
-        if (!isEditMode && currentGame) {
-            localStorage.setItem('layout_' + currentGame.n, JSON.stringify({scaleX, scaleY, screenX, screenY}));
-        }
-    }
-
-    frameDiv.addEventListener('touchstart', (e) => { 
-        if(!isEditMode) return; 
-        isDragging = true; 
-        startDragX = e.touches[0].clientX - screenX; 
-        startDragY = e.touches[0].clientY - screenY; 
-    }, {passive: false});
-    
-    frameDiv.addEventListener('touchmove', (e) => { 
-        if(!isEditMode || !isDragging) return; 
-        e.preventDefault(); 
-        screenX = e.touches[0].clientX - startDragX; 
-        screenY = e.touches[0].clientY - startDragY; 
-        updateScreenTransform(); 
-    }, {passive: false});
-    
-    frameDiv.addEventListener('touchend', () => isDragging = false);
-
-    const UniversalWebGL = {
-        gl: null, program: null, texture: null,
-        uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
-        maxTexSize: 4096,
-        currentWidth: 256, currentHeight: 240,
-        
-        init: function(canvas) {
-            const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
-            if (!gl) return false;
-            this.gl = gl;
-            this.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-
-            const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord;
-                void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
-            const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
-                uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
-                uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
-
-                vec3 toLinear(vec3 c) { return c * c; }
-                vec3 toSRGB(vec3 c) { return sqrt(c); }
-
-                vec3 FSR_RCAS(vec3 color, vec2 uv) {
-                    float sharpness = 0.4; 
-                    vec3 d = vec3(0.0);
-                    d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
-                    d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
-                    d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
-                    d += toLinear(texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb);
-                    
-                    vec3 linearColor = toLinear(color);
-                    vec3 delta = abs(d - linearColor * 4.0);
-                    float contrast = max(max(delta.r, delta.g), delta.b);
-                    
-                    return mix(linearColor, linearColor * 2.0 - d * 0.5, sharpness * contrast);
-                }
-
-                void main() {
-                    vec2 uv = v_texCoord; float vignette = 1.0;
-                    
-                    if (u_curve == 1) {
-                        vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
-                        float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
-                        float edgeDist = max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0;
-                        vignette = smoothstep(1.05, 0.95, edgeDist) * (1.0 - dist * 1.8);
-                        if (vignette <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
-                    }
-                    
-                    vec4 color;
-                    
-                    if (u_filter == 3) {
-                        vec3 rawColor = texture2D(u_image, uv).rgb;
-                        if (u_colors == 1) {
-                            color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
-                        } else {
-                            float sharpness = 0.4; 
-                            vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            vec3 delta = abs(d - rawColor * 4.0);
-                            float contrast = max(max(delta.r, delta.g), delta.b);
-                            color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
-                        }
-                    } 
-                    else if (u_filter == 1 || u_filter == 2) {
-                        vec2 p = uv * u_tex_size;
-                        vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
-                        if (u_filter == 1) { f = f * f * (3.0 - 2.0 * f); }
-                        color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } 
-                    else { 
-                        color = texture2D(u_image, uv); 
-                    }
-                    
-                    if (u_rgb == 1) { 
-                        float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
-                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
-                    }
-                    
-                    if (u_bloom == 1) {
-                        vec4 sum = vec4(0.0); float stepX = 1.2 / (u_tex_size.x * u_res); float stepY = 1.2 / (u_tex_size.y * u_res);
-                        sum += texture2D(u_image, uv + vec2(-stepX, -stepY)); sum += texture2D(u_image, uv + vec2(stepX, -stepY));
-                        sum += texture2D(u_image, uv + vec2(-stepX, stepY)); sum += texture2D(u_image, uv + vec2(stepX, stepY));
-                        color += (sum / 4.0) * 0.3; 
-                    }
-                    
-                    if (u_crt > 0) {
-                        if (u_crt == 3 || u_crt == 4) { 
-                            vec2 pix_uv = uv * u_tex_size;
-                            vec2 grid = fract(pix_uv);
-                            float gap = (u_crt == 4) ? 0.08 : 0.15;
-                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x);
-                            float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
-                            color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
-                            
-                            if (u_crt == 3) {
-                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x);
-                                float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
-                                float subB = smoothstep(0.66, 1.0, grid.x);
-                                color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
-                            }
-                        } else if (u_crt == 2) {
-                            vec2 pos = fract(uv * u_tex_size * u_res);
-                            float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415);
-                            color.rgb *= cell;
-                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0);
-                            vec3 phosphor = vec3(
-                                triad < 0.33 ? 1.08 : 0.92,
-                                (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92,
-                                triad >= 0.66 ? 1.08 : 0.92
-                            );
-                            color.rgb *= phosphor;
-                        } else if (u_crt == 1) {
-                            float scanlineStrength = 0.20; float maskStrength = 0.20;
-                            float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
-                            color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
-                            float mask = fract(uv.x * u_tex_size.x * u_res);
-                            vec3 maskColor = vec3(
-                                mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
-                                mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), 
-                                mask >= 0.66 ? 1.0 : (1.0 - maskStrength)
-                            );
-                            color.rgb *= maskColor;
-                        }
-                    }
-                    color.rgb *= vignette; gl_FragColor = color;
-                }`;
-
-            const compileShader = (type, source) => { 
-                const s = gl.createShader(type); 
-                gl.shaderSource(s, source); 
-                gl.compileShader(s); 
-                return s; 
-            };
-            const program = gl.createProgram(); 
-            gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vsSource)); 
-            gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fsSource)); 
-            gl.linkProgram(program); 
-            gl.useProgram(program);
-            this.program = program;
-
-            this.uCrtLoc = gl.getUniformLocation(program, "u_crt"); 
-            this.uCurveLoc = gl.getUniformLocation(program, "u_curve");
-            this.uFilterLoc = gl.getUniformLocation(program, "u_filter"); 
-            this.uRgbLoc = gl.getUniformLocation(program, "u_rgb");
-            this.uBloomLoc = gl.getUniformLocation(program, "u_bloom"); 
-            this.uResLoc = gl.getUniformLocation(program, "u_res");
-            this.uTexSizeLoc = gl.getUniformLocation(program, "u_tex_size"); 
-            this.uSystemLoc = gl.getUniformLocation(program, "u_system"); 
-            this.uColorsLoc = gl.getUniformLocation(program, "u_colors");
-
-            const posBuffer = gl.createBuffer(); 
-            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, -1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,   1.0,  1.0]), gl.STATIC_DRAW);
-            const posAttr = gl.getAttribLocation(program, "a_position"); 
-            gl.enableVertexAttribArray(posAttr); 
-            gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
-
-            const texBuffer = gl.createBuffer(); 
-            gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 1.0,  1.0, 1.0,  0.0, 0.0, 0.0, 0.0,  1.0, 1.0,  1.0, 0.0]), gl.STATIC_DRAW);
-            const texAttr = gl.getAttribLocation(program, "a_texCoord"); 
-            gl.enableVertexAttribArray(texAttr); 
-            gl.vertexAttribPointer(texAttr, 2, gl.FLOAT, false, 0, 0);
-
-            this.texture = gl.createTexture(); 
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            return true;
-        },
-        draw: function(sourceCanvas, systemCode) {
-            if (!this.gl || !sourceCanvas.width || !sourceCanvas.height) return;
-            const gl = this.gl;
-            let scaleMult = videoConfig.res;
-            if (currentGame && currentGame.t === 'd') scaleMult = Math.min(videoConfig.res, 4); 
-            
-            let targetW = sourceCanvas.width * scaleMult, targetH = sourceCanvas.height * scaleMult;
-            const maxArea = 16777216;
-            if (targetW > this.maxTexSize || targetH > this.maxTexSize || (targetW * targetH) > maxArea) {
-                let limitScaleTex = Math.min(this.maxTexSize / sourceCanvas.width, this.maxTexSize / sourceCanvas.height);
-                let limitScaleArea = Math.sqrt(maxArea / (sourceCanvas.width * sourceCanvas.height));
-                scaleMult = Math.max(1, Math.min(limitScaleTex, limitScaleArea));
-                targetW = sourceCanvas.width * scaleMult; 
-                targetH = sourceCanvas.height * scaleMult;
-            }
-
-            if (sourceCanvas.width !== this.currentWidth || sourceCanvas.height !== this.currentHeight || gl.canvas.width !== Math.floor(targetW)) {
-                this.currentWidth = sourceCanvas.width; 
-                this.currentHeight = sourceCanvas.height;
-                gl.canvas.width = Math.floor(targetW); 
-                gl.canvas.height = Math.floor(targetH);
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
-                gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
-            }
-
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
-
-            let passCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
-            gl.uniform1i(this.uCrtLoc, passCrt); 
-            gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
-            gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
-            gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
-            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
-            gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
-            gl.uniform1i(this.uSystemLoc, systemCode); 
-            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
-            
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-        }
-    };
-
-    function updateVibration(val) {
-        document.getElementById('vibrationVal').textContent = val + 'мс';
-        padConfig.vib = parseInt(val);
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-    }
-
-    function sanitizePadConfig() {
-        const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
-        if (!padConfig || typeof padConfig !== 'object') padConfig = {};
-        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(k => {
-            if (!padConfig[k]) padConfig[k] = {...defaultCfg};
-            if (padConfig[k].x === undefined) padConfig[k].x = 0; 
-            if (padConfig[k].y === undefined) padConfig[k].y = 0;
-            if (padConfig[k].s === undefined) padConfig[k].s = 1; 
-            if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
-            if (padConfig[k].b === undefined) padConfig[k].b = 1;
-        });
-        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
-        if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
-        if (padConfig.autoStop === undefined) padConfig.autoStop = false;
-        if (padConfig.barrier === undefined) padConfig.barrier = false;
-        if (padConfig.vib === undefined) padConfig.vib = 15;
-        
-        isFloatingDpad = padConfig.dpad.f; 
-        isStepDpad = padConfig.dpad.step; 
-        isAutoStop = padConfig.autoStop;
-        isBottomBarrier = padConfig.barrier;
-        
-        const btnAS = document.getElementById('toggleAutoStopBtn');
-        if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
-
-        const btnBar = document.getElementById('toggleBarrierBtn');
-        if (btnBar) {
-            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
-            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
-        }
-        
-        const btnVib = document.getElementById('vibrationSlider');
-        if(btnVib) {
-            btnVib.value = padConfig.vib;
-            document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс';
-        }
-        
-        updateBarrierVisuals();
-    }
-
-    function updateBarrierVisuals() {
-        const shield = document.getElementById('bottom-shield');
-        if (!shield) return;
-        if (isBottomBarrier) {
-            shield.classList.add('active');
-            if (isPadEditMode) shield.classList.add('edit-mode');
-            else shield.classList.remove('edit-mode');
-        } else {
-            shield.classList.remove('active', 'edit-mode');
-        }
-    }
-
-    function toggleBarrier() {
-        isBottomBarrier = !isBottomBarrier;
-        const btn = document.getElementById('toggleBarrierBtn');
-        if (btn) {
-            btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
-            btn.style.background = isBottomBarrier ? '#047857' : '#991b1b';
-        }
-        updateBarrierVisuals();
-        if (currentGame) {
-            padConfig.barrier = isBottomBarrier;
-            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-        }
-    }
-
-    function toggleAutoStop() { 
-        isAutoStop = !isAutoStop; 
-        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ'; 
-        if (currentGame) { 
-            padConfig.autoStop = isAutoStop; 
-            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
-        } 
-    }
-    
-    function toggleFloatingDpad() { 
-        isFloatingDpad = !isFloatingDpad; 
-        padConfig.dpad.f = isFloatingDpad; 
-        updateFloatingBtnUI(); 
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
-        updatePadTransforms(); 
-    }
-    
-    function toggleStepDpad() { 
-        isStepDpad = !isStepDpad; 
-        padConfig.dpad.step = isStepDpad; 
-        updateStepBtnUI(); 
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
-    }
-    
-    function updateFloatingBtnUI() { 
-        const btn = document.getElementById('toggleFloatBtn'); 
-        if (!btn) return;
-        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; 
-        btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
-    }
-    
-    function updateStepBtnUI() { 
-        const btn = document.getElementById('toggleStepBtn'); 
-        if (!btn) return;
-        
-        if (currentGame?.t !== 'd') {
-            btn.style.display = 'none';
-            return;
-        } else {
-            btn.style.display = 'block';
-        }
-        
-        btn.innerHTML = isStepDpad ? 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)' : 'Режим: СВАЙП (ПЛАВНЫЙ)'; 
-        btn.style.background = isStepDpad ? '#ef4444' : '#3b82f6'; 
-    }
-    
-    function togglePadEdit() {
-        isPadEditMode = !isPadEditMode;
-        btnPadEdit.classList.toggle('active-tool', isPadEditMode);
-        padPanel.style.display = isPadEditMode ? 'flex' : 'none';
-        
-        updateBarrierVisuals();
-        
-        if (isPadEditMode) {
-            updateStepBtnUI(); 
-            const el = document.getElementById('joystick-dpad');
-            el.style.opacity = padConfig.dpad.o; 
-            el.style.pointerEvents = 'auto'; 
-            document.getElementById('dpad-catch-zone').style.display = 'none';
-        } else {
-            document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
-            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-            updatePadTransforms(); 
-        }
-    }
-
-    function updateOpacity(val) { 
-        const opacity = val / 100; 
-        document.getElementById('opacityVal').textContent = val + '%'; 
-        if (selectedPadEl) { 
-            padConfig[selectedPadEl].o = opacity; 
-            applyVisuals(selectedPadEl); 
-        } 
-    }
-    
-    function updateBrightness(val) { 
-        const brightness = val / 100; 
-        document.getElementById('brightnessVal').textContent = val + '%'; 
-        if (selectedPadEl) { 
-            padConfig[selectedPadEl].b = brightness; 
-            applyVisuals(selectedPadEl); 
-        } 
-    }
-
-    function applyVisuals(id) {
-        const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
-        if (!el) return;
-        const cfg = padConfig[id];
-        if (id === 'dpad') {
-            el.style.background = `rgba(255,255,255,${cfg.o * 0.1})`; 
-            el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
-            const cross = el.querySelector('.d-cross'); 
-            if (cross) { 
-                cross.style.opacity = cfg.o; 
-                cross.style.filter = `brightness(${cfg.b})`; 
-            }
-        } else {
-            let baseColor, borderColor;
-            if (id === 'a') { 
-                baseColor = `rgba(239, 68, 68, ${cfg.o})`; 
-                borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'b') { 
-                baseColor = `rgba(59, 130, 246, ${cfg.o})`; 
-                borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'y') { 
-                baseColor = `rgba(16, 185, 129, ${cfg.o})`; 
-                borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'x') { 
-                baseColor = `rgba(245, 158, 11, ${cfg.o})`; 
-                borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else { 
-                baseColor = `rgba(255, 255, 255, ${cfg.o})`; 
-                borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            el.style.background = baseColor; 
-            el.style.borderColor = borderColor; 
-            el.style.filter = `brightness(${cfg.b})`;
-        }
-    }
-
-    document.querySelectorAll('.draggable-btn').forEach(el => {
-        el.addEventListener('touchstart', e => {
-            if (!isPadEditMode) return;
-            e.preventDefault(); 
-            document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
-            selectedPadEl = el.dataset.id; 
-            el.classList.add('editing-active');
-            const cfg = padConfig[selectedPadEl];
-            document.getElementById('opacitySlider').value = (cfg.o || 0.3) * 100; 
-            document.getElementById('opacityVal').textContent = Math.round((cfg.o || 0.3) * 100) + '%';
-            document.getElementById('brightnessSlider').value = (cfg.b || 1) * 100; 
-            document.getElementById('brightnessVal').textContent = Math.round((cfg.b || 1) * 100) + '%';
-            padDragTarget = selectedPadEl; 
-            padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; 
-            padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
-        }, {passive: false});
-
-        document.addEventListener('touchmove', e => { 
-            if (!isPadEditMode || !padDragTarget) return; 
-            e.preventDefault();
-            
-            let newX = e.touches[0].clientX - padDragStartX;
-            let newY = e.touches[0].clientY - padDragStartY;
-            
-            if (isBottomBarrier) {
-                const el = document.getElementById(padDragTarget === 'dpad' ? 'joystick-dpad' : 'btn-' + padDragTarget);
-                const rect = el.getBoundingClientRect();
-                const limit = window.innerHeight - 75; 
-                
-                if (rect.bottom > limit && newY > padConfig[padDragTarget].y) {
-                    return; 
-                }
-            }
-
-            padConfig[padDragTarget].x = newX; 
-            padConfig[padDragTarget].y = newY; 
-            updatePadTransforms(); 
-        }, {passive: false});
-        
-        document.addEventListener('touchend', () => padDragTarget = null);
-    });
-
-    function updatePadTransforms() {
-        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(id => {
-            const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
-            if(!el) return;
-            const c = padConfig[id];
-            
-            if (id === 'dpad' && isFloatingDpad && !isPadEditMode) { 
-                el.style.opacity = '0'; 
-                el.style.pointerEvents = 'none'; 
-                document.getElementById('dpad-catch-zone').style.display = 'block'; 
-            } else {
-                const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
-                
-                if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
-                else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
-                else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
-                else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
-                else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
-                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
-                else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
-                
-                el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
-                el.style.pointerEvents = 'auto'; 
-                applyVisuals(id);
-                if (id === 'dpad') document.getElementById('dpad-catch-zone').style.display = 'none';
-            }
-        });
-    }
-
-    function scaleSelectedPad(d) { 
-        padConfig[selectedPadEl].s = Math.max(0.3, Math.min(3, padConfig[selectedPadEl].s + d)); 
-        updatePadTransforms(); 
-    }
-    
-    function resetPad() { 
-        padConfig = {}; 
-        sanitizePadConfig(); 
-        updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
-        updatePadTransforms(); 
-    }
-
-    const dpadZone = document.getElementById('joystick-dpad'); 
-    const catchZone = document.getElementById('dpad-catch-zone'); 
-    let activeDpadKeys = new Set(); 
-    let dpadTouchId = null; 
-    let dpadCenter = {x:0, y:0}; 
-    let dpadRadius = 75;
-
-    function updateDpadVisuals() { 
-        document.querySelectorAll('.d-arrow').forEach(arrow => { 
-            const k = parseInt(arrow.dataset.k); 
-            if (activeDpadKeys.has(k)) arrow.classList.add('active'); 
-            else arrow.classList.remove('active'); 
-        }); 
-    }
-
-    function getDpadDirection(clientX, clientY) {
-        const dx = clientX - dpadCenter.x; 
-        const dy = clientY - dpadCenter.y; 
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        let normalizedDist = Math.min(distance / dpadRadius, 1); 
-        const deadZone = 0.2;
-        if (normalizedDist < deadZone) return null;
-        
-        let angle = Math.atan2(dy, dx) * 180 / Math.PI; 
-        if (angle < 0) angle += 360;
-        const newKeys = new Set();
-        
-        if (isStepDpad) {
-            if (angle >= 315 || angle < 45) newKeys.add(39); 
-            else if (angle >= 45 && angle < 135) newKeys.add(40); 
-            else if (angle >= 135 && angle < 225) newKeys.add(37); 
-            else if (angle >= 225 && angle < 315) newKeys.add(38); 
-            return newKeys;
-        }
-        
-        if (angle >= 337.5 || angle < 22.5) newKeys.add(39); 
-        else if (angle >= 22.5 && angle < 67.5) { newKeys.add(40); newKeys.add(39); } 
-        else if (angle >= 67.5 && angle < 112.5) newKeys.add(40); 
-        else if (angle >= 112.5 && angle < 157.5) { newKeys.add(40); newKeys.add(37); } 
-        else if (angle >= 157.5 && angle < 202.5) newKeys.add(37); 
-        else if (angle >= 202.5 && angle < 247.5) { newKeys.add(38); newKeys.add(37); } 
-        else if (angle >= 247.5 && angle < 292.5) newKeys.add(38); 
-        else if (angle >= 292.5 && angle < 337.5) { newKeys.add(38); newKeys.add(39); }
-        return newKeys;
-    }
-
-    function handleDpadTouchStart(e) {
-        if(isPadEditMode) return; 
-        if(e.target.closest('.draggable-btn') && e.target.id !== 'joystick-dpad') return;
-        e.preventDefault(); 
-        const touch = e.changedTouches[0]; 
-        if (dpadTouchId !== null) return; 
-        dpadTouchId = touch.identifier;
-        
-        if (isFloatingDpad) {
-            const el = document.getElementById('joystick-dpad'); 
-            const rad = (150 * padConfig.dpad.s) / 2;
-            el.style.bottom = 'auto'; 
-            el.style.left = (touch.clientX - rad) + 'px'; 
-            el.style.top = (touch.clientY - rad) + 'px'; 
-            el.style.transform = `scale(${padConfig.dpad.s})`;
-            dpadCenter = { x: touch.clientX, y: touch.clientY }; 
-            dpadRadius = rad; 
-            el.style.opacity = padConfig.dpad.o; 
-        } else {
-            const rect = dpadZone.getBoundingClientRect(); 
-            dpadCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; 
-            dpadRadius = rect.width / 2;
-        }
-        
-        doVibrate(10);
-        const newKeys = getDpadDirection(touch.clientX, touch.clientY);
-        if (newKeys !== null) {
-            newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); });
-            activeDpadKeys = new Set(newKeys); 
-            updateDpadVisuals();
-        }
-    }
-
-    function handleDpadTouchMove(e) {
-        if(isPadEditMode || dpadTouchId === null) return; 
-        if (isStepDpad && currentGame?.t === 'd') return; 
-        
-        e.preventDefault();
-        let trackedTouch = null; 
-        for (let i = 0; i < e.touches.length; i++) { 
-            if (e.touches[i].identifier === dpadTouchId) { 
-                trackedTouch = e.touches[i]; 
-                break; 
-            } 
-        }
-        if (!trackedTouch) return;
-        
-        const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
-        if (newKeys === null) { 
-            if (activeDpadKeys.size > 0) {
-                activeDpadKeys.forEach(k => sendKey(k, false)); 
-                activeDpadKeys.clear(); 
-            }
-        } else { 
-            let changed = false;
-            if (newKeys.size !== activeDpadKeys.size) {
-                changed = true;
-            } else {
-                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
-            }
-
-            if (changed) {
-                doVibrate(10); 
-            }
-
-            if (isStepDpad) {
-                activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
-            }
-            newKeys.forEach(k => { 
-                if (!activeDpadKeys.has(k)) sendKey(k, true); 
-            }); 
-            if (!isStepDpad) {
-               activeDpadKeys.forEach(k => { 
-                   if (!newKeys.has(k)) sendKey(k, false); 
-               }); 
-            }
-            activeDpadKeys = new Set(newKeys); 
-        }
-        updateDpadVisuals();
-    }
-
-    function handleDpadTouchEnd(e) {
-        let isDpadReleased = false; 
-        for (let i = 0; i < e.changedTouches.length; i++) { 
-            if (e.changedTouches[i].identifier === dpadTouchId) { 
-                isDpadReleased = true; 
-                break; 
-            } 
-        }
-        if (isDpadReleased) {
-            activeDpadKeys.forEach(k => sendKey(k, false)); 
-            activeDpadKeys.clear(); 
-            updateDpadVisuals();
-            
-            if (isAutoStop && currentGame) {
-                const sysMap = systemButtonMap[currentGame.sys] || systemButtonMap['dos'];
-                const brakeKey = sysMap.brake;
-                
-                sendKey(brakeKey, true); 
-                setTimeout(() => sendKey(brakeKey, false), 50); 
-            }
-            
-            dpadTouchId = null; 
-            if (isFloatingDpad) { 
-                document.getElementById('joystick-dpad').style.opacity = '0'; 
-            }
-        }
-    }
-
-    [dpadZone, catchZone].forEach(zone => { 
-        zone.addEventListener('touchstart', handleDpadTouchStart, {passive: false}); 
-        zone.addEventListener('touchmove', handleDpadTouchMove, {passive: false}); 
-        zone.addEventListener('touchend', handleDpadTouchEnd, {passive: false}); 
-        zone.addEventListener('touchcancel', handleDpadTouchEnd, {passive: false}); 
-    });
-
-    document.querySelectorAll('#btn-a, #btn-b, #btn-x, #btn-y, #btn-l, #btn-r, #btn-start, #btn-select').forEach(btn => {
-        btn.addEventListener('touchstart', (e) => { 
-            if(isPadEditMode) return; 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            const k = parseInt(btn.dataset.k); 
-            sendKey(k, true); 
-            btn.classList.add('active-key'); 
-            doVibrate(15); 
-        }, {passive: false});
-        btn.addEventListener('touchend', (e) => { 
-            if(isPadEditMode) return; 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            const k = parseInt(btn.dataset.k); 
-            sendKey(k, false); 
-            btn.classList.remove('active-key'); 
-        }, {passive: false});
-    });
-
-    document.querySelectorAll('.f-btn[data-f]').forEach(btn => {
-        btn.addEventListener('touchstart', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            sendKey(parseInt(btn.dataset.f), true); 
-            btn.classList.add('active-key'); 
-            doVibrate(15); 
-        }, {passive: false});
-        btn.addEventListener('touchend', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            sendKey(parseInt(btn.dataset.f), false); 
-            btn.classList.remove('active-key'); 
-        }, {passive: false});
-        btn.addEventListener('touchcancel', (e) => { 
-            e.preventDefault(); 
-            e.stopPropagation(); 
-            sendKey(parseInt(btn.dataset.f), false); 
-            btn.classList.remove('active-key'); 
-        }, {passive: false});
-    });
-
-    function toggleGamepad(force = null) { 
-        isGamepadVisible = force !== null ? force : !isGamepadVisible; 
-        gamepad.style.display = isGamepadVisible ? 'block' : 'none'; 
-    }
-    
-    function toggleKeysPanel() { 
-        const isVisible = fkeysPanel.style.display === 'flex'; 
-        fkeysPanel.style.display = isVisible ? 'none' : 'flex'; 
-        btnKeyboard.classList.toggle('active-tool', !isVisible); 
-    }
-
-    function sendKey(defaultCode, down) {
-        let finalCode = defaultCode;
-        if (currentGame?.keys) { 
-            if (defaultCode === 90 && currentGame.keys.a) finalCode = currentGame.keys.a; 
-            if (defaultCode === 88 && currentGame.keys.b) finalCode = currentGame.keys.b; 
-        }
-        
-        if (currentGame?.m === 'touch_hover' && defaultCode === 90) {
-            const dc = document.getElementById('dos-canvas');
-            if (dc?.getHoverCoords) { 
-                const coords = dc.getHoverCoords(); 
-                dc.dispatchEvent(new MouseEvent(down ? 'mousedown' : 'mouseup', {clientX: coords.x, clientY: coords.y, button: 0, bubbles: true})); 
-            }
-            return; 
-        }
-
-        if (currentDos || (currentGame?.t === 'l')) {
-            let keyMap = {}; 
-            let targetKeyCode = finalCode; 
-            if (currentDos) {
-                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 88: { keyCode: 32, code: 'Space', key: ' ' }, 65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift' }, 81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 27, code: 'Escape', key: 'Escape' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
-            } else {
-                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 88: { keyCode: 88, code: 'KeyX', key: 'x' }, 65: { keyCode: 65, code: 'KeyA', key: 'a' }, 83: { keyCode: 83, code: 'KeyS', key: 's' }, 81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 87: { keyCode: 87, code: 'KeyW', key: 'w' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftRight', key: 'Shift' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
-            }
-            if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
-            
-            let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true, composed: true };
-            if (keyMap[finalCode]) { evData.code = keyMap[finalCode].code; evData.key = keyMap[finalCode].key; }
-            
-            const event = new KeyboardEvent(down ? 'keydown' : 'keyup', evData);
-            document.dispatchEvent(event);
-            
-            const cvs = document.getElementById('canvas');
-            if (cvs) {
-                cvs.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', evData));
-            }
-        }
-        if (nes) {
-            const nesMap = {38:4, 40:5, 37:6, 39:7, 90:0, 88:1, 16:2, 13:3, 27:3}; 
-            if (nesMap[defaultCode] !== undefined) down ? nes.buttonDown(1, nesMap[defaultCode]) : nes.buttonUp(1, nesMap[defaultCode]);
-        }
-    }
-
-    async function hardResetGame() {
-        if (!currentGame) return;
-        await saveGameState(); 
-        sessionStorage.setItem('autoRestartGameId', currentGame.id);
-        location.reload();
     }
 
     function startGame(game) {
@@ -2490,6 +1633,883 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+    function getMaxScaleForSystem(sys) { 
+        const limits = {'nes': 16, 'snes': 16, 'smd': 16, 'ngp': 8, 'dos': 4, 'gba': 8}; 
+        return limits[sys] || 8; 
+    }
+    
+    function changeCrtMode() { 
+        videoConfig.crt = parseInt(document.getElementById('crtSelector').value); 
+        saveVideoConfig(); 
+    }
+    
+    function toggleCurve() { videoConfig.curve = !videoConfig.curve; saveVideoConfig(); }
+    function toggleRGB() { videoConfig.rgb = !videoConfig.rgb; saveVideoConfig(); }
+    function toggleBloom() { videoConfig.bloom = !videoConfig.bloom; saveVideoConfig(); }
+    function changeFilter() { videoConfig.filter = parseInt(document.getElementById('filterSelector').value); saveVideoConfig(); }
+    
+    function saveVideoConfig() { 
+        localStorage.setItem('videoV6', JSON.stringify(videoConfig)); 
+        if (currentGame) {
+            localStorage.setItem('video_' + currentGame.n, JSON.stringify(videoConfig));
+        }
+        updateVideoUI(); 
+    }
+    
+    function changeRes() { 
+        const rawVal = parseInt(document.getElementById('resSelector').value);
+        const maxAllowed = getMaxScaleForSystem(currentGame ? currentGame.sys : 'unk');
+        videoConfig.res = Math.min(rawVal, maxAllowed);
+        if (rawVal > maxAllowed) {
+            const btn = document.getElementById('resSelector'); 
+            const oldColor = btn.style.background;
+            btn.style.background = '#991b1b'; 
+            setTimeout(() => btn.style.background = oldColor, 500);
+        }
+        saveVideoConfig(); 
+    }
+
+    function updateScreenTransform() { 
+        canvasContainer.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scaleX}, ${scaleY})`; 
+    }
+    function adjustScaleX(delta) { scaleX += delta; updateScreenTransform(); }
+    function adjustScaleY(delta) { scaleY += delta; updateScreenTransform(); }
+    function resetScale() { scaleX = 1; scaleY = 1; screenX = 0; screenY = 0; updateScreenTransform(); }
+    
+    function toggleScreenEdit() {
+        isEditMode = !isEditMode;
+        btnScreen.classList.toggle('active-tool', isEditMode);
+        screenPanel.style.display = isEditMode ? 'flex' : 'none';
+        canvasContainer.style.pointerEvents = isEditMode ? 'none' : 'auto';
+        updateVideoUI();
+        if (!isEditMode && currentGame) {
+            localStorage.setItem('layout_' + currentGame.n, JSON.stringify({scaleX, scaleY, screenX, screenY}));
+        }
+    }
+
+    frameDiv.addEventListener('touchstart', (e) => { 
+        if(!isEditMode) return; 
+        isDragging = true; 
+        startDragX = e.touches[0].clientX - screenX; 
+        startDragY = e.touches[0].clientY - screenY; 
+    }, {passive: false});
+    
+    frameDiv.addEventListener('touchmove', (e) => { 
+        if(!isEditMode || !isDragging) return; 
+        e.preventDefault(); 
+        screenX = e.touches[0].clientX - startDragX; 
+        screenY = e.touches[0].clientY - startDragY; 
+        updateScreenTransform(); 
+    }, {passive: false});
+    
+    frameDiv.addEventListener('touchend', () => isDragging = false);
+
+    const UniversalWebGL = {
+        gl: null, program: null, texture: null,
+        uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
+        maxTexSize: 4096,
+        currentWidth: 256, currentHeight: 240,
+        
+        init: function(canvas) {
+            const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
+            if (!gl) return false;
+            this.gl = gl;
+            this.maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+
+            const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord;
+                void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
+            const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
+                uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
+                uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
+
+                vec3 toLinear(vec3 c) { return c * c; }
+                vec3 toSRGB(vec3 c) { return sqrt(c); }
+
+                vec3 FSR_RCAS(vec3 color, vec2 uv) {
+                    float sharpness = 0.4; 
+                    vec3 d = vec3(0.0);
+                    d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
+                    d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
+                    d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
+                    d += toLinear(texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb);
+                    
+                    vec3 linearColor = toLinear(color);
+                    vec3 delta = abs(d - linearColor * 4.0);
+                    float contrast = max(max(delta.r, delta.g), delta.b);
+                    
+                    return mix(linearColor, linearColor * 2.0 - d * 0.5, sharpness * contrast);
+                }
+
+                void main() {
+                    vec2 uv = v_texCoord; float vignette = 1.0;
+                    
+                    if (u_curve == 1) {
+                        vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
+                        float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
+                        float edgeDist = max(abs(uv.x - 0.5), abs(uv.y - 0.5)) * 2.0;
+                        vignette = smoothstep(1.05, 0.95, edgeDist) * (1.0 - dist * 1.8);
+                        if (vignette <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+                    }
+                    
+                    vec4 color;
+                    
+                    if (u_filter == 3) {
+                        vec3 rawColor = texture2D(u_image, uv).rgb;
+                        if (u_colors == 1) {
+                            color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
+                        } else {
+                            float sharpness = 0.4; 
+                            vec3 d = vec3(0.0);
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            vec3 delta = abs(d - rawColor * 4.0);
+                            float contrast = max(max(delta.r, delta.g), delta.b);
+                            color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
+                        }
+                    } 
+                    else if (u_filter == 1 || u_filter == 2) {
+                        vec2 p = uv * u_tex_size;
+                        vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
+                        if (u_filter == 1) { f = f * f * (3.0 - 2.0 * f); }
+                        color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
+                    } 
+                    else { 
+                        color = texture2D(u_image, uv); 
+                    }
+                    
+                    if (u_rgb == 1) { 
+                        float shift = 2.0 / (u_tex_size.x * u_res); 
+                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
+                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                    }
+                    
+                    if (u_bloom == 1) {
+                        vec4 sum = vec4(0.0); float stepX = 1.2 / (u_tex_size.x * u_res); float stepY = 1.2 / (u_tex_size.y * u_res);
+                        sum += texture2D(u_image, uv + vec2(-stepX, -stepY)); sum += texture2D(u_image, uv + vec2(stepX, -stepY));
+                        sum += texture2D(u_image, uv + vec2(-stepX, stepY)); sum += texture2D(u_image, uv + vec2(stepX, stepY));
+                        color += (sum / 4.0) * 0.3; 
+                    }
+                    
+                    // --- НОВЫЙ БЛОК МАТРИЦ (БЕЗ МУАРА) ---
+                    if (u_crt > 0) {
+                        if (u_crt == 3) { 
+                            // LCD-Матрица (GBA) - Глубокая сетка + RGB субпиксели
+                            vec2 pix_uv = uv * u_tex_size;
+                            float gridX = 0.75 + 0.25 * cos(pix_uv.x * 6.2831);
+                            float gridY = 0.75 + 0.25 * cos(pix_uv.y * 6.2831);
+                            color.rgb *= (gridX * gridY);
+                            // Легкая имитация субпикселей 
+                            float subR = 0.95 + 0.05 * cos(pix_uv.x * 6.2831 * 3.0);
+                            float subG = 0.95 + 0.05 * cos((pix_uv.x * 6.2831 * 3.0) + 2.094);
+                            float subB = 0.95 + 0.05 * cos((pix_uv.x * 6.2831 * 3.0) + 4.188);
+                            color.rgb *= vec3(subR, subG, subB);
+                        } else if (u_crt == 4) {
+                            // VGA-Монитор (DOS) - Строгая тонкая сетка
+                            vec2 pix_uv = uv * u_tex_size;
+                            float gridX = 0.85 + 0.15 * cos(pix_uv.x * 6.2831);
+                            float gridY = 0.85 + 0.15 * cos(pix_uv.y * 6.2831);
+                            color.rgb *= (gridX * gridY);
+                        } else if (u_crt == 2) {
+                            // Премиум ЭЛТ (Тринитрон) - Фосфорные точки
+                            vec2 pos = uv * u_tex_size * u_res;
+                            float cell = 0.9 + 0.1 * cos(pos.y * 6.2831); 
+                            color.rgb *= cell;
+                            float r = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0);
+                            float g = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0 + 2.094);
+                            float b = 1.0 + 0.15 * cos(pos.x * 6.2831 * 3.0 + 4.188);
+                            color.rgb *= vec3(r, g, b);
+                        } else if (u_crt == 1) {
+                            // Классические сканлайны (Денди)
+                            float scanlineStrength = 0.20; float maskStrength = 0.20;
+                            float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
+                            color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
+                            float mask = fract(uv.x * u_tex_size.x * u_res);
+                            vec3 maskColor = vec3(
+                                mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
+                                mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), 
+                                mask >= 0.66 ? 1.0 : (1.0 - maskStrength)
+                            );
+                            color.rgb *= maskColor;
+                        }
+                    }
+
+                    color.rgb *= vignette; gl_FragColor = color;
+                }`;
+
+            const compileShader = (type, source) => { 
+                const s = gl.createShader(type); 
+                gl.shaderSource(s, source); 
+                gl.compileShader(s); 
+                return s; 
+            };
+            const program = gl.createProgram(); 
+            gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vsSource)); 
+            gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fsSource)); 
+            gl.linkProgram(program); 
+            gl.useProgram(program);
+            this.program = program;
+
+            this.uCrtLoc = gl.getUniformLocation(program, "u_crt"); 
+            this.uCurveLoc = gl.getUniformLocation(program, "u_curve");
+            this.uFilterLoc = gl.getUniformLocation(program, "u_filter"); 
+            this.uRgbLoc = gl.getUniformLocation(program, "u_rgb");
+            this.uBloomLoc = gl.getUniformLocation(program, "u_bloom"); 
+            this.uResLoc = gl.getUniformLocation(program, "u_res");
+            this.uTexSizeLoc = gl.getUniformLocation(program, "u_tex_size"); 
+            this.uSystemLoc = gl.getUniformLocation(program, "u_system"); 
+            this.uColorsLoc = gl.getUniformLocation(program, "u_colors");
+
+            const posBuffer = gl.createBuffer(); 
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, -1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,   1.0,  1.0]), gl.STATIC_DRAW);
+            const posAttr = gl.getAttribLocation(program, "a_position"); 
+            gl.enableVertexAttribArray(posAttr); 
+            gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+
+            const texBuffer = gl.createBuffer(); 
+            gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 1.0,  1.0, 1.0,  0.0, 0.0, 0.0, 0.0,  1.0, 1.0,  1.0, 0.0]), gl.STATIC_DRAW);
+            const texAttr = gl.getAttribLocation(program, "a_texCoord"); 
+            gl.enableVertexAttribArray(texAttr); 
+            gl.vertexAttribPointer(texAttr, 2, gl.FLOAT, false, 0, 0);
+
+            this.texture = gl.createTexture(); 
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); 
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            return true;
+        },
+        draw: function(sourceCanvas, systemCode) {
+            if (!this.gl || !sourceCanvas.width || !sourceCanvas.height) return;
+            const gl = this.gl;
+            let scaleMult = videoConfig.res;
+            if (currentGame && currentGame.t === 'd') scaleMult = Math.min(videoConfig.res, 4); 
+            
+            let targetW = sourceCanvas.width * scaleMult, targetH = sourceCanvas.height * scaleMult;
+            const maxArea = 16777216;
+            if (targetW > this.maxTexSize || targetH > this.maxTexSize || (targetW * targetH) > maxArea) {
+                let limitScaleTex = Math.min(this.maxTexSize / sourceCanvas.width, this.maxTexSize / sourceCanvas.height);
+                let limitScaleArea = Math.sqrt(maxArea / (sourceCanvas.width * sourceCanvas.height));
+                scaleMult = Math.max(1, Math.min(limitScaleTex, limitScaleArea));
+                targetW = sourceCanvas.width * scaleMult; 
+                targetH = sourceCanvas.height * scaleMult;
+            }
+
+            if (sourceCanvas.width !== this.currentWidth || sourceCanvas.height !== this.currentHeight || gl.canvas.width !== Math.floor(targetW)) {
+                this.currentWidth = sourceCanvas.width; 
+                this.currentHeight = sourceCanvas.height;
+                gl.canvas.width = Math.floor(targetW); 
+                gl.canvas.height = Math.floor(targetH);
+                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
+                gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
+
+            let passCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
+            gl.uniform1i(this.uCrtLoc, passCrt); 
+            gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
+            gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
+            gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
+            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
+            gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
+            gl.uniform1i(this.uSystemLoc, systemCode); 
+            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
+            
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+    };
+
+    function updateVibration(val) {
+        document.getElementById('vibrationVal').textContent = val + 'мс';
+        padConfig.vib = parseInt(val);
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+    }
+
+    function sanitizePadConfig() {
+        const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
+        if (!padConfig || typeof padConfig !== 'object') padConfig = {};
+        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(k => {
+            if (!padConfig[k]) padConfig[k] = {...defaultCfg};
+            if (padConfig[k].x === undefined) padConfig[k].x = 0; 
+            if (padConfig[k].y === undefined) padConfig[k].y = 0;
+            if (padConfig[k].s === undefined) padConfig[k].s = 1; 
+            if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
+            if (padConfig[k].b === undefined) padConfig[k].b = 1;
+        });
+        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
+        if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
+        if (padConfig.autoStop === undefined) padConfig.autoStop = false;
+        if (padConfig.barrier === undefined) padConfig.barrier = false;
+        if (padConfig.vib === undefined) padConfig.vib = 15;
+        
+        isFloatingDpad = padConfig.dpad.f; 
+        isStepDpad = padConfig.dpad.step; 
+        isAutoStop = padConfig.autoStop;
+        isBottomBarrier = padConfig.barrier;
+        
+        const btnAS = document.getElementById('toggleAutoStopBtn');
+        if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
+
+        const btnBar = document.getElementById('toggleBarrierBtn');
+        if (btnBar) {
+            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
+            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+        }
+        
+        const btnVib = document.getElementById('vibrationSlider');
+        if(btnVib) {
+            btnVib.value = padConfig.vib;
+            document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс';
+        }
+        
+        updateBarrierVisuals();
+    }
+
+    function updateBarrierVisuals() {
+        const shield = document.getElementById('bottom-shield');
+        if (!shield) return;
+        if (isBottomBarrier) {
+            shield.classList.add('active');
+            if (isPadEditMode) shield.classList.add('edit-mode');
+            else shield.classList.remove('edit-mode');
+        } else {
+            shield.classList.remove('active', 'edit-mode');
+        }
+    }
+
+    function toggleBarrier() {
+        isBottomBarrier = !isBottomBarrier;
+        const btn = document.getElementById('toggleBarrierBtn');
+        if (btn) {
+            btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
+            btn.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+        }
+        updateBarrierVisuals();
+        if (currentGame) {
+            padConfig.barrier = isBottomBarrier;
+            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+        }
+    }
+
+    function toggleAutoStop() { 
+        isAutoStop = !isAutoStop; 
+        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ'; 
+        if (currentGame) { 
+            padConfig.autoStop = isAutoStop; 
+            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
+        } 
+    }
+    
+    function toggleFloatingDpad() { 
+        isFloatingDpad = !isFloatingDpad; 
+        padConfig.dpad.f = isFloatingDpad; 
+        updateFloatingBtnUI(); 
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
+        updatePadTransforms(); 
+    }
+    
+    function toggleStepDpad() { 
+        isStepDpad = !isStepDpad; 
+        padConfig.dpad.step = isStepDpad; 
+        updateStepBtnUI(); 
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
+    }
+    
+    function updateFloatingBtnUI() { 
+        const btn = document.getElementById('toggleFloatBtn'); 
+        if (!btn) return;
+        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; 
+        btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
+    }
+    
+    function updateStepBtnUI() { 
+        const btn = document.getElementById('toggleStepBtn'); 
+        if (!btn) return;
+        
+        if (currentGame?.t !== 'd') {
+            btn.style.display = 'none';
+            return;
+        } else {
+            btn.style.display = 'block';
+        }
+        
+        btn.innerHTML = isStepDpad ? 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)' : 'Режим: СВАЙП (ПЛАВНЫЙ)'; 
+        btn.style.background = isStepDpad ? '#ef4444' : '#3b82f6'; 
+    }
+    
+    function togglePadEdit() {
+        isPadEditMode = !isPadEditMode;
+        btnPadEdit.classList.toggle('active-tool', isPadEditMode);
+        padPanel.style.display = isPadEditMode ? 'flex' : 'none';
+        
+        updateBarrierVisuals();
+        
+        if (isPadEditMode) {
+            updateStepBtnUI(); 
+            const el = document.getElementById('joystick-dpad');
+            el.style.opacity = padConfig.dpad.o; 
+            el.style.pointerEvents = 'auto'; 
+            document.getElementById('dpad-catch-zone').style.display = 'none';
+        } else {
+            document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
+            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+            updatePadTransforms(); 
+        }
+    }
+
+    function updateOpacity(val) { 
+        const opacity = val / 100; 
+        document.getElementById('opacityVal').textContent = val + '%'; 
+        if (selectedPadEl) { 
+            padConfig[selectedPadEl].o = opacity; 
+            applyVisuals(selectedPadEl); 
+        } 
+    }
+    
+    function updateBrightness(val) { 
+        const brightness = val / 100; 
+        document.getElementById('brightnessVal').textContent = val + '%'; 
+        if (selectedPadEl) { 
+            padConfig[selectedPadEl].b = brightness; 
+            applyVisuals(selectedPadEl); 
+        } 
+    }
+
+    function applyVisuals(id) {
+        const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
+        if (!el) return;
+        const cfg = padConfig[id];
+        if (id === 'dpad') {
+            el.style.background = `rgba(255,255,255,${cfg.o * 0.1})`; 
+            el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
+            const cross = el.querySelector('.d-cross'); 
+            if (cross) { 
+                cross.style.opacity = cfg.o; 
+                cross.style.filter = `brightness(${cfg.b})`; 
+            }
+        } else {
+            let baseColor, borderColor;
+            if (id === 'a') { 
+                baseColor = `rgba(239, 68, 68, ${cfg.o})`; 
+                borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; 
+            }
+            else if (id === 'b') { 
+                baseColor = `rgba(59, 130, 246, ${cfg.o})`; 
+                borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; 
+            }
+            else if (id === 'y') { 
+                baseColor = `rgba(16, 185, 129, ${cfg.o})`; 
+                borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; 
+            }
+            else if (id === 'x') { 
+                baseColor = `rgba(245, 158, 11, ${cfg.o})`; 
+                borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; 
+            }
+            else { 
+                baseColor = `rgba(255, 255, 255, ${cfg.o})`; 
+                borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; 
+            }
+            el.style.background = baseColor; 
+            el.style.borderColor = borderColor; 
+            el.style.filter = `brightness(${cfg.b})`;
+        }
+    }
+
+    document.querySelectorAll('.draggable-btn').forEach(el => {
+        el.addEventListener('touchstart', e => {
+            if (!isPadEditMode) return;
+            e.preventDefault(); 
+            document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
+            selectedPadEl = el.dataset.id; 
+            el.classList.add('editing-active');
+            const cfg = padConfig[selectedPadEl];
+            document.getElementById('opacitySlider').value = (cfg.o || 0.3) * 100; 
+            document.getElementById('opacityVal').textContent = Math.round((cfg.o || 0.3) * 100) + '%';
+            document.getElementById('brightnessSlider').value = (cfg.b || 1) * 100; 
+            document.getElementById('brightnessVal').textContent = Math.round((cfg.b || 1) * 100) + '%';
+            padDragTarget = selectedPadEl; 
+            padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; 
+            padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
+        }, {passive: false});
+
+        document.addEventListener('touchmove', e => { 
+            if (!isPadEditMode || !padDragTarget) return; 
+            e.preventDefault();
+            
+            let newX = e.touches[0].clientX - padDragStartX;
+            let newY = e.touches[0].clientY - padDragStartY;
+            
+            if (isBottomBarrier) {
+                const el = document.getElementById(padDragTarget === 'dpad' ? 'joystick-dpad' : 'btn-' + padDragTarget);
+                const rect = el.getBoundingClientRect();
+                const limit = window.innerHeight - 75; 
+                
+                if (rect.bottom > limit && newY > padConfig[padDragTarget].y) {
+                    return; 
+                }
+            }
+
+            padConfig[padDragTarget].x = newX; 
+            padConfig[padDragTarget].y = newY; 
+            updatePadTransforms(); 
+        }, {passive: false});
+        
+        document.addEventListener('touchend', () => padDragTarget = null);
+    });
+
+    function updatePadTransforms() {
+        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(id => {
+            const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
+            if(!el) return;
+            const c = padConfig[id];
+            
+            if (id === 'dpad' && isFloatingDpad && !isPadEditMode) { 
+                el.style.opacity = '0'; 
+                el.style.pointerEvents = 'none'; 
+                document.getElementById('dpad-catch-zone').style.display = 'block'; 
+            } else {
+                const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
+                
+                if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
+                else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
+                else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
+                else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
+                else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
+                else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
+                
+                el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
+                el.style.pointerEvents = 'auto'; 
+                applyVisuals(id);
+                if (id === 'dpad') document.getElementById('dpad-catch-zone').style.display = 'none';
+            }
+        });
+    }
+
+    function scaleSelectedPad(d) { 
+        padConfig[selectedPadEl].s = Math.max(0.3, Math.min(3, padConfig[selectedPadEl].s + d)); 
+        updatePadTransforms(); 
+    }
+    
+    function resetPad() { 
+        padConfig = {}; 
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
+    }
+
+    const dpadZone = document.getElementById('joystick-dpad'); 
+    const catchZone = document.getElementById('dpad-catch-zone'); 
+    let activeDpadKeys = new Set(); 
+    let dpadTouchId = null; 
+    let dpadCenter = {x:0, y:0}; 
+    let dpadRadius = 75;
+
+    function updateDpadVisuals() { 
+        document.querySelectorAll('.d-arrow').forEach(arrow => { 
+            const k = parseInt(arrow.dataset.k); 
+            if (activeDpadKeys.has(k)) arrow.classList.add('active'); 
+            else arrow.classList.remove('active'); 
+        }); 
+    }
+
+    function getDpadDirection(clientX, clientY) {
+        const dx = clientX - dpadCenter.x; 
+        const dy = clientY - dpadCenter.y; 
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        let normalizedDist = Math.min(distance / dpadRadius, 1); 
+        const deadZone = 0.2;
+        if (normalizedDist < deadZone) return null;
+        
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI; 
+        if (angle < 0) angle += 360;
+        const newKeys = new Set();
+        
+        if (isStepDpad) {
+            if (angle >= 315 || angle < 45) newKeys.add(39); 
+            else if (angle >= 45 && angle < 135) newKeys.add(40); 
+            else if (angle >= 135 && angle < 225) newKeys.add(37); 
+            else if (angle >= 225 && angle < 315) newKeys.add(38); 
+            return newKeys;
+        }
+        
+        if (angle >= 337.5 || angle < 22.5) newKeys.add(39); 
+        else if (angle >= 22.5 && angle < 67.5) { newKeys.add(40); newKeys.add(39); } 
+        else if (angle >= 67.5 && angle < 112.5) newKeys.add(40); 
+        else if (angle >= 112.5 && angle < 157.5) { newKeys.add(40); newKeys.add(37); } 
+        else if (angle >= 157.5 && angle < 202.5) newKeys.add(37); 
+        else if (angle >= 202.5 && angle < 247.5) { newKeys.add(38); newKeys.add(37); } 
+        else if (angle >= 247.5 && angle < 292.5) newKeys.add(38); 
+        else if (angle >= 292.5 && angle < 337.5) { newKeys.add(38); newKeys.add(39); }
+        return newKeys;
+    }
+
+    function handleDpadTouchStart(e) {
+        if(isPadEditMode) return; 
+        if(e.target.closest('.draggable-btn') && e.target.id !== 'joystick-dpad') return;
+        e.preventDefault(); 
+        const touch = e.changedTouches[0]; 
+        if (dpadTouchId !== null) return; 
+        dpadTouchId = touch.identifier;
+        
+        if (isFloatingDpad) {
+            const el = document.getElementById('joystick-dpad'); 
+            const rad = (150 * padConfig.dpad.s) / 2;
+            el.style.bottom = 'auto'; 
+            el.style.left = (touch.clientX - rad) + 'px'; 
+            el.style.top = (touch.clientY - rad) + 'px'; 
+            el.style.transform = `scale(${padConfig.dpad.s})`;
+            dpadCenter = { x: touch.clientX, y: touch.clientY }; 
+            dpadRadius = rad; 
+            el.style.opacity = padConfig.dpad.o; 
+        } else {
+            const rect = dpadZone.getBoundingClientRect(); 
+            dpadCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; 
+            dpadRadius = rect.width / 2;
+        }
+        
+        doVibrate(10);
+        const newKeys = getDpadDirection(touch.clientX, touch.clientY);
+        if (newKeys !== null) {
+            newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); });
+            activeDpadKeys = new Set(newKeys); 
+            updateDpadVisuals();
+        }
+    }
+
+    function handleDpadTouchMove(e) {
+        if(isPadEditMode || dpadTouchId === null) return; 
+        if (isStepDpad && currentGame?.t === 'd') return; 
+        
+        e.preventDefault();
+        let trackedTouch = null; 
+        for (let i = 0; i < e.touches.length; i++) { 
+            if (e.touches[i].identifier === dpadTouchId) { 
+                trackedTouch = e.touches[i]; 
+                break; 
+            } 
+        }
+        if (!trackedTouch) return;
+        
+        const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
+        if (newKeys === null) { 
+            if (activeDpadKeys.size > 0) {
+                activeDpadKeys.forEach(k => sendKey(k, false)); 
+                activeDpadKeys.clear(); 
+            }
+        } else { 
+            let changed = false;
+            if (newKeys.size !== activeDpadKeys.size) {
+                changed = true;
+            } else {
+                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
+            }
+
+            if (changed) {
+                doVibrate(10); 
+            }
+
+            if (isStepDpad) {
+                activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
+            }
+            newKeys.forEach(k => { 
+                if (!activeDpadKeys.has(k)) sendKey(k, true); 
+            }); 
+            if (!isStepDpad) {
+               activeDpadKeys.forEach(k => { 
+                   if (!newKeys.has(k)) sendKey(k, false); 
+               }); 
+            }
+            activeDpadKeys = new Set(newKeys); 
+        }
+        updateDpadVisuals();
+    }
+
+    function handleDpadTouchEnd(e) {
+        let isDpadReleased = false; 
+        for (let i = 0; i < e.changedTouches.length; i++) { 
+            if (e.changedTouches[i].identifier === dpadTouchId) { 
+                isDpadReleased = true; 
+                break; 
+            } 
+        }
+        if (isDpadReleased) {
+            activeDpadKeys.forEach(k => sendKey(k, false)); 
+            activeDpadKeys.clear(); 
+            updateDpadVisuals();
+            
+            if (isAutoStop && currentGame) {
+                const sysMap = systemButtonMap[currentGame.sys] || systemButtonMap['dos'];
+                const brakeKey = sysMap.brake;
+                
+                sendKey(brakeKey, true); 
+                setTimeout(() => sendKey(brakeKey, false), 50); 
+            }
+            
+            dpadTouchId = null; 
+            if (isFloatingDpad) { 
+                document.getElementById('joystick-dpad').style.opacity = '0'; 
+            }
+        }
+    }
+
+    [dpadZone, catchZone].forEach(zone => { 
+        zone.addEventListener('touchstart', handleDpadTouchStart, {passive: false}); 
+        zone.addEventListener('touchmove', handleDpadTouchMove, {passive: false}); 
+        zone.addEventListener('touchend', handleDpadTouchEnd, {passive: false}); 
+        zone.addEventListener('touchcancel', handleDpadTouchEnd, {passive: false}); 
+    });
+
+    document.querySelectorAll('#btn-a, #btn-b, #btn-x, #btn-y, #btn-l, #btn-r, #btn-start, #btn-select').forEach(btn => {
+        btn.addEventListener('touchstart', (e) => { 
+            if(isPadEditMode) return; 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            const k = parseInt(btn.dataset.k); 
+            sendKey(k, true); 
+            btn.classList.add('active-key'); 
+            doVibrate(15); 
+        }, {passive: false});
+        btn.addEventListener('touchend', (e) => { 
+            if(isPadEditMode) return; 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            const k = parseInt(btn.dataset.k); 
+            sendKey(k, false); 
+            btn.classList.remove('active-key'); 
+        }, {passive: false});
+    });
+
+    document.querySelectorAll('.f-btn[data-f]').forEach(btn => {
+        btn.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            sendKey(parseInt(btn.dataset.f), true); 
+            btn.classList.add('active-key'); 
+            doVibrate(15); 
+        }, {passive: false});
+        btn.addEventListener('touchend', (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            sendKey(parseInt(btn.dataset.f), false); 
+            btn.classList.remove('active-key'); 
+        }, {passive: false});
+        btn.addEventListener('touchcancel', (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+            sendKey(parseInt(btn.dataset.f), false); 
+            btn.classList.remove('active-key'); 
+        }, {passive: false});
+    });
+
+    function toggleGamepad(force = null) { 
+        isGamepadVisible = force !== null ? force : !isGamepadVisible; 
+        gamepad.style.display = isGamepadVisible ? 'block' : 'none'; 
+    }
+    
+    function toggleKeysPanel() { 
+        const isVisible = fkeysPanel.style.display === 'flex'; 
+        fkeysPanel.style.display = isVisible ? 'none' : 'flex'; 
+        btnKeyboard.classList.toggle('active-tool', !isVisible); 
+    }
+
+    function sendKey(defaultCode, down) {
+        let finalCode = defaultCode;
+        if (currentGame?.keys) { 
+            if (defaultCode === 90 && currentGame.keys.a) finalCode = currentGame.keys.a; 
+            if (defaultCode === 88 && currentGame.keys.b) finalCode = currentGame.keys.b; 
+        }
+        
+        if (currentGame?.m === 'touch_hover' && defaultCode === 90) {
+            const dc = document.getElementById('dos-canvas');
+            if (dc?.getHoverCoords) { 
+                const coords = dc.getHoverCoords(); 
+                dc.dispatchEvent(new MouseEvent(down ? 'mousedown' : 'mouseup', {clientX: coords.x, clientY: coords.y, button: 0, bubbles: true})); 
+            }
+            return; 
+        }
+
+        if (currentDos || (currentGame?.t === 'l')) {
+            let keyMap = {}; 
+            let targetKeyCode = finalCode; 
+            if (currentDos) {
+                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 88: { keyCode: 32, code: 'Space', key: ' ' }, 65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift' }, 81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 27, code: 'Escape', key: 'Escape' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
+            } else {
+                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 88: { keyCode: 88, code: 'KeyX', key: 'x' }, 65: { keyCode: 65, code: 'KeyA', key: 'a' }, 83: { keyCode: 83, code: 'KeyS', key: 's' }, 81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 87: { keyCode: 87, code: 'KeyW', key: 'w' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftRight', key: 'Shift' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
+            }
+            if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
+            
+            let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true, composed: true };
+            if (keyMap[finalCode]) { evData.code = keyMap[finalCode].code; evData.key = keyMap[finalCode].key; }
+            
+            const event = new KeyboardEvent(down ? 'keydown' : 'keyup', evData);
+            document.dispatchEvent(event);
+            
+            const cvs = document.getElementById('canvas');
+            if (cvs) {
+                cvs.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', evData));
+            }
+        }
+        if (nes) {
+            const nesMap = {38:4, 40:5, 37:6, 39:7, 90:0, 88:1, 16:2, 13:3, 27:3}; 
+            if (nesMap[defaultCode] !== undefined) down ? nes.buttonDown(1, nesMap[defaultCode]) : nes.buttonUp(1, nesMap[defaultCode]);
+        }
+    }
+
+    async function hardResetGame() {
+        if (!currentGame) return;
+        await saveGameState(); 
+        sessionStorage.setItem('autoRestartGameId', currentGame.id);
+        location.reload();
+    }
+
+    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ИГР ---
+    function selectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        const tx = db.transaction(["games"], "readonly");
+        const req = tx.objectStore("games").getAllKeys();
+        req.onsuccess = () => {
+            const keys = req.result;
+            keys.forEach(k => selectedGamesForDelete.add(k));
+            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
+            updateEditCount();
+        };
+    }
+
+    function deselectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        selectedGamesForDelete.clear();
+        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+        updateEditCount();
+    }
+
+    function deleteSelectedGames() {
+        if (selectedGamesForDelete.size === 0) return;
+        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
+        
+        const tx = db.transaction(["games"], "readwrite");
+        const store = tx.objectStore("games");
+        
+        selectedGamesForDelete.forEach(id => {
+            store.delete(id);
+        });
+        
+        tx.oncomplete = () => {
+            selectedGamesForDelete.clear();
+            toggleLibraryEditMode(); 
+        };
+    }
+
     async function analyzeZipAndCovers(fileBlob) {
         try {
             const buffer = await readBlob(fileBlob); 
@@ -2807,43 +2827,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ---
-    function selectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        const tx = db.transaction(["games"], "readonly");
-        const req = tx.objectStore("games").getAllKeys();
-        req.onsuccess = () => {
-            const keys = req.result;
-            keys.forEach(k => selectedGamesForDelete.add(k));
-            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
-            updateEditCount();
-        };
-    }
-
-    function deselectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        selectedGamesForDelete.clear();
-        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
-        updateEditCount();
-    }
-
-    function deleteSelectedGames() {
-        if (selectedGamesForDelete.size === 0) return;
-        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
-        
-        const tx = db.transaction(["games"], "readwrite");
-        const store = tx.objectStore("games");
-        
-        selectedGamesForDelete.forEach(id => {
-            store.delete(id);
-        });
-        
-        tx.oncomplete = () => {
-            selectedGamesForDelete.clear();
-            toggleLibraryEditMode(); 
-        };
-    }
-
     // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
     function toggleFavorite(id, e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -2878,11 +2861,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             
             // === ОБНОВЛЕННАЯ СОРТИРОВКА (С УЧЕТОМ ИЗБРАННОГО) ===
             customGames.sort((a, b) => {
-                // Сначала всегда сортируем по "Избранному"
                 if (a.fav && !b.fav) return -1;
                 if (!a.fav && b.fav) return 1;
 
-                // Затем применяем выбранную пользователем сортировку
                 if (sortType === 'name_asc') return a.n.localeCompare(b.n);
                 if (sortType === 'name_desc') return b.n.localeCompare(a.n);
                 if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
@@ -2891,11 +2872,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     const idB = parseInt(b.id.split('_')[1]) || 0;
                     return idB - idA;
                 }
-                return 0; // Для random оставляем так, он перемешает ниже
+                return 0; 
             });
 
             if (sortType === 'random') {
-                // Если рандом, перемешиваем только внутри "своих" групп (избранные с избранными, остальные с остальными)
                 let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
                 let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
                 customGames = favs.concat(nonFavs);
@@ -2929,7 +2909,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
         
-        // === ДОБАВЛЕНА КНОПКА ИЗБРАННОГО НА КАРТОЧКУ ===
         const favIcon = game.fav ? '⭐' : '☆';
         const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
         
