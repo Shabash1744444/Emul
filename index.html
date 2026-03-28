@@ -112,8 +112,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #nes-canvas { width: 100% !important; height: 100% !important; }
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
-#toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9999; display: none; gap: 10px; flex-wrap: wrap; max-width: 80%; }
-.tool-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(30, 30, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; }
+
+/* ОБНОВЛЕННАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ */
+#toolbar { 
+    position: fixed; 
+    top: calc(15px + env(safe-area-inset-top, 0px)); 
+    left: 15px; 
+    right: 15px; /* Тянется на весь экран */
+    z-index: 9999; 
+    display: none; 
+    gap: 10px; 
+    flex-wrap: nowrap; /* Без переноса на новую строку */
+    overflow-x: auto; /* Мягкий скролл пальцем */
+    scrollbar-width: none; 
+}
+#toolbar::-webkit-scrollbar { display: none; }
+
+.tool-btn { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(30, 30, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; }
 .tool-btn.active-tool { background: rgba(56, 189, 248, 0.6); border-color: #38bdf8; }
 #fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,10,0.8); padding: 8px; border-radius: 8px; border: 1px solid #333; flex-wrap: wrap; max-width: 90%; }
 .f-btn { padding: 8px 12px; background: #333; color: #fff; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -143,7 +158,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
-/* ОБНОВЛЕННЫЕ РАЗМЕРЫ И ПОЗИЦИИ КНОПОК (СТАНДАРТ) */
 #btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
@@ -158,12 +172,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
 .action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
 
-/* БАРЬЕР */
 #bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
 #bottom-shield.active { display: block; pointer-events: auto; }
 #bottom-shield.edit-mode { background: rgba(239,68,68,0.15); border-top: 2px dashed #ef4444; }
 
-/* НОВЫЕ СТИЛИ ДЛЯ РЕЖИМА РЕДАКТИРОВАНИЯ И СОРТИРОВКИ */
 #viewToggleBtn { background: #1e293b !important; border: 1px solid #475569 !important; border-radius: 6px !important; display: flex !important; align-items: center; justify-content: center; }
 #editModeBtn { display: flex !important; align-items: center; justify-content: center; background: linear-gradient(135deg, #ef4444, #b91c1c) !important; border: 1px solid #991b1b; border-radius: 6px; }
 #editModeBtn.active { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #064e3b !important; }
@@ -176,7 +188,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
 .game-btn.selected .edit-icon { display: flex !important; }
 
-/* РЕЖИМ: СПИСОК И КРУПНЫЕ ОБЛОЖКИ */
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; padding-bottom: 0; }
@@ -315,8 +326,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <div id="toolbar">
     <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px;">⬅</div>
     <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
-    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; font-size: 16px; background:#047857; border-color:#059669;">💾</div>
-    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; font-size: 16px; background:#b45309; border-color:#d97706;">📂</div>
+    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:#047857; border-color:#059669; font-size: 16px;">💾</div>
+    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:#b45309; border-color:#d97706; font-size: 16px;">📂</div>
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -395,13 +406,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="pad-edit-panel">
-    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-        <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; font-size:9px; margin:0; padding:8px 4px; flex:1;">Барьер: ВЫКЛ</button>
-        <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="background: #3b82f6; font-size:9px; margin:0; padding:8px 4px; flex:1;">Грузчик: ВЫКЛ</button>
-        <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size:9px; margin:0; padding:8px 4px; flex:1;">D-Pad: ФИКС</button>
-        <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size:9px; margin:0; padding:8px 4px; flex:1;">Режим: СВАЙП</button>
-    </div>
-    <div class="edit-row" style="margin-top: 10px;">
+    <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
+    <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <div class="edit-row">
       <span>Размер:</span>
       <button class="edit-btn action-btn" onclick="scaleSelectedPad(0.05)">➕</button>
       <button class="edit-btn action-btn" onclick="scaleSelectedPad(-0.05)">➖</button>
@@ -442,7 +451,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-x" data-id="x" data-k="83">X</div>
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
-</div><script src="js-dos.js"></script>
+</div>
+<script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
     window._tempModule = window.module; window._tempExports = window.exports; window._tempDefine = window.define;
@@ -462,22 +472,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             r.onerror = rej;
             r.readAsArrayBuffer(blob);
         });
-    }
-
-    // --- ВСПЛЫВАЮЩИЕ ЛОГИ ДЛЯ APK (TOAST) ---
-    function showLog(msg, isError = false) {
-        let toast = document.getElementById('hub-toast');
-        if (!toast) {
-            toast = document.createElement('div');
-            toast.id = 'hub-toast';
-            toast.style.cssText = 'position:fixed; top:calc(15px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:8px; z-index:99999; font-weight:bold; font-size:12px; color:#fff; pointer-events:none; transition:opacity 0.3s; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.5); opacity:0;';
-            document.body.appendChild(toast);
-        }
-        toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
-        toast.innerHTML = msg;
-        toast.style.opacity = '1';
-        if (window.toastTimeout) clearTimeout(window.toastTimeout);
-        window.toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
     }
 
     const menuScreen = document.getElementById('menuScreen');
@@ -560,18 +554,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     } catch(e) {}
 
-    // --- ОБНОВЛЕННАЯ СЕРИАЛИЗАЦИЯ БЕЗ BASE64 ---
     function packData(u8arr) {
-        return fflate.zlibSync(u8arr); 
+        const compressed = fflate.zlibSync(u8arr);
+        let bin = '';
+        const chunkSize = 8192;
+        for (let i = 0; i < compressed.length; i += chunkSize) {
+            bin += String.fromCharCode.apply(null, compressed.subarray(i, i + chunkSize));
+        }
+        return window.btoa(bin);
     }
 
-    function unpackData(compressed) {
-        if (typeof compressed === 'string') {
-            const binary = window.atob(compressed);
-            const arr = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
-            return fflate.unzlibSync(arr);
-        }
+    function unpackData(b64) {
+        const binary = window.atob(b64);
+        const compressed = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) compressed[i] = binary.charCodeAt(i);
         return fflate.unzlibSync(compressed);
     }
 
@@ -592,27 +588,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (typeof navigator === 'undefined') return false;
         if (navigator.vibrate) { 
             try { if (navigator.vibrate(vibStrength) !== false) return true; } catch (e) {} 
-        }
-        if (window.navigator?.notification?.vibrate) {
-            try { window.navigator.notification.vibrate(vibStrength); return true; } catch (e) {}
-        }
-        if (window.Capacitor?.Plugins?.Haptics) {
-            try {
-                if (typeof window.Capacitor.Plugins.Haptics.vibrate === 'function') { 
-                    window.Capacitor.Plugins.Haptics.vibrate({ duration: vibStrength }); 
-                    return true; 
-                }
-                if (vibStrength < 50 && typeof window.Capacitor.Plugins.Haptics.impact === 'function') { 
-                    window.Capacitor.Plugins.Haptics.impact({ style: window.Capacitor.Plugins.Haptics.ImpactStyle.Light }); 
-                    return true; 
-                }
-            } catch (e) {}
-        }
-        if (window.Android?.vibrate) { 
-            try { window.Android.vibrate(vibStrength); return true; } catch (e) {} 
-        }
-        if (window.webkit?.messageHandlers?.vibrate) { 
-            try { window.webkit.messageHandlers.vibrate.postMessage({ duration: vibStrength }); return true; } catch (e) {} 
         }
         return false;
     }
@@ -656,10 +631,34 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+    document.getElementById('infoBtn').addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        document.getElementById('infoModalOverlay').style.display = 'flex'; 
+    });
+    document.getElementById('closeInfoBtn').addEventListener('click', () => { 
+        document.getElementById('infoModalOverlay').style.display = 'none'; 
+    });
+    document.getElementById('infoModalOverlay').addEventListener('click', (e) => { 
+        if (e.target === document.getElementById('infoModalOverlay')) { 
+            document.getElementById('infoModalOverlay').style.display = 'none'; 
+        } 
+    });
+
     document.addEventListener('touchmove', (e) => {
         if (e.target.closest('#menuScreen') || e.target.closest('#screen-edit-panel') || e.target.closest('#pad-edit-panel') || e.target.closest('#infoModal')) return;
         e.preventDefault();
     }, { passive: false });
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            isGamePaused = true; 
+            saveGameState(true); 
+            stopAudio(); 
+        } else {
+            isGamePaused = false;
+            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
+        }
+    });
 
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
@@ -675,19 +674,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
-            window.Capacitor.Plugins.App.addListener('backButton', (data) => {
-                const gameFrame = document.getElementById('gameFrame');
-                if (gameFrame && gameFrame.style.display === 'block') {
-                    if (typeof handleBackBtn === 'function') handleBackBtn();
-                } else if (data.canGoBack) {
-                    window.history.back();
-                }
-            });
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', () => {
         const shield = document.getElementById('bottom-shield');
         if (shield) {
             const blockTap = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -697,115 +683,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
     
-    // --- БРОНЕБОЙНОЕ ХРАНИЛИЩЕ ---
+    window.addEventListener('beforeunload', () => {
+        if (currentGame) saveGameState(true);
+    });
+
     const SaveStorage = {
         _db: null,
-        _useLocalStorage: false,
         init() {
-            return new Promise((resolve) => {
-                if (this._db || this._useLocalStorage) { resolve(); return; }
-                try {
-                    const req = indexedDB.open('ArcadeHubSaves', 1);
-                    req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
-                    req.onsuccess = e => { this._db = e.target.result; resolve(); };
-                    req.onerror = e => { 
-                        console.warn("IndexedDB недоступна, используем localStorage"); 
-                        this._useLocalStorage = true; 
-                        resolve(); 
-                    };
-                } catch (e) {
-                    this._useLocalStorage = true;
-                    resolve();
-                }
+            return new Promise((resolve, reject) => {
+                if (this._db) { resolve(); return; }
+                const req = indexedDB.open('ArcadeHubSaves', 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
+                req.onsuccess = e => { this._db = e.target.result; resolve(); };
+                req.onerror = e => reject(e);
             });
         },
         async set(key, val) {
             await this.init();
-            if (this._useLocalStorage) {
-                try {
-                    let b64 = '';
-                    if (val instanceof Uint8Array) {
-                        const chunkSize = 8192;
-                        for (let i = 0; i < val.length; i += chunkSize) {
-                            b64 += String.fromCharCode.apply(null, val.subarray(i, i + chunkSize));
-                        }
-                        b64 = window.btoa(b64);
-                    } else { b64 = val; }
-                    localStorage.setItem(key, b64);
-                    return true;
-                } catch(e) { return false; }
-            }
             return new Promise(r => {
-                try {
-                    const tx = this._db.transaction(['saves'], 'readwrite');
-                    tx.objectStore('saves').put(val, key);
-                    tx.oncomplete = () => r(true);
-                    tx.onerror = () => r(false);
-                } catch(e) { r(false); }
+                const tx = this._db.transaction(['saves'], 'readwrite');
+                tx.objectStore('saves').put(val, key);
+                tx.oncomplete = () => r(true);
             });
         },
         async get(key) {
             await this.init();
-            if (this._useLocalStorage) {
-                return localStorage.getItem(key) || null;
-            }
             return new Promise(r => {
-                try {
-                    const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
-                    req.onsuccess = () => r(req.result || null);
-                    req.onerror = () => r(null);
-                } catch(e) { r(null); }
+                const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
+                req.onsuccess = () => r(req.result || null);
+                req.onerror = () => r(null);
             });
         }
     };
-    // === ЗАГРУЗКА SRAM В ПАМЯТЬ ===
-    async function loadSramDirectly(gameName) {
-        if (!window.Module) return;
-        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName);
-        if (sramCompressed) {
-            try {
-                const sramArray = unpackData(sramCompressed);
-                
-                // Умное ожидание: Ядрам (GBA/SNES) нужно время, чтобы инициализировать память
-                let attempts = 0;
-                const checkSram = setInterval(() => {
-                    attempts++;
-                    const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                    if (sramSize > 0) {
-                        clearInterval(checkSram);
-                        const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                        
-                        // ВАЛИДАЦИЯ УКАЗАТЕЛЯ: Защита от Out-Of-Bounds в WebView
-                        if (sramPtr && sramPtr > 0 && (sramPtr + sramSize) <= window.Module.HEAPU8.length) {
-                            const len = Math.min(sramArray.length, sramSize);
-                            window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
-                            showLog('🔋 Батарейка загружена');
-                        } else {
-                            console.error("[SRAM] Игнорируем кривой указатель от ядра:", sramPtr);
-                        }
-                    } else if (attempts > 50) { 
-                        clearInterval(checkSram); // Сдаемся после 5 секунд
-                    }
-                }, 100);
-            } catch(e) { console.error("SRAM load err:", e); }
-        }
-    }
-
-    // === ЭКСТРЕННОЕ СОХРАНЕНИЕ ПРИ СВОРАЧИВАНИИ ===
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            isGamePaused = true; 
-            saveGameState(true); 
-            stopAudio(); 
-        } else {
-            isGamePaused = false;
-            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
-        }
-    });
-    
-    window.addEventListener('beforeunload', () => {
-        if (currentGame) saveGameState(true);
-    });
 
     function lrCall(funcName, returnType, argTypes, args) {
         const m = window.Module;
@@ -822,11 +731,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return null;
     }
 
-    // --- СОХРАНЕНИЕ СОСТОЯНИЙ (С ХАКОМ BORROWED BUFFER) ---
+    // --- ФИНАЛЬНЫЙ КОД СОХРАНЕНИЙ (С ПОДДЕРЖКОЙ Libretro _cmd_save_state) ---
     async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
             let success = false;
+            const btn = document.getElementById('btnSave');
+            if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#059669'; }
             
             if (currentGame.t === 'n' && nes) {
                 const state = nes.toJSON();
@@ -836,20 +747,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 success = true;
             } 
             else if (currentGame.t === 'l' && window.Module) {
-                const stateSize = lrCall('retro_serialize_size', 'number', [], []);
-                
-                if (stateSize > 0) {
-                    // Используем хвост кучи, так как _malloc удален компилятором
-                    const statePtr = window.Module.HEAPU8.length - stateSize - 1024; 
+                if (window.Module._cmd_save_state) {
+                    window.Module._cmd_save_state(); // Дергаем родную команду ядра
                     
-                    if (statePtr > 0) {
-                        lrCall('retro_serialize', 'void', ['number', 'number'], [statePtr, stateSize]);
-                        const stateData = window.Module.HEAPU8.subarray(statePtr, statePtr + stateSize);
-                        const stateCopy = new Uint8Array(stateData); // Изолируем дамп
-                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(stateCopy));
+                    // Ждем 500мс, чтобы ядро успело записать файл на свой виртуальный диск
+                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                    let fs = window.FS || (window.Module && window.Module.FS);
+                    let statePath = null;
+                    
+                    // Ищем файл в папке states
+                    function findState(dir) {
+                        try {
+                            let nodes = fs.readdir(dir);
+                            for (let n of nodes) {
+                                if (n === '.' || n === '..') continue;
+                                let p = dir === '/' ? '/' + n : dir + '/' + n;
+                                if (fs.isDir(fs.stat(p).mode)) {
+                                    findState(p);
+                                } else if (p.includes('/states/') && fs.stat(p).size > 0) {
+                                    statePath = p; // Нашли файл!
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                    if (fs) findState('/home/web_user/retroarch/userdata/states');
+
+                    if (statePath) {
+                        // Забираем файл и прячем в IndexedDB навечно
+                        let fileData = fs.readFile(statePath);
+                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(fileData));
+                        await SaveStorage.set('savestate_lr_path_' + currentGame.n, statePath); 
                         success = true;
-                    } else {
-                        console.error("Save state failed: Недостаточно памяти в HEAPU8 для хвоста");
                     }
                 }
             }
@@ -880,20 +809,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             
-            if (!isAuto) {
+            if (btn && !isAuto) {
                 if (success) { 
-                    showLog('✅ Состояние сохранено');
+                    btn.innerHTML = '✅'; 
                 } else { 
-                    showLog('⚠️ Ошибка сохранения', true);
+                    btn.innerHTML = '⚠️'; 
+                    btn.style.background = '#ef4444'; 
                 }
+                setTimeout(() => { btn.innerHTML = '💾'; btn.style.background = '#047857'; }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
 
+    // --- ФИНАЛЬНЫЙ КОД ЗАГРУЗКИ ---
     async function loadGameState(isAuto = false) {
         if (!currentGame) return;
         try {
             let success = false;
+            const btn = document.getElementById('btnLoad');
+            if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#d97706'; }
+
             if (currentGame.t === 'n' && nes) { 
                 const savedData = await SaveStorage.get('savestate_' + currentGame.n);
                 if (savedData) {
@@ -902,29 +837,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         const unpacked = decoder.decode(unpackData(savedData));
                         nes.fromJSON(JSON.parse(unpacked)); 
                         success = true; 
-                    } catch(e) { 
-                        try { if (savedData.startsWith('{')) { nes.fromJSON(JSON.parse(savedData)); success = true; } } catch(e2) {}
-                    }
+                    } catch(e) {}
                 }
             } 
             else if (currentGame.t === 'l' && window.Module) { 
-                const stateCompressed = await SaveStorage.get('savestate_lr_' + currentGame.n);
-                if (stateCompressed) {
-                    try {
-                        const stateArray = unpackData(stateCompressed);
-                        const stateSize = lrCall('retro_serialize_size', 'number', [], []);
-                        
-                        if (stateSize > 0) {
-                            // Одолженный буфер для загрузки
-                            const statePtr = window.Module.HEAPU8.length - stateSize - 1024;
-                            if (statePtr > 0) {
-                                const len = Math.min(stateArray.length, stateSize);
-                                window.Module.HEAPU8.set(stateArray.subarray(0, len), statePtr);
-                                lrCall('retro_unserialize', 'boolean', ['number', 'number'], [statePtr, stateSize]);
-                                success = true;
-                            }
+                const savedData = await SaveStorage.get('savestate_lr_' + currentGame.n);
+                if (savedData && window.Module._cmd_load_state) {
+                    let fs = window.FS || (window.Module && window.Module.FS);
+                    let statePath = await SaveStorage.get('savestate_lr_path_' + currentGame.n);
+
+                    if (!statePath && fs) {
+                        window.Module._cmd_save_state();
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        function findState(dir) {
+                            try {
+                                let nodes = fs.readdir(dir);
+                                for (let n of nodes) {
+                                    if (n === '.' || n === '..') continue;
+                                    let p = dir === '/' ? '/' + n : dir + '/' + n;
+                                    if (fs.isDir(fs.stat(p).mode)) findState(p);
+                                    else if (p.includes('/states/')) statePath = p; 
+                                }
+                            } catch(e) {}
                         }
-                    } catch(e) { console.error("Load state LR err:", e); }
+                        findState('/home/web_user/retroarch/userdata/states');
+                    }
+
+                    if (statePath && fs) {
+                        const stateCopy = unpackData(savedData);
+                        fs.writeFile(statePath, stateCopy);
+                        window.Module._cmd_load_state();
+                        success = true;
+                    }
                 }
             }
             else if (currentGame.t === 'd') {
@@ -949,20 +893,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isAuto && !b64) success = true; 
             }
             
-            if (!isAuto) {
+            if (btn && !isAuto) {
                 if (success) {
-                    showLog('✅ Состояние загружено');
+                    btn.innerHTML = '✅'; 
                 } else {
-                    showLog('⚠️ Нет сохранений', true);
+                    btn.innerHTML = '⚠️'; 
+                    btn.style.background = '#ef4444';
                 }
+                setTimeout(() => { btn.innerHTML = '📂'; btn.style.background = '#b45309'; }, 2000);
             }
         } catch(e) { console.error("Load error:", e); }
     }
 
-    function toggleColors() { 
-        videoConfig.colors = !videoConfig.colors; 
-        saveVideoConfig(); 
-    }
+    function toggleColors() { videoConfig.colors = !videoConfig.colors; saveVideoConfig(); }
 
     function updateVideoUI() {
         const btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
@@ -986,11 +929,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return limits[sys] || 8; 
     }
     
-    function changeCrtMode() { 
-        videoConfig.crt = parseInt(document.getElementById('crtSelector').value); 
-        saveVideoConfig(); 
-    }
-    
+    function changeCrtMode() { videoConfig.crt = parseInt(document.getElementById('crtSelector').value); saveVideoConfig(); }
     function toggleCurve() { videoConfig.curve = !videoConfig.curve; saveVideoConfig(); }
     function toggleRGB() { videoConfig.rgb = !videoConfig.rgb; saveVideoConfig(); }
     function toggleBloom() { videoConfig.bloom = !videoConfig.bloom; saveVideoConfig(); }
@@ -998,9 +937,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     function saveVideoConfig() { 
         localStorage.setItem('videoV6', JSON.stringify(videoConfig)); 
-        if (currentGame) {
-            localStorage.setItem('video_' + currentGame.n, JSON.stringify(videoConfig));
-        }
+        if (currentGame) localStorage.setItem('video_' + currentGame.n, JSON.stringify(videoConfig));
         updateVideoUI(); 
     }
     
@@ -1017,9 +954,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         saveVideoConfig(); 
     }
 
-    function updateScreenTransform() { 
-        canvasContainer.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scaleX}, ${scaleY})`; 
-    }
+    function updateScreenTransform() { canvasContainer.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scaleX}, ${scaleY})`; }
     function adjustScaleX(delta) { scaleX += delta; updateScreenTransform(); }
     function adjustScaleY(delta) { scaleY += delta; updateScreenTransform(); }
     function resetScale() { scaleX = 1; scaleY = 1; screenX = 0; screenY = 0; updateScreenTransform(); }
@@ -1055,8 +990,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
-        maxTexSize: 4096,
-        currentWidth: 256, currentHeight: 240,
+        maxTexSize: 4096, currentWidth: 256, currentHeight: 240,
         
         init: function(canvas) {
             const gl = canvas.getContext('webgl', { alpha: false, antialias: false });
@@ -1090,7 +1024,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
                 void main() {
                     vec2 uv = v_texCoord; float vignette = 1.0;
-                    
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
                         float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
@@ -1098,131 +1031,78 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vignette = smoothstep(1.05, 0.95, edgeDist) * (1.0 - dist * 1.8);
                         if (vignette <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
                     }
-                    
                     vec4 color;
-                    
                     if (u_filter == 3) {
                         vec3 rawColor = texture2D(u_image, uv).rgb;
-                        if (u_colors == 1) {
-                            color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
-                        } else {
-                            float sharpness = 0.4; 
-                            vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            vec3 delta = abs(d - rawColor * 4.0);
-                            float contrast = max(max(delta.r, delta.g), delta.b);
+                        if (u_colors == 1) { color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0); } 
+                        else {
+                            float sharpness = 0.4; vec3 d = vec3(0.0);
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb; d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb; d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            vec3 delta = abs(d - rawColor * 4.0); float contrast = max(max(delta.r, delta.g), delta.b);
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
                     } 
                     else if (u_filter == 1 || u_filter == 2) {
-                        vec2 p = uv * u_tex_size;
-                        vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
+                        vec2 p = uv * u_tex_size; vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
                         if (u_filter == 1) { f = f * f * (3.0 - 2.0 * f); }
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } 
-                    else { 
-                        color = texture2D(u_image, uv); 
-                    }
+                    } else { color = texture2D(u_image, uv); }
                     
                     if (u_rgb == 1) { 
                         float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
-                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
-                    
                     if (u_bloom == 1) {
                         vec4 sum = vec4(0.0); float stepX = 1.2 / (u_tex_size.x * u_res); float stepY = 1.2 / (u_tex_size.y * u_res);
                         sum += texture2D(u_image, uv + vec2(-stepX, -stepY)); sum += texture2D(u_image, uv + vec2(stepX, -stepY));
                         sum += texture2D(u_image, uv + vec2(-stepX, stepY)); sum += texture2D(u_image, uv + vec2(stepX, stepY));
                         color += (sum / 4.0) * 0.3; 
                     }
-                    
                     if (u_crt > 0) {
                         if (u_crt == 3 || u_crt == 4) { 
-                            vec2 pix_uv = uv * u_tex_size;
-                            vec2 grid = fract(pix_uv);
-                            float gap = (u_crt == 4) ? 0.08 : 0.15;
-                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x);
-                            float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
+                            vec2 pix_uv = uv * u_tex_size; vec2 grid = fract(pix_uv); float gap = (u_crt == 4) ? 0.08 : 0.15;
+                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x); float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
                             color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
-                            
                             if (u_crt == 3) {
-                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x);
-                                float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
-                                float subB = smoothstep(0.66, 1.0, grid.x);
-                                color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
+                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x); float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
+                                float subB = smoothstep(0.66, 1.0, grid.x); color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
                             }
                         } else if (u_crt == 2) {
-                            vec2 pos = fract(uv * u_tex_size * u_res);
-                            float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415);
-                            color.rgb *= cell;
-                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0);
-                            vec3 phosphor = vec3(
-                                triad < 0.33 ? 1.08 : 0.92,
-                                (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92,
-                                triad >= 0.66 ? 1.08 : 0.92
-                            );
+                            vec2 pos = fract(uv * u_tex_size * u_res); float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415); color.rgb *= cell;
+                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0); vec3 phosphor = vec3(triad < 0.33 ? 1.08 : 0.92, (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92, triad >= 0.66 ? 1.08 : 0.92);
                             color.rgb *= phosphor;
                         } else if (u_crt == 1) {
-                            float scanlineStrength = 0.20; float maskStrength = 0.20;
-                            float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
+                            float scanlineStrength = 0.20; float maskStrength = 0.20; float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
                             color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
-                            float mask = fract(uv.x * u_tex_size.x * u_res);
-                            vec3 maskColor = vec3(
-                                mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
-                                mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), 
-                                mask >= 0.66 ? 1.0 : (1.0 - maskStrength)
-                            );
+                            float mask = fract(uv.x * u_tex_size.x * u_res); vec3 maskColor = vec3(mask < 0.33 ? 1.0 : (1.0 - maskStrength), mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), mask >= 0.66 ? 1.0 : (1.0 - maskStrength));
                             color.rgb *= maskColor;
                         }
                     }
                     color.rgb *= vignette; gl_FragColor = color;
                 }`;
 
-            const compileShader = (type, source) => { 
-                const s = gl.createShader(type); 
-                gl.shaderSource(s, source); 
-                gl.compileShader(s); 
-                return s; 
-            };
+            const compileShader = (type, source) => { const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s); return s; };
             const program = gl.createProgram(); 
-            gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vsSource)); 
-            gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fsSource)); 
-            gl.linkProgram(program); 
-            gl.useProgram(program);
-            this.program = program;
+            gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vsSource)); gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fsSource)); 
+            gl.linkProgram(program); gl.useProgram(program); this.program = program;
 
-            this.uCrtLoc = gl.getUniformLocation(program, "u_crt"); 
-            this.uCurveLoc = gl.getUniformLocation(program, "u_curve");
-            this.uFilterLoc = gl.getUniformLocation(program, "u_filter"); 
-            this.uRgbLoc = gl.getUniformLocation(program, "u_rgb");
-            this.uBloomLoc = gl.getUniformLocation(program, "u_bloom"); 
-            this.uResLoc = gl.getUniformLocation(program, "u_res");
-            this.uTexSizeLoc = gl.getUniformLocation(program, "u_tex_size"); 
-            this.uSystemLoc = gl.getUniformLocation(program, "u_system"); 
+            this.uCrtLoc = gl.getUniformLocation(program, "u_crt"); this.uCurveLoc = gl.getUniformLocation(program, "u_curve");
+            this.uFilterLoc = gl.getUniformLocation(program, "u_filter"); this.uRgbLoc = gl.getUniformLocation(program, "u_rgb");
+            this.uBloomLoc = gl.getUniformLocation(program, "u_bloom"); this.uResLoc = gl.getUniformLocation(program, "u_res");
+            this.uTexSizeLoc = gl.getUniformLocation(program, "u_tex_size"); this.uSystemLoc = gl.getUniformLocation(program, "u_system"); 
             this.uColorsLoc = gl.getUniformLocation(program, "u_colors");
 
-            const posBuffer = gl.createBuffer(); 
-            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            const posBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, -1.0,  1.0, -1.0,  -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,   1.0,  1.0]), gl.STATIC_DRAW);
-            const posAttr = gl.getAttribLocation(program, "a_position"); 
-            gl.enableVertexAttribArray(posAttr); 
-            gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+            const posAttr = gl.getAttribLocation(program, "a_position"); gl.enableVertexAttribArray(posAttr); gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
 
-            const texBuffer = gl.createBuffer(); 
-            gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+            const texBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0.0, 1.0,  1.0, 1.0,  0.0, 0.0, 0.0, 0.0,  1.0, 1.0,  1.0, 0.0]), gl.STATIC_DRAW);
-            const texAttr = gl.getAttribLocation(program, "a_texCoord"); 
-            gl.enableVertexAttribArray(texAttr); 
-            gl.vertexAttribPointer(texAttr, 2, gl.FLOAT, false, 0, 0);
+            const texAttr = gl.getAttribLocation(program, "a_texCoord"); gl.enableVertexAttribArray(texAttr); gl.vertexAttribPointer(texAttr, 2, gl.FLOAT, false, 0, 0);
 
-            this.texture = gl.createTexture(); 
-            gl.bindTexture(gl.TEXTURE_2D, this.texture);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            this.texture = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, this.texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             return true;
         },
         draw: function(sourceCanvas, systemCode) {
@@ -1237,35 +1117,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 let limitScaleTex = Math.min(this.maxTexSize / sourceCanvas.width, this.maxTexSize / sourceCanvas.height);
                 let limitScaleArea = Math.sqrt(maxArea / (sourceCanvas.width * sourceCanvas.height));
                 scaleMult = Math.max(1, Math.min(limitScaleTex, limitScaleArea));
-                targetW = sourceCanvas.width * scaleMult; 
-                targetH = sourceCanvas.height * scaleMult;
+                targetW = sourceCanvas.width * scaleMult; targetH = sourceCanvas.height * scaleMult;
             }
 
             if (sourceCanvas.width !== this.currentWidth || sourceCanvas.height !== this.currentHeight || gl.canvas.width !== Math.floor(targetW)) {
-                this.currentWidth = sourceCanvas.width; 
-                this.currentHeight = sourceCanvas.height;
-                gl.canvas.width = Math.floor(targetW); 
-                gl.canvas.height = Math.floor(targetH);
+                this.currentWidth = sourceCanvas.width; this.currentHeight = sourceCanvas.height;
+                gl.canvas.width = Math.floor(targetW); gl.canvas.height = Math.floor(targetH);
                 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
                 gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
             }
 
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); 
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, glFilter); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, glFilter);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, sourceCanvas);
 
             let passCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
-            gl.uniform1i(this.uCrtLoc, passCrt); 
-            gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
-            gl.uniform1i(this.uFilterLoc, videoConfig.filter); 
-            gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
-            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); 
-            gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
-            gl.uniform1i(this.uSystemLoc, systemCode); 
-            gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
-            
+            gl.uniform1i(this.uCrtLoc, passCrt); gl.uniform1i(this.uCurveLoc, videoConfig.curve ? 1 : 0);
+            gl.uniform1i(this.uFilterLoc, videoConfig.filter); gl.uniform1i(this.uRgbLoc, videoConfig.rgb ? 1 : 0);
+            gl.uniform1i(this.uBloomLoc, videoConfig.bloom ? 1 : 0); gl.uniform1f(this.uResLoc, Math.floor(scaleMult)); 
+            gl.uniform1i(this.uSystemLoc, systemCode); gl.uniform1i(this.uColorsLoc, videoConfig.colors ? 1 : 0);
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
@@ -1281,246 +1152,133 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (!padConfig || typeof padConfig !== 'object') padConfig = {};
         ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(k => {
             if (!padConfig[k]) padConfig[k] = {...defaultCfg};
-            if (padConfig[k].x === undefined) padConfig[k].x = 0; 
-            if (padConfig[k].y === undefined) padConfig[k].y = 0;
-            if (padConfig[k].s === undefined) padConfig[k].s = 1; 
-            if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
+            if (padConfig[k].x === undefined) padConfig[k].x = 0; if (padConfig[k].y === undefined) padConfig[k].y = 0;
+            if (padConfig[k].s === undefined) padConfig[k].s = 1; if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
             if (padConfig[k].b === undefined) padConfig[k].b = 1;
         });
-        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
-        if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
-        if (padConfig.autoStop === undefined) padConfig.autoStop = false;
-        if (padConfig.barrier === undefined) padConfig.barrier = false;
+        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
+        if (padConfig.autoStop === undefined) padConfig.autoStop = false; if (padConfig.barrier === undefined) padConfig.barrier = false;
         if (padConfig.vib === undefined) padConfig.vib = 15;
         
-        isFloatingDpad = padConfig.dpad.f; 
-        isStepDpad = padConfig.dpad.step; 
-        isAutoStop = padConfig.autoStop;
-        isBottomBarrier = padConfig.barrier;
+        isFloatingDpad = padConfig.dpad.f; isStepDpad = padConfig.dpad.step; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
         
-        const btnAS = document.getElementById('toggleAutoStopBtn');
-        if (btnAS) btnAS.innerHTML = isAutoStop ? 'Грузчик: ВКЛ' : 'Грузчик: ВЫКЛ';
-
+        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
         const btnBar = document.getElementById('toggleBarrierBtn');
         if (btnBar) {
-            btnBar.innerHTML = isBottomBarrier ? 'Барьер: ВКЛ' : 'Барьер: ВЫКЛ';
+            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
             btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
         }
-        
         const btnVib = document.getElementById('vibrationSlider');
-        if(btnVib) {
-            btnVib.value = padConfig.vib;
-            document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс';
-        }
-        
+        if(btnVib) { btnVib.value = padConfig.vib; document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс'; }
         updateBarrierVisuals();
     }
 
     function updateBarrierVisuals() {
-        const shield = document.getElementById('bottom-shield');
-        if (!shield) return;
+        const shield = document.getElementById('bottom-shield'); if (!shield) return;
         if (isBottomBarrier) {
             shield.classList.add('active');
-            if (isPadEditMode) shield.classList.add('edit-mode');
-            else shield.classList.remove('edit-mode');
-        } else {
-            shield.classList.remove('active', 'edit-mode');
-        }
+            if (isPadEditMode) shield.classList.add('edit-mode'); else shield.classList.remove('edit-mode');
+        } else { shield.classList.remove('active', 'edit-mode'); }
     }
 
     function toggleBarrier() {
         isBottomBarrier = !isBottomBarrier;
         const btn = document.getElementById('toggleBarrierBtn');
-        if (btn) {
-            btn.innerHTML = isBottomBarrier ? 'Барьер: ВКЛ' : 'Барьер: ВЫКЛ';
-            btn.style.background = isBottomBarrier ? '#047857' : '#991b1b';
-        }
+        if (btn) { btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ'; btn.style.background = isBottomBarrier ? '#047857' : '#991b1b'; }
         updateBarrierVisuals();
-        if (currentGame) {
-            padConfig.barrier = isBottomBarrier;
-            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-        }
+        if (currentGame) { padConfig.barrier = isBottomBarrier; localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); }
     }
 
     function toggleAutoStop() { 
         isAutoStop = !isAutoStop; 
-        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Грузчик: ВКЛ' : 'Грузчик: ВЫКЛ'; 
-        if (currentGame) { 
-            padConfig.autoStop = isAutoStop; 
-            localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
-        } 
+        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ'; 
+        if (currentGame) { padConfig.autoStop = isAutoStop; localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); } 
     }
     
     function toggleFloatingDpad() { 
-        isFloatingDpad = !isFloatingDpad; 
-        padConfig.dpad.f = isFloatingDpad; 
-        updateFloatingBtnUI(); 
+        isFloatingDpad = !isFloatingDpad; padConfig.dpad.f = isFloatingDpad; updateFloatingBtnUI(); 
         if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
         updatePadTransforms(); 
     }
     
     function toggleStepDpad() { 
-        isStepDpad = !isStepDpad; 
-        padConfig.dpad.step = isStepDpad; 
-        updateStepBtnUI(); 
+        isStepDpad = !isStepDpad; padConfig.dpad.step = isStepDpad; updateStepBtnUI(); 
         if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
     }
     
     function updateFloatingBtnUI() { 
-        const btn = document.getElementById('toggleFloatBtn'); 
-        if (!btn) return;
-        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩ' : 'D-Pad: ФИКС'; 
-        btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
+        const btn = document.getElementById('toggleFloatBtn'); if (!btn) return;
+        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
     }
     
     function updateStepBtnUI() { 
-        const btn = document.getElementById('toggleStepBtn'); 
-        if (!btn) return;
-        
-        if (currentGame?.t !== 'd') {
-            btn.style.display = 'none';
-            return;
-        } else {
-            btn.style.display = 'block';
-        }
-        
-        btn.innerHTML = isStepDpad ? 'Режим: ПОШАГОВЫЙ' : 'Режим: СВАЙП'; 
-        btn.style.background = isStepDpad ? '#ef4444' : '#3b82f6'; 
+        const btn = document.getElementById('toggleStepBtn'); if (!btn) return;
+        if (currentGame?.t !== 'd') { btn.style.display = 'none'; return; } else { btn.style.display = 'block'; }
+        btn.innerHTML = isStepDpad ? 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)' : 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = isStepDpad ? '#ef4444' : '#3b82f6'; 
     }
     
     function togglePadEdit() {
-        isPadEditMode = !isPadEditMode;
-        btnPadEdit.classList.toggle('active-tool', isPadEditMode);
-        padPanel.style.display = isPadEditMode ? 'flex' : 'none';
-        
+        isPadEditMode = !isPadEditMode; btnPadEdit.classList.toggle('active-tool', isPadEditMode); padPanel.style.display = isPadEditMode ? 'flex' : 'none';
         updateBarrierVisuals();
-        
         if (isPadEditMode) {
             updateStepBtnUI(); 
-            const el = document.getElementById('joystick-dpad');
-            el.style.opacity = padConfig.dpad.o; 
-            el.style.pointerEvents = 'auto'; 
-            document.getElementById('dpad-catch-zone').style.display = 'none';
+            const el = document.getElementById('joystick-dpad'); el.style.opacity = padConfig.dpad.o; el.style.pointerEvents = 'auto'; document.getElementById('dpad-catch-zone').style.display = 'none';
         } else {
             document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
-            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-            updatePadTransforms(); 
+            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); updatePadTransforms(); 
         }
     }
 
-    function updateOpacity(val) { 
-        const opacity = val / 100; 
-        document.getElementById('opacityVal').textContent = val + '%'; 
-        if (selectedPadEl) { 
-            padConfig[selectedPadEl].o = opacity; 
-            applyVisuals(selectedPadEl); 
-        } 
-    }
-    
-    function updateBrightness(val) { 
-        const brightness = val / 100; 
-        document.getElementById('brightnessVal').textContent = val + '%'; 
-        if (selectedPadEl) { 
-            padConfig[selectedPadEl].b = brightness; 
-            applyVisuals(selectedPadEl); 
-        } 
-    }
+    function updateOpacity(val) { const opacity = val / 100; document.getElementById('opacityVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].o = opacity; applyVisuals(selectedPadEl); } }
+    function updateBrightness(val) { const brightness = val / 100; document.getElementById('brightnessVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].b = brightness; applyVisuals(selectedPadEl); } }
 
     function applyVisuals(id) {
         const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
-        if (!el) return;
-        const cfg = padConfig[id];
+        if (!el) return; const cfg = padConfig[id];
         if (id === 'dpad') {
-            el.style.background = `rgba(255,255,255,${cfg.o * 0.1})`; 
-            el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
-            const cross = el.querySelector('.d-cross'); 
-            if (cross) { 
-                cross.style.opacity = cfg.o; 
-                cross.style.filter = `brightness(${cfg.b})`; 
-            }
+            el.style.background = `rgba(255,255,255,${cfg.o * 0.1})`; el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
+            const cross = el.querySelector('.d-cross'); if (cross) { cross.style.opacity = cfg.o; cross.style.filter = `brightness(${cfg.b})`; }
         } else {
             let baseColor, borderColor;
-            if (id === 'a') { 
-                baseColor = `rgba(239, 68, 68, ${cfg.o})`; 
-                borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'b') { 
-                baseColor = `rgba(59, 130, 246, ${cfg.o})`; 
-                borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'y') { 
-                baseColor = `rgba(16, 185, 129, ${cfg.o})`; 
-                borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else if (id === 'x') { 
-                baseColor = `rgba(245, 158, 11, ${cfg.o})`; 
-                borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            else { 
-                baseColor = `rgba(255, 255, 255, ${cfg.o})`; 
-                borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; 
-            }
-            el.style.background = baseColor; 
-            el.style.borderColor = borderColor; 
-            el.style.filter = `brightness(${cfg.b})`;
+            if (id === 'a') { baseColor = `rgba(239, 68, 68, ${cfg.o})`; borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'b') { baseColor = `rgba(59, 130, 246, ${cfg.o})`; borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'y') { baseColor = `rgba(16, 185, 129, ${cfg.o})`; borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'x') { baseColor = `rgba(245, 158, 11, ${cfg.o})`; borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; }
+            else { baseColor = `rgba(255, 255, 255, ${cfg.o})`; borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; }
+            el.style.background = baseColor; el.style.borderColor = borderColor; el.style.filter = `brightness(${cfg.b})`;
         }
     }
 
     document.querySelectorAll('.draggable-btn').forEach(el => {
         el.addEventListener('touchstart', e => {
-            if (!isPadEditMode) return;
-            e.preventDefault(); 
+            if (!isPadEditMode) return; e.preventDefault(); 
             document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
-            selectedPadEl = el.dataset.id; 
-            el.classList.add('editing-active');
-            const cfg = padConfig[selectedPadEl];
-            document.getElementById('opacitySlider').value = (cfg.o || 0.3) * 100; 
-            document.getElementById('opacityVal').textContent = Math.round((cfg.o || 0.3) * 100) + '%';
-            document.getElementById('brightnessSlider').value = (cfg.b || 1) * 100; 
-            document.getElementById('brightnessVal').textContent = Math.round((cfg.b || 1) * 100) + '%';
-            padDragTarget = selectedPadEl; 
-            padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; 
-            padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
+            selectedPadEl = el.dataset.id; el.classList.add('editing-active'); const cfg = padConfig[selectedPadEl];
+            document.getElementById('opacitySlider').value = (cfg.o || 0.3) * 100; document.getElementById('opacityVal').textContent = Math.round((cfg.o || 0.3) * 100) + '%';
+            document.getElementById('brightnessSlider').value = (cfg.b || 1) * 100; document.getElementById('brightnessVal').textContent = Math.round((cfg.b || 1) * 100) + '%';
+            padDragTarget = selectedPadEl; padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
         }, {passive: false});
 
         document.addEventListener('touchmove', e => { 
-            if (!isPadEditMode || !padDragTarget) return; 
-            e.preventDefault();
-            
-            let newX = e.touches[0].clientX - padDragStartX;
-            let newY = e.touches[0].clientY - padDragStartY;
-            
+            if (!isPadEditMode || !padDragTarget) return; e.preventDefault();
+            let newX = e.touches[0].clientX - padDragStartX, newY = e.touches[0].clientY - padDragStartY;
             if (isBottomBarrier) {
                 const el = document.getElementById(padDragTarget === 'dpad' ? 'joystick-dpad' : 'btn-' + padDragTarget);
-                const rect = el.getBoundingClientRect();
-                const limit = window.innerHeight - 75; 
-                
-                if (rect.bottom > limit && newY > padConfig[padDragTarget].y) {
-                    return; 
-                }
+                const rect = el.getBoundingClientRect(); const limit = window.innerHeight - 75; 
+                if (rect.bottom > limit && newY > padConfig[padDragTarget].y) return; 
             }
-
-            padConfig[padDragTarget].x = newX; 
-            padConfig[padDragTarget].y = newY; 
-            updatePadTransforms(); 
+            padConfig[padDragTarget].x = newX; padConfig[padDragTarget].y = newY; updatePadTransforms(); 
         }, {passive: false});
-        
         document.addEventListener('touchend', () => padDragTarget = null);
     });
 
     function updatePadTransforms() {
         ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(id => {
-            const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
-            if(!el) return;
-            const c = padConfig[id];
-            
+            const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id); if(!el) return; const c = padConfig[id];
             if (id === 'dpad' && isFloatingDpad && !isPadEditMode) { 
-                el.style.opacity = '0'; 
-                el.style.pointerEvents = 'none'; 
-                document.getElementById('dpad-catch-zone').style.display = 'block'; 
+                el.style.opacity = '0'; el.style.pointerEvents = 'none'; document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
-                
                 if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; }
                 else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; } 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
@@ -1530,53 +1288,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
                 else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
                 else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
-                
-                el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`;
-                el.style.pointerEvents = 'auto'; 
-                applyVisuals(id);
-                if (id === 'dpad') document.getElementById('dpad-catch-zone').style.display = 'none';
+                el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`; el.style.pointerEvents = 'auto'; 
+                applyVisuals(id); if (id === 'dpad') document.getElementById('dpad-catch-zone').style.display = 'none';
             }
         });
     }
 
-    function scaleSelectedPad(d) { 
-        padConfig[selectedPadEl].s = Math.max(0.3, Math.min(3, padConfig[selectedPadEl].s + d)); 
-        updatePadTransforms(); 
-    }
-    
-    function resetPad() { 
-        padConfig = {}; 
-        sanitizePadConfig(); 
-        updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
-        updatePadTransforms(); 
-    }
+    function scaleSelectedPad(d) { padConfig[selectedPadEl].s = Math.max(0.3, Math.min(3, padConfig[selectedPadEl].s + d)); updatePadTransforms(); }
+    function resetPad() { padConfig = {}; sanitizePadConfig(); updateFloatingBtnUI(); updateStepBtnUI(); updatePadTransforms(); }
 
-    const dpadZone = document.getElementById('joystick-dpad'); 
-    const catchZone = document.getElementById('dpad-catch-zone'); 
-    let activeDpadKeys = new Set(); 
-    let dpadTouchId = null; 
-    let dpadCenter = {x:0, y:0}; 
-    let dpadRadius = 75;
+    const dpadZone = document.getElementById('joystick-dpad'); const catchZone = document.getElementById('dpad-catch-zone'); 
+    let activeDpadKeys = new Set(); let dpadTouchId = null; let dpadCenter = {x:0, y:0}; let dpadRadius = 75;
 
     function updateDpadVisuals() { 
         document.querySelectorAll('.d-arrow').forEach(arrow => { 
             const k = parseInt(arrow.dataset.k); 
-            if (activeDpadKeys.has(k)) arrow.classList.add('active'); 
-            else arrow.classList.remove('active'); 
+            if (activeDpadKeys.has(k)) arrow.classList.add('active'); else arrow.classList.remove('active'); 
         }); 
     }
 
+    // --- ИДЕАЛЬНАЯ ЛОГИКА ШАГОВОГО D-PAD ---
     function getDpadDirection(clientX, clientY) {
-        const dx = clientX - dpadCenter.x; 
-        const dy = clientY - dpadCenter.y; 
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        let normalizedDist = Math.min(distance / dpadRadius, 1); 
-        const deadZone = 0.2;
-        if (normalizedDist < deadZone) return null;
+        const dx = clientX - dpadCenter.x; const dy = clientY - dpadCenter.y; 
+        const distance = Math.sqrt(dx * dx + dy * dy); let normalizedDist = Math.min(distance / dpadRadius, 1); 
+        const deadZone = 0.2; if (normalizedDist < deadZone) return null;
         
-        let angle = Math.atan2(dy, dx) * 180 / Math.PI; 
-        if (angle < 0) angle += 360;
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI; if (angle < 0) angle += 360;
         const newKeys = new Set();
         
         if (isStepDpad) {
@@ -1599,114 +1336,59 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function handleDpadTouchStart(e) {
-        if(isPadEditMode) return; 
-        if(e.target.closest('.draggable-btn') && e.target.id !== 'joystick-dpad') return;
-        e.preventDefault(); 
-        const touch = e.changedTouches[0]; 
-        if (dpadTouchId !== null) return; 
-        dpadTouchId = touch.identifier;
-        
+        if(isPadEditMode) return; if(e.target.closest('.draggable-btn') && e.target.id !== 'joystick-dpad') return;
+        e.preventDefault(); const touch = e.changedTouches[0]; if (dpadTouchId !== null) return; dpadTouchId = touch.identifier;
         if (isFloatingDpad) {
-            const el = document.getElementById('joystick-dpad'); 
-            const rad = (150 * padConfig.dpad.s) / 2;
-            el.style.bottom = 'auto'; 
-            el.style.left = (touch.clientX - rad) + 'px'; 
-            el.style.top = (touch.clientY - rad) + 'px'; 
-            el.style.transform = `scale(${padConfig.dpad.s})`;
-            dpadCenter = { x: touch.clientX, y: touch.clientY }; 
-            dpadRadius = rad; 
-            el.style.opacity = padConfig.dpad.o; 
+            const el = document.getElementById('joystick-dpad'); const rad = (150 * padConfig.dpad.s) / 2;
+            el.style.bottom = 'auto'; el.style.left = (touch.clientX - rad) + 'px'; el.style.top = (touch.clientY - rad) + 'px'; el.style.transform = `scale(${padConfig.dpad.s})`;
+            dpadCenter = { x: touch.clientX, y: touch.clientY }; dpadRadius = rad; el.style.opacity = padConfig.dpad.o; 
         } else {
-            const rect = dpadZone.getBoundingClientRect(); 
-            dpadCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; 
-            dpadRadius = rect.width / 2;
+            const rect = dpadZone.getBoundingClientRect(); dpadCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; dpadRadius = rect.width / 2;
         }
-        
-        doVibrate(10);
-        const newKeys = getDpadDirection(touch.clientX, touch.clientY);
-        if (newKeys !== null) {
-            newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); });
-            activeDpadKeys = new Set(newKeys); 
-            updateDpadVisuals();
-        }
+        doVibrate(10); const newKeys = getDpadDirection(touch.clientX, touch.clientY);
+        if (newKeys !== null) { newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); activeDpadKeys = new Set(newKeys); updateDpadVisuals(); }
     }
 
     function handleDpadTouchMove(e) {
-        if(isPadEditMode || dpadTouchId === null) return; 
-        if (isStepDpad && currentGame?.t === 'd') return; 
-        
+        if(isPadEditMode || dpadTouchId === null) return; if (isStepDpad && currentGame?.t === 'd') return; 
         e.preventDefault();
         let trackedTouch = null; 
-        for (let i = 0; i < e.touches.length; i++) { 
-            if (e.touches[i].identifier === dpadTouchId) { 
-                trackedTouch = e.touches[i]; 
-                break; 
-            } 
-        }
+        for (let i = 0; i < e.touches.length; i++) { if (e.touches[i].identifier === dpadTouchId) { trackedTouch = e.touches[i]; break; } }
         if (!trackedTouch) return;
         
         const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
         if (newKeys === null) { 
-            if (activeDpadKeys.size > 0) {
-                activeDpadKeys.forEach(k => sendKey(k, false)); 
-                activeDpadKeys.clear(); 
-            }
+            if (activeDpadKeys.size > 0) { activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); }
         } else { 
             let changed = false;
-            if (newKeys.size !== activeDpadKeys.size) {
-                changed = true;
-            } else {
-                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
-            }
-
-            if (changed) {
-                doVibrate(10); 
-            }
-
-            if (isStepDpad) {
-                activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
-            }
-            newKeys.forEach(k => { 
-                if (!activeDpadKeys.has(k)) sendKey(k, true); 
-            }); 
-            if (!isStepDpad) {
-               activeDpadKeys.forEach(k => { 
-                   if (!newKeys.has(k)) sendKey(k, false); 
-               }); 
-            }
+            if (newKeys.size !== activeDpadKeys.size) changed = true; else newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
+            if (changed) doVibrate(10); 
+            
+            if (isStepDpad) activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
+            newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); 
+            if (!isStepDpad) activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); }); 
             activeDpadKeys = new Set(newKeys); 
         }
         updateDpadVisuals();
     }
 
+    // --- ИДЕАЛЬНАЯ ЛОГИКА АВТО-ТОРМОЗА (ГРУЗЧИК) ---
     function handleDpadTouchEnd(e) {
         let isDpadReleased = false; 
-        for (let i = 0; i < e.changedTouches.length; i++) { 
-            if (e.changedTouches[i].identifier === dpadTouchId) { 
-                isDpadReleased = true; 
-                break; 
-            } 
-        }
+        for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === dpadTouchId) { isDpadReleased = true; break; } }
         if (isDpadReleased) {
-            activeDpadKeys.forEach(k => sendKey(k, false)); 
-            activeDpadKeys.clear(); 
-            updateDpadVisuals();
+            activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); updateDpadVisuals();
             
             if (isAutoStop && currentGame) {
                 const sysMap = systemButtonMap[currentGame.sys] || systemButtonMap['dos'];
                 const brakeKey = sysMap.brake;
-                
                 sendKey(brakeKey, true); 
                 setTimeout(() => sendKey(brakeKey, false), 50); 
             }
             
-            dpadTouchId = null; 
-            if (isFloatingDpad) { 
-                document.getElementById('joystick-dpad').style.opacity = '0'; 
-            }
+            dpadTouchId = null; if (isFloatingDpad) document.getElementById('joystick-dpad').style.opacity = '0'; 
         }
     }
-
     [dpadZone, catchZone].forEach(zone => { 
         zone.addEventListener('touchstart', handleDpadTouchStart, {passive: false}); 
         zone.addEventListener('touchmove', handleDpadTouchMove, {passive: false}); 
@@ -1812,10 +1494,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function hardResetGame() {
         if (!currentGame) return;
-        await saveGameState(); 
+        await saveGameState(true); 
         sessionStorage.setItem('autoRestartGameId', currentGame.id);
         location.reload();
-    }function startGame(game) {
+    }
+
+    function startGame(game) {
         if (isGameStarting) return; 
         isGameStarting = true;
         
@@ -1861,8 +1545,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const nesOnlySettings = document.getElementById('nes-only-settings');
         if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
 
-        document.getElementById('btnSave').style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
-        document.getElementById('btnLoad').style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+        // ВКЛЮЧАЕМ КНОПКИ СОХРАНЕНИЯ ТОЛЬКО ЕСЛИ ЯДРО ЭТО ПОДДЕРЖИВАЕТ (NES и Libretro)
+        const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
+        document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
+        document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
         
         const btnSelect = document.getElementById('btn-select');
         if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
@@ -1899,7 +1585,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         nesRestartFn = null; 
         isShuttingDown = false; 
         isGamePaused = false;
-        window._fsPatched = false; // Сбрасываем флаг патча ФС
 
         if (game.t === 'h') {
             const htmlUrl = URL.createObjectURL(game.fileBlob);
@@ -1945,7 +1630,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         canvasContainer.appendChild(glCanvas); 
         UniversalWebGL.init(glCanvas);
 
-        // Сохраняем оригинальный перехват рендера GBA (ЭТАЛОН)
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
             let ctx = originalGetContext(type, attributes);
@@ -2027,23 +1711,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [virtualFileName],
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
-                        
-                        // --- MONKEY PATCHING ФАЙЛОВОЙ СИСТЕМЫ ДЛЯ GBA ---
-                        if (!window._fsPatched && mod.FS && mod.FS.writeFile) {
-                            const origWrite = mod.FS.writeFile;
-                            mod.FS.writeFile = function(path, data, opts) {
-                                const result = origWrite.apply(this, arguments);
-                                if (currentGame && (path.endsWith('.srm') || path.endsWith('.sav') || path.endsWith('.rtc'))) {
-                                    console.log("[FS Patch] Поймали сохранение:", path);
-                                    const sramCopy = new Uint8Array(data);
-                                    SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy)).then(() => {
-                                        showLog('💾 Батарейка сохранена');
-                                    });
-                                }
-                                return result;
-                            };
-                            window._fsPatched = true;
-                        }
+                        try {
+                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
+                            if (b64) {
+                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
+                            }
+                        } catch(e) {}
                     }],
                     print: (t) => console.log('CORE:', t),
                     printErr: (t) => console.error('CORE ERR:', t)
@@ -2052,14 +1725,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 glLoop();
                 setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
-                
-                // Пробуем загрузить SRAM и State
-                await loadSramDirectly(currentGame.n);
                 await loadGameState(true);
                 isGameStarting = false;
 
             } catch (err) {
-                alert("Ошибка инициализации ядра GBA: " + err.message);
+                alert("Ошибка инициализации ядра: " + err.message);
                 executeCleanup();
                 isGameStarting = false;
             }
@@ -2154,32 +1824,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [romName],
                     preRun: [function() { 
                         FS.writeFile(romName, fileData); 
-                        
-                        // --- MONKEY PATCHING ФАЙЛОВОЙ СИСТЕМЫ ДЛЯ SNES/SEGA ---
-                        if (!window._fsPatched && typeof FS !== 'undefined' && FS.writeFile) {
-                            const origWrite = FS.writeFile;
-                            FS.writeFile = function(path, data, opts) {
-                                const result = origWrite.apply(this, arguments);
-                                if (currentGame && (path.endsWith('.srm') || path.endsWith('.sav') || path.endsWith('.rtc'))) {
-                                    console.log("[FS Patch] Поймали сохранение:", path);
-                                    const sramCopy = new Uint8Array(data);
-                                    SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy)).then(() => {
-                                        showLog('💾 Батарейка сохранена');
-                                    });
-                                }
-                                return result;
-                            };
-                            window._fsPatched = true;
-                        }
+                        try { 
+                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n); 
+                            if (b64) { 
+                                FS.writeFile(romName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64)); 
+                            } 
+                        } catch(e) {}
                     }],
                     print: function(t) { console.log(t); }, 
                     printErr: function(t) { console.error(t); },
                     onRuntimeInitialized: async function() { 
                         glLoop(); 
                         await new Promise(r => setTimeout(r, 500)); 
-                        await loadSramDirectly(currentGame.n);
                         await loadGameState(true); 
-                        isGameStarting = false;
                     }
                 };
                 const script = document.createElement('script'); 
@@ -2190,6 +1847,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     executeCleanup(); 
                 }; 
                 document.body.appendChild(script);
+                isGameStarting = false;
             }, 100);
         }).catch(err => { 
             alert("Ошибка чтения файла: " + err.message); 
@@ -2256,14 +1914,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     await loadGameState(true); 
                     let cmd = ["-c", "cycles auto"]; 
                     if (game.e) cmd.push("-c", game.e);
-                    main(cmd).then(ci => {
-                        currentDos = ci;
-                        if (window.dosAutoSaveInterval) clearInterval(window.dosAutoSaveInterval);
-                        window.dosAutoSaveInterval = setInterval(() => {
-                            if (!isShuttingDown && !isGamePaused) saveGameState(true);
-                        }, 15000);
-                    }).catch(err => console.log("DOS:", err));
-                    
+                    main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
                     const glLoop = () => { 
                         if (isShuttingDown) return; 
                         if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
@@ -2368,7 +2019,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 nes.loadROM(windowCurrentROMString);
                 
                 if (!isReset) {
-                    loadGameState(true);
+                    const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
+                    if (autoLoadData) { 
+                        try { 
+                            const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
+                            nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
+                        } catch(e) {
+                            try {
+                                if (autoLoadData.startsWith('{')) {
+                                    nes.fromJSON(JSON.parse(autoLoadData));
+                                }
+                            } catch(e2) {}
+                        } 
+                    }
                 }
                 
                 lastTime = performance.now(); 
@@ -2428,7 +2091,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.innerHTML = 'ВЫХОД';
             }
             
-            await saveGameState(true); 
+            await saveGameState(); 
             
             setTimeout(() => { 
                 backTapCount = 0; 
@@ -2445,15 +2108,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
-        window._fsPatched = false;
-        
-        if (window.dosAutoSaveInterval) {
-            clearInterval(window.dosAutoSaveInterval);
-            window.dosAutoSaveInterval = null;
-        }
         
         if (!skipSave) {
-            await saveGameState(true); 
+            await saveGameState(); 
         }
         
         if (currentGame?._tempUrl) { 
@@ -2544,6 +2201,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         padPanel.style.display = 'none'; 
         
         document.getElementById('btnRestart').style.display = 'none';
+        document.getElementById('btnSave').style.display = 'none';
+        document.getElementById('btnLoad').style.display = 'none';
         
         menuScreen.style.display = 'flex';
         
@@ -2893,7 +2552,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ---
     function selectAllGamesForDelete() {
         if (!isLibraryEditMode) return;
         const tx = db.transaction(["games"], "readonly");
@@ -2930,7 +2588,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     }
 
-    // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
     function toggleFavorite(id, e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
         const tx = db.transaction(["games"], "readwrite");
@@ -2939,7 +2596,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => {
             const g = req.result;
             if (g) {
-                g.fav = !g.fav; // Меняем флаг на противоположный
+                g.fav = !g.fav;
                 store.put(g).onsuccess = () => renderAllGames();
             }
         };
@@ -2962,13 +2619,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         req.onsuccess = () => { 
             let customGames = req.result; 
             
-            // === ОБНОВЛЕННАЯ СОРТИРОВКА (С УЧЕТОМ ИЗБРАННОГО) ===
             customGames.sort((a, b) => {
-                // Сначала всегда сортируем по "Избранному"
                 if (a.fav && !b.fav) return -1;
                 if (!a.fav && b.fav) return 1;
 
-                // Затем применяем выбранную пользователем сортировку
                 if (sortType === 'name_asc') return a.n.localeCompare(b.n);
                 if (sortType === 'name_desc') return b.n.localeCompare(a.n);
                 if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
@@ -2977,11 +2631,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     const idB = parseInt(b.id.split('_')[1]) || 0;
                     return idB - idA;
                 }
-                return 0; // Для random оставляем так, он перемешает ниже
+                return 0; 
             });
 
             if (sortType === 'random') {
-                // Если рандом, перемешиваем только внутри "своих" групп (избранные с избранными, остальные с остальными)
                 let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
                 let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
                 customGames = favs.concat(nonFavs);
@@ -3014,8 +2667,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btn.dataset.gameId = game.id;
         
         const overlayHtml = `<div class="edit-overlay" style="display:${isLibraryEditMode ? 'flex' : 'none'}"><div class="edit-icon">🗑️</div></div>`;
-        
-        // === ДОБАВЛЕНА КНОПКА ИЗБРАННОГО НА КАРТОЧКУ ===
         const favIcon = game.fav ? '⭐' : '☆';
         const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
         
@@ -3078,7 +2729,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         document.body.appendChild(globalFileInput);
     }
 
-    // --- УМНЫЙ РЕНТГЕН ZIP-МАТРЕШЕК ---
     async function flattenAndProcessFiles(files) {
         const extractedFiles = [];
         
@@ -3119,7 +2769,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    // Обновляем вызов загрузки файлов
     globalFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
@@ -3182,14 +2831,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let romExt = rawExt, sysType = 'unk', coverData = null;
 
         if (fileName.endsWith('.nes')) { 
-            gameType = 'n'; 
-            gameIcon = '🎮'; 
-            controlMode = 'pad'; 
-            sysType = 'nes'; 
+            gameType = 'n'; gameIcon = '🎮'; controlMode = 'pad'; sysType = 'nes'; 
         } 
         else if (coreMap[rawExt]) { 
-            gameType = 'l'; 
-            gameIcon = '🕹️'; 
+            gameType = 'l'; gameIcon = '🕹️'; 
             if (['md','smd','gen','bin'].includes(rawExt)) sysType = 'smd'; 
             else if (['sfc','smc'].includes(rawExt)) sysType = 'snes'; 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
@@ -3198,46 +2843,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         else if (fileName.endsWith('.zip')) { 
             const analysis = await analyzeZipAndCovers(persistentBlob);
             if(analysis) { 
-                gameType = analysis.type; 
-                romExt = analysis.ext; 
-                sysType = analysis.sys; 
-                coverData = analysis.cover; 
+                gameType = analysis.type; romExt = analysis.ext; sysType = analysis.sys; coverData = analysis.cover; 
                 if(gameType === 'n') gameIcon = '🎮'; 
                 else if(gameType === 'l') gameIcon = '🕹️'; 
-                else if(gameType === 'd') { 
-                    gameIcon = '💾'; 
-                    execCmd = analysis.exec; 
-                    controlMode = 'pad'; 
-                } 
-            } else { 
-                throw new Error('Архив пуст или содержит мусор'); 
-            }
+                else if(gameType === 'd') { gameIcon = '💾'; execCmd = analysis.exec; controlMode = 'pad'; } 
+            } else { throw new Error('Архив пуст или содержит мусор'); }
         } 
         else if (fileName.endsWith('.html')) { 
-            gameType = 'h'; 
-            gameIcon = '🌐'; 
-            controlMode = 'none'; 
-            sysType = 'html'; 
+            gameType = 'h'; gameIcon = '🌐'; controlMode = 'none'; sysType = 'html'; 
         } 
         else if (fileName.endsWith('.7z') || fileName.endsWith('.rar')) {
-             alert('⚠️ Android WebView блокирует фоновую распаковку .7z и .rar из-за политик безопасности. Пожалуйста, перепакуйте игру в .zip!');
-             throw new Error('Неподдерживаемый формат на мобильных устройствах');
+             alert('⚠️ Android WebView блокирует фоновую распаковку .7z и .rar. Перепакуйте в .zip!');
+             throw new Error('Неподдерживаемый формат');
         }
         else { throw new Error('Неподдерживаемый формат'); }
 
         const newGame = { 
             id: "game_" + Date.now() + "_" + Math.random().toString(36).substring(2, 10),
-            n: cleanGameName, 
-            t: gameType, 
-            ext: romExt, 
-            sys: sysType, 
-            fileBlob: persistentBlob, 
-            i: gameIcon, 
-            m: controlMode, 
-            e: execCmd, 
-            fit: 'contain', 
-            cover: coverData,
-            fav: false // Новые игры по умолчанию не в избранном
+            n: cleanGameName, t: gameType, ext: romExt, sys: sysType, fileBlob: persistentBlob, 
+            i: gameIcon, m: controlMode, e: execCmd, fit: 'contain', cover: coverData, fav: false
         };
 
         if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
@@ -3268,18 +2892,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (!db) {
                 if (!window.tempGames) window.tempGames = [];
                 window.tempGames.push(newGame);
-                resolve();
-                return;
+                resolve(); return;
             }
             const txCheck = db.transaction(["games"], "readonly");
             const reqCheck = txCheck.objectStore("games").getAll();
             reqCheck.onsuccess = () => {
                 const existingGames = reqCheck.result;
                 const isDuplicate = existingGames.some(g => g.n === cleanGameName && g.sys === sysType);
-                if (isDuplicate) {
-                    resolve(); 
-                    return;
-                }
+                if (isDuplicate) { resolve(); return; }
                 const tx = db.transaction(["games"], "readwrite"); 
                 const store = tx.objectStore("games"); 
                 const req = store.put(newGame); 
@@ -3289,7 +2909,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     };
 
-    // ФУНКЦИЯ КАСТОМНЫХ ОБЛОЖЕК
     function triggerCoverChange() {
         if (selectedGamesForDelete.size !== 1) return;
         document.getElementById('customCoverInput').click();
@@ -3312,7 +2931,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     g.cover = base64Cover;
                     store.put(g).onsuccess = () => {
                         renderAllGames();
-                        toggleLibraryEditMode(); // Выходим из режима редактора после смены обложки
+                        toggleLibraryEditMode(); 
                     };
                 }
             };
@@ -3321,21 +2940,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    // --- ПЕРЕДЕЛАННАЯ ЛОГИКА БЕКАПОВ (ДВОЙНОЕ ПОДТВЕРЖДЕНИЕ) ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
-        
         if (btn.dataset.readyToDownload === 'true') {
             const url = btn.dataset.blobUrl;
             const a = document.createElement('a');
             a.href = url;
             a.download = 'ArcadeHub_Backup.zip';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
             
-            btn.innerHTML = '✅ СКАЧАНО!';
-            btn.style.background = '#0f766e';
+            btn.innerHTML = '✅ СКАЧАНО!'; btn.style.background = '#0f766e';
             setTimeout(() => { 
                 btn.innerHTML = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)'; 
                 btn.dataset.readyToDownload = 'false';
@@ -3358,10 +2972,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             req.onsuccess = async () => {
                 const games = req.result;
                 if (games.length === 0) {
-                    alert('Библиотека пуста!');
-                    btn.innerHTML = origTxt;
-                    btn.style.pointerEvents = 'auto';
-                    return;
+                    alert('Библиотека пуста!'); btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; return;
                 }
 
                 let zipData = {};
@@ -3370,7 +2981,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     let fname = g.n + '.' + g.ext;
                     if (g.t === 'd') fname = g.n + '.zip';
                     else if (g.t === 'h') fname = g.n + '.html';
-                    
                     zipData[fname] = new Uint8Array(buffer);
                 }
 
@@ -3378,16 +2988,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
                 
-                btn.innerHTML = '✅ СКАЧАТЬ АРХИВ';
-                btn.style.background = '#d97706';
-                btn.style.pointerEvents = 'auto';
-                btn.dataset.readyToDownload = 'true';
-                btn.dataset.blobUrl = url;
+                btn.innerHTML = '✅ СКАЧАТЬ АРХИВ'; btn.style.background = '#d97706';
+                btn.style.pointerEvents = 'auto'; btn.dataset.readyToDownload = 'true'; btn.dataset.blobUrl = url;
             };
         } catch(e) {
-            alert('Ошибка при выгрузке: ' + e.message);
-            btn.innerHTML = origTxt;
-            btn.style.pointerEvents = 'auto';
+            alert('Ошибка при выгрузке: ' + e.message); btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto';
         }
     }
 </script>
