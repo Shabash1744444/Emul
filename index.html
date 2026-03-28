@@ -39,13 +39,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
-@keyframes eat1 { 0%, 13% { opacity: 1; } 14%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat2 { 0%, 25% { opacity: 1; } 26%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat3 { 0%, 37% { opacity: 1; } 38%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat4 { 0%, 49% { opacity: 1; } 50%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat5 { 0%, 61% { opacity: 1; } 62%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat6 { 0%, 73% { opacity: 1; } 74%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat7 { 0%, 85% { opacity: 1; } 86%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat3 { 0%, 42% { opacity: 1; } 43%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat4 { 0%, 56% { opacity: 1; } 57%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat5 { 0%, 70% { opacity: 1; } 71%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat6 { 0%, 84% { opacity: 1; } 85%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat7 { 0%, 98% { opacity: 1; } 99%, 100% { opacity: 0; transform: scale(0.5); } }
 .t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
 .t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
 .t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
@@ -123,10 +123,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .edit-btn { padding: 8px 15px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; -webkit-user-select: none; touch-action: none; }
 .edit-btn:active { background: #38bdf8; }
 .hint-text { font-size: 9px; color: #888; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-.save-btn { background: #047857; border-color: #059669; }
-.save-btn:active { background: #10b981; }
-.load-btn { background: #b45309; border-color: #d97706; }
-.load-btn:active { background: #f59e0b; }
 .slider-row { display: flex; flex-direction: column; gap: 5px; }
 .slider-row label { font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }
 .slider-row input[type="range"] { width: 100%; }
@@ -259,7 +255,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
-    
     <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
         <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
             Выбрано: <span id="selectedCount">0</span> игр
@@ -320,6 +315,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <div id="toolbar">
     <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px;">⬅</div>
     <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
+    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; font-size: 16px; background:#047857; border-color:#059669;">💾</div>
+    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; font-size: 16px; background:#b45309; border-color:#d97706;">📂</div>
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -339,13 +336,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="screen-edit-panel">
-    <div id="save-settings" style="display: none; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px;">
-        <div class="edit-row">
-            <button class="edit-btn save-btn action-btn" onclick="saveGameState()">💾 СОХРАНИТЬ</button>
-            <button class="edit-btn load-btn action-btn" onclick="loadGameState()">📂 ЗАГРУЗИТЬ</button>
-        </div>
-    </div>
-
     <div style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #888; font-weight: bold;">ГРАФИКА И ЭФФЕКТЫ</div>
     
     <div id="nes-only-settings">
@@ -473,6 +463,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
+    // --- ВСПЛЫВАЮЩИЕ ЛОГИ ДЛЯ APK (TOAST) ---
+    function showLog(msg, isError = false) {
+        let toast = document.getElementById('hub-toast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'hub-toast';
+            toast.style.cssText = 'position:fixed; top:calc(15px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%); padding:10px 20px; border-radius:8px; z-index:99999; font-weight:bold; font-size:12px; color:#fff; pointer-events:none; transition:opacity 0.3s; text-align:center; box-shadow:0 4px 10px rgba(0,0,0,0.5); opacity:0;';
+            document.body.appendChild(toast);
+        }
+        toast.style.background = isError ? 'rgba(239, 68, 68, 0.95)' : 'rgba(16, 185, 129, 0.95)';
+        toast.innerHTML = msg;
+        toast.style.opacity = '1';
+        if (window.toastTimeout) clearTimeout(window.toastTimeout);
+        window.toastTimeout = setTimeout(() => toast.style.opacity = '0', 2500);
+    }
+
     const menuScreen = document.getElementById('menuScreen');
     const gameGrid = document.getElementById('gameGrid');
     const frameDiv = document.getElementById('gameFrame');
@@ -553,20 +559,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     } catch(e) {}
 
+    // --- ОБНОВЛЕННАЯ СЕРИАЛИЗАЦИЯ БЕЗ BASE64 (ПРЕДОТВРАЩАЕТ OOM/STACK OVERFLOW) ---
     function packData(u8arr) {
-        const compressed = fflate.zlibSync(u8arr);
-        let bin = '';
-        const chunkSize = 8192;
-        for (let i = 0; i < compressed.length; i += chunkSize) {
-            bin += String.fromCharCode.apply(null, compressed.subarray(i, i + chunkSize));
-        }
-        return window.btoa(bin);
+        return fflate.zlibSync(u8arr); 
     }
 
-    function unpackData(b64) {
-        const binary = window.atob(b64);
-        const compressed = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) compressed[i] = binary.charCodeAt(i);
+    function unpackData(compressed) {
+        // Обратная совместимость со старыми сохранениями (Base64)
+        if (typeof compressed === 'string') {
+            const binary = window.atob(compressed);
+            const arr = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+            return fflate.unzlibSync(arr);
+        }
         return fflate.unzlibSync(compressed);
     }
 
@@ -669,17 +674,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.preventDefault();
     }, { passive: false });
 
-    document.addEventListener("visibilitychange", () => {
-        if (document.hidden) {
-            isGamePaused = true; 
-            saveGameState(); 
-            stopAudio(); 
-        } else {
-            isGamePaused = false;
-            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
-        }
-    });
-
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
         history.pushState({ trap: true }, ""); 
@@ -717,37 +711,180 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
     
     window.addEventListener('beforeunload', () => {
-        if (currentGame) saveGameState();
+        if (currentGame) saveGameState(true);
     });
 
+    // --- ОБНОВЛЕННЫЙ SaveStorage (Бронебойный Fallback на localStorage) ---
     const SaveStorage = {
         _db: null,
+        _useLocalStorage: false,
         init() {
-            return new Promise((resolve, reject) => {
-                if (this._db) { resolve(); return; }
-                const req = indexedDB.open('ArcadeHubSaves', 1);
-                req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
-                req.onsuccess = e => { this._db = e.target.result; resolve(); };
-                req.onerror = e => reject(e);
+            return new Promise((resolve) => {
+                if (this._db || this._useLocalStorage) { resolve(); return; }
+                try {
+                    const req = indexedDB.open('ArcadeHubSaves', 1);
+                    req.onupgradeneeded = e => e.target.result.createObjectStore('saves');
+                    req.onsuccess = e => { this._db = e.target.result; resolve(); };
+                    req.onerror = e => { 
+                        console.warn("IndexedDB недоступна, используем localStorage"); 
+                        this._useLocalStorage = true; 
+                        resolve(); 
+                    };
+                } catch (e) {
+                    console.warn("IndexedDB заблокирована, используем localStorage");
+                    this._useLocalStorage = true;
+                    resolve();
+                }
             });
         },
         async set(key, val) {
             await this.init();
+            if (this._useLocalStorage) {
+                try {
+                    // Если fallback, переводим Uint8Array в Base64, так как localStorage не ест бинарники
+                    let b64 = '';
+                    if (val instanceof Uint8Array) {
+                        const chunkSize = 8192;
+                        for (let i = 0; i < val.length; i += chunkSize) {
+                            b64 += String.fromCharCode.apply(null, val.subarray(i, i + chunkSize));
+                        }
+                        b64 = window.btoa(b64);
+                    } else {
+                        b64 = val; // Если это старый формат
+                    }
+                    localStorage.setItem(key, b64);
+                    return true;
+                } catch(e) { return false; }
+            }
             return new Promise(r => {
-                const tx = this._db.transaction(['saves'], 'readwrite');
-                tx.objectStore('saves').put(val, key);
-                tx.oncomplete = () => r(true);
+                try {
+                    const tx = this._db.transaction(['saves'], 'readwrite');
+                    tx.objectStore('saves').put(val, key);
+                    tx.oncomplete = () => r(true);
+                    tx.onerror = () => r(false);
+                } catch(e) { r(false); }
             });
         },
         async get(key) {
             await this.init();
+            if (this._useLocalStorage) {
+                const data = localStorage.getItem(key);
+                return data || null;
+            }
             return new Promise(r => {
-                const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
-                req.onsuccess = () => r(req.result || null);
-                req.onerror = () => r(null);
+                try {
+                    const req = this._db.transaction(['saves'], 'readonly').objectStore('saves').get(key);
+                    req.onsuccess = () => r(req.result || null);
+                    req.onerror = () => r(null);
+                } catch(e) { r(null); }
             });
         }
     };
+
+    // === БЛОК ПЕРСИСТЕНТНОСТИ SRAM (БАТАРЕЙКИ) ===
+    let sramPollInterval = null;
+    let sramLastHash = 0;
+
+    function fastHash(arr) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < arr.length; i++) {
+            h ^= arr[i];
+            h = (h * 0x01000193) >>> 0;
+        }
+        return h;
+    }
+
+    async function loadSramDirectly(gameName) {
+        if (!window.Module) return;
+        const sramCompressed = await SaveStorage.get('sram_lr_' + gameName);
+        if (sramCompressed) {
+            try {
+                const sramArray = unpackData(sramCompressed);
+                
+                // Умное ожидание: Ядрам (GBA/SNES) нужно время, чтобы инициализировать память
+                let attempts = 0;
+                const checkSram = setInterval(() => {
+                    attempts++;
+                    const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                    if (sramSize > 0) {
+                        clearInterval(checkSram);
+                        const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                        if (sramPtr) {
+                            const len = Math.min(sramArray.length, sramSize);
+                            window.Module.HEAPU8.set(sramArray.subarray(0, len), sramPtr);
+                            showLog('🔋 Батарейка загружена');
+                        }
+                    } else if (attempts > 50) { 
+                        clearInterval(checkSram); // Сдаемся после 5 секунд
+                    }
+                }, 100);
+            } catch(e) { console.error("SRAM load err:", e); }
+        }
+    }
+
+    function startSramPolling(gameName) {
+        if (sramPollInterval) clearInterval(sramPollInterval);
+        sramLastHash = 0;
+        sramPollInterval = setInterval(async () => {
+            if (!window.Module || !currentGame || isGamePaused || isShuttingDown) return;
+            const size = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+            if (size > 0) {
+                const ptr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                if (ptr) {
+                    const view = window.Module.HEAPU8.subarray(ptr, ptr + size);
+                    const currentHash = fastHash(view);
+                    if (sramLastHash !== 0 && currentHash !== sramLastHash) {
+                        const sramCopy = new Uint8Array(view); // Изолируем дамп из HEAPU8
+                        await SaveStorage.set('sram_lr_' + gameName, packData(sramCopy));
+                        showLog('💾 Автосохранение (Батарейка)');
+                    }
+                    sramLastHash = currentHash;
+                }
+            }
+        }, 3000);
+    }
+    // ============================================
+
+    // === ЭКСТРЕННОЕ СОХРАНЕНИЕ (Сворачивание APK) ===
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+            isGamePaused = true; 
+            saveGameState(true); 
+            // Мгновенный сброс SRAM без таймера
+            if (currentGame && currentGame.t === 'l' && window.Module) {
+                const size = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
+                if (size > 0) {
+                    const ptr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
+                    if (ptr) {
+                        const view = window.Module.HEAPU8.subarray(ptr, ptr + size);
+                        const currentHash = fastHash(view);
+                        if (sramLastHash !== 0 && currentHash !== sramLastHash) {
+                            const sramCopy = new Uint8Array(view);
+                            SaveStorage.set('sram_lr_' + currentGame.n, packData(sramCopy));
+                            sramLastHash = currentHash;
+                        }
+                    }
+                }
+            }
+            stopAudio(); 
+        } else {
+            isGamePaused = false;
+            if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
+        }
+    });
+
+    // Бронебойный поиск функций WASM
+    function getWasmMalloc() {
+        if (window.Module._malloc) return window.Module._malloc;
+        if (window.Module.asm && window.Module.asm.malloc) return window.Module.asm.malloc;
+        return null;
+    }
+
+    function getWasmFree() {
+        if (window.Module._free) return window.Module._free;
+        if (window.Module.asm && window.Module.asm.free) return window.Module.asm.free;
+        return null;
+    }
 
     function lrCall(funcName, returnType, argTypes, args) {
         const m = window.Module;
@@ -764,7 +901,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return null;
     }
 
-    async function saveGameState() {
+    async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
             let success = false;
@@ -777,14 +914,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 success = true;
             } 
             else if (currentGame.t === 'l' && window.Module) {
-                const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                if (sramSize > 0) {
-                    const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                    if (sramPtr) {
-                        const sramData = new Uint8Array(window.Module.HEAPU8.buffer.slice(sramPtr, sramPtr + sramSize));
-                        await SaveStorage.set('sram_lr_' + currentGame.n, packData(sramData));
+                const stateSize = lrCall('retro_serialize_size', 'number', [], []);
+                const wasmMalloc = getWasmMalloc();
+                const wasmFree = getWasmFree();
+
+                if (stateSize > 0 && wasmMalloc && wasmFree) {
+                    const statePtr = wasmMalloc(stateSize);
+                    if (statePtr) {
+                        lrCall('retro_serialize', 'void', ['number', 'number'], [statePtr, stateSize]);
+                        const stateData = new Uint8Array(window.Module.HEAPU8.subarray(statePtr, statePtr + stateSize));
+                        const stateCopy = new Uint8Array(stateData);
+                        wasmFree(statePtr);
+                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(stateCopy));
                         success = true;
                     }
+                } else {
+                    console.error("Save state failed: Missing malloc/free or state size 0");
                 }
             }
             else if (currentGame.t === 'd') {
@@ -814,17 +959,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             
-            const btn = document.querySelector('.save-btn');
-            if(btn) {
-                const oldText = btn.innerHTML;
+            if (!isAuto) {
                 if (success) { 
-                    btn.innerHTML = '✅ СОХРАНЕНО!'; 
-                    btn.style.background = '#059669'; 
+                    showLog('✅ Состояние сохранено');
                 } else { 
-                    btn.innerHTML = '⚠️ ОШИБКА'; 
-                    btn.style.background = '#ef4444'; 
+                    showLog('⚠️ Ошибка сохранения', true);
                 }
-                setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
@@ -834,7 +974,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         try {
             let success = false;
             if (currentGame.t === 'n' && nes) { 
-                const savedData = await SaveStorage.get('savestate_' + currentGame.n) || localStorage.getItem('savestate_' + currentGame.n);
+                const savedData = await SaveStorage.get('savestate_' + currentGame.n);
                 if (savedData) {
                     try { 
                         const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
@@ -847,25 +987,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             } 
             else if (currentGame.t === 'l' && window.Module) { 
-                const sram64 = await SaveStorage.get('sram_lr_' + currentGame.n) || localStorage.getItem('sram_lr_' + currentGame.n);
-                if (sram64) {
+                const stateCompressed = await SaveStorage.get('savestate_lr_' + currentGame.n);
+                if (stateCompressed) {
                     try {
-                        const sramArray = unpackData(sram64);
-                        const sramSize = lrCall('retro_get_memory_size', 'number', ['number'], [0]);
-                        if (sramSize > 0) {
-                            const sramPtr = lrCall('retro_get_memory_data', 'number', ['number'], [0]);
-                            if (sramPtr) {
-                                const len = Math.min(sramArray.length, sramSize);
-                                new Uint8Array(window.Module.HEAPU8.buffer, sramPtr, len).set(sramArray.subarray(0, len));
+                        const stateArray = unpackData(stateCompressed);
+                        const stateSize = lrCall('retro_serialize_size', 'number', [], []);
+                        const wasmMalloc = getWasmMalloc();
+                        const wasmFree = getWasmFree();
+
+                        if (stateSize > 0 && wasmMalloc && wasmFree) {
+                            const statePtr = wasmMalloc(stateSize);
+                            if (statePtr) {
+                                const len = Math.min(stateArray.length, stateSize);
+                                window.Module.HEAPU8.set(stateArray.subarray(0, len), statePtr);
+                                lrCall('retro_unserialize', 'boolean', ['number', 'number'], [statePtr, stateSize]);
+                                wasmFree(statePtr);
                                 success = true;
                             }
                         }
-                    } catch(e) {}
+                    } catch(e) { console.error("Load state LR err:", e); }
                 }
             }
             else if (currentGame.t === 'd') {
                 const dosFS = window.FS || (window.WDOSBOX && window.WDOSBOX.FS);
-                const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n) || localStorage.getItem('savestate_dos_' + currentGame.n);
+                const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n);
                 if (b64 && dosFS && typeof dosFS.writeFile === 'function') {
                     try {
                         const unzipped = fflate.unzipSync(unpackData(b64));
@@ -885,18 +1030,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isAuto && !b64) success = true; 
             }
             
-            const btn = document.querySelector('.load-btn');
-            if(btn) {
+            if (!isAuto) {
                 if (success) {
-                    const oldText = btn.innerHTML; 
-                    btn.innerHTML = '✅ ЗАГРУЖЕНО!'; 
-                    btn.style.background = '#d97706';
-                    setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
-                } else if (!isAuto) {
-                    const oldText = btn.innerHTML; 
-                    btn.innerHTML = '⚠️ НЕТ СОХРАНЕНИЙ'; 
-                    btn.style.background = '#ef4444';
-                    setTimeout(() => { btn.innerHTML = oldText; btn.style.background = ''; }, 1500);
+                    showLog('✅ Состояние загружено');
+                } else {
+                    showLog('⚠️ Нет сохранений', true);
                 }
             }
         } catch(e) { console.error("Load error:", e); }
@@ -994,6 +1132,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }, {passive: false});
     
     frameDiv.addEventListener('touchend', () => isDragging = false);
+
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
@@ -1008,12 +1147,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord;
                 void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
-            const fsSource = `
-                #ifdef GL_ES
-                precision highp float;
-                #endif
-                
-                varying vec2 v_texCoord; uniform sampler2D u_image;
+            const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
                 uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
                 uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
 
@@ -1036,11 +1170,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
 
                 void main() {
-                    // Превентивная защита от падения мобильных GPU (деление на ноль)
-                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) {
-                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
-                    }
-
                     vec2 uv = v_texCoord; float vignette = 1.0;
                     
                     if (u_curve == 1) {
@@ -1092,37 +1221,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
-                    // --- НОВЫЙ БЛОК МАТРИЦ (БЕЗ МУАРА, СТРОГАЯ ТИПИЗАЦИЯ VEC3) ---
                     if (u_crt > 0) {
-                        if (u_crt == 3) { 
+                        if (u_crt == 3 || u_crt == 4) { 
                             vec2 pix_uv = uv * u_tex_size;
-                            float gridX = 0.75 + 0.25 * cos(pix_uv.x * 6.2831853);
-                            float gridY = 0.75 + 0.25 * cos(pix_uv.y * 6.2831853);
-                            color.rgb *= vec3(gridX * gridY);
-                            float subR = 0.95 + 0.05 * cos(pix_uv.x * 18.849555);
-                            float subG = 0.95 + 0.05 * cos(pix_uv.x * 18.849555 + 2.09439);
-                            float subB = 0.95 + 0.05 * cos(pix_uv.x * 18.849555 + 4.18879);
-                            color.rgb *= vec3(subR, subG, subB);
-                        } else if (u_crt == 4) {
-                            vec2 pix_uv = uv * u_tex_size;
-                            float gridX = 0.85 + 0.15 * cos(pix_uv.x * 6.2831853);
-                            float gridY = 0.85 + 0.15 * cos(pix_uv.y * 6.2831853);
-                            color.rgb *= vec3(gridX * gridY);
+                            vec2 grid = fract(pix_uv);
+                            float gap = (u_crt == 4) ? 0.08 : 0.15;
+                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x);
+                            float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
+                            color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
+                            
+                            if (u_crt == 3) {
+                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x);
+                                float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
+                                float subB = smoothstep(0.66, 1.0, grid.x);
+                                color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
+                            }
                         } else if (u_crt == 2) {
-                            vec2 pos = uv * u_tex_size * u_res;
-                            float cell = 0.9 + 0.1 * cos(pos.y * 6.2831853); 
-                            color.rgb *= vec3(cell);
-                            float r = 1.0 + 0.15 * cos(pos.x * 18.849555);
-                            float g = 1.0 + 0.15 * cos(pos.x * 18.849555 + 2.09439);
-                            float b = 1.0 + 0.15 * cos(pos.x * 18.849555 + 4.18879);
-                            color.rgb *= vec3(r, g, b);
+                            vec2 pos = fract(uv * u_tex_size * u_res);
+                            float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415);
+                            color.rgb *= cell;
+                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0);
+                            vec3 phosphor = vec3(
+                                triad < 0.33 ? 1.08 : 0.92,
+                                (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92,
+                                triad >= 0.66 ? 1.08 : 0.92
+                            );
+                            color.rgb *= phosphor;
                         } else if (u_crt == 1) {
                             float scanlineStrength = 0.20; float maskStrength = 0.20;
-                            float wave = sin(uv.y * u_tex_size.y * u_res * 3.14159265);
-                            float scanline = pow(abs(wave), 1.5);
-                            vec3 scanline_color = vec3(1.0 - scanlineStrength) + vec3(scanlineStrength * scanline);
-                            color.rgb *= scanline_color;
-                            
+                            float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
+                            color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
                             float mask = fract(uv.x * u_tex_size.x * u_res);
                             vec3 maskColor = vec3(
                                 mask < 0.33 ? 1.0 : (1.0 - maskStrength), 
@@ -1132,8 +1260,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             color.rgb *= maskColor;
                         }
                     }
-
-                    color.rgb *= vec3(vignette); gl_FragColor = color;
+                    color.rgb *= vignette; gl_FragColor = color;
                 }`;
 
             const compileShader = (type, source) => { 
@@ -1179,7 +1306,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             return true;
         },
-        draw: function(sourceCanvas, systemCode, isRaw) {
+        draw: function(sourceCanvas, systemCode) {
             if (!this.gl || !sourceCanvas.width || !sourceCanvas.height) return;
             const gl = this.gl;
             let scaleMult = videoConfig.res;
@@ -1201,10 +1328,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 gl.canvas.width = Math.floor(targetW); 
                 gl.canvas.height = Math.floor(targetH);
                 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
+                gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
             }
-
-            // ФИКС: Обязательно передаем размер текстуры ДО отрисовки
-            gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
 
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
@@ -1773,41 +1898,733 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         location.reload();
     }
 
-    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ИГР ---
-    function selectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        const tx = db.transaction(["games"], "readonly");
-        const req = tx.objectStore("games").getAllKeys();
-        req.onsuccess = () => {
-            const keys = req.result;
-            keys.forEach(k => selectedGamesForDelete.add(k));
-            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
-            updateEditCount();
+    function startGame(game) {
+        if (isGameStarting) return; 
+        isGameStarting = true;
+        
+        try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
+        try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
+
+        history.pushState({inGame: true}, "");
+
+        currentGame = game;
+        
+        const savedGameVideo = localStorage.getItem('video_' + game.n);
+        if (savedGameVideo) {
+            try { 
+                videoConfig = JSON.parse(savedGameVideo); 
+                if (typeof videoConfig.crt === 'boolean') videoConfig.crt = videoConfig.crt ? 1 : 0;
+            } catch(e) {}
+        } else {
+            const globalVideo = localStorage.getItem('videoV6');
+            if (globalVideo) {
+                try { 
+                    videoConfig = JSON.parse(globalVideo); 
+                    if (typeof videoConfig.crt === 'boolean') videoConfig.crt = videoConfig.crt ? 1 : 0;
+                } catch(e) {}
+            }
+        }
+        
+        document.getElementById('searchInput').value = ''; 
+        menuScreen.style.display = 'none'; 
+        frameDiv.style.display = 'block'; 
+        toolbar.style.display = 'flex';
+        
+        document.getElementById('btnRestart').style.display = 'flex';
+        
+        btnGamepad.style.display = 'none'; 
+        btnKeyboard.style.display = 'none'; 
+        btnScreen.style.display = 'none'; 
+        btnPadEdit.style.display = 'none'; 
+        fkeysPanel.style.display = 'none'; 
+        screenPanel.style.display = 'none'; 
+        padPanel.style.display = 'none'; 
+        gamepad.style.display = 'none';
+        
+        const nesOnlySettings = document.getElementById('nes-only-settings');
+        if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
+
+        document.getElementById('btnSave').style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+        document.getElementById('btnLoad').style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+        
+        const btnSelect = document.getElementById('btn-select');
+        if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+        
+        const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
+        document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
+        document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
+        
+        const isGba = game.sys === 'gba';
+        document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
+        document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
+        
+        isPadEditMode = false; 
+        btnPadEdit.classList.remove('active-tool');
+        
+        const savedLayout = localStorage.getItem('layout_' + game.n);
+        if (savedLayout) { 
+            const l = JSON.parse(savedLayout); 
+            scaleX = l.scaleX; 
+            scaleY = l.scaleY; 
+            screenX = l.screenX; 
+            screenY = l.screenY; 
+        } else { 
+            resetScale(); 
+        }
+        updateScreenTransform();
+
+        isEditMode = false; 
+        btnScreen.classList.remove('active-tool'); 
+        canvasContainer.style.pointerEvents = 'auto';
+        document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
+        
+        backTapCount = 0; 
+        nesRestartFn = null; 
+        isShuttingDown = false; 
+        isGamePaused = false;
+
+        if (game.t === 'h') {
+            const htmlUrl = URL.createObjectURL(game.fileBlob);
+            currentGame._tempUrl = htmlUrl; 
+            htmlIframe.style.display = 'block'; 
+            htmlIframe.src = htmlUrl; 
+            canvasContainer.style.pointerEvents = 'none'; 
+            isGameStarting = false;
+        } 
+        else if (game.t === 'd') {
+            setupDOS(game);
+        } 
+        else if (game.t === 'l') {
+            const cName = coreMap[game.ext];
+            if (cName === 'mgba_libretro') {
+                setupModernLibretro(game);
+            } else {
+                setupLibretro(game);
+            }
+        }
+        else if (game.t === 'n') {
+            setupNES(game);
+        }
+    }
+
+    function setupModernLibretro(game) {
+        document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        const libCanvas = document.createElement('canvas'); 
+        libCanvas.id = 'canvas'; 
+        libCanvas.tabIndex = -1;
+        
+        let nativeWidth = 240, nativeHeight = 160, systemCode = 5;
+        if (game.sys === 'gba') { nativeWidth = 240; nativeHeight = 160; systemCode = 5; } 
+
+        libCanvas.style.cssText = `position: absolute; top: -3000px; left: -3000px; width: ${nativeWidth}px; height: ${nativeHeight}px; opacity: 0.01; z-index: 1; display: block; image-rendering: pixelated; outline: none;`;
+        libCanvas.width = nativeWidth; 
+        libCanvas.height = nativeHeight;
+        canvasContainer.appendChild(libCanvas);
+
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
+
+        const originalGetContext = libCanvas.getContext.bind(libCanvas);
+        libCanvas.getContext = function(type, attributes) {
+            let ctx = originalGetContext(type, attributes);
+            if (ctx && (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl')) {
+                const origTexImage2D = ctx.texImage2D.bind(ctx);
+                const origTexSubImage2D = ctx.texSubImage2D.bind(ctx);
+
+                ctx.texImage2D = function() {
+                    return origTexImage2D.apply(this, arguments);
+                };
+
+                ctx.texSubImage2D = function() {
+                    return origTexSubImage2D.apply(this, arguments);
+                };
+            }
+            return ctx;
         };
+        
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        btnScreen.style.display = 'flex'; 
+        toggleGamepad(true);
+        
+        const sp = localStorage.getItem('padV4_' + game.n); 
+        if(sp) { try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } } else { padConfig = {}; }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
+        updateVideoUI();
+
+        readBlob(game.fileBlob).then(async arrayBuffer => {
+            let fileData = new Uint8Array(arrayBuffer); 
+            let romName = game.n + "." + game.ext; 
+            if (game.fileBlob?.name) romName = game.fileBlob.name;
+            
+            if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
+                try { 
+                    const unzipped = fflate.unzipSync(fileData); 
+                    for (const filename in unzipped) { 
+                        if (coreMap[filename.split('.').pop().toLowerCase()]) { 
+                            fileData = unzipped[filename]; 
+                            romName = filename.split('/').pop(); 
+                            break; 
+                        } 
+                    } 
+                } catch(e) {}
+            }
+            
+            currentGame._romName = romName;
+            const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
+            const virtualFileName = '/' + romName;
+
+            const glLoop = () => { 
+                if (isShuttingDown) return; 
+                if (!isGamePaused) { 
+                    try {
+                        if (libCanvas.width > 0 && libCanvas.height > 0) {
+                            UniversalWebGL.draw(libCanvas, systemCode, false); 
+                        }
+                    } catch (e) {
+                        if (e.message && e.message.includes('memory')) {
+                            console.error("ОЗУ переполнено апскейлом, сбрасываем разрешение:", e);
+                            videoConfig.res = 1;
+                            saveVideoConfig();
+                        }
+                    }
+                } 
+                glLoopId = requestAnimationFrame(glLoop); 
+            };
+
+            try {
+                ['Module', 'FS', 'Browser'].forEach(g => window[g] = undefined);
+                
+                const moduleFactory = (await import('./' + coreName + '.js')).default;
+                window.Module = await moduleFactory({
+                    canvas: libCanvas,
+                    keyboardListeningElement: window.document, 
+                    arguments: [virtualFileName],
+                    preRun: [function(mod) {
+                        mod.FS.writeFile(virtualFileName, fileData);
+                    }],
+                    print: (t) => console.log('CORE:', t),
+                    printErr: (t) => console.error('CORE ERR:', t)
+                });
+
+                glLoop();
+                setTimeout(() => libCanvas.focus(), 100); 
+                await new Promise(r => setTimeout(r, 500));
+                
+                await loadSramDirectly(currentGame.n);
+                startSramPolling(currentGame.n);
+                await loadGameState(true);
+                isGameStarting = false;
+
+            } catch (err) {
+                alert("Ошибка инициализации ядра GBA: " + err.message);
+                executeCleanup();
+                isGameStarting = false;
+            }
+        }).catch(err => { 
+            alert("Ошибка чтения файла: " + err.message); 
+            executeCleanup(); 
+            isGameStarting = false;
+        });
     }
 
-    function deselectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        selectedGamesForDelete.clear();
-        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
-        updateEditCount();
+    function setupLibretro(game) {
+        document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
+        const libCanvas = document.createElement('canvas'); 
+        libCanvas.id = 'canvas'; 
+        let nativeWidth = 256, nativeHeight = 224, systemCode = 0;
+        if (game.sys === 'snes') { nativeWidth = 256; nativeHeight = 224; systemCode = 1; } 
+        else if (game.sys === 'smd') { nativeWidth = 320; nativeHeight = 224; systemCode = 2; } 
+        else if (game.sys === 'ngp') { nativeWidth = 160; nativeHeight = 152; systemCode = 3; }
+
+        libCanvas.width = nativeWidth; 
+        libCanvas.height = nativeHeight;
+        libCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+        canvasContainer.appendChild(libCanvas);
+        
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
+        
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        btnScreen.style.display = 'flex'; 
+        toggleGamepad(true);
+        
+        const sp = localStorage.getItem('padV4_' + game.n); 
+        if(sp) { 
+            try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+        } else { 
+            padConfig = {}; 
+        }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
+        updateVideoUI();
+
+        readBlob(game.fileBlob).then(arrayBuffer => {
+            let fileData = new Uint8Array(arrayBuffer); 
+            let romName = game.n + "." + game.ext; 
+            if (game.fileBlob?.name) romName = game.fileBlob.name;
+            if (fileData.length > 2 && fileData[0] === 0x50 && fileData[1] === 0x4B) {
+                try { 
+                    const unzipped = fflate.unzipSync(fileData); 
+                    for (const filename in unzipped) { 
+                        if (coreMap[filename.split('.').pop().toLowerCase()]) { 
+                            fileData = unzipped[filename]; 
+                            romName = filename.split('/').pop(); 
+                            break; 
+                        } 
+                    } 
+                } catch(e) {}
+            }
+            currentGame._romName = romName;
+            const coreName = coreMap[romName.split('.').pop().toLowerCase()] || coreMap[game.ext];
+            const origGetContext = libCanvas.getContext.bind(libCanvas);
+            libCanvas.getContext = function(type, attrs) { 
+                if (type === 'webgl' || type === 'experimental-webgl') { 
+                    attrs = attrs || {}; 
+                    attrs.preserveDrawingBuffer = true; 
+                } 
+                return origGetContext(type, attrs); 
+            };
+
+            const glLoop = () => { 
+                if (isShuttingDown) return; 
+                if (!isGamePaused) UniversalWebGL.draw(libCanvas, systemCode, false); 
+                glLoopId = requestAnimationFrame(glLoop); 
+            };
+
+            const emGlobals = ['Module', 'FS', 'GL', 'Browser', 'ERRNO_CODES', 'ERRNO_MESSAGES', 'calledRun', 'runDependencies', 'wasmTable', 'wasmMemory', 'asm', 'ccall', 'cwrap', 'ENV', 'SDL', 'JSEvents', 'HEAP8', 'HEAP16', 'HEAP32', 'HEAPU8', 'STACKTOP'];
+            emGlobals.forEach(g => { 
+                try { delete window[g]; } catch(e) {} 
+                window[g] = undefined; 
+            });
+            const oldScript = document.getElementById('core-script'); 
+            if (oldScript) oldScript.remove();
+
+            setTimeout(() => {
+                window.Module = {
+                    canvas: libCanvas, 
+                    arguments: [romName],
+                    preRun: [function() { 
+                        FS.writeFile(romName, fileData); 
+                    }],
+                    print: function(t) { console.log(t); }, 
+                    printErr: function(t) { console.error(t); },
+                    onRuntimeInitialized: async function() { 
+                        glLoop(); 
+                        await new Promise(r => setTimeout(r, 500)); 
+                        await loadSramDirectly(currentGame.n);
+                        startSramPolling(currentGame.n);
+                        await loadGameState(true); 
+                        isGameStarting = false;
+                    }
+                };
+                const script = document.createElement('script'); 
+                script.src = coreName + '.js?v=' + Date.now(); 
+                script.id = 'core-script'; 
+                script.onerror = () => { 
+                    alert("Ошибка загрузки ядра: " + coreName); 
+                    executeCleanup(); 
+                }; 
+                document.body.appendChild(script);
+            }, 100);
+        }).catch(err => { 
+            alert("Ошибка чтения файла: " + err.message); 
+            executeCleanup(); 
+            isGameStarting = false;
+        });
     }
 
-    function deleteSelectedGames() {
-        if (selectedGamesForDelete.size === 0) return;
-        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
+    function setupDOS(game) {
+        const dosCanvas = document.createElement('canvas'); 
+        dosCanvas.id = 'dos-canvas'; 
+        dosCanvas.width = 640; 
+        dosCanvas.height = 480;
+        dosCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+        canvasContainer.appendChild(dosCanvas);
         
-        const tx = db.transaction(["games"], "readwrite");
-        const store = tx.objectStore("games");
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
         
-        selectedGamesForDelete.forEach(id => {
-            store.delete(id);
+        btnKeyboard.style.display = 'flex'; 
+        btnScreen.style.display = 'flex';
+        
+        if(game.m === 'pad' || game.m === 'touch_hover') { 
+            btnGamepad.style.display = 'flex'; 
+            btnPadEdit.style.display = 'flex'; 
+            toggleGamepad(true); 
+            const sp = localStorage.getItem('padV4_' + game.n);
+            if(sp) { 
+                try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+            } else { 
+                padConfig = {}; 
+            }
+            sanitizePadConfig(); 
+            updateFloatingBtnUI(); 
+            updateStepBtnUI(); 
+            updatePadTransforms();
+        }
+        updateVideoUI();
+        
+        if(game.m === 'touch_hover') {
+            let hx = 0, hy = 0;
+            const updateHover = (e) => { 
+                if(isEditMode) return; 
+                e.preventDefault(); 
+                hx = e.touches[0].clientX; 
+                hy = e.touches[0].clientY; 
+                dosCanvas.dispatchEvent(new MouseEvent('mousemove', { clientX: hx, clientY: hy, button: 0, bubbles: true })); 
+            };
+            dosCanvas.addEventListener('touchstart', updateHover, {passive: false}); 
+            dosCanvas.addEventListener('touchmove', updateHover, {passive: false}); 
+            dosCanvas.addEventListener('touchend', e => { if(isEditMode) return; e.preventDefault(); }, {passive: false});
+            dosCanvas.getHoverCoords = () => ({x: hx, y: hy});
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            if (isShuttingDown) return;
+            Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
+                window.WDOSBOX = { FS: fs }; 
+                fs.extract(e.target.result).then(async () => {
+                    await loadGameState(true); 
+                    let cmd = ["-c", "cycles auto"]; 
+                    if (game.e) cmd.push("-c", game.e);
+                    main(cmd).then(ci => {
+                        currentDos = ci;
+                        if (window.dosAutoSaveInterval) clearInterval(window.dosAutoSaveInterval);
+                        window.dosAutoSaveInterval = setInterval(() => {
+                            if (!isShuttingDown && !isGamePaused) saveGameState(true);
+                        }, 15000);
+                    }).catch(err => console.log("DOS:", err));
+                    
+                    const glLoop = () => { 
+                        if (isShuttingDown) return; 
+                        if (!isGamePaused) UniversalWebGL.draw(dosCanvas, 4, false); 
+                        glLoopId = requestAnimationFrame(glLoop); 
+                    }; 
+                    glLoop();
+                    isGameStarting = false;
+                }).catch(err => { 
+                    alert("Ошибка распаковки DOS-архива."); 
+                    executeCleanup(); 
+                    isGameStarting = false;
+                });
+            });
+        };
+        reader.onerror = () => { 
+            alert("Ошибка чтения DOS файла."); 
+            executeCleanup(); 
+            isGameStarting = false;
+        };
+        reader.readAsDataURL(game.fileBlob);
+    }
+
+    function setupNES(game) {
+        const nesCanvas = document.createElement('canvas'); 
+        nesCanvas.id = 'nes-canvas'; 
+        nesCanvas.width = 256; 
+        nesCanvas.height = 240;
+        nesCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.01; z-index: 10; display: block; image-rendering: pixelated;';
+        canvasContainer.appendChild(nesCanvas);
+        
+        const glCanvas = document.createElement('canvas'); 
+        glCanvas.id = 'universal-gl-canvas';
+        glCanvas.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; z-index: 5; display: block;';
+        canvasContainer.appendChild(glCanvas); 
+        UniversalWebGL.init(glCanvas);
+        
+        btnGamepad.style.display = 'flex'; 
+        btnPadEdit.style.display = 'flex'; 
+        btnScreen.style.display = 'flex'; 
+        toggleGamepad(true);
+        
+        const sp = localStorage.getItem('padV4_' + game.n); 
+        if(sp) { 
+            try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } 
+        } else { 
+            padConfig = {}; 
+        }
+        sanitizePadConfig(); 
+        updateFloatingBtnUI(); 
+        updateStepBtnUI(); 
+        updatePadTransforms(); 
+        updateVideoUI();
+        
+        readBlob(game.fileBlob).then(arrayBuffer => { 
+            launchNes(window.jsnes?.NES || window.NES, arrayBuffer, nesCanvas); 
+            isGameStarting = false;
+        }).catch(err => { 
+            alert("Ошибка чтения ROM: " + err.message); 
+            executeCleanup(); 
+            isGameStarting = false;
+        });
+    }
+
+    function launchNes(Constructor, arrayBuffer, canvas) {
+        const currentSampleRate = initAudio(); 
+        windowCurrentROMString = null; 
+        try {
+            const u8 = new Uint8Array(arrayBuffer); 
+            let str = ""; 
+            for (let i = 0; i < u8.length; i++) str += String.fromCharCode(u8[i]); 
+            windowCurrentROMString = str;
+            canvas.width = 256; 
+            canvas.height = 240;
+            const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true }); 
+            const imgData = ctx.createImageData(256, 240); 
+            const buf32 = new Uint32Array(imgData.data.buffer);
+            let lastTime = performance.now(); 
+            let accumulator = 0; 
+            const step = 1000 / 60; 
+
+            const startNesProcess = (isReset = false) => {
+                if (isReset) {
+                    if (nes) nes.reset();
+                    return;
+                }
+                if (nesLoop) cancelAnimationFrame(nesLoop);
+                nes = new Constructor({
+                    onFrame: (fb) => { 
+                        if (canvas.width !== 256 || canvas.height !== 240) { 
+                            canvas.width = 256; 
+                            canvas.height = 240; 
+                        } 
+                        for (let i = 0; i < 61440; i++) buf32[i] = 0xFF000000 | fb[i]; 
+                        ctx.putImageData(imgData, 0, 0); 
+                    },
+                    onAudioSample: (left, right) => { 
+                        audioBufferL.push(left); 
+                        audioBufferR.push(right); 
+                    }, 
+                    sampleRate: currentSampleRate
+                });
+                nes.loadROM(windowCurrentROMString);
+                
+                if (!isReset) {
+                    loadGameState(true);
+                }
+                
+                lastTime = performance.now(); 
+                accumulator = 0;
+                const frameLoop = (time) => {
+                    if (isShuttingDown || !nes) return; 
+                    if (isGamePaused) { 
+                        lastTime = time; 
+                        nesLoop = requestAnimationFrame(frameLoop); 
+                        return; 
+                    }
+                    nesLoop = requestAnimationFrame(frameLoop);
+                    accumulator += (time - lastTime); 
+                    lastTime = time; 
+                    if (accumulator > 200) accumulator = 200; 
+                    while (accumulator >= step) { 
+                        try { 
+                            if (nes && !isShuttingDown) nes.frame(); 
+                        } catch (err) { 
+                            console.error("Ошибка кадра:", err); 
+                            nes = null; 
+                            if (!isShuttingDown) alert("Сбой в игре: " + err.message); 
+                            return; 
+                        } 
+                        accumulator -= step; 
+                    }
+                };
+                nesLoop = requestAnimationFrame(frameLoop);
+            };
+
+            nesRestartFn = startNesProcess; 
+            startNesProcess(false); 
+            const glLoop = () => { 
+                if (isShuttingDown) return; 
+                if (!isGamePaused) UniversalWebGL.draw(canvas, 0, false); 
+                glLoopId = requestAnimationFrame(glLoop); 
+            }; 
+            glLoop();
+        } catch(e) { 
+            alert("Ошибка инициализации эмулятора: " + e.message); 
+            executeCleanup(); 
+        }
+    }
+
+    async function handleBackBtn() {
+        if (!currentGame) {
+            await executeCleanup(true);
+            return;
+        }
+        
+        if (backTapCount === 0) {
+            backTapCount++; 
+            const btn = document.getElementById('btnBack'); 
+            if (btn) {
+                btn.style.background = 'rgba(239, 68, 68, 0.9)'; 
+                btn.style.fontSize = '10px'; 
+                btn.innerHTML = 'ВЫХОД';
+            }
+            
+            await saveGameState(true); 
+            
+            setTimeout(() => { 
+                backTapCount = 0; 
+                if (btn) {
+                    btn.style.background = 'rgba(30, 30, 30, 0.7)'; 
+                    btn.style.fontSize = '18px'; 
+                    btn.innerHTML = '⬅'; 
+                }
+            }, 2000);
+        } else { 
+            await executeCleanup(true); 
+        }
+    }
+
+    async function executeCleanup(skipSave = false) {
+        isShuttingDown = true; 
+        
+        if (sramPollInterval) {
+            clearInterval(sramPollInterval);
+            sramPollInterval = null;
+        }
+        if (window.dosAutoSaveInterval) {
+            clearInterval(window.dosAutoSaveInterval);
+            window.dosAutoSaveInterval = null;
+        }
+        
+        if (!skipSave) {
+            await saveGameState(true); 
+        }
+        
+        if (currentGame?._tempUrl) { 
+            URL.revokeObjectURL(currentGame._tempUrl); 
+            currentGame._tempUrl = null; 
+        }
+        stopAudio();
+        
+        if (typeof window.AL !== 'undefined' && window.AL.contexts) { 
+            window.AL.contexts.forEach(function(c) { 
+                if (c?.ctx?.state !== 'closed') { 
+                    try { c.ctx.close(); } catch(e) {} 
+                } 
+            }); 
+        }
+        
+        try { 
+            if (currentDos) { 
+                currentDos.exit(); 
+                currentDos = null; 
+            } 
+        } catch(e) {}
+        
+        if (window.JSEvents) {
+            try { 
+                if (window.JSEvents.eventHandlers) {
+                    for (let i = 0; i < window.JSEvents.eventHandlers.length; i++) {
+                        const handler = window.JSEvents.eventHandlers[i];
+                        if (handler?.target) {
+                            handler.target.removeEventListener(handler.eventTypeString, handler.handlerFunc, handler.useCapture);
+                        }
+                    }
+                }
+            } catch(e) {}
+            try { window.JSEvents.runDeferredCalls = function() {}; } catch(e) {}
+        }
+        
+        if (window.Browser?.mainLoop) { 
+            try { window.Browser.mainLoop.pause(); } catch(e) {} 
+        }
+        if (window.Module) { 
+            try { if (window.Module.pauseMainLoop) window.Module.pauseMainLoop(); } catch(e) {} 
+            try { if (window.Module._exit) window.Module._exit(); } catch(e) {} 
+            try { if (window.Module.canvas) window.Module.canvas = null; } catch(e) {} 
+        }
+        
+        const emGlobals = ['Module', 'FS', 'GL', 'Browser', 'ERRNO_CODES', 'ERRNO_MESSAGES', 'calledRun', 'runDependencies', 'wasmTable', 'wasmMemory', 'asm', 'ccall', 'cwrap', 'ENV', 'SDL', 'heap8', 'HEAP8', 'HEAP16', 'HEAP32', 'HEAPU8', 'HEAPU16', 'HEAPU32', 'HEAPF32', 'HEAPF64', 'STACKTOP', 'STACK_MAX', 'tempDoublePtr', 'ABORT'];
+        emGlobals.forEach(g => { 
+            try { delete window[g]; } catch(e) {} 
+            try { window[g] = undefined; } catch(e) {} 
         });
         
-        tx.oncomplete = () => {
-            selectedGamesForDelete.clear();
-            toggleLibraryEditMode(); 
-        };
+        document.querySelectorAll('script[id="core-script"]').forEach(s => s.remove());
+        
+        ['canvas', 'universal-gl-canvas', 'dos-canvas', 'nes-canvas'].forEach(id => {
+            const c = document.getElementById(id);
+            if(c) { 
+                try {
+                    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+                    if (gl) {
+                        const ext = gl.getExtension('WEBGL_lose_context');
+                        if (ext) ext.loseContext();
+                    }
+                } catch(e) {}
+                c.remove();
+            }
+        });
+
+        if (nesLoop) { 
+            cancelAnimationFrame(nesLoop); 
+            nesLoop = null; 
+        }
+        if (glLoopId) { 
+            cancelAnimationFrame(glLoopId); 
+            glLoopId = null; 
+        }
+        nesRestartFn = null; 
+        nes = null;
+        htmlIframe.src = 'about:blank'; 
+        htmlIframe.style.display = 'none';
+        
+        canvasContainer.innerHTML = '<div id="dos-overlay"></div>';
+        frameDiv.style.display = 'none'; 
+        toolbar.style.display = 'none'; 
+        gamepad.style.display = 'none'; 
+        fkeysPanel.style.display = 'none'; 
+        screenPanel.style.display = 'none'; 
+        padPanel.style.display = 'none'; 
+        
+        document.getElementById('btnRestart').style.display = 'none';
+        
+        menuScreen.style.display = 'flex';
+        
+        try { 
+            screen.orientation.unlock(); 
+            try { if (document.exitFullscreen) document.exitFullscreen().catch(()=>{}); } catch(e) {}
+        } catch(e) {}
+        
+        currentGame = null;
+        if (window.gc) window.gc();
+        isGameStarting = false;
+        
+        location.reload(); 
+    }
+
+    function injectText() {
+        const text = prompt("Введите текст (англ.):");
+        if (text && currentDos) {
+            for (let i = 0; i < text.length; i++) {
+                let code = text.toUpperCase().charCodeAt(i);
+                setTimeout(() => { 
+                    document.dispatchEvent(new KeyboardEvent('keydown', { keyCode: code, which: code, bubbles: true })); 
+                    setTimeout(() => document.dispatchEvent(new KeyboardEvent('keyup', { keyCode: code, which: code, bubbles: true })), 30); 
+                }, i * 150);
+            }
+            setTimeout(() => { 
+                sendKey(13, true); 
+                setTimeout(() => sendKey(13, false), 30); 
+            }, text.length * 150 + 100); 
+        }
     }
 
     async function analyzeZipAndCovers(fileBlob) {
@@ -2125,6 +2942,43 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (coverBtn) {
             coverBtn.style.display = selectedGamesForDelete.size === 1 ? 'block' : 'none';
         }
+    }
+
+    // --- ФУНКЦИИ ВЫДЕЛЕНИЯ ---
+    function selectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        const tx = db.transaction(["games"], "readonly");
+        const req = tx.objectStore("games").getAllKeys();
+        req.onsuccess = () => {
+            const keys = req.result;
+            keys.forEach(k => selectedGamesForDelete.add(k));
+            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
+            updateEditCount();
+        };
+    }
+
+    function deselectAllGamesForDelete() {
+        if (!isLibraryEditMode) return;
+        selectedGamesForDelete.clear();
+        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
+        updateEditCount();
+    }
+
+    function deleteSelectedGames() {
+        if (selectedGamesForDelete.size === 0) return;
+        if (!confirm(`Удалить ${selectedGamesForDelete.size} игр из библиотеки?`)) return;
+        
+        const tx = db.transaction(["games"], "readwrite");
+        const store = tx.objectStore("games");
+        
+        selectedGamesForDelete.forEach(id => {
+            store.delete(id);
+        });
+        
+        tx.oncomplete = () => {
+            selectedGamesForDelete.clear();
+            toggleLibraryEditMode(); 
+        };
     }
 
     // === ЛОГИКА ДОБАВЛЕНИЯ В ИЗБРАННОЕ ===
