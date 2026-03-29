@@ -3211,8 +3211,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    async function exportLibrary() {
+        async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
+        const origTxt = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
+        
         if (btn.dataset.readyToDownload === 'true') {
             const url = btn.dataset.blobUrl;
             const a = document.createElement('a');
@@ -3222,7 +3224,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             
             btn.innerHTML = '✅ СКАЧАНО!'; btn.style.background = '#0f766e';
             setTimeout(() => { 
-                btn.innerHTML = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)'; 
+                btn.innerHTML = origTxt; 
                 btn.dataset.readyToDownload = 'false';
                 URL.revokeObjectURL(url);
             }, 3000);
@@ -3231,7 +3233,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         if (!confirm('Собрать все игры в один ZIP архив? Это может занять время.')) return;
         
-        const origTxt = btn.innerHTML;
         btn.innerHTML = '⏳ СОБИРАЮ АРХИВ...';
         btn.style.pointerEvents = 'none';
 
@@ -3243,7 +3244,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             req.onsuccess = async () => {
                 const games = req.result;
                 if (games.length === 0) {
-                    alert('Библиотека пуста!'); btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; return;
+                    btn.innerHTML = '⚠️ БИБЛИОТЕКА ПУСТА'; 
+                    btn.style.background = '#ef4444';
+                    setTimeout(() => {
+                        btn.innerHTML = origTxt;
+                        btn.style.background = '#0f766e';
+                        btn.style.pointerEvents = 'auto';
+                    }, 3000);
+                    return;
                 }
 
                 let zipData = {};
@@ -3263,76 +3271,104 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.style.pointerEvents = 'auto'; btn.dataset.readyToDownload = 'true'; btn.dataset.blobUrl = url;
             };
         } catch(e) {
-            alert('Ошибка при выгрузке: ' + e.message); btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto';
+            btn.innerHTML = '⚠️ ОШИБКА ВЫГРУЗКИ'; 
+            btn.style.background = '#ef4444';
+            setTimeout(() => {
+                btn.innerHTML = origTxt;
+                btn.style.background = '#0f766e';
+                btn.style.pointerEvents = 'auto';
+            }, 3000);
         }
     }
-        // =========================================================
-// ПРАВИЛЬНАЯ ЛОГИКА ПОИСКА (БЕЗ ЗАВИСАНИЙ БАЗЫ)
-// =========================================================
-document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
-    const btn = e.target;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ СКАНИРУЕМ БАЗУ...';
-    btn.style.pointerEvents = 'none';
 
-    try {
-        // 1. Быстро читаем базу и вытаскиваем только игры без обложек
-        const gamesToUpdate = await new Promise((resolve, reject) => {
-            const tx = db.transaction(["games"], "readonly");
-            const store = tx.objectStore("games");
-            const req = store.getAll();
-            req.onsuccess = () => {
-                const needsCover = req.result.filter(g => !g.cover && g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
-                resolve(needsCover);
-            };
-            req.onerror = () => reject(req.error);
-        });
+    // =========================================================
+    // ПРАВИЛЬНАЯ ЛОГИКА ПОИСКА (КРАСИВЫЕ КНОПКИ, БЕЗ ЗАВИСАНИЙ)
+    // =========================================================
+    document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
+        const btn = e.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '⏳ СКАНИРУЕМ БАЗУ...';
+        btn.style.pointerEvents = 'none';
 
-        if (gamesToUpdate.length === 0) {
-            btn.innerHTML = originalText;
-            btn.style.pointerEvents = 'auto';
-            alert('У всех игр уже есть обложки! ✨');
-            return;
-        }
+        try {
+            // 1. Быстро читаем базу
+            const gamesToUpdate = await new Promise((resolve, reject) => {
+                const tx = db.transaction(["games"], "readonly");
+                const store = tx.objectStore("games");
+                const req = store.getAll();
+                req.onsuccess = () => {
+                    const needsCover = req.result.filter(g => !g.cover && g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
+                    resolve(needsCover);
+                };
+                req.onerror = () => reject(req.error);
+            });
 
-        let missingCount = gamesToUpdate.length;
-        let updatedCount = 0;
-
-        // 2. Спокойно ищем обложки в интернете (транзакция базы закрыта, ничего не вылетит)
-        for (const game of gamesToUpdate) {
-            btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
-            
-            const newCover = await fetchNetCover(game.n, game.sys);
-            
-            if (newCover) {
-                game.cover = newCover;
-                
-                // 3. Открываем новую микро-транзакцию только для сохранения картинки
-                await new Promise((resolve) => {
-                    const writeTx = db.transaction(["games"], "readwrite");
-                    writeTx.objectStore("games").put(game);
-                    writeTx.oncomplete = () => resolve();
-                });
-                updatedCount++;
+            // Если изначально всё найдено
+            if (gamesToUpdate.length === 0) {
+                btn.innerHTML = '✨ У ВСЕХ ИГР ЕСТЬ ОБЛОЖКИ!';
+                btn.style.background = '#10b981'; 
+                btn.style.borderColor = '#047857';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '#0284c7'; 
+                    btn.style.borderColor = '#0369a1';
+                    btn.style.pointerEvents = 'auto';
+                }, 3000);
+                return;
             }
+
+            let missingCount = gamesToUpdate.length;
+            let updatedCount = 0;
+
+            // 2. Спокойно ищем обложки в интернете
+            for (const game of gamesToUpdate) {
+                btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
+                
+                const newCover = await fetchNetCover(game.n, game.sys);
+                
+                if (newCover) {
+                    game.cover = newCover;
+                    
+                    // 3. Сохраняем в микро-транзакции
+                    await new Promise((resolve) => {
+                        const writeTx = db.transaction(["games"], "readwrite");
+                        writeTx.objectStore("games").put(game);
+                        writeTx.oncomplete = () => resolve();
+                    });
+                    updatedCount++;
+                }
+                
+                // Защита от бана на GitHub
+                await new Promise(r => setTimeout(r, 400));
+            }
+
+            // Финал: красиво показываем итог
+            btn.innerHTML = `✅ НАЙДЕНО НОВЫХ: ${updatedCount} из ${missingCount}`;
+            btn.style.background = '#10b981'; 
+            btn.style.borderColor = '#047857';
             
-            // Защита от бана на GitHub
-            await new Promise(r => setTimeout(r, 400));
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '#0284c7'; 
+                btn.style.borderColor = '#0369a1';
+                btn.style.pointerEvents = 'auto';
+                renderAllGames(); 
+            }, 3000);
+
+        } catch (err) {
+            console.error(err);
+            btn.innerHTML = '⚠️ ОШИБКА ПОИСКА';
+            btn.style.background = '#ef4444'; 
+            btn.style.borderColor = '#b91c1c';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '#0284c7';
+                btn.style.borderColor = '#0369a1';
+                btn.style.pointerEvents = 'auto';
+            }, 3000);
         }
-
-        btn.innerHTML = originalText;
-        btn.style.pointerEvents = 'auto';
-        alert(`Поиск завершен!\nИгр проверено: ${missingCount}\nУспешно найдено новых: ${updatedCount}`);
-        renderAllGames(); 
-
-    } catch (err) {
-        console.error(err);
-        btn.innerHTML = originalText;
-        btn.style.pointerEvents = 'auto';
-        alert('Произошла ошибка при поиске обложек.');
-    }
-});
-// =========================================================
+    });
+    // =========================================================
 
 </script>
 
@@ -3340,3 +3376,4 @@ document.getElementById('btnFetchMissingLogos').addEventListener('click', async 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
+
