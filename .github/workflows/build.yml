@@ -28,15 +28,8 @@ jobs:
           cp index.html *.js *.wasm *.txt public/ 2>/dev/null || true
           
           npm init -y
-          npm install fflate@0.8.2 libarchive.js@1.3.0
-          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/haptics @capacitor/browser @capacitor/filesystem esbuild
-          
-          cp node_modules/fflate/umd/index.js public/fflate.js
-          cp node_modules/libarchive.js/main.js public/libarchive.js
-          cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
-          
-          # Собираем arcade-extensions в чистый бандл со всеми плагинами внутри
-          npx esbuild arcade-extensions.js --bundle --format=iife --outfile=public/arcade-extensions.bundle.js
+          # Ставим только самое необходимое ядро Capacitor (без лишних плагинов и esbuild)
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Capacitor Init & Sync
         run: |
@@ -63,7 +56,7 @@ jobs:
         run: |
           sed -i 's/<application/<application android:requestLegacyExternalStorage="true" android:usesCleartextTraffic="true"/g' android/app/src/main/AndroidManifest.xml || true
           
-          # Жесткое добавление разрешений
+          # Оставляем права на вибрацию и файлы для ручного импорта
           node -e "
             const fs = require('fs');
             const file = 'android/app/src/main/AndroidManifest.xml';
