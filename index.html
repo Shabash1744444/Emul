@@ -40,7 +40,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
 
-/* ИСПРАВЛЕННАЯ АНИМАЦИЯ ПАКМАНА */
 @keyframes eat1 { 0%, 18% { opacity: 1; } 19%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 @keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 @keyframes eat3 { 0%, 38% { opacity: 1; } 39%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
@@ -116,7 +115,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
-/* ИСПРАВЛЕННАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ (Отступы и размер) */
 #toolbar { 
     position: fixed; 
     top: calc(15px + env(safe-area-inset-top, 0px)); 
@@ -124,8 +122,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     right: 10px; 
     z-index: 9999; 
     display: none; 
-    gap: 6px; /* Уменьшен отступ */
-    padding: 0 5px; /* Защита от прилипания к краям при прокрутке */
+    gap: 6px; 
+    padding: 0 5px; 
     flex-wrap: nowrap; 
     overflow-x: auto; 
     -webkit-overflow-scrolling: touch;
@@ -148,8 +146,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .slider-row input[type="range"] { width: 100%; }
 #hiddenInput { position: absolute; top: -1000px; opacity: 0; }
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
-.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+
+.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
+
 #joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
@@ -163,7 +163,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
-/* ВИЗУАЛЬНЫЙ АНАЛОГОВЫЙ СТИК ДЛЯ ШУТЕРОВ */
 .d-knob { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin-top: -21px; margin-left: -21px; background: rgba(255,255,255,0.4); border-radius: 50%; pointer-events: none; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.6); }
 .dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
 .dpad-shooter .d-knob { display: block; }
@@ -179,7 +178,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
-/* ЗОНА ПОВОРОТА КАМЕРЫ В ШУТЕРАХ */
 #camera-catch-zone { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
 .action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
@@ -368,7 +366,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 <option value="0">ВЫКЛ (Чистая картинка)</option>
                 <option value="1">Сканлайны (Старый ТВ)</option>
                 <option value="2">Тринитрон (Премиум ЭЛТ)</option>
-                <option value="3">Сетка (LCD/VGA Матрица)</option>
+                <option value="3">LCD Матрица (Выпуклые пиксели)</option>
             </select>
         </div>
         <div>
@@ -418,10 +416,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="pad-edit-panel">
     <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
     
     <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <button class="edit-btn action-btn" id="toggleStepHoldBtn" onclick="toggleStepHold()" style="font-size: 12px; margin-bottom: 5px; width: 100%; display: none;">Удержание: БЕГ (Зажал-Бежит)</button>
     
     <div class="edit-row">
       <span>Размер:</span>
@@ -469,10 +468,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
-
-
-
-
+// тут начинается обычно 2 часть//
 
 <script src="js-dos.js"></script>
 <script>
@@ -523,8 +519,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const GAMES = []; 
 
     let padConfig = {};
-    // НОВЫЙ РЕЖИМ УПРАВЛЕНИЯ: 0=Свайп, 1=Шаговый, 2=Шутер
     let isPadEditMode = false, isFloatingDpad = false, dpadMode = 0, isAutoStop = false, isBottomBarrier = false;
+    let isStepHold = true; 
+    let isStepLocked = false; // Блокировка от дрожания пальца
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
     let isEditMode = false;
@@ -1002,6 +999,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     frameDiv.addEventListener('touchend', () => isDragging = false);
 
+    // =========================================================================
+    // 🔥 ФИНАЛЬНАЯ ШЕЙДЕРНАЯ СТАНЦИЯ (Независимая сетка + Идеальные линзы)
+    // =========================================================================
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
@@ -1029,8 +1029,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 vec3 toSRGB(vec3 c) { return sqrt(c); }
 
                 vec3 FSR_RCAS(vec3 color, vec2 uv) {
-                    float sharpness = 0.4; 
-                    vec3 d = vec3(0.0);
+                    float sharpness = 0.4; vec3 d = vec3(0.0);
                     d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
@@ -1042,11 +1041,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
 
                 void main() {
-                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) {
-                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
-                    }
+                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
 
-                    vec2 uv = v_texCoord; float vignette = 1.0;
+                    // ЗАПОМИНАЕМ ПРЯМЫЕ КООРДИНАТЫ ДЛЯ СЕТКИ (ЧТОБЫ ОНА НЕ КРУТИЛАСЬ)
+                    vec2 orig_uv = v_texCoord;
+                    vec2 uv = orig_uv; 
+                    float vignette = 1.0;
+                    
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
                         float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
@@ -1061,10 +1062,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (u_colors == 1) color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
                         else {
                             float sharpness = 0.4; vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb; d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb; d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
                             float contrast = max(max(abs(d.r - rawColor.r * 4.0), abs(d.g - rawColor.g * 4.0)), abs(d.b - rawColor.b * 4.0));
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
@@ -1073,13 +1072,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vec2 scaled_p = uv * u_tex_size * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
                         if (u_filter == 1) f = f * f * (3.0 - 2.0 * f);
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } 
-                    else color = texture2D(u_image, uv); 
+                    } else color = texture2D(u_image, uv); 
                     
                     if (u_rgb == 1) { 
-                        float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
-                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        float shift = 2.0 / (u_tex_size.x * u_res); color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
                     if (u_bloom == 1) {
                         vec4 sum = vec4(0.0); float sX = 1.2 / (u_tex_size.x * u_res); float sY = 1.2 / (u_tex_size.y * u_res);
@@ -1088,19 +1084,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
+                    // ПРИМЕНЯЕМ СЕТКУ К ПЛОСКИМ КООРДИНАТАМ И ФИЗИЧЕСКИМ ПИКСЕЛЯМ
                     if (u_crt > 0) {
                         if (u_crt == 3) {
-                            float gX = 0.85 + 0.15 * cos(uv.x * u_tex_size.x * 6.2831);
-                            float gY = 0.85 + 0.15 * cos(uv.y * u_tex_size.y * 6.2831);
-                            color.rgb *= vec3(gX * gY);
+                            // Идеальные Выпуклые LCD Пиксели (LCD3x)
+                            vec2 cell_uv = fract(orig_uv * u_tex_size);
+                            float dist = length(cell_uv - vec2(0.5));
+                            float bump = 1.15 - dist * 0.6; 
+                            float gridX = smoothstep(0.0, 0.15, cell_uv.x) - smoothstep(0.85, 1.0, cell_uv.x);
+                            float gridY = smoothstep(0.0, 0.15, cell_uv.y) - smoothstep(0.85, 1.0, cell_uv.y);
+                            float grid = gridX * gridY;
+                            color.rgb *= bump * mix(0.4, 1.0, grid);
                         } else if (u_crt == 2) {
-                            float cell = 0.9 + 0.1 * cos(uv.y * u_tex_size.y * u_res * 6.2831); color.rgb *= vec3(cell);
-                            float r = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495);
-                            float g = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 2.094);
-                            float b = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 4.188);
-                            color.rgb *= vec3(r, g, b);
+                            float cell = 0.9 + 0.1 * cos(orig_uv.y * u_tex_size.y * 6.2831); 
+                            float r = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495);
+                            float g = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 2.094);
+                            float b = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 4.188);
+                            color.rgb *= vec3(cell * r, cell * g, cell * b);
                         } else if (u_crt == 1) {
-                            float wave = sin(uv.y * u_tex_size.y * u_res * 3.1415);
+                            float wave = sin(orig_uv.y * u_tex_size.y * 3.1415);
                             color.rgb *= vec3(0.8 + 0.2 * pow(abs(wave), 1.5));
                         }
                     }
@@ -1183,13 +1185,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (padConfig[k].b === undefined) padConfig[k].b = 1;
         });
         
-        // НОВЫЙ БЛОК ИНИЦИАЛИЗАЦИИ РЕЖИМОВ
         if (padConfig.dpad.m === undefined) {
             padConfig.dpad.m = 0; 
-            if (padConfig.dpad.step) padConfig.dpad.m = 1; // Обратная совместимость
+            if (padConfig.dpad.step) padConfig.dpad.m = 1; 
         }
         dpadMode = padConfig.dpad.m;
         
+        // 🔥 ИНИЦИАЛИЗАЦИЯ: Удержание в шагах
+        if (padConfig.dpad.h === undefined) padConfig.dpad.h = true;
+        isStepHold = padConfig.dpad.h;
+
         if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
         if (padConfig.autoStop === undefined) padConfig.autoStop = false; 
         if (padConfig.barrier === undefined) padConfig.barrier = false;
@@ -1197,7 +1202,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         isFloatingDpad = padConfig.dpad.f; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
         
-        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
+        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
         const btnBar = document.getElementById('toggleBarrierBtn');
         if (btnBar) {
             btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
@@ -1209,12 +1214,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         updateBarrierVisuals();
         updateModeBtnUI();
     }
-
-
-
-
-
-
 
     function updateBarrierVisuals() {
         const shield = document.getElementById('bottom-shield'); if (!shield) return;
@@ -1234,7 +1233,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function toggleAutoStop() { 
         isAutoStop = !isAutoStop; 
-        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ'; 
+        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ'; 
         if (currentGame) { padConfig.autoStop = isAutoStop; localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); } 
     }
     
@@ -1244,13 +1243,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         updatePadTransforms(); 
     }
     
-    // ПЕРЕКЛЮЧЕНИЕ 3-х РЕЖИМОВ DPAD
     function cycleDpadMode() {
         dpadMode = (dpadMode + 1) % 3;
         padConfig.dpad.m = dpadMode;
         updateModeBtnUI();
         if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
         updatePadTransforms();
+    }
+
+    function toggleStepHold() {
+        isStepHold = !isStepHold;
+        padConfig.dpad.h = isStepHold;
+        updateModeBtnUI();
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
     }
     
     function updateFloatingBtnUI() { 
@@ -1260,11 +1265,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     function updateModeBtnUI() { 
         const btn = document.getElementById('toggleModeBtn'); if (!btn) return;
-        if (currentGame?.t !== 'd') { btn.style.display = 'none'; return; } else { btn.style.display = 'block'; }
+        const holdBtn = document.getElementById('toggleStepHoldBtn');
         
-        if (dpadMode === 0) { btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; }
-        else if (dpadMode === 1) { btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; }
-        else if (dpadMode === 2) { btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; }
+        btn.style.display = 'block'; 
+        
+        if (dpadMode === 0) { 
+            btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; 
+            if (holdBtn) holdBtn.style.display = 'none';
+        }
+        else if (dpadMode === 1) { 
+            btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; 
+            if (holdBtn) {
+                holdBtn.style.display = 'block';
+                holdBtn.innerHTML = isStepHold ? 'Удержание: БЕГ (Зажал-Бежит)' : 'Удержание: 1 КЛИК = 1 ШАГ';
+                holdBtn.style.background = isStepHold ? '#f59e0b' : '#8b5cf6';
+            }
+        }
+        else if (dpadMode === 2) { 
+            btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; 
+            if (holdBtn) holdBtn.style.display = 'none';
+        }
         
         const padEl = document.getElementById('joystick-dpad');
         if (padEl) {
@@ -1379,7 +1399,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const dx = clientX - dpadCenter.x; const dy = clientY - dpadCenter.y; 
         const distance = Math.sqrt(dx * dx + dy * dy); let normalizedDist = Math.min(distance / dpadRadius, 1); 
         
-        // Визуализация стика в режиме ШУТЕР
         if (dpadMode === 2) {
             const knob = document.getElementById('dpad-knob');
             if (knob) {
@@ -1387,21 +1406,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (distance > dpadRadius) { nx = (dx / distance) * dpadRadius; ny = (dy / distance) * dpadRadius; }
                 knob.style.transform = `translate(${nx}px, ${ny}px)`;
             }
-            
-            // Логика БЕГА (Shift) при оттяжке более 70%
             if (normalizedDist > 0.70) {
-                if (!isShooterRunning) { sendKey(16, true); isShooterRunning = true; } // 16 = Shift
+                if (!isShooterRunning) { sendKey(16, true); isShooterRunning = true; } 
             } else {
                 if (isShooterRunning) { sendKey(16, false); isShooterRunning = false; }
             }
         }
         
         const deadZone = 0.2; if (normalizedDist < deadZone) return null;
-        
         let angle = Math.atan2(dy, dx) * 180 / Math.PI; if (angle < 0) angle += 360;
         const newKeys = new Set();
         
-        if (dpadMode === 1) { // ЖЕСТКИЙ ПОШАГОВЫЙ РЕЖИМ
+        if (dpadMode === 1) { 
             if (angle >= 315 || angle < 45) newKeys.add(39); 
             else if (angle >= 45 && angle < 135) newKeys.add(40); 
             else if (angle >= 135 && angle < 225) newKeys.add(37); 
@@ -1409,7 +1425,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return newKeys;
         }
         
-        // СВАЙП И ШУТЕР (с диагоналями)
         if (angle >= 337.5 || angle < 22.5) newKeys.add(39); 
         else if (angle >= 22.5 && angle < 67.5) { newKeys.add(40); newKeys.add(39); } 
         else if (angle >= 67.5 && angle < 112.5) newKeys.add(40); 
@@ -1424,6 +1439,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     function handleDpadTouchStart(e) {
         if(isPadEditMode) return; if(e.target.closest('.draggable-btn') && e.target.id !== 'joystick-dpad') return;
         e.preventDefault(); const touch = e.changedTouches[0]; if (dpadTouchId !== null) return; dpadTouchId = touch.identifier;
+        
         if (isFloatingDpad) {
             const el = document.getElementById('joystick-dpad'); const rad = (150 * padConfig.dpad.s) / 2;
             el.style.bottom = 'auto'; el.style.left = (touch.clientX - rad) + 'px'; el.style.top = (touch.clientY - rad) + 'px'; el.style.transform = `scale(${padConfig.dpad.s})`;
@@ -1437,8 +1453,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (knob) knob.style.transform = `translate(0px, 0px)`;
         }
         
-        doVibrate(10); const newKeys = getDpadDirection(touch.clientX, touch.clientY);
-        if (newKeys !== null) { newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); activeDpadKeys = new Set(newKeys); updateDpadVisuals(); }
+        const newKeys = getDpadDirection(touch.clientX, touch.clientY);
+        if (newKeys !== null) { 
+            doVibrate(10);
+            
+            // 🔥 ЖЕСТКИЙ ФИКС: 1 КЛИК = 1 ШАГ (Блокировка движения пальца)
+            if (dpadMode === 1 && !isStepHold) {
+                if (isStepLocked) return;
+                isStepLocked = true; // Ставим замок
+                newKeys.forEach(k => sendKey(k, true)); 
+                activeDpadKeys = new Set(newKeys); 
+                updateDpadVisuals(); 
+                
+                setTimeout(() => {
+                    activeDpadKeys.forEach(k => sendKey(k, false));
+                    activeDpadKeys.clear();
+                    updateDpadVisuals();
+                }, 80);
+                return; // Выходим, больше ничего не делаем
+            }
+
+            newKeys.forEach(k => { 
+                if (!activeDpadKeys.has(k)) sendKey(k, true); 
+            }); 
+            activeDpadKeys = new Set(newKeys); 
+            updateDpadVisuals(); 
+        }
     }
 
     function handleDpadTouchMove(e) {
@@ -1449,6 +1489,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (!trackedTouch) return;
         
         const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
+        
+        // 🔥 ЖЕСТКИЙ ФИКС: Если 1 шаг сделан, игнорируем любые свайпы
+        if (dpadMode === 1 && !isStepHold) {
+            if (isStepLocked) return; // Палец еще не оторвали, стоим на месте
+            
+            if (newKeys !== null) {
+                isStepLocked = true; // Заново ставим замок (если ткнул в пустую зону и дотянул до стрелки)
+                doVibrate(10);
+                newKeys.forEach(k => sendKey(k, true)); 
+                activeDpadKeys = new Set(newKeys); 
+                updateDpadVisuals();
+                setTimeout(() => {
+                    activeDpadKeys.forEach(k => sendKey(k, false));
+                    activeDpadKeys.clear();
+                    updateDpadVisuals();
+                }, 80);
+            }
+            return;
+        }
+
         if (newKeys === null) { 
             if (activeDpadKeys.size > 0) { activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); }
         } else { 
@@ -1456,17 +1516,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (newKeys.size !== activeDpadKeys.size) changed = true; else newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
             if (changed) doVibrate(10); 
             
-            if (dpadMode === 1) {
-                // ЖЕСТКАЯ ОТСЕЧКА ПОШАГОВОГО РЕЖИМА: Отпускаем старые до нажатия новых
+            if (dpadMode === 1) { // Это ветка для "ПОШАГОВЫЙ - ЗАЖАЛ И БЕЖИШЬ"
                 if (changed) {
-                    activeDpadKeys.forEach(k => sendKey(k, false));
+                    activeDpadKeys.forEach(k => sendKey(k, false)); 
                     activeDpadKeys.clear();
                     newKeys.forEach(k => sendKey(k, true));
                     activeDpadKeys = new Set(newKeys);
                 }
             } else {
                 activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
-                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); 
+                newKeys.forEach(k => { 
+                    if (!activeDpadKeys.has(k)) sendKey(k, true); 
+                }); 
                 activeDpadKeys = new Set(newKeys); 
             }
         }
@@ -1477,6 +1538,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let isDpadReleased = false; 
         for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === dpadTouchId) { isDpadReleased = true; break; } }
         if (isDpadReleased) {
+            // 🔥 СНИМАЕМ ЗАМОК ПРИ ОТРЫВЕ ПАЛЬЦА
+            isStepLocked = false; 
+            
             activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); updateDpadVisuals();
             
             if (dpadMode === 2) {
@@ -1485,7 +1549,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (isShooterRunning) { sendKey(16, false); isShooterRunning = false; }
             }
             
-            // АВТОТОРМОЗ СОХРАНЕН И РАБОТАЕТ ВЕЗДЕ
             if (isAutoStop && currentGame) {
                 const sysMap = systemButtonMap[currentGame.sys] || systemButtonMap['dos'];
                 const brakeKey = sysMap.brake;
@@ -1598,7 +1661,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     function toggleGamepad(force = null) { 
         isGamepadVisible = force !== null ? force : !isGamepadVisible; 
         gamepad.style.display = isGamepadVisible ? 'block' : 'none'; 
-        updateModeBtnUI(); // Показываем/скрываем зону камеры
+        updateModeBtnUI(); 
     }
     
     function toggleKeysPanel() { 
@@ -1792,10 +1855,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
                 attributes = attributes || {};
                 attributes.preserveDrawingBuffer = true; 
+                attributes.antialias = false;
             }
             
             let ctx = originalGetContext(type, attributes);
             if (ctx && (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl')) {
+                const origTexParameteri = ctx.texParameteri.bind(ctx);
+                ctx.texParameteri = function(target, pname, param) {
+                    if (param === ctx.LINEAR) param = ctx.NEAREST;
+                    return origTexParameteri(target, pname, param);
+                };
+
                 const origTexImage2D = ctx.texImage2D.bind(ctx);
                 const origTexSubImage2D = ctx.texSubImage2D.bind(ctx);
 
@@ -3159,4 +3229,3 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
-
