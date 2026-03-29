@@ -3266,58 +3266,73 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             alert('Ошибка при выгрузке: ' + e.message); btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto';
         }
     }
-        // === ЛОГИКА ПОИСКА НЕДОСТАЮЩИХ ОБЛОЖЕК ===
-    document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
-        const btn = e.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '⏳ ИДЕТ ПОИСК...';
-        btn.style.pointerEvents = 'none';
+        // =========================================================
+// ПРАВИЛЬНАЯ ЛОГИКА ПОИСКА (БЕЗ ЗАВИСАНИЙ БАЗЫ)
+// =========================================================
+document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
+    const btn = e.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ СКАНИРУЕМ БАЗУ...';
+    btn.style.pointerEvents = 'none';
 
-        try {
-            const tx = db.transaction(["games"], "readwrite");
+    try {
+        // 1. Быстро читаем базу и вытаскиваем только игры без обложек
+        const gamesToUpdate = await new Promise((resolve, reject) => {
+            const tx = db.transaction(["games"], "readonly");
             const store = tx.objectStore("games");
             const req = store.getAll();
-
-            req.onsuccess = async () => {
-                const games = req.result;
-                let missingCount = 0;
-                let updatedCount = 0;
-
-                for (const game of games) {
-                    // Ищем только те игры, у которых нет обложки (DOS и HTML пропускаем)
-                    if (!game.cover && game.sys !== 'dos' && game.sys !== 'unk' && game.sys !== 'html') {
-                        missingCount++;
-                        btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
-                        
-                        const newCover = await fetchNetCover(game.n, game.sys);
-                        if (newCover) {
-                            game.cover = newCover;
-                            store.put(game); // Сохраняем в базу
-                            updatedCount++;
-                        }
-                        
-                        // Жесткая пауза в 400мс, чтобы GitHub не забанил нас за DDoS
-                        await new Promise(r => setTimeout(r, 400));
-                    }
-                }
-
-                btn.innerHTML = originalText;
-                btn.style.pointerEvents = 'auto';
-
-                if (missingCount === 0) {
-                    alert('У всех игр уже есть обложки! ✨');
-                } else {
-                    alert(`Поиск завершен!\nИгр без обложек было: ${missingCount}\nУспешно найдено новых: ${updatedCount}`);
-                    renderAllGames(); // Обновляем сетку игр
-                }
+            req.onsuccess = () => {
+                const needsCover = req.result.filter(g => !g.cover && g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
+                resolve(needsCover);
             };
-        } catch (err) {
-            console.error(err);
+            req.onerror = () => reject(req.error);
+        });
+
+        if (gamesToUpdate.length === 0) {
             btn.innerHTML = originalText;
             btn.style.pointerEvents = 'auto';
-            alert('Произошла ошибка при поиске обложек.');
+            alert('У всех игр уже есть обложки! ✨');
+            return;
         }
-    });
+
+        let missingCount = gamesToUpdate.length;
+        let updatedCount = 0;
+
+        // 2. Спокойно ищем обложки в интернете (транзакция базы закрыта, ничего не вылетит)
+        for (const game of gamesToUpdate) {
+            btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
+            
+            const newCover = await fetchNetCover(game.n, game.sys);
+            
+            if (newCover) {
+                game.cover = newCover;
+                
+                // 3. Открываем новую микро-транзакцию только для сохранения картинки
+                await new Promise((resolve) => {
+                    const writeTx = db.transaction(["games"], "readwrite");
+                    writeTx.objectStore("games").put(game);
+                    writeTx.oncomplete = () => resolve();
+                });
+                updatedCount++;
+            }
+            
+            // Защита от бана на GitHub
+            await new Promise(r => setTimeout(r, 400));
+        }
+
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        alert(`Поиск завершен!\nИгр проверено: ${missingCount}\nУспешно найдено новых: ${updatedCount}`);
+        renderAllGames(); 
+
+    } catch (err) {
+        console.error(err);
+        btn.innerHTML = originalText;
+        btn.style.pointerEvents = 'auto';
+        alert('Произошла ошибка при поиске обложек.');
+    }
+});
+// =========================================================
 
 </script>
 
