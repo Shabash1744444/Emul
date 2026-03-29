@@ -325,6 +325,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <button id="closeInfoBtn" class="action-btn" style="width: 100%; background: #334155; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;">ЗАКРЫТЬ</button>
     </div>
 </div>
+<div id="resetModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px);">
+    <div style="background: #1f2937; border: 2px solid #ef4444; border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.9); text-align: center;">
+        <h3 style="margin-top: 0; color: #ef4444; border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px;">ПЕРЕЗАПУСК ИГРЫ</h3>
+        <p style="font-size: 12px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5;">Что сделать с вашим текущим прогрессом?</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btnResetSave" class="action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: 1px solid #1e3a8a; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                💾 СОХРАНИТЬ И ПРОДОЛЖИТЬ
+            </button>
+            <button id="btnResetWipe" class="action-btn" style="background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border: 1px solid #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
+                🗑️ СТЕРЕТЬ И НАЧАТЬ С НУЛЯ
+            </button>
+            <button id="btnResetCancel" class="action-btn" style="background: transparent; color: #64748b; border: 1px solid #475569; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 5px;">
+                ОТМЕНА
+            </button>
+        </div>
+    </div>
+</div>
+
 
 <div id="gameFrame">
     <iframe id="html-iframe"></iframe>
@@ -467,6 +485,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
+
 // тут начинается обычно 2 часть//
 
 <script src="js-dos.js"></script>
@@ -519,8 +538,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     let padConfig = {};
     let isPadEditMode = false, isFloatingDpad = false, dpadMode = 0, isAutoStop = false, isBottomBarrier = false;
-    let isStepHold = true; 
-    let isStepLocked = false; // Блокировка от дрожания пальца
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
     let isEditMode = false;
@@ -1025,8 +1042,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 vec3 toSRGB(vec3 c) { return sqrt(c); }
 
                 vec3 FSR_RCAS(vec3 color, vec2 uv) {
-                    float sharpness = 0.4; 
-                    vec3 d = vec3(0.0);
+                    float sharpness = 0.4; vec3 d = vec3(0.0);
                     d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
@@ -1038,11 +1054,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
 
                 void main() {
-                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) {
-                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
-                    }
+                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
 
-                    vec2 uv = v_texCoord; float vignette = 1.0;
+                    vec2 orig_uv = v_texCoord;
+                    vec2 uv = orig_uv; 
+                    float vignette = 1.0;
+                    
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
                         float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
@@ -1057,10 +1074,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (u_colors == 1) color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
                         else {
                             float sharpness = 0.4; vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb; d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb; d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
                             float contrast = max(max(abs(d.r - rawColor.r * 4.0), abs(d.g - rawColor.g * 4.0)), abs(d.b - rawColor.b * 4.0));
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
@@ -1069,13 +1084,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vec2 scaled_p = uv * u_tex_size * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
                         if (u_filter == 1) f = f * f * (3.0 - 2.0 * f);
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } 
-                    else color = texture2D(u_image, uv); 
+                    } else color = texture2D(u_image, uv); 
                     
                     if (u_rgb == 1) { 
-                        float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
-                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        float shift = 2.0 / (u_tex_size.x * u_res); color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
                     if (u_bloom == 1) {
                         vec4 sum = vec4(0.0); float sX = 1.2 / (u_tex_size.x * u_res); float sY = 1.2 / (u_tex_size.y * u_res);
@@ -1086,17 +1098,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     
                     if (u_crt > 0) {
                         if (u_crt == 3) {
-                            float gX = 0.85 + 0.15 * cos(uv.x * u_tex_size.x * 6.2831);
-                            float gY = 0.85 + 0.15 * cos(uv.y * u_tex_size.y * 6.2831);
-                            color.rgb *= vec3(gX * gY);
+                            vec2 cell_uv = fract(orig_uv * u_tex_size);
+                            float dist = length(cell_uv - vec2(0.5));
+                            float bump = 1.15 - dist * 0.6; 
+                            float gridX = smoothstep(0.0, 0.15, cell_uv.x) - smoothstep(0.85, 1.0, cell_uv.x);
+                            float gridY = smoothstep(0.0, 0.15, cell_uv.y) - smoothstep(0.85, 1.0, cell_uv.y);
+                            float grid = gridX * gridY;
+                            color.rgb *= bump * mix(0.4, 1.0, grid);
                         } else if (u_crt == 2) {
-                            float cell = 0.9 + 0.1 * cos(uv.y * u_tex_size.y * u_res * 6.2831); color.rgb *= vec3(cell);
-                            float r = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495);
-                            float g = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 2.094);
-                            float b = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 4.188);
-                            color.rgb *= vec3(r, g, b);
+                            float cell = 0.9 + 0.1 * cos(orig_uv.y * u_tex_size.y * 6.2831); 
+                            float r = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495);
+                            float g = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 2.094);
+                            float b = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 4.188);
+                            color.rgb *= vec3(cell * r, cell * g, cell * b);
                         } else if (u_crt == 1) {
-                            float wave = sin(uv.y * u_tex_size.y * u_res * 3.1415);
+                            float wave = sin(orig_uv.y * u_tex_size.y * 3.1415);
                             color.rgb *= vec3(0.8 + 0.2 * pow(abs(wave), 1.5));
                         }
                     }
@@ -1162,6 +1178,49 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
+
+    function updateVibration(val) {
+        document.getElementById('vibrationVal').textContent = val + 'мс';
+        padConfig.vib = parseInt(val);
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+    }
+
+    function sanitizePadConfig() {
+        const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
+        if (!padConfig || typeof padConfig !== 'object') padConfig = {};
+        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(k => {
+            if (!padConfig[k]) padConfig[k] = {...defaultCfg};
+            if (padConfig[k].x === undefined) padConfig[k].x = 0; if (padConfig[k].y === undefined) padConfig[k].y = 0;
+            if (padConfig[k].s === undefined) padConfig[k].s = 1; if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
+            if (padConfig[k].b === undefined) padConfig[k].b = 1;
+        });
+        
+        if (padConfig.dpad.m === undefined) {
+            padConfig.dpad.m = 0; 
+            if (padConfig.dpad.step) padConfig.dpad.m = 1; 
+        }
+        dpadMode = padConfig.dpad.m;
+        
+        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
+        if (padConfig.autoStop === undefined) padConfig.autoStop = false; 
+        if (padConfig.barrier === undefined) padConfig.barrier = false;
+        if (padConfig.vib === undefined) padConfig.vib = 15;
+        
+        isFloatingDpad = padConfig.dpad.f; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
+        
+        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
+        const btnBar = document.getElementById('toggleBarrierBtn');
+        if (btnBar) {
+            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
+            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+        }
+        const btnVib = document.getElementById('vibrationSlider');
+        if(btnVib) { btnVib.value = padConfig.vib; document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс'; }
+        
+        updateBarrierVisuals();
+        updateModeBtnUI();
+    }
+
     function updateBarrierVisuals() {
         const shield = document.getElementById('bottom-shield'); if (!shield) return;
         if (isBottomBarrier) {
@@ -1197,13 +1256,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
         updatePadTransforms();
     }
-
-    function toggleStepHold() {
-        isStepHold = !isStepHold;
-        padConfig.dpad.h = isStepHold;
-        updateModeBtnUI();
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-    }
     
     function updateFloatingBtnUI() { 
         const btn = document.getElementById('toggleFloatBtn'); if (!btn) return;
@@ -1212,26 +1264,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     function updateModeBtnUI() { 
         const btn = document.getElementById('toggleModeBtn'); if (!btn) return;
-        const holdBtn = document.getElementById('toggleStepHoldBtn');
         
         btn.style.display = 'block'; 
         
-        if (dpadMode === 0) { 
-            btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; 
-            if (holdBtn) holdBtn.style.display = 'none';
-        }
-        else if (dpadMode === 1) { 
-            btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; 
-            if (holdBtn) {
-                holdBtn.style.display = 'block';
-                holdBtn.innerHTML = isStepHold ? 'Удержание: БЕГ (Зажал-Бежит)' : 'Удержание: 1 КЛИК = 1 ШАГ';
-                holdBtn.style.background = isStepHold ? '#f59e0b' : '#8b5cf6';
-            }
-        }
-        else if (dpadMode === 2) { 
-            btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; 
-            if (holdBtn) holdBtn.style.display = 'none';
-        }
+        if (dpadMode === 0) { btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; }
+        else if (dpadMode === 1) { btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; }
+        else if (dpadMode === 2) { btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; }
         
         const padEl = document.getElementById('joystick-dpad');
         if (padEl) {
@@ -1403,23 +1441,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const newKeys = getDpadDirection(touch.clientX, touch.clientY);
         if (newKeys !== null) { 
             doVibrate(10);
-            
-            // 🔥 ЖЕСТКИЙ ФИКС: 1 КЛИК = 1 ШАГ (Блокировка движения пальца)
-            if (dpadMode === 1 && !isStepHold) {
-                if (isStepLocked) return;
-                isStepLocked = true; // Ставим замок
-                newKeys.forEach(k => sendKey(k, true)); 
-                activeDpadKeys = new Set(newKeys); 
-                updateDpadVisuals(); 
-                
-                setTimeout(() => {
-                    activeDpadKeys.forEach(k => sendKey(k, false));
-                    activeDpadKeys.clear();
-                    updateDpadVisuals();
-                }, 80);
-                return; // Выходим, больше ничего не делаем
-            }
-
             newKeys.forEach(k => { 
                 if (!activeDpadKeys.has(k)) sendKey(k, true); 
             }); 
@@ -1436,25 +1457,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (!trackedTouch) return;
         
         const newKeys = getDpadDirection(trackedTouch.clientX, trackedTouch.clientY);
-        
-        // 🔥 ЖЕСТКИЙ ФИКС: Если 1 шаг сделан, игнорируем любые свайпы
-        if (dpadMode === 1 && !isStepHold) {
-            if (isStepLocked) return; // Палец еще не оторвали, стоим на месте
-            
-            if (newKeys !== null) {
-                isStepLocked = true; // Заново ставим замок (если ткнул в пустую зону и дотянул до стрелки)
-                doVibrate(10);
-                newKeys.forEach(k => sendKey(k, true)); 
-                activeDpadKeys = new Set(newKeys); 
-                updateDpadVisuals();
-                setTimeout(() => {
-                    activeDpadKeys.forEach(k => sendKey(k, false));
-                    activeDpadKeys.clear();
-                    updateDpadVisuals();
-                }, 80);
-            }
-            return;
-        }
 
         if (newKeys === null) { 
             if (activeDpadKeys.size > 0) { activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); }
@@ -1463,7 +1465,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (newKeys.size !== activeDpadKeys.size) changed = true; else newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
             if (changed) doVibrate(10); 
             
-            if (dpadMode === 1) { // Это ветка для "ПОШАГОВЫЙ - ЗАЖАЛ И БЕЖИШЬ"
+            if (dpadMode === 1) { 
                 if (changed) {
                     activeDpadKeys.forEach(k => sendKey(k, false)); 
                     activeDpadKeys.clear();
@@ -1473,7 +1475,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else {
                 activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
                 newKeys.forEach(k => { 
-                    if (!activeDpadKeys.has(k)) sendKey(k, true); 
+                    if (!activeDpadKeys.has(k)) { sendKey(k, true); }
                 }); 
                 activeDpadKeys = new Set(newKeys); 
             }
@@ -1485,9 +1487,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let isDpadReleased = false; 
         for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === dpadTouchId) { isDpadReleased = true; break; } }
         if (isDpadReleased) {
-            // 🔥 СНИМАЕМ ЗАМОК ПРИ ОТРЫВЕ ПАЛЬЦА
-            isStepLocked = false; 
-            
             activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); updateDpadVisuals();
             
             if (dpadMode === 2) {
@@ -1660,12 +1659,65 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+            function showResetModal() {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('resetModalOverlay');
+            const btnWipe = document.getElementById('btnResetWipe');
+            const btnSave = document.getElementById('btnResetSave');
+            const btnCancel = document.getElementById('btnResetCancel');
+
+            overlay.style.display = 'flex';
+
+            const cleanup = () => {
+                overlay.style.display = 'none';
+                btnWipe.onclick = null;
+                btnSave.onclick = null;
+                btnCancel.onclick = null;
+            };
+
+            btnWipe.onclick = () => { cleanup(); resolve('wipe'); };
+            btnSave.onclick = () => { cleanup(); resolve('save'); };
+            btnCancel.onclick = () => { cleanup(); resolve(null); };
+        });
+    }
+
     async function hardResetGame() {
         if (!currentGame) return;
-        await saveGameState(true); 
-        sessionStorage.setItem('autoRestartGameId', currentGame.id);
-        location.reload();
+        
+        const choice = await showResetModal();
+        if (!choice) return; // Если нажали Отмена или кликнули мимо
+        
+        if (choice === 'wipe') {
+            const btn = document.getElementById('btnRestart');
+            if (btn) btn.innerHTML = '⏳';
+            
+            const req = indexedDB.open('ArcadeHubSaves', 1);
+            req.onsuccess = (e) => {
+                const db = e.target.result;
+                if (db.objectStoreNames.contains('saves')) {
+                    const tx = db.transaction(['saves'], 'readwrite');
+                    const store = tx.objectStore('saves');
+                    store.delete('savestate_' + currentGame.n);
+                    store.delete('savestate_lr_' + currentGame.n);
+                    store.delete('savestate_dos_' + currentGame.n);
+                    
+                    tx.oncomplete = () => {
+                        sessionStorage.setItem('autoRestartGameId', currentGame.id);
+                        location.reload();
+                    };
+                } else {
+                    sessionStorage.setItem('autoRestartGameId', currentGame.id);
+                    location.reload();
+                }
+            };
+        } else if (choice === 'save') {
+            await saveGameState(true); 
+            sessionStorage.setItem('autoRestartGameId', currentGame.id);
+            location.reload();
+        }
     }
+
+
 
     function startGame(game) {
         if (isGameStarting) return; 
