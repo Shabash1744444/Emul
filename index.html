@@ -39,13 +39,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
-@keyframes eat1 { 0%, 15% { opacity: 1; } 16%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+
+/* ИСПРАВЛЕННАЯ АНИМАЦИЯ ПАКМАНА */
+@keyframes eat1 { 0%, 18% { opacity: 1; } 19%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
 @keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat3 { 0%, 42% { opacity: 1; } 43%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat4 { 0%, 56% { opacity: 1; } 57%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat5 { 0%, 70% { opacity: 1; } 71%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat6 { 0%, 84% { opacity: 1; } 85%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat7 { 0%, 98% { opacity: 1; } 99%, 100% { opacity: 0; transform: scale(0.5); } }
+@keyframes eat3 { 0%, 38% { opacity: 1; } 39%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat4 { 0%, 48% { opacity: 1; } 49%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat5 { 0%, 60% { opacity: 1; } 61%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat6 { 0%, 72% { opacity: 1; } 73%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
+@keyframes eat7 { 0%, 84% { opacity: 1; } 85%, 100% { opacity: 0; transform: scale(0.5); } }
+
 .t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
 .t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
 .t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
@@ -113,22 +116,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
-/* ОБНОВЛЕННАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ */
+/* ИСПРАВЛЕННАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ (Отступы и размер) */
 #toolbar { 
     position: fixed; 
     top: calc(15px + env(safe-area-inset-top, 0px)); 
-    left: 15px; 
-    right: 15px; /* Тянется на весь экран */
+    left: 10px; 
+    right: 10px; 
     z-index: 9999; 
     display: none; 
-    gap: 10px; 
-    flex-wrap: nowrap; /* Без переноса на новую строку */
-    overflow-x: auto; /* Мягкий скролл пальцем */
+    gap: 6px; /* Уменьшен отступ */
+    padding: 0 5px; /* Защита от прилипания к краям при прокрутке */
+    flex-wrap: nowrap; 
+    overflow-x: auto; 
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none; 
 }
 #toolbar::-webkit-scrollbar { display: none; }
 
-.tool-btn { flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; background: rgba(30, 30, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; }
+.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(30, 30, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; }
 .tool-btn.active-tool { background: rgba(56, 189, 248, 0.6); border-color: #38bdf8; }
 #fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,10,0.8); padding: 8px; border-radius: 8px; border: 1px solid #333; flex-wrap: wrap; max-width: 90%; }
 .f-btn { padding: 8px 12px; background: #333; color: #fff; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -158,6 +163,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
 
+/* ВИЗУАЛЬНЫЙ АНАЛОГОВЫЙ СТИК ДЛЯ ШУТЕРОВ */
+.d-knob { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin-top: -21px; margin-left: -21px; background: rgba(255,255,255,0.4); border-radius: 50%; pointer-events: none; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.6); }
+.dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
+.dpad-shooter .d-knob { display: block; }
+
 #btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
 #btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
@@ -169,6 +179,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 .active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
 #dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
+/* ЗОНА ПОВОРОТА КАМЕРЫ В ШУТЕРАХ */
+#camera-catch-zone { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
 .action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
 .action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
 
@@ -324,10 +336,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="toolbar">
-    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()" style="font-size: 18px;">⬅</div>
-    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; font-size: 18px; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
-    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:#047857; border-color:#059669; font-size: 16px;">💾</div>
-    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:#b45309; border-color:#d97706; font-size: 16px;">📂</div>
+    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()">⬅</div>
+    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
+    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:#047857; border-color:#059669;">💾</div>
+    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:#b45309; border-color:#d97706;">📂</div>
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -356,8 +368,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 <option value="0">ВЫКЛ (Чистая картинка)</option>
                 <option value="1">Сканлайны (Старый ТВ)</option>
                 <option value="2">Тринитрон (Премиум ЭЛТ)</option>
-                <option value="3">LCD-матрица (Портативки)</option>
-                <option value="4">VGA-сетка (Монитор ПК)</option>
+                <option value="3">Сетка (LCD/VGA Матрица)</option>
             </select>
         </div>
         <div>
@@ -409,7 +420,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Грузчик): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
-    <button class="edit-btn action-btn" id="toggleStepBtn" onclick="toggleStepDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    
+    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    
     <div class="edit-row">
       <span>Размер:</span>
       <button class="edit-btn action-btn" onclick="scaleSelectedPad(0.05)">➕</button>
@@ -435,7 +448,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="gamepad">
     <div id="dpad-catch-zone" style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5;"></div>
+    
+    <div id="camera-catch-zone"></div>
+    
     <div class="draggable-btn" id="joystick-dpad" data-id="dpad">
+        <div class="d-knob" id="dpad-knob"></div>
         <div class="d-cross"></div>
         <div class="d-deadzone"></div>
         <div class="d-arrow up" data-k="38">▲</div>
@@ -452,6 +469,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
+
+
+
+
+
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -501,7 +523,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const GAMES = []; 
 
     let padConfig = {};
-    let isPadEditMode = false, isFloatingDpad = false, isStepDpad = false, isAutoStop = false, isBottomBarrier = false;
+    // НОВЫЙ РЕЖИМ УПРАВЛЕНИЯ: 0=Свайп, 1=Шаговый, 2=Шутер
+    let isPadEditMode = false, isFloatingDpad = false, dpadMode = 0, isAutoStop = false, isBottomBarrier = false;
     let selectedPadEl = 'dpad', padDragTarget = null, padDragStartX = 0, padDragStartY = 0;
 
     let isEditMode = false;
@@ -731,7 +754,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return null;
     }
 
-    // --- ФИНАЛЬНЫЙ КОД СОХРАНЕНИЙ (С ПОДДЕРЖКОЙ Libretro _cmd_save_state) ---
     async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
@@ -748,15 +770,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } 
             else if (currentGame.t === 'l' && window.Module) {
                 if (window.Module._cmd_save_state) {
-                    window.Module._cmd_save_state(); // Дергаем родную команду ядра
+                    window.Module._cmd_save_state(); 
                     
-                    // Ждем 500мс, чтобы ядро успело записать файл на свой виртуальный диск
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 700));
 
                     let fs = window.FS || (window.Module && window.Module.FS);
                     let statePath = null;
                     
-                    // Ищем файл в папке states
                     function findState(dir) {
                         try {
                             let nodes = fs.readdir(dir);
@@ -765,8 +785,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                                 let p = dir === '/' ? '/' + n : dir + '/' + n;
                                 if (fs.isDir(fs.stat(p).mode)) {
                                     findState(p);
-                                } else if (p.includes('/states/') && fs.stat(p).size > 0) {
-                                    statePath = p; // Нашли файл!
+                                } else if ((p.includes('/states/') || p.endsWith('.state') || p.endsWith('.srm')) && fs.stat(p).size > 0) {
+                                    statePath = p; 
                                 }
                             }
                         } catch(e) {}
@@ -774,7 +794,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (fs) findState('/home/web_user/retroarch/userdata/states');
 
                     if (statePath) {
-                        // Забираем файл и прячем в IndexedDB навечно
                         let fileData = fs.readFile(statePath);
                         await SaveStorage.set('savestate_lr_' + currentGame.n, packData(fileData));
                         await SaveStorage.set('savestate_lr_path_' + currentGame.n, statePath); 
@@ -783,20 +802,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             else if (currentGame.t === 'd') {
-                const dosFS = window.FS || (window.WDOSBOX && window.WDOSBOX.FS);
-                if (dosFS && typeof dosFS.readdir === 'function') {
+                const dosFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
+                const actualFS = dosFS?.fs || dosFS;
+                
+                if (actualFS && typeof actualFS.readdir === 'function') {
                     let zipData = {};
                     function scanFS(path) {
                         try {
-                            dosFS.readdir(path).forEach(item => {
-                                if(item === '.' || item === '..' || item === 'dev' || item === 'proc' || item === 'tmp' || item === 'home') return;
+                            actualFS.readdir(path).forEach(item => {
+                                if(['.', '..', 'dev', 'proc', 'sys', 'tmp', 'home'].includes(item)) return;
                                 const fullPath = path === '/' ? '/' + item : path + '/' + item;
-                                const st = dosFS.stat(fullPath);
-                                if (dosFS.isDir(st.mode)) scanFS(fullPath);
-                                else {
+                                const st = actualFS.stat(fullPath);
+                                if (actualFS.isDir(st.mode)) {
+                                    scanFS(fullPath);
+                                } else {
                                     const ext = fullPath.split('.').pop().toLowerCase();
                                     if (!['exe','com','dll','ovl','drv','bat'].includes(ext)) {
-                                        zipData[fullPath.replace(/^\//, '')] = dosFS.readFile(fullPath);
+                                        zipData[fullPath.replace(/^\//, '')] = actualFS.readFile(fullPath);
                                     }
                                 }
                             });
@@ -810,18 +832,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             
             if (btn && !isAuto) {
-                if (success) { 
-                    btn.innerHTML = '✅'; 
-                } else { 
-                    btn.innerHTML = '⚠️'; 
-                    btn.style.background = '#ef4444'; 
-                }
+                if (success) { btn.innerHTML = '✅'; } 
+                else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
                 setTimeout(() => { btn.innerHTML = '💾'; btn.style.background = '#047857'; }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
 
-    // --- ФИНАЛЬНЫЙ КОД ЗАГРУЗКИ ---
     async function loadGameState(isAuto = false) {
         if (!currentGame) return;
         try {
@@ -856,7 +873,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                                     if (n === '.' || n === '..') continue;
                                     let p = dir === '/' ? '/' + n : dir + '/' + n;
                                     if (fs.isDir(fs.stat(p).mode)) findState(p);
-                                    else if (p.includes('/states/')) statePath = p; 
+                                    else if (p.includes('/states/') || p.endsWith('.state')) statePath = p; 
                                 }
                             } catch(e) {}
                         }
@@ -872,9 +889,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             }
             else if (currentGame.t === 'd') {
-                const dosFS = window.FS || (window.WDOSBOX && window.WDOSBOX.FS);
+                const dosFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
+                const actualFS = dosFS?.fs || dosFS;
                 const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n);
-                if (b64 && dosFS && typeof dosFS.writeFile === 'function') {
+                
+                if (b64 && actualFS && typeof actualFS.writeFile === 'function') {
                     try {
                         const unzipped = fflate.unzipSync(unpackData(b64));
                         for (const f in unzipped) {
@@ -883,9 +902,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             let currentPath = '';
                             for (let i = 1; i < parts.length - 1; i++) {
                                 currentPath += '/' + parts[i];
-                                try { dosFS.mkdir(currentPath); } catch(e) {}
+                                try { actualFS.mkdir(currentPath); } catch(e) {}
                             }
-                            dosFS.writeFile(fullPath, unzipped[f]);
+                            actualFS.writeFile(fullPath, unzipped[f]);
                         }
                         success = true;
                     } catch(e) {}
@@ -894,12 +913,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             
             if (btn && !isAuto) {
-                if (success) {
-                    btn.innerHTML = '✅'; 
-                } else {
-                    btn.innerHTML = '⚠️'; 
-                    btn.style.background = '#ef4444';
-                }
+                if (success) { btn.innerHTML = '✅'; } 
+                else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
                 setTimeout(() => { btn.innerHTML = '📂'; btn.style.background = '#b45309'; }, 2000);
             }
         } catch(e) { console.error("Load error:", e); }
@@ -1000,7 +1015,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             const vsSource = `attribute vec2 a_position; attribute vec2 a_texCoord; varying vec2 v_texCoord;
                 void main() { gl_Position = vec4(a_position, 0.0, 1.0); v_texCoord = a_texCoord; }`;
-            const fsSource = `precision mediump float; varying vec2 v_texCoord; uniform sampler2D u_image;
+                
+            const fsSource = `
+                #ifdef GL_ES
+                precision highp float;
+                #endif
+                
+                varying vec2 v_texCoord; uniform sampler2D u_image;
                 uniform int u_crt; uniform int u_curve; uniform int u_filter; uniform int u_rgb; uniform int u_bloom; uniform float u_res; 
                 uniform vec2 u_tex_size; uniform int u_system; uniform int u_colors;
 
@@ -1014,15 +1035,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
                     d += toLinear(texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb);
-                    
                     vec3 linearColor = toLinear(color);
                     vec3 delta = abs(d - linearColor * 4.0);
                     float contrast = max(max(delta.r, delta.g), delta.b);
-                    
                     return mix(linearColor, linearColor * 2.0 - d * 0.5, sharpness * contrast);
                 }
 
                 void main() {
+                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
+                    }
+
                     vec2 uv = v_texCoord; float vignette = 1.0;
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
@@ -1031,55 +1054,57 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vignette = smoothstep(1.05, 0.95, edgeDist) * (1.0 - dist * 1.8);
                         if (vignette <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
                     }
+                    
                     vec4 color;
                     if (u_filter == 3) {
                         vec3 rawColor = texture2D(u_image, uv).rgb;
-                        if (u_colors == 1) { color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0); } 
+                        if (u_colors == 1) color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
                         else {
                             float sharpness = 0.4; vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb; d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb; d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
-                            vec3 delta = abs(d - rawColor * 4.0); float contrast = max(max(delta.r, delta.g), delta.b);
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            float contrast = max(max(abs(d.r - rawColor.r * 4.0), abs(d.g - rawColor.g * 4.0)), abs(d.b - rawColor.b * 4.0));
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
                     } 
                     else if (u_filter == 1 || u_filter == 2) {
-                        vec2 p = uv * u_tex_size; vec2 scaled_p = p * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
-                        if (u_filter == 1) { f = f * f * (3.0 - 2.0 * f); }
+                        vec2 scaled_p = uv * u_tex_size * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
+                        if (u_filter == 1) f = f * f * (3.0 - 2.0 * f);
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } else { color = texture2D(u_image, uv); }
+                    } 
+                    else color = texture2D(u_image, uv); 
                     
                     if (u_rgb == 1) { 
                         float shift = 2.0 / (u_tex_size.x * u_res); 
-                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
+                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
                     if (u_bloom == 1) {
-                        vec4 sum = vec4(0.0); float stepX = 1.2 / (u_tex_size.x * u_res); float stepY = 1.2 / (u_tex_size.y * u_res);
-                        sum += texture2D(u_image, uv + vec2(-stepX, -stepY)); sum += texture2D(u_image, uv + vec2(stepX, -stepY));
-                        sum += texture2D(u_image, uv + vec2(-stepX, stepY)); sum += texture2D(u_image, uv + vec2(stepX, stepY));
+                        vec4 sum = vec4(0.0); float sX = 1.2 / (u_tex_size.x * u_res); float sY = 1.2 / (u_tex_size.y * u_res);
+                        sum += texture2D(u_image, uv + vec2(-sX, -sY)); sum += texture2D(u_image, uv + vec2(sX, -sY));
+                        sum += texture2D(u_image, uv + vec2(-sX, sY)); sum += texture2D(u_image, uv + vec2(sX, sY));
                         color += (sum / 4.0) * 0.3; 
                     }
+                    
                     if (u_crt > 0) {
-                        if (u_crt == 3 || u_crt == 4) { 
-                            vec2 pix_uv = uv * u_tex_size; vec2 grid = fract(pix_uv); float gap = (u_crt == 4) ? 0.08 : 0.15;
-                            float edgeX = smoothstep(0.0, gap, grid.x) * smoothstep(1.0, 1.0 - gap, grid.x); float edgeY = smoothstep(0.0, gap, grid.y) * smoothstep(1.0, 1.0 - gap, grid.y);
-                            color.rgb *= mix(vec3(0.75), vec3(1.0), edgeX * edgeY); 
-                            if (u_crt == 3) {
-                                float subR = smoothstep(0.0, 0.33, grid.x) - smoothstep(0.33, 0.66, grid.x); float subG = smoothstep(0.33, 0.66, grid.x) - smoothstep(0.66, 1.0, grid.x);
-                                float subB = smoothstep(0.66, 1.0, grid.x); color.rgb *= vec3(1.0 + subR*0.08, 1.0 + subG*0.08, 1.0 + subB*0.08);
-                            }
+                        if (u_crt == 3) {
+                            float gX = 0.85 + 0.15 * cos(uv.x * u_tex_size.x * 6.2831);
+                            float gY = 0.85 + 0.15 * cos(uv.y * u_tex_size.y * 6.2831);
+                            color.rgb *= vec3(gX * gY);
                         } else if (u_crt == 2) {
-                            vec2 pos = fract(uv * u_tex_size * u_res); float cell = 0.85 + 0.15 * sin(pos.x * 3.1415) * sin(pos.y * 3.1415); color.rgb *= cell;
-                            float triad = fract(uv.x * u_tex_size.x * u_res * 3.0); vec3 phosphor = vec3(triad < 0.33 ? 1.08 : 0.92, (triad >= 0.33 && triad < 0.66) ? 1.08 : 0.92, triad >= 0.66 ? 1.08 : 0.92);
-                            color.rgb *= phosphor;
+                            float cell = 0.9 + 0.1 * cos(uv.y * u_tex_size.y * u_res * 6.2831); color.rgb *= vec3(cell);
+                            float r = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495);
+                            float g = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 2.094);
+                            float b = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 4.188);
+                            color.rgb *= vec3(r, g, b);
                         } else if (u_crt == 1) {
-                            float scanlineStrength = 0.20; float maskStrength = 0.20; float scanline = fract(uv.y * u_tex_size.y * u_res * 0.5);
-                            color.rgb *= 1.0 - (scanline > 0.5 ? scanlineStrength : 0.0);
-                            float mask = fract(uv.x * u_tex_size.x * u_res); vec3 maskColor = vec3(mask < 0.33 ? 1.0 : (1.0 - maskStrength), mask >= 0.33 && mask < 0.66 ? 1.0 : (1.0 - maskStrength), mask >= 0.66 ? 1.0 : (1.0 - maskStrength));
-                            color.rgb *= maskColor;
+                            float wave = sin(uv.y * u_tex_size.y * u_res * 3.1415);
+                            color.rgb *= vec3(0.8 + 0.2 * pow(abs(wave), 1.5));
                         }
                     }
-                    color.rgb *= vignette; gl_FragColor = color;
+                    color.rgb *= vec3(vignette); gl_FragColor = color;
                 }`;
 
             const compileShader = (type, source) => { const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s); return s; };
@@ -1124,8 +1149,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 this.currentWidth = sourceCanvas.width; this.currentHeight = sourceCanvas.height;
                 gl.canvas.width = Math.floor(targetW); gl.canvas.height = Math.floor(targetH);
                 gl.viewport(0, 0, gl.canvas.width, gl.canvas.height); 
-                gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
             }
+            
+            gl.uniform2f(this.uTexSizeLoc, sourceCanvas.width, sourceCanvas.height);
 
             gl.bindTexture(gl.TEXTURE_2D, this.texture);
             const glFilter = videoConfig.filter === 0 ? gl.NEAREST : gl.LINEAR;
@@ -1156,11 +1182,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (padConfig[k].s === undefined) padConfig[k].s = 1; if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
             if (padConfig[k].b === undefined) padConfig[k].b = 1;
         });
-        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; if (padConfig.dpad.step === undefined) padConfig.dpad.step = false; 
-        if (padConfig.autoStop === undefined) padConfig.autoStop = false; if (padConfig.barrier === undefined) padConfig.barrier = false;
+        
+        // НОВЫЙ БЛОК ИНИЦИАЛИЗАЦИИ РЕЖИМОВ
+        if (padConfig.dpad.m === undefined) {
+            padConfig.dpad.m = 0; 
+            if (padConfig.dpad.step) padConfig.dpad.m = 1; // Обратная совместимость
+        }
+        dpadMode = padConfig.dpad.m;
+        
+        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
+        if (padConfig.autoStop === undefined) padConfig.autoStop = false; 
+        if (padConfig.barrier === undefined) padConfig.barrier = false;
         if (padConfig.vib === undefined) padConfig.vib = 15;
         
-        isFloatingDpad = padConfig.dpad.f; isStepDpad = padConfig.dpad.step; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
+        isFloatingDpad = padConfig.dpad.f; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
         
         const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Грузчик): ВКЛ' : 'Авто-Тормоз (Грузчик): ВЫКЛ';
         const btnBar = document.getElementById('toggleBarrierBtn');
@@ -1170,8 +1205,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         const btnVib = document.getElementById('vibrationSlider');
         if(btnVib) { btnVib.value = padConfig.vib; document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс'; }
+        
         updateBarrierVisuals();
+        updateModeBtnUI();
     }
+
+
+
+
+
+
 
     function updateBarrierVisuals() {
         const shield = document.getElementById('bottom-shield'); if (!shield) return;
@@ -1201,9 +1244,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         updatePadTransforms(); 
     }
     
-    function toggleStepDpad() { 
-        isStepDpad = !isStepDpad; padConfig.dpad.step = isStepDpad; updateStepBtnUI(); 
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
+    // ПЕРЕКЛЮЧЕНИЕ 3-х РЕЖИМОВ DPAD
+    function cycleDpadMode() {
+        dpadMode = (dpadMode + 1) % 3;
+        padConfig.dpad.m = dpadMode;
+        updateModeBtnUI();
+        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
+        updatePadTransforms();
     }
     
     function updateFloatingBtnUI() { 
@@ -1211,21 +1258,40 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
     }
     
-    function updateStepBtnUI() { 
-        const btn = document.getElementById('toggleStepBtn'); if (!btn) return;
+    function updateModeBtnUI() { 
+        const btn = document.getElementById('toggleModeBtn'); if (!btn) return;
         if (currentGame?.t !== 'd') { btn.style.display = 'none'; return; } else { btn.style.display = 'block'; }
-        btn.innerHTML = isStepDpad ? 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)' : 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = isStepDpad ? '#ef4444' : '#3b82f6'; 
+        
+        if (dpadMode === 0) { btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; }
+        else if (dpadMode === 1) { btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; }
+        else if (dpadMode === 2) { btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; }
+        
+        const padEl = document.getElementById('joystick-dpad');
+        if (padEl) {
+            if (dpadMode === 2) padEl.classList.add('dpad-shooter');
+            else padEl.classList.remove('dpad-shooter');
+        }
+        
+        const camZone = document.getElementById('camera-catch-zone');
+        if (camZone) {
+            camZone.style.display = (dpadMode === 2 && !isPadEditMode && isGamepadVisible) ? 'block' : 'none';
+        }
     }
     
     function togglePadEdit() {
         isPadEditMode = !isPadEditMode; btnPadEdit.classList.toggle('active-tool', isPadEditMode); padPanel.style.display = isPadEditMode ? 'flex' : 'none';
         updateBarrierVisuals();
+        updateModeBtnUI();
+        
+        const camZone = document.getElementById('camera-catch-zone');
         if (isPadEditMode) {
-            updateStepBtnUI(); 
             const el = document.getElementById('joystick-dpad'); el.style.opacity = padConfig.dpad.o; el.style.pointerEvents = 'auto'; document.getElementById('dpad-catch-zone').style.display = 'none';
+            if(camZone) camZone.style.display = 'none';
         } else {
             document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
-            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); updatePadTransforms(); 
+            if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
+            updatePadTransforms(); 
+            if(camZone && dpadMode === 2 && isGamepadVisible) camZone.style.display = 'block';
         }
     }
 
@@ -1292,13 +1358,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 applyVisuals(id); if (id === 'dpad') document.getElementById('dpad-catch-zone').style.display = 'none';
             }
         });
+        updateModeBtnUI();
     }
 
     function scaleSelectedPad(d) { padConfig[selectedPadEl].s = Math.max(0.3, Math.min(3, padConfig[selectedPadEl].s + d)); updatePadTransforms(); }
-    function resetPad() { padConfig = {}; sanitizePadConfig(); updateFloatingBtnUI(); updateStepBtnUI(); updatePadTransforms(); }
+    function resetPad() { padConfig = {}; sanitizePadConfig(); updateFloatingBtnUI(); updateModeBtnUI(); updatePadTransforms(); }
 
     const dpadZone = document.getElementById('joystick-dpad'); const catchZone = document.getElementById('dpad-catch-zone'); 
     let activeDpadKeys = new Set(); let dpadTouchId = null; let dpadCenter = {x:0, y:0}; let dpadRadius = 75;
+    let isShooterRunning = false;
 
     function updateDpadVisuals() { 
         document.querySelectorAll('.d-arrow').forEach(arrow => { 
@@ -1307,16 +1375,33 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }); 
     }
 
-    // --- ИДЕАЛЬНАЯ ЛОГИКА ШАГОВОГО D-PAD ---
     function getDpadDirection(clientX, clientY) {
         const dx = clientX - dpadCenter.x; const dy = clientY - dpadCenter.y; 
         const distance = Math.sqrt(dx * dx + dy * dy); let normalizedDist = Math.min(distance / dpadRadius, 1); 
+        
+        // Визуализация стика в режиме ШУТЕР
+        if (dpadMode === 2) {
+            const knob = document.getElementById('dpad-knob');
+            if (knob) {
+                let nx = dx, ny = dy;
+                if (distance > dpadRadius) { nx = (dx / distance) * dpadRadius; ny = (dy / distance) * dpadRadius; }
+                knob.style.transform = `translate(${nx}px, ${ny}px)`;
+            }
+            
+            // Логика БЕГА (Shift) при оттяжке более 70%
+            if (normalizedDist > 0.70) {
+                if (!isShooterRunning) { sendKey(16, true); isShooterRunning = true; } // 16 = Shift
+            } else {
+                if (isShooterRunning) { sendKey(16, false); isShooterRunning = false; }
+            }
+        }
+        
         const deadZone = 0.2; if (normalizedDist < deadZone) return null;
         
         let angle = Math.atan2(dy, dx) * 180 / Math.PI; if (angle < 0) angle += 360;
         const newKeys = new Set();
         
-        if (isStepDpad) {
+        if (dpadMode === 1) { // ЖЕСТКИЙ ПОШАГОВЫЙ РЕЖИМ
             if (angle >= 315 || angle < 45) newKeys.add(39); 
             else if (angle >= 45 && angle < 135) newKeys.add(40); 
             else if (angle >= 135 && angle < 225) newKeys.add(37); 
@@ -1324,6 +1409,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return newKeys;
         }
         
+        // СВАЙП И ШУТЕР (с диагоналями)
         if (angle >= 337.5 || angle < 22.5) newKeys.add(39); 
         else if (angle >= 22.5 && angle < 67.5) { newKeys.add(40); newKeys.add(39); } 
         else if (angle >= 67.5 && angle < 112.5) newKeys.add(40); 
@@ -1345,12 +1431,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } else {
             const rect = dpadZone.getBoundingClientRect(); dpadCenter = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; dpadRadius = rect.width / 2;
         }
+        
+        if (dpadMode === 2) {
+            const knob = document.getElementById('dpad-knob');
+            if (knob) knob.style.transform = `translate(0px, 0px)`;
+        }
+        
         doVibrate(10); const newKeys = getDpadDirection(touch.clientX, touch.clientY);
         if (newKeys !== null) { newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); activeDpadKeys = new Set(newKeys); updateDpadVisuals(); }
     }
 
     function handleDpadTouchMove(e) {
-        if(isPadEditMode || dpadTouchId === null) return; if (isStepDpad && currentGame?.t === 'd') return; 
+        if(isPadEditMode || dpadTouchId === null) return; 
         e.preventDefault();
         let trackedTouch = null; 
         for (let i = 0; i < e.touches.length; i++) { if (e.touches[i].identifier === dpadTouchId) { trackedTouch = e.touches[i]; break; } }
@@ -1364,21 +1456,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (newKeys.size !== activeDpadKeys.size) changed = true; else newKeys.forEach(k => { if (!activeDpadKeys.has(k)) changed = true; });
             if (changed) doVibrate(10); 
             
-            if (isStepDpad) activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
-            newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); 
-            if (!isStepDpad) activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); }); 
-            activeDpadKeys = new Set(newKeys); 
+            if (dpadMode === 1) {
+                // ЖЕСТКАЯ ОТСЕЧКА ПОШАГОВОГО РЕЖИМА: Отпускаем старые до нажатия новых
+                if (changed) {
+                    activeDpadKeys.forEach(k => sendKey(k, false));
+                    activeDpadKeys.clear();
+                    newKeys.forEach(k => sendKey(k, true));
+                    activeDpadKeys = new Set(newKeys);
+                }
+            } else {
+                activeDpadKeys.forEach(k => { if (!newKeys.has(k)) sendKey(k, false); });
+                newKeys.forEach(k => { if (!activeDpadKeys.has(k)) sendKey(k, true); }); 
+                activeDpadKeys = new Set(newKeys); 
+            }
         }
         updateDpadVisuals();
     }
 
-    // --- ИДЕАЛЬНАЯ ЛОГИКА АВТО-ТОРМОЗА (ГРУЗЧИК) ---
     function handleDpadTouchEnd(e) {
         let isDpadReleased = false; 
         for (let i = 0; i < e.changedTouches.length; i++) { if (e.changedTouches[i].identifier === dpadTouchId) { isDpadReleased = true; break; } }
         if (isDpadReleased) {
             activeDpadKeys.forEach(k => sendKey(k, false)); activeDpadKeys.clear(); updateDpadVisuals();
             
+            if (dpadMode === 2) {
+                const knob = document.getElementById('dpad-knob');
+                if (knob) knob.style.transform = `translate(0px, 0px)`;
+                if (isShooterRunning) { sendKey(16, false); isShooterRunning = false; }
+            }
+            
+            // АВТОТОРМОЗ СОХРАНЕН И РАБОТАЕТ ВЕЗДЕ
             if (isAutoStop && currentGame) {
                 const sysMap = systemButtonMap[currentGame.sys] || systemButtonMap['dos'];
                 const brakeKey = sysMap.brake;
@@ -1389,12 +1496,62 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             dpadTouchId = null; if (isFloatingDpad) document.getElementById('joystick-dpad').style.opacity = '0'; 
         }
     }
+    
     [dpadZone, catchZone].forEach(zone => { 
         zone.addEventListener('touchstart', handleDpadTouchStart, {passive: false}); 
         zone.addEventListener('touchmove', handleDpadTouchMove, {passive: false}); 
         zone.addEventListener('touchend', handleDpadTouchEnd, {passive: false}); 
         zone.addEventListener('touchcancel', handleDpadTouchEnd, {passive: false}); 
     });
+    
+    // --- ЛОГИКА КАМЕРЫ ДЛЯ ШУТЕРОВ (СВАЙПЫ) ---
+    const cameraZone = document.getElementById('camera-catch-zone');
+    let camTouchId = null;
+    let camStartX = 0;
+    let camActiveKey = null;
+
+    if (cameraZone) {
+        cameraZone.addEventListener('touchstart', (e) => {
+            if(isPadEditMode || dpadMode !== 2) return;
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            if (camTouchId !== null) return;
+            camTouchId = touch.identifier;
+            camStartX = touch.clientX;
+        }, {passive: false});
+
+        cameraZone.addEventListener('touchmove', (e) => {
+            if(isPadEditMode || dpadMode !== 2 || camTouchId === null) return;
+            e.preventDefault();
+            let touch = null;
+            for(let i=0; i<e.touches.length; i++) if(e.touches[i].identifier === camTouchId) touch = e.touches[i];
+            if(!touch) return;
+
+            const delta = touch.clientX - camStartX;
+            const threshold = 15; // Чувствительность поворота
+            let newKey = null;
+            if (delta > threshold) newKey = 39; // Право
+            else if (delta < -threshold) newKey = 37; // Лево
+
+            if (newKey !== camActiveKey) {
+                if (camActiveKey) sendKey(camActiveKey, false);
+                if (newKey) sendKey(newKey, true);
+                camActiveKey = newKey;
+            }
+        }, {passive: false});
+
+        function handleCamTouchEnd(e) {
+            let released = false;
+            for(let i=0; i<e.changedTouches.length; i++) if(e.changedTouches[i].identifier === camTouchId) released = true;
+            if (released) {
+                if (camActiveKey) sendKey(camActiveKey, false);
+                camActiveKey = null;
+                camTouchId = null;
+            }
+        }
+        cameraZone.addEventListener('touchend', handleCamTouchEnd, {passive: false});
+        cameraZone.addEventListener('touchcancel', handleCamTouchEnd, {passive: false});
+    }
 
     document.querySelectorAll('#btn-a, #btn-b, #btn-x, #btn-y, #btn-l, #btn-r, #btn-start, #btn-select').forEach(btn => {
         btn.addEventListener('touchstart', (e) => { 
@@ -1441,6 +1598,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     function toggleGamepad(force = null) { 
         isGamepadVisible = force !== null ? force : !isGamepadVisible; 
         gamepad.style.display = isGamepadVisible ? 'block' : 'none'; 
+        updateModeBtnUI(); // Показываем/скрываем зону камеры
     }
     
     function toggleKeysPanel() { 
@@ -1469,7 +1627,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let keyMap = {}; 
             let targetKeyCode = finalCode; 
             if (currentDos) {
-                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 88: { keyCode: 32, code: 'Space', key: ' ' }, 65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift' }, 81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 27, code: 'Escape', key: 'Escape' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
+                keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 88: { keyCode: 32, code: 'Space', key: ' ' }, 65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift' }, 81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftLeft', key: 'Shift' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
             } else {
                 keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 88: { keyCode: 88, code: 'KeyX', key: 'x' }, 65: { keyCode: 65, code: 'KeyA', key: 'a' }, 83: { keyCode: 83, code: 'KeyS', key: 's' }, 81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 87: { keyCode: 87, code: 'KeyW', key: 'w' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftRight', key: 'Shift' }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
             }
@@ -1545,7 +1703,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const nesOnlySettings = document.getElementById('nes-only-settings');
         if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
 
-        // ВКЛЮЧАЕМ КНОПКИ СОХРАНЕНИЯ ТОЛЬКО ЕСЛИ ЯДРО ЭТО ПОДДЕРЖИВАЕТ (NES и Libretro)
         const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
         document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
         document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
@@ -1632,6 +1789,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         const originalGetContext = libCanvas.getContext.bind(libCanvas);
         libCanvas.getContext = function(type, attributes) {
+            if (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl') {
+                attributes = attributes || {};
+                attributes.preserveDrawingBuffer = true; 
+            }
+            
             let ctx = originalGetContext(type, attributes);
             if (ctx && (type === 'webgl' || type === 'webgl2' || type === 'experimental-webgl')) {
                 const origTexImage2D = ctx.texImage2D.bind(ctx);
@@ -1657,7 +1819,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if(sp) { try { padConfig = JSON.parse(sp); } catch(e) { padConfig = {}; } } else { padConfig = {}; }
         sanitizePadConfig(); 
         updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
         updatePadTransforms(); 
         updateVideoUI();
 
@@ -1773,7 +1934,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         sanitizePadConfig(); 
         updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
         updatePadTransforms(); 
         updateVideoUI();
 
@@ -1885,7 +2045,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             sanitizePadConfig(); 
             updateFloatingBtnUI(); 
-            updateStepBtnUI(); 
             updatePadTransforms();
         }
         updateVideoUI();
@@ -1964,7 +2123,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         sanitizePadConfig(); 
         updateFloatingBtnUI(); 
-        updateStepBtnUI(); 
         updatePadTransforms(); 
         updateVideoUI();
         
@@ -3001,3 +3159,4 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
+
