@@ -2689,32 +2689,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         setTimeout(processCoverQueue, 150);
     }
 
-    async function processCoverQueue() {
-        if (coverQueue.length === 0) {
-            isFetchingCover = false; return;
-        }
-        isFetchingCover = true;
-        await coversReady;
-
-        const { gameName, sysType, resolve } = coverQueue.shift();
-        
-        const repoMap = {
-            "nes": ["Nintendo - Nintendo Entertainment System"],
-            "snes": ["Nintendo - Super Nintendo Entertainment System"],
-            "sfc": ["Nintendo - Super Nintendo Entertainment System"],
-            "smd": ["Sega - Mega Drive - Genesis"],
-            "md": ["Sega - Mega Drive - Genesis"],
-            "gen": ["Sega - Mega Drive - Genesis"],
-            "bin": ["Sega - Mega Drive - Genesis"],
-            "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], 
-            "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"],
-            "gba": ["Nintendo - Game Boy Advance", "Nintendo - Game Boy Color", "Nintendo - Game Boy"]
-        };
-        const folders = repoMap[sysType] || [];
-        
-        if (folders.length === 0 || githubCovers.length === 0) {
-            resolve(null); setTimeout(processCoverQueue, 50); return;
-        }
+    
 
         const localWords = getWords(gameName);
         const localSquashed = localWords.join('');
