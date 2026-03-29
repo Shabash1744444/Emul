@@ -420,7 +420,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
     
     <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
-    <button class="edit-btn action-btn" id="toggleStepHoldBtn" onclick="toggleStepHold()" style="font-size: 12px; margin-bottom: 5px; width: 100%; display: none;">Удержание: БЕГ (Зажал-Бежит)</button>
     
     <div class="edit-row">
       <span>Размер:</span>
@@ -999,9 +998,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     frameDiv.addEventListener('touchend', () => isDragging = false);
 
-    // =========================================================================
-    // 🔥 ФИНАЛЬНАЯ ШЕЙДЕРНАЯ СТАНЦИЯ (Независимая сетка + Идеальные линзы)
-    // =========================================================================
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
@@ -1029,7 +1025,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 vec3 toSRGB(vec3 c) { return sqrt(c); }
 
                 vec3 FSR_RCAS(vec3 color, vec2 uv) {
-                    float sharpness = 0.4; vec3 d = vec3(0.0);
+                    float sharpness = 0.4; 
+                    vec3 d = vec3(0.0);
                     d += toLinear(texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb);
                     d += toLinear(texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb);
@@ -1041,13 +1038,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
 
                 void main() {
-                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) { gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
+                    if (u_tex_size.x <= 0.0 || u_tex_size.y <= 0.0) {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); return;
+                    }
 
-                    // ЗАПОМИНАЕМ ПРЯМЫЕ КООРДИНАТЫ ДЛЯ СЕТКИ (ЧТОБЫ ОНА НЕ КРУТИЛАСЬ)
-                    vec2 orig_uv = v_texCoord;
-                    vec2 uv = orig_uv; 
-                    float vignette = 1.0;
-                    
+                    vec2 uv = v_texCoord; float vignette = 1.0;
                     if (u_curve == 1) {
                         vec2 aspect = vec2(u_tex_size.x / u_tex_size.y, 1.0); vec2 center = (uv - 0.5) * aspect;
                         float dist = dot(center, center) * 0.15; uv = center * (1.0 + dist) / aspect + 0.5;
@@ -1062,8 +1057,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (u_colors == 1) color = vec4(toSRGB(FSR_RCAS(rawColor, uv)), 1.0);
                         else {
                             float sharpness = 0.4; vec3 d = vec3(0.0);
-                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb; d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
-                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb; d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv + vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv - vec2(0.0, 1.0/u_tex_size.y)).rgb;
+                            d += texture2D(u_image, uv + vec2(1.0/u_tex_size.x, 0.0)).rgb;
+                            d += texture2D(u_image, uv - vec2(1.0/u_tex_size.x, 0.0)).rgb;
                             float contrast = max(max(abs(d.r - rawColor.r * 4.0), abs(d.g - rawColor.g * 4.0)), abs(d.b - rawColor.b * 4.0));
                             color = vec4(mix(rawColor, rawColor * 2.0 - d * 0.5, sharpness * contrast), 1.0);
                         }
@@ -1072,10 +1069,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         vec2 scaled_p = uv * u_tex_size * u_res; vec2 i = floor(scaled_p); vec2 f = fract(scaled_p);
                         if (u_filter == 1) f = f * f * (3.0 - 2.0 * f);
                         color = texture2D(u_image, (i + f) / (u_tex_size * u_res));
-                    } else color = texture2D(u_image, uv); 
+                    } 
+                    else color = texture2D(u_image, uv); 
                     
                     if (u_rgb == 1) { 
-                        float shift = 2.0 / (u_tex_size.x * u_res); color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
+                        float shift = 2.0 / (u_tex_size.x * u_res); 
+                        color.r = texture2D(u_image, uv + vec2(shift, 0.0)).r; 
+                        color.b = texture2D(u_image, uv - vec2(shift, 0.0)).b; 
                     }
                     if (u_bloom == 1) {
                         vec4 sum = vec4(0.0); float sX = 1.2 / (u_tex_size.x * u_res); float sY = 1.2 / (u_tex_size.y * u_res);
@@ -1084,25 +1084,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
-                    // ПРИМЕНЯЕМ СЕТКУ К ПЛОСКИМ КООРДИНАТАМ И ФИЗИЧЕСКИМ ПИКСЕЛЯМ
                     if (u_crt > 0) {
                         if (u_crt == 3) {
-                            // Идеальные Выпуклые LCD Пиксели (LCD3x)
-                            vec2 cell_uv = fract(orig_uv * u_tex_size);
-                            float dist = length(cell_uv - vec2(0.5));
-                            float bump = 1.15 - dist * 0.6; 
-                            float gridX = smoothstep(0.0, 0.15, cell_uv.x) - smoothstep(0.85, 1.0, cell_uv.x);
-                            float gridY = smoothstep(0.0, 0.15, cell_uv.y) - smoothstep(0.85, 1.0, cell_uv.y);
-                            float grid = gridX * gridY;
-                            color.rgb *= bump * mix(0.4, 1.0, grid);
+                            float gX = 0.85 + 0.15 * cos(uv.x * u_tex_size.x * 6.2831);
+                            float gY = 0.85 + 0.15 * cos(uv.y * u_tex_size.y * 6.2831);
+                            color.rgb *= vec3(gX * gY);
                         } else if (u_crt == 2) {
-                            float cell = 0.9 + 0.1 * cos(orig_uv.y * u_tex_size.y * 6.2831); 
-                            float r = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495);
-                            float g = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 2.094);
-                            float b = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495 + 4.188);
-                            color.rgb *= vec3(cell * r, cell * g, cell * b);
+                            float cell = 0.9 + 0.1 * cos(uv.y * u_tex_size.y * u_res * 6.2831); color.rgb *= vec3(cell);
+                            float r = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495);
+                            float g = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 2.094);
+                            float b = 1.0 + 0.15 * cos(uv.x * u_tex_size.x * 18.8495 + 4.188);
+                            color.rgb *= vec3(r, g, b);
                         } else if (u_crt == 1) {
-                            float wave = sin(orig_uv.y * u_tex_size.y * 3.1415);
+                            float wave = sin(uv.y * u_tex_size.y * u_res * 3.1415);
                             color.rgb *= vec3(0.8 + 0.2 * pow(abs(wave), 1.5));
                         }
                     }
@@ -1168,53 +1162,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             gl.drawArrays(gl.TRIANGLES, 0, 6);
         }
     };
-
-    function updateVibration(val) {
-        document.getElementById('vibrationVal').textContent = val + 'мс';
-        padConfig.vib = parseInt(val);
-        if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig));
-    }
-
-    function sanitizePadConfig() {
-        const defaultCfg = {x:0, y:0, s:1, o:0.3, b:1};
-        if (!padConfig || typeof padConfig !== 'object') padConfig = {};
-        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(k => {
-            if (!padConfig[k]) padConfig[k] = {...defaultCfg};
-            if (padConfig[k].x === undefined) padConfig[k].x = 0; if (padConfig[k].y === undefined) padConfig[k].y = 0;
-            if (padConfig[k].s === undefined) padConfig[k].s = 1; if (padConfig[k].o === undefined) padConfig[k].o = 0.3;
-            if (padConfig[k].b === undefined) padConfig[k].b = 1;
-        });
-        
-        if (padConfig.dpad.m === undefined) {
-            padConfig.dpad.m = 0; 
-            if (padConfig.dpad.step) padConfig.dpad.m = 1; 
-        }
-        dpadMode = padConfig.dpad.m;
-        
-        // 🔥 ИНИЦИАЛИЗАЦИЯ: Удержание в шагах
-        if (padConfig.dpad.h === undefined) padConfig.dpad.h = true;
-        isStepHold = padConfig.dpad.h;
-
-        if (padConfig.dpad.f === undefined) padConfig.dpad.f = false; 
-        if (padConfig.autoStop === undefined) padConfig.autoStop = false; 
-        if (padConfig.barrier === undefined) padConfig.barrier = false;
-        if (padConfig.vib === undefined) padConfig.vib = 15;
-        
-        isFloatingDpad = padConfig.dpad.f; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
-        
-        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
-        const btnBar = document.getElementById('toggleBarrierBtn');
-        if (btnBar) {
-            btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
-            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
-        }
-        const btnVib = document.getElementById('vibrationSlider');
-        if(btnVib) { btnVib.value = padConfig.vib; document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс'; }
-        
-        updateBarrierVisuals();
-        updateModeBtnUI();
-    }
-
     function updateBarrierVisuals() {
         const shield = document.getElementById('bottom-shield'); if (!shield) return;
         if (isBottomBarrier) {
