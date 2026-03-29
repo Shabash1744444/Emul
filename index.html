@@ -2959,35 +2959,66 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     async function flattenAndProcessFiles(files) {
         const extractedFiles = [];
         
-        async function processEntry(fileData, filename) {
-            const lowName = filename.toLowerCase();
+        for (const f of files) {
+            const lowName = f.name.toLowerCase();
+            
             if (lowName.endsWith('.zip')) {
                 try {
-                    const unzipped = fflate.unzipSync(fileData);
+                    const buffer = await readBlob(f);
+                    const arr = new Uint8Array(buffer);
+                    const unzipped = fflate.unzipSync(arr);
+                    
+                    let romsInZip = [];
                     let hasExe = false;
-                    for (const f in unzipped) {
-                        if (f.toLowerCase().endsWith('.exe') || f.toLowerCase().endsWith('.bat')) hasExe = true;
-                    }
-                    if (hasExe) {
-                        extractedFiles.push(new File([fileData], filename, {type: 'application/zip'}));
-                    } else {
-                        for (const f in unzipped) {
-                            if (!f.endsWith('/')) {
-                                await processEntry(unzipped[f], f.split('/').pop());
-                            }
+
+                    // Сканируем содержимое архива
+                    for (const path in unzipped) {
+                        const lowPath = path.toLowerCase();
+                        const ext = lowPath.split('.').pop();
+                        
+                        // Если есть .exe — это DOS игра, берем весь ZIP целиком
+                        if (['exe', 'com', 'bat'].includes(ext)) {
+                            hasExe = true;
+                            break;
+                        }
+                        
+                        // Если это ром — запоминаем его
+                        if (coreMap[ext] || ext === 'nes' || ext === 'html') {
+                            romsInZip.push({ 
+                                name: path.split('/').pop(), 
+                                data: unzipped[path],
+                                originalPath: path
+                            });
                         }
                     }
+
+                    if (hasExe) {
+                        // Для DOS оставляем архив как есть
+                        extractedFiles.push(f);
+                    } 
+                    else if (romsInZip.length > 1) {
+                        // Если в архиве много игр — вытаскиваем каждую как отдельный файл
+                        for (const rom of romsInZip) {
+                            const blob = new Blob([rom.data], {type: 'application/octet-stream'});
+                            const newFile = new File([blob], rom.name);
+                            extractedFiles.push(newFile);
+                        }
+                    } 
+                    else if (romsInZip.length === 1) {
+                        // Если игра одна — оставляем в ZIP (для экономии места)
+                        extractedFiles.push(f);
+                    }
+                    else {
+                        // Если вообще ничего не нашли — на всякий случай кидаем файл целиком
+                        extractedFiles.push(f);
+                    }
                 } catch(e) {
-                    extractedFiles.push(new File([fileData], filename, {type: 'application/zip'}));
+                    extractedFiles.push(f);
                 }
             } else {
-                extractedFiles.push(new File([fileData], filename));
+                // Голые файлы просто прокидываем дальше
+                extractedFiles.push(f);
             }
-        }
-
-        for (const f of files) {
-            const buffer = await readBlob(f);
-            await processEntry(new Uint8Array(buffer), f.name);
         }
         
         return extractedFiles.filter(f => {
@@ -2995,6 +3026,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return coreMap[ext] || ext === 'nes' || ext === 'zip' || ext === 'html';
         });
     }
+
+
 
     globalFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files || []);
