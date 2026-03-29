@@ -2565,7 +2565,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch (e) { return false; }
     }
 
-    const coverQueue = [];
+        const coverQueue = [];
     let isFetchingCover = false;
 
     function fetchNetCover(gameName, sysType) {
@@ -2573,6 +2573,120 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             coverQueue.push({ gameName, sysType, resolve });
             if (!isFetchingCover) processCoverQueue();
         });
+    }
+
+    async function processCoverQueue() {
+        if (coverQueue.length === 0) {
+            isFetchingCover = false; 
+            return;
+        }
+        isFetchingCover = true;
+        
+        // Берем первую задачу из очереди
+        const task = coverQueue.shift();
+
+        try {
+            await coversReady;
+
+            const repoMap = {
+                "nes": ["Nintendo - Nintendo Entertainment System"],
+                "snes": ["Nintendo - Super Nintendo Entertainment System"],
+                "sfc": ["Nintendo - Super Nintendo Entertainment System"],
+                "smd": ["Sega - Mega Drive - Genesis"],
+                "md": ["Sega - Mega Drive - Genesis"],
+                "gen": ["Sega - Mega Drive - Genesis"],
+                "bin": ["Sega - Mega Drive - Genesis"],
+                "ngp": ["SNK - Neo Geo Pocket", "SNK - Neo Geo Pocket Color"], 
+                "ngc": ["SNK - Neo Geo Pocket Color", "SNK - Neo Geo Pocket"],
+                "gba": ["Nintendo - Game Boy Advance", "Nintendo - Game Boy Color", "Nintendo - Game Boy"]
+            };
+            const folders = repoMap[task.sysType] || [];
+            
+            if (folders.length === 0 || githubCovers.length === 0) {
+                task.resolve(null); 
+                setTimeout(processCoverQueue, 50); 
+                return;
+            }
+
+            const localWords = getWords(task.gameName);
+            const localSquashed = localWords.join('');
+            const localNumbers = localWords.filter(w => !isNaN(w));
+
+            let scoredMatches = githubCovers.map(name => {
+                const dbWords = getWords(name);
+                const dbSquashed = dbWords.join('');
+                const dbNumbers = dbWords.filter(w => !isNaN(w));
+                let score = 0;
+
+                if (dbSquashed === localSquashed) score += 100;
+                else if (dbSquashed.includes(localSquashed) || localSquashed.includes(dbSquashed)) score += 40;
+
+                const matchedWords = localWords.filter(w => dbWords.includes(w));
+                score += matchedWords.length * 10;
+                if (matchedWords.length > 0 && matchedWords.length === localWords.length) score += 50;
+
+                if (localNumbers.length > 0 && dbNumbers.length > 0) {
+                    if (localNumbers[0] === dbNumbers[0]) score += 40;
+                    else score -= 100; 
+                }
+
+                return { name, score };
+            }).filter(m => m.score > 0);
+
+            scoredMatches.sort((a, b) => b.score - a.score);
+            let matches = scoredMatches.map(m => m.name).slice(0, 5);
+
+            if (matches.length === 0) {
+                for (let name of githubCovers) {
+                    let safeName = name.replace(/\.png$/i, '');
+                    let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folders[0])}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                    if (!window.usedCovers.has(url)) {
+                        matches.push(name);
+                        if (matches.length >= 3) break;
+                    }
+                }
+                if (matches.length === 0) {
+                    matches = githubCovers.slice(0, 3); 
+                }
+            }
+
+            let foundUrl = null;
+            let fallbackUrl = null;
+
+            for (const match of matches) {
+                const safeName = match.replace(/\.png$/i, '');
+                
+                for (const folder of folders) {
+                    const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
+                    
+                    if (await checkImageExists(url)) {
+                        if (window.usedCovers.has(url)) {
+                            if (!fallbackUrl) fallbackUrl = url; 
+                            continue; 
+                        } else {
+                            foundUrl = url;
+                            window.usedCovers.add(url);
+                            break;
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 50));
+                }
+                if (foundUrl) break; 
+            }
+
+            if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
+            
+            // Если дошли сюда успешно — отдаем картинку
+            task.resolve(foundUrl);
+
+        } catch (error) {
+            console.error("Очередь поймала сбой, но мы идем дальше:", error);
+            // САМОЕ ВАЖНОЕ: даже если всё взорвалось, мы ОБЯЗАНЫ отпустить кнопку!
+            task.resolve(null); 
+        }
+
+        // Запускаем следующий элемент очереди несмотря ни на что
+        setTimeout(processCoverQueue, 150);
     }
 
     async function processCoverQueue() {
