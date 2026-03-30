@@ -34,9 +34,37 @@
     document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
 <style>
+:root {
+    --bg-color-base: #0a0a0a;
+    --bg-glow: #111827;
+}
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; }
-#menuScreen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; background: linear-gradient(135deg, #0a0a0a, #111827, #0a0a0a); display: flex; flex-direction: column; }
+
+/* Адаптивный фон меню и плавное растворение */
+#menuScreen { 
+    position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; 
+    padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; 
+    background: linear-gradient(135deg, var(--bg-color-base), var(--bg-glow), var(--bg-color-base)); 
+    display: flex; flex-direction: column; 
+    transition: opacity 0.4s ease, background 0.8s ease; 
+}
+
+/* Сплеш Скрин (Заставка) */
+#splashScreen {
+    position: fixed; inset: 0; background: #00000a; z-index: 99999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#splashScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.splash-title {
+    color: #38bdf8; font-family: monospace; font-size: 38px; font-weight: bold;
+    text-shadow: 0 0 10px #38bdf8; letter-spacing: 2px;
+    animation: pulse 1.5s infinite alternate;
+}
+.splash-sub { color: #888; font-family: monospace; margin-top: 20px; font-size: 14px; letter-spacing: 1px; }
+@keyframes pulse { 0% { opacity: 0.7; text-shadow: 0 0 10px #38bdf8; } 100% { opacity: 1; text-shadow: 0 0 20px #38bdf8, 0 0 40px #38bdf8; } }
+
 .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
 .crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
 
@@ -75,7 +103,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .icon { font-size: 36px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px; }
 .game-title { position: absolute; bottom: 0; left: 0; width: 100%; padding: 6px 4px; font-size: 10px; background: rgba(0,0,0,0.8); border-radius: 0 0 11px 11px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; z-index: 3; }
 
-/* ОБНОВЛЕННЫЙ БЕЙДЖ АВТОЗАГРУЗКИ (ЖИРНЫЙ, УДОБНЫЙ) */
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: all 0.2s ease; }
 .neon-active { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.9), inset 0 0 6px rgba(56, 189, 248, 0.6) !important; border: 1px solid #38bdf8 !important; color: #fff !important; text-shadow: 0 0 5px #fff, 0 0 10px #38bdf8 !important; transform: scale(1.05); }
 
@@ -111,7 +138,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .info-platform-list { margin: 15px 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
 .info-platform-list li { margin-bottom: 8px; border-bottom: 1px solid #374151; padding-bottom: 8px; display: flex; justify-content: space-between;}
 .info-ext { color: #38bdf8; font-family: monospace; font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 4px; border-radius: 4px;}
-#gameFrame { position: fixed; inset: 0; background: #000; display: none; z-index: 100; overflow: hidden; }
+
+/* Плавное открытие/закрытие окна эмулятора */
+#gameFrame { position: fixed; inset: 0; background: #000; display: none; opacity: 0; z-index: 100; overflow: hidden; transition: opacity 0.4s ease; }
 #html-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; background: #000; }
 #canvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center; transition: transform 0.1s ease-out; }
 #dos-canvas, #nes-canvas, #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; object-fit: contain; opacity: 0.01; z-index: 10; image-rendering: pixelated; }
@@ -120,18 +149,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
 #toolbar { 
-    position: fixed; 
-    top: calc(15px + env(safe-area-inset-top, 0px)); 
-    left: 10px; 
-    right: 10px; 
-    z-index: 9999; 
-    display: none; 
-    gap: 6px; 
-    padding: 0 5px; 
-    flex-wrap: nowrap; 
-    overflow-x: auto; 
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; 
+    position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; 
+    display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; 
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; 
+    transition: opacity 0.4s ease;
 }
 #toolbar::-webkit-scrollbar { display: none; }
 
@@ -234,6 +255,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </style>
 </head>
 <body>
+
+<div id="splashScreen">
+    <div class="splash-title">ARCADE HUB</div>
+    <div class="splash-sub">INITIALIZING RETRO CORES...</div>
+</div>
 
 <div id="menuScreen">
     <div class="meme-header">
@@ -564,14 +590,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     };
 
     const sysColors = {
-        'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'NES' },
-        'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA' },
-        'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES' },
-        'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP' },
-        'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA' },
-        'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS' },
-        'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML' },
-        'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE' } 
+        'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'NES', hex: '#ef4444' },
+        'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA', hex: '#3b82f6' },
+        'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', hex: '#8b5cf6' },
+        'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', hex: '#06b6d4' },
+        'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA', hex: '#d946ef' },
+        'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS', hex: '#10b981' },
+        'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML', hex: '#f59e0b' },
+        'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' } 
     };
 
     const systemButtonMap = {
@@ -583,6 +609,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'dos': { brake: 90, jump: 88 },
         'unk': { brake: 88, jump: 90 }
     };
+    
+    // Spotify Adaptive Background Logic
+    function hexToRgb(hex) {
+        let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 10, g: 10, b: 10};
+    }
+    
+    function setSpotifyGlow(gameSys) {
+        const root = document.documentElement;
+        if (!gameSys || !sysColors[gameSys]) {
+            root.style.setProperty('--bg-color-base', '#0a0a0a');
+            root.style.setProperty('--bg-glow', '#111827');
+            return;
+        }
+        const rgb = hexToRgb(sysColors[gameSys].hex);
+        // Создаем темный глубокий градиент на основе цвета платформы
+        root.style.setProperty('--bg-glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`);
+        root.style.setProperty('--bg-color-base', `rgba(${Math.max(0, rgb.r-30)}, ${Math.max(0, rgb.g-30)}, ${Math.max(0, rgb.b-30)}, 0.15)`);
+    }
+
     let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
     try {
         const savedVc = localStorage.getItem('videoV6');
@@ -698,18 +744,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // УМНАЯ КНОПКА НАЗАД: Перехватчик
+    // --- УМНАЯ КНОПКА НАЗАД: НОВАЯ БЕЗОТКАЗНАЯ ЛОГИКА ДЛЯ APK / TWA ---
     window.addEventListener('load', () => {
-        history.pushState({ trap: true }, "");
-        history.pushState({ trap: true }, ""); 
+        // Устанавливаем базовую историю, чтобы не пускать браузер назад
+        history.replaceState({ page: 'menu' }, "");
+        
+        // Убираем Сплеш Скрин через 2 секунды после прогрузки
+        setTimeout(() => {
+            const splash = document.getElementById('splashScreen');
+            if(splash) splash.classList.add('hidden');
+        }, 2000);
     });
 
     window.addEventListener('popstate', (e) => { 
-        history.pushState({ trap: true }, "");
+        // Если была нажата системная кнопка или свайп назад
         const gameFrame = document.getElementById('gameFrame');
-        if (gameFrame && gameFrame.style.display === 'block') { 
+        
+        if (gameFrame && gameFrame.style.display === 'block' && parseFloat(gameFrame.style.opacity) > 0) { 
+            // Мы находимся в игре. Блокируем закрытие APK! Возвращаем шаг истории.
+            history.pushState({ page: 'game' }, "");
+            
+            // Запускаем нашу мягкую функцию очистки и выхода
             if (typeof handleBackBtn === 'function') handleBackBtn();
         }
+        // Если мы в меню, код ничего не делает, и браузер штатно закрывает приложение
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -725,7 +783,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     window.addEventListener('beforeunload', () => {
         if (currentGame) saveGameState(true);
     });
-
     const SaveStorage = {
         _db: null,
         init() {
@@ -1368,7 +1425,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
                 else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
                 else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'r') { el.style.top = '95px'; right = '20px'; el.style.bottom = 'auto'; } 
                 else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
                 else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`; el.style.pointerEvents = 'auto'; 
@@ -1727,6 +1784,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             location.reload();
         }
     }
+
+    // --- ОБНОВЛЕННЫЙ СТАРТ С ПЛАВНЫМ ПЕРЕХОДОМ И HISTORY API ---
     function startGame(game) {
         if (isGameStarting) return; 
         isGameStarting = true;
@@ -1734,7 +1793,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
         try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
 
-        history.pushState({inGame: true}, "");
+        // ИДЕАЛЬНАЯ КНОПКА НАЗАД (APK)
+        history.pushState({ page: 'game' }, "");
 
         currentGame = game;
         
@@ -1755,89 +1815,99 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         
         document.getElementById('searchInput').value = ''; 
-        menuScreen.style.display = 'none'; 
-        frameDiv.style.display = 'block'; 
-        toolbar.style.display = 'flex';
         
-        document.getElementById('btnRestart').style.display = 'flex';
-        
-        btnGamepad.style.display = 'none'; 
-        btnKeyboard.style.display = 'none'; 
-        btnScreen.style.display = 'none'; 
-        btnPadEdit.style.display = 'none'; 
-        fkeysPanel.style.display = 'none'; 
-        screenPanel.style.display = 'none'; 
-        padPanel.style.display = 'none'; 
-        gamepad.style.display = 'none';
-        
-        const nesOnlySettings = document.getElementById('nes-only-settings');
-        if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
+        // --- ПЛАВНЫЙ ПЕРЕХОД FADE OUT / FADE IN ---
+        menuScreen.style.opacity = '0';
+        setTimeout(() => {
+            menuScreen.style.display = 'none'; 
+            
+            frameDiv.style.display = 'block'; 
+            // Принудительная перерисовка перед показом
+            void frameDiv.offsetWidth;
+            frameDiv.style.opacity = '1';
+            
+            toolbar.style.display = 'flex';
+            setTimeout(() => toolbar.style.opacity = '1', 50);
+            
+            document.getElementById('btnRestart').style.display = 'flex';
+            
+            btnGamepad.style.display = 'none'; 
+            btnKeyboard.style.display = 'none'; 
+            btnScreen.style.display = 'none'; 
+            btnPadEdit.style.display = 'none'; 
+            fkeysPanel.style.display = 'none'; 
+            screenPanel.style.display = 'none'; 
+            padPanel.style.display = 'none'; 
+            gamepad.style.display = 'none';
+            
+            const nesOnlySettings = document.getElementById('nes-only-settings');
+            if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
 
-        const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
-        document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
-        document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
-        
-        const btnSelect = document.getElementById('btn-select');
-        if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
-        
-        const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
-        document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
-        document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
-        
-        const isGba = game.sys === 'gba';
-        document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
-        document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
-        
-        isPadEditMode = false; 
-        btnPadEdit.classList.remove('active-tool');
-        
-        const savedLayout = localStorage.getItem('layout_' + game.n);
-        if (savedLayout) { 
-            const l = JSON.parse(savedLayout); 
-            scaleX = l.scaleX; 
-            scaleY = l.scaleY; 
-            screenX = l.screenX; 
-            screenY = l.screenY; 
-        } else { 
-            resetScale(); 
-        }
-        updateScreenTransform();
-
-        isEditMode = false; 
-        btnScreen.classList.remove('active-tool'); 
-        canvasContainer.style.pointerEvents = 'auto';
-        document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
-        
-        backTapCount = 0; 
-        nesRestartFn = null; 
-        isShuttingDown = false; 
-        isGamePaused = false;
-
-        // ПРОВЕРЯЕМ ФЛАГ НЕОНА
-        const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
-
-        if (game.t === 'h') {
-            const htmlUrl = URL.createObjectURL(game.fileBlob);
-            currentGame._tempUrl = htmlUrl; 
-            htmlIframe.style.display = 'block'; 
-            htmlIframe.src = htmlUrl; 
-            canvasContainer.style.pointerEvents = 'none'; 
-            isGameStarting = false;
-        } 
-        else if (game.t === 'd') {
-            setupDOS(game, shouldAutoLoad);
-        } 
-        else if (game.t === 'l') {
-            const cName = coreMap[game.ext];
-            if (cName === 'mgba_libretro') {
-                setupModernLibretro(game, shouldAutoLoad);
-            } else {
-                setupLibretro(game, shouldAutoLoad);
+            const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
+            document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
+            document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
+            
+            const btnSelect = document.getElementById('btn-select');
+            if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+            
+            const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
+            document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
+            document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
+            
+            const isGba = game.sys === 'gba';
+            document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
+            document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
+            
+            isPadEditMode = false; 
+            btnPadEdit.classList.remove('active-tool');
+            
+            const savedLayout = localStorage.getItem('layout_' + game.n);
+            if (savedLayout) { 
+                const l = JSON.parse(savedLayout); 
+                scaleX = l.scaleX; 
+                scaleY = l.scaleY; 
+                screenX = l.screenX; 
+                screenY = l.screenY; 
+            } else { 
+                resetScale(); 
             }
-        }
-        else if (game.t === 'n') {
-            setupNES(game, shouldAutoLoad);
-        }
+            updateScreenTransform();
+
+            isEditMode = false; 
+            btnScreen.classList.remove('active-tool'); 
+            canvasContainer.style.pointerEvents = 'auto';
+            document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
+            
+            backTapCount = 0; 
+            nesRestartFn = null; 
+            isShuttingDown = false; 
+            isGamePaused = false;
+
+            const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
+
+            if (game.t === 'h') {
+                const htmlUrl = URL.createObjectURL(game.fileBlob);
+                currentGame._tempUrl = htmlUrl; 
+                htmlIframe.style.display = 'block'; 
+                htmlIframe.src = htmlUrl; 
+                canvasContainer.style.pointerEvents = 'none'; 
+                isGameStarting = false;
+            } 
+            else if (game.t === 'd') {
+                setupDOS(game, shouldAutoLoad);
+            } 
+            else if (game.t === 'l') {
+                const cName = coreMap[game.ext];
+                if (cName === 'mgba_libretro') {
+                    setupModernLibretro(game, shouldAutoLoad);
+                } else {
+                    setupLibretro(game, shouldAutoLoad);
+                }
+            }
+            else if (game.t === 'n') {
+                setupNES(game, shouldAutoLoad);
+            }
+        }, 400); // 400мс совпадает с transition в CSS
     }
 
     function setupModernLibretro(game, shouldAutoLoad) {
@@ -1961,7 +2031,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
                 
-                // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                 await loadGameState(true);
                 
                 isGameStarting = false;
@@ -2068,7 +2137,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         glLoop(); 
                         await new Promise(r => setTimeout(r, 500)); 
                         
-                        // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                         await loadGameState(true); 
                     }
                 };
@@ -2144,7 +2212,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 window.WDOSBOX = { FS: fs }; 
                 fs.extract(e.target.result).then(async () => {
                     
-                    // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                     await loadGameState(true); 
                     
                     let cmd = ["-c", "cycles auto"]; 
@@ -2253,7 +2320,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 nes.loadROM(windowCurrentROMString);
                 
                 if (!isReset) {
-                    loadGameState(true); // <--- ВЫЗЫВАЕМ С ФЛАГОМ TRUE
+                    loadGameState(true);
                 }
                 
                 lastTime = performance.now(); 
@@ -2310,7 +2377,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btn.innerHTML = '⏳';
         }
         
-        // УМНАЯ КНОПКА НАЗАД: ДЕЛАЕТ ТИХИЙ СЕЙВ
         await saveGameState(true); 
         await executeCleanup(true); 
         
@@ -2320,6 +2386,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
+    // --- ОБНОВЛЕННАЯ ОЧИСТКА С ПЛАВНЫМ ВОЗВРАТОМ В МЕНЮ ---
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
         
@@ -2403,35 +2470,40 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         nesRestartFn = null; 
         nes = null;
-        htmlIframe.src = 'about:blank'; 
-        htmlIframe.style.display = 'none';
-        
-        canvasContainer.innerHTML = '<div id="dos-overlay"></div>';
-        frameDiv.style.display = 'none'; 
-        toolbar.style.display = 'none'; 
-        gamepad.style.display = 'none'; 
-        fkeysPanel.style.display = 'none'; 
-        screenPanel.style.display = 'none'; 
-        padPanel.style.display = 'none'; 
-        
-        document.getElementById('btnRestart').style.display = 'none';
-        document.getElementById('btnSave').style.display = 'none';
-        document.getElementById('btnLoad').style.display = 'none';
-        
-        menuScreen.style.display = 'flex';
-        
-        try { 
-            screen.orientation.unlock(); 
-            try { if (document.exitFullscreen) document.exitFullscreen().catch(()=>{}); } catch(e) {}
-        } catch(e) {}
-        
-        currentGame = null;
-        if (window.gc) window.gc();
-        isGameStarting = false;
-        
-        location.reload(); 
-    }
 
+        // --- ПЛАВНОЕ РАСТВОРЕНИЕ ПЕРЕД ПЕРЕЗАГРУЗКОЙ ---
+        frameDiv.style.opacity = '0';
+        toolbar.style.opacity = '0';
+        
+        setTimeout(() => {
+            htmlIframe.src = 'about:blank'; 
+            htmlIframe.style.display = 'none';
+            
+            canvasContainer.innerHTML = '<div id="dos-overlay"></div>';
+            frameDiv.style.display = 'none'; 
+            toolbar.style.display = 'none'; 
+            gamepad.style.display = 'none'; 
+            fkeysPanel.style.display = 'none'; 
+            screenPanel.style.display = 'none'; 
+            padPanel.style.display = 'none'; 
+            
+            document.getElementById('btnRestart').style.display = 'none';
+            document.getElementById('btnSave').style.display = 'none';
+            document.getElementById('btnLoad').style.display = 'none';
+            
+            try { 
+                screen.orientation.unlock(); 
+                try { if (document.exitFullscreen) document.exitFullscreen().catch(()=>{}); } catch(e) {}
+            } catch(e) {}
+            
+            currentGame = null;
+            if (window.gc) window.gc();
+            isGameStarting = false;
+            
+            // Чтобы эмуляторы точно выгрузились из памяти, делаем reload, но уже под черным экраном
+            location.reload(); 
+        }, 400); // Совпадает с CSS transition
+    }
     function injectText() {
         const text = prompt("Введите текст (англ.):");
         if (text && currentDos) {
@@ -2827,7 +2899,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     }
 
-    // НАША КРАСИВАЯ И НАДЕЖНАЯ ФУНКЦИЯ ДЛЯ НЕОНА
     function toggleAutoLoad(id, e) {
         if (e) { e.preventDefault(); e.stopPropagation(); } 
         if (isLibraryEditMode) return; 
@@ -2846,6 +2917,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function renderAllGames() {
+        setSpotifyGlow(null); // Сбрасываем свечение при перерисовке
         const scrollPos = menuScreen.scrollTop; 
         
         const sortSelectEl = document.getElementById('sortSelect');
@@ -2913,13 +2985,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const favIcon = game.fav ? '⭐' : '☆';
         const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
         
-        // Читаем статус автозагрузки при создании кнопки
         const isAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
         const neonClass = isAutoLoad ? 'neon-active' : '';
 
-        // Внедряем интерактивный бейдж с ИНЛАЙН-кликом
         btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge} ${neonClass}" id="badge-${game.id}" onclick="toggleAutoLoad('${game.id}', event)">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
+        // --- SPOTIFY ADAPTIVE GLOW TRIGGERS ---
+        btn.addEventListener('mouseenter', () => setSpotifyGlow(game.sys));
+        btn.addEventListener('touchstart', () => setSpotifyGlow(game.sys), {passive: true});
+
         btn.onclick = (e) => { 
             e.preventDefault(); 
             e.stopPropagation(); 
@@ -2934,6 +3008,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
                 updateEditCount();
             } else {
+                setSpotifyGlow(game.sys);
                 startGame(game); 
             }
         };
