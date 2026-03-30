@@ -33,146 +33,262 @@
     });
     document.addEventListener('gesturestart', e => e.preventDefault());
 </script>
+
 <style>
 :root {
-    --bg-color-base: #0a0a0a;
+    --bg-color-base: #060608;
     --bg-glow: #111827;
+    --glass-bg: rgba(15, 15, 25, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --neon-blue: #38bdf8;
+    --neon-purple: #a855f7;
+    --neon-red: #ef4444;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; }
 
-/* Адаптивный фон меню и плавное растворение */
+/* Плавный и тягучий фон меню с GPU-ускорением (Виньетка + Неон) */
 #menuScreen { 
     position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; 
     padding: 15px; padding-top: env(safe-area-inset-top, 0px); padding-bottom: 90px; 
-    background: linear-gradient(135deg, var(--bg-color-base), var(--bg-glow), var(--bg-color-base)); 
+    background-color: var(--bg-color-base); 
+    background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 30%, rgba(0,0,0,0.95) 100%);
     display: flex; flex-direction: column; 
-    transition: opacity 0.4s ease, background 0.8s ease; 
+    transition: opacity 0.4s ease, background-color 1.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    will-change: opacity, background-color;
 }
 
-/* Сплеш Скрин (Заставка) */
+/* --- ДЫШАЩИЙ ЛОГОТИП ARCADE HUB (С неоном) --- */
 #splashScreen {
-    position: fixed; inset: 0; background: #00000a; z-index: 99999;
+    position: fixed; inset: 0; background: #000; z-index: 99999;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
+    transition: opacity 0.8s ease-out, visibility 0.8s; backdrop-filter: blur(15px);
 }
 #splashScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .splash-title {
-    color: #38bdf8; font-family: monospace; font-size: 38px; font-weight: bold;
-    text-shadow: 0 0 10px #38bdf8; letter-spacing: 2px;
-    animation: pulse 1.5s infinite alternate;
+    color: #fff; font-family: monospace; font-size: 42px; font-weight: 900; letter-spacing: 5px; margin-bottom: 15px;
+    animation: heartBeatBreathe 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    will-change: transform, filter, text-shadow;
 }
-.splash-sub { color: #888; font-family: monospace; margin-top: 20px; font-size: 14px; letter-spacing: 1px; }
-@keyframes pulse { 0% { opacity: 0.7; text-shadow: 0 0 10px #38bdf8; } 100% { opacity: 1; text-shadow: 0 0 20px #38bdf8, 0 0 40px #38bdf8; } }
+.splash-sub { color: #475569; font-family: monospace; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; animation: subPulse 2.5s ease-in-out infinite; }
 
-.meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed #38bdf8; position: relative; overflow: hidden; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; }
-.crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; text-shadow: 2px 2px 0px #000; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
+@keyframes heartBeatBreathe {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 10px rgba(56, 189, 248, 0.6), 0 0 20px rgba(56, 189, 248, 0.3); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5)); color: #fff; }
+    15% { transform: scale(1.08); text-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue); filter: drop-shadow(0 0 15px var(--neon-blue)); color: #fff; }
+    30% { transform: scale(1.05); text-shadow: 0 0 12px rgba(56, 189, 248, 0.8), 0 0 25px rgba(56, 189, 248, 0.6); filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.7)); color: #fff; }
+    60% { transform: scale(1); text-shadow: 0 0 8px rgba(56, 189, 248, 0.5), 0 0 15px rgba(56, 189, 248, 0.2); filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.4)); color: rgba(255, 255, 255, 0.8); }
+}
+@keyframes subPulse { 0%, 100% { opacity: 0.6; } 15% { opacity: 0.9; } 60% { opacity: 0.4; } }
 
-@keyframes eat1 { 0%, 18% { opacity: 1; } 19%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat2 { 0%, 28% { opacity: 1; } 29%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat3 { 0%, 38% { opacity: 1; } 39%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat4 { 0%, 48% { opacity: 1; } 49%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat5 { 0%, 60% { opacity: 1; } 61%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat6 { 0%, 72% { opacity: 1; } 73%, 95% { opacity: 0; transform: scale(0.5); } 96%, 100% { opacity: 1; } }
-@keyframes eat7 { 0%, 84% { opacity: 1; } 85%, 100% { opacity: 0; transform: scale(0.5); } }
+/* --- ПАКМАН И КИБЕР-ХЕДЕР --- */
+.retro-glass {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(25px) saturate(200%) !important; -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
+    border: 1px solid var(--glass-border) !important; border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.04) !important;
+}
 
-.t-dendy { color: #ef4444; transform: rotate(-6deg); animation: eat1 5s linear infinite; }
-.t-mega { color: #3b82f6; transform: rotate(5deg) translateY(4px); animation: eat2 5s linear infinite; }
-.t-snes { color: #8b5cf6; transform: rotate(-3deg); animation: eat3 5s linear infinite; }
-.t-ngp { color: #06b6d4; transform: rotate(4deg); animation: eat4 5s linear infinite; }
-.t-dos { color: #10b981; transform: rotate(-2deg); animation: eat5 5s linear infinite; }
-.t-html { color: #f59e0b; font-size: 14px; transform: rotate(-4deg) translateY(2px); animation: eat6 5s linear infinite; }
-.t-gba { color: #d946ef; transform: rotate(3deg) translateY(-2px); animation: eat7 5s linear infinite; }
+.meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed var(--neon-blue); position: relative; overflow: hidden; border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; background: rgba(0,0,0,0.4); }
+.crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
+
+/* Анимации: Логотипы ВЫПРЫГИВАЮТ после Пакмана */
+@keyframes pop1 { 0%, 15% { opacity: 0; transform: scale(0.1) rotate(-6deg); } 20%, 95% { opacity: 1; transform: scale(1.1) rotate(-6deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop2 { 0%, 25% { opacity: 0; transform: scale(0.1) rotate(5deg); } 30%, 95% { opacity: 1; transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop3 { 0%, 35% { opacity: 0; transform: scale(0.1) rotate(-3deg); } 40%, 95% { opacity: 1; transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop4 { 0%, 45% { opacity: 0; transform: scale(0.1) rotate(4deg); } 50%, 95% { opacity: 1; transform: scale(1.1) rotate(4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop5 { 0%, 55% { opacity: 0; transform: scale(0.1) rotate(-2deg); } 60%, 95% { opacity: 1; transform: scale(1.1) rotate(-2deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop6 { 0%, 65% { opacity: 0; transform: scale(0.1) rotate(-4deg); } 70%, 95% { opacity: 1; transform: scale(1.1) rotate(-4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop7 { 0%, 75% { opacity: 0; transform: scale(0.1) rotate(3deg); } 80%, 95% { opacity: 1; transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+
+.t-dendy { color: #ef4444; animation: pop1 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-mega { color: #3b82f6; animation: pop2 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-snes { color: #8b5cf6; animation: pop3 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-ngp { color: #06b6d4; animation: pop4 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-dos { color: #10b981; animation: pop5 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-html { color: #f59e0b; font-size: 14px; animation: pop6 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-gba { color: #d946ef; animation: pop7 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+
 .pacman-container { position: absolute; top: 50%; left: 0; width: 100%; height: 35px; margin-top: -17px; overflow: hidden; z-index: 4; pointer-events: none; }
-.pacman { width: 26px; height: 26px; border-radius: 50%; background: #eab308; position: absolute; top: 2px; left: 0; z-index: 5; clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); animation: chomp 0.25s infinite alternate, movePacman 5s linear infinite; }
-.dot-track { position: absolute; top: 13px; left: 0; width: 100%; height: 4px; background-image: radial-gradient(#fff 2px, transparent 2px); background-size: 30px 4px; z-index: 1; opacity: 0.5; }
+
+/* БРОНЕБОЙНЫЙ ПАКМАН (Без квадратов и сплющивания, работает через border) */
+.pacman { 
+    width: 26px; height: 26px; 
+    position: absolute; top: 2px; left: 0; z-index: 5; 
+    animation: movePacman 5s linear infinite; 
+    filter: drop-shadow(0 0 10px rgba(253, 224, 71, 0.8)); 
+}
+.pacman::before, .pacman::after {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 0; height: 0;
+    border: 13px solid #fde047;
+    border-radius: 50%;
+    border-right-color: transparent;
+}
+.pacman::before { animation: chompTop 0.25s ease-in-out infinite alternate; }
+.pacman::after { animation: chompBottom 0.25s ease-in-out infinite alternate; }
+
+/* Разноцветные неоновые шарики, которые ест Пакман */
+.dot-track { 
+    position: absolute; top: 13px; left: 0; width: 100%; height: 6px; z-index: 1; 
+    background: linear-gradient(90deg, #ef4444, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #d946ef);
+    -webkit-mask-image: radial-gradient(circle, #fff 3px, transparent 3px);
+    -webkit-mask-size: 30px 6px; -webkit-mask-repeat: repeat-x;
+    mask-image: radial-gradient(circle, #fff 3px, transparent 3px);
+    mask-size: 30px 6px; mask-repeat: repeat-x;
+    animation: eatDots 5s linear infinite; 
+    filter: drop-shadow(0 0 4px rgba(255,255,255,0.6)); 
+}
+
 .om-nom { position: absolute; color: #eab308; font-weight: 900; font-size: 13px; animation: floatNom 0.8s infinite alternate; left: 50%; bottom: 2px; z-index: 6; text-shadow: 2px 2px 0 #000; transform: translateX(-50%); white-space: nowrap; }
-@keyframes chomp { 100% { clip-path: polygon(100% 50%, 50% 50%, 100% 50%, 100% 0, 0 0, 0 100%, 100% 100%); } }
+
+@keyframes chompTop { 0% { transform: rotate(0deg); } 100% { transform: rotate(-45deg); } }
+@keyframes chompBottom { 0% { transform: rotate(0deg); } 100% { transform: rotate(45deg); } }
 @keyframes movePacman { 0% { left: -10%; transform: scaleX(1); } 100% { left: 110%; transform: scaleX(1); } }
+@keyframes eatDots { 0%, 8% { clip-path: inset(0 0 0 0); } 92%, 100% { clip-path: inset(0 0 0 100%); } }
 @keyframes floatNom { 0% { transform: translate(-50%, 0) scale(1); opacity: 1; } 100% { transform: translate(-50%, -6px) scale(1.1); opacity: 0.7; } }
+
+
+/* --- КНОПКИ ДЕЙСТВИЙ (Стекло + Неон) --- */
 .top-actions { display: flex; gap: 10px; margin-bottom: 15px; }
-#searchInput { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #374151; background: rgba(17, 24, 39, 0.8); color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 15px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: border-color 0.2s; }
-#searchInput:focus { border-color: #38bdf8; }
-#searchInput::placeholder { color: #64748b; }
-.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; }
-.game-btn { padding: 0; font-size: 13px; font-weight: bold; text-align: center; background: linear-gradient(145deg, #1f2937, #111827); color: #fff; border: 1px solid #374151; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; min-height: 120px; }
-.game-btn:active { transform: translateY(4px) scale(0.96); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0,0,0,0.5); }
+.action-btn { 
+    flex: 1; text-align: center; color: rgba(255,255,255,0.9); border-radius: 10px; font-weight: 700; font-size: 13px; 
+    cursor: pointer; touch-action: manipulation; transition: all 0.2s ease-out; position: relative; overflow: hidden; 
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.05) !important; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+.action-btn::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%); pointer-events: none; }
+.action-btn:active { transform: scale(0.96); filter: brightness(1.2); box-shadow: 0 0 15px var(--neon-blue); }
+
+#mainImportBtn, #infoBtn { background: rgba(56, 189, 248, 0.1) !important; border: 1px solid rgba(56, 189, 248, 0.3) !important; color: #bae6fd !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.1); }
+#editModeBtn.active { background: rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.6) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+
+/* --- КАСТОМНАЯ СОРТИРОВКА (Только нужные опции) --- */
+#sortContainer { position: relative; flex: 1; height: 44px; }
+#sortSelect { 
+    width: 100%; height: 100%; padding: 0 15px; color: #fff; font-size: 13px; font-weight: bold; border-radius: 10px; 
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); outline: none; -webkit-appearance: none;
+    backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s;
+}
+#sortSelect:focus { border-color: var(--neon-purple); box-shadow: 0 0 15px rgba(168,85,247,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
+.sort-arrow { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 10px; pointer-events: none; }
+
+#searchInput { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #374151; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(10px); color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 15px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: border-color 0.2s, box-shadow 0.2s; }
+#searchInput:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.3), inset 0 2px 5px rgba(0,0,0,0.5); }
+
+/* --- ПАНЕЛЬ РЕДАКТИРОВАНИЯ --- */
+#editPanel { margin-bottom: 15px; padding: 15px; border-radius: 12px; background: rgba(20, 10, 10, 0.7) !important; backdrop-filter: blur(15px); border: 1px solid rgba(239, 68, 68, 0.4) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 0 20px rgba(239, 68, 68, 0.1); }
+#deleteSelectedBtn { background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.7) !important; color: #fca5a5 !important; animation: neonDeletePulse 2s infinite; }
+@keyframes neonDeletePulse { 0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.3); } 50% { box-shadow: 0 0 25px rgba(239,68,68,0.7); } }
+
+/* --- СЕТКА И КАРТОЧКИ --- */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-bottom: 20px; background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px); background-size: 4px 4px; border-radius: 12px; }
+.game-btn { padding: 0; font-size: 13px; font-weight: bold; text-align: center; background-color: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; min-height: 120px; will-change: transform; }
+.game-btn:active { transform: translateY(2px) scale(0.96); filter: brightness(1.2); box-shadow: 0 0 20px var(--neon-blue); }
 .game-btn::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.2); z-index: 1; pointer-events: none; transition: background 0.2s; }
-.game-btn:hover::before { background: rgba(0,0,0,0.1); }
 .game-btn-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; padding-bottom: 25px; }
 .icon { font-size: 36px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px; }
-.game-title { position: absolute; bottom: 0; left: 0; width: 100%; padding: 6px 4px; font-size: 10px; background: rgba(0,0,0,0.8); border-radius: 0 0 11px 11px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; z-index: 3; }
+.game-title { position: absolute; bottom: 0; left: 0; width: 100%; padding: 6px 4px; font-size: 10px; background: rgba(0,0,0,0.85); border-radius: 0 0 11px 11px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; z-index: 3; }
 
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: all 0.2s ease; }
-.neon-active { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.9), inset 0 0 6px rgba(56, 189, 248, 0.6) !important; border: 1px solid #38bdf8 !important; color: #fff !important; text-shadow: 0 0 5px #fff, 0 0 10px #38bdf8 !important; transform: scale(1.05); }
+.neon-active { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.9), inset 0 0 6px rgba(56, 189, 248, 0.6) !important; border: 1px solid var(--neon-blue) !important; color: #fff !important; text-shadow: 0 0 5px #fff, 0 0 10px var(--neon-blue) !important; transform: scale(1.05); }
 
+/* ЦВЕТА СИСТЕМ (Оригинал) */
 .sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
-.sys-nes:active { box-shadow: 0 2px 0 #991b1b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-nes { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
 .sys-smd { box-shadow: 0 6px 0 #1e3a8a, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #3b82f6; }
-.sys-smd:active { box-shadow: 0 2px 0 #1e3a8a, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-smd { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
 .sys-snes { box-shadow: 0 6px 0 #4c1d95, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #8b5cf6; }
-.sys-snes:active { box-shadow: 0 2px 0 #4c1d95, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-snes { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
 .sys-ngp { box-shadow: 0 6px 0 #164e63, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #06b6d4; }
-.sys-ngp:active { box-shadow: 0 2px 0 #164e63, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-ngp { background: linear-gradient(135deg, #06b6d4, #0e7490); color: white; }
 .sys-dos { box-shadow: 0 6px 0 #064e3b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #10b981; }
-.sys-dos:active { box-shadow: 0 2px 0 #064e3b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-dos { background: linear-gradient(135deg, #10b981, #047857); color: white; }
 .sys-unk { box-shadow: 0 6px 0 #334155, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #64748b; }
-.sys-unk:active { box-shadow: 0 2px 0 #334155, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-unk { background: linear-gradient(135deg, #64748b, #334155); color: white; }
 .sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
-.sys-html:active { box-shadow: 0 2px 0 #78350f, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
 .sys-gba { box-shadow: 0 6px 0 #a21caf, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #d946ef; }
-.sys-gba:active { box-shadow: 0 2px 0 #a21caf, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-gba { background: linear-gradient(135deg, #d946ef, #a21caf); color: white; }
 
 .del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
-#infoModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px); }
-#infoModal { background: #1f2937; border: 2px solid #38bdf8; border-radius: 12px; padding: 20px; max-width: 400px; width: 100%; color: #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.8); }
-.info-platform-list { margin: 15px 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
-.info-platform-list li { margin-bottom: 8px; border-bottom: 1px solid #374151; padding-bottom: 8px; display: flex; justify-content: space-between;}
-.info-ext { color: #38bdf8; font-family: monospace; font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 4px; border-radius: 4px;}
 
-/* Плавное открытие/закрытие окна эмулятора */
-#gameFrame { position: fixed; inset: 0; background: #000; display: none; opacity: 0; z-index: 100; overflow: hidden; transition: opacity 0.4s ease; }
+/* --- МОДАЛЬНЫЕ ОКНА И ИНФО --- */
+#infoModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
+#infoModal { background: rgba(15,20,30,0.85); border: 1px solid var(--neon-blue); border-radius: 16px; padding: 25px; max-width: 400px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(56,189,248,0.2); }
+.info-platform-list { margin: 15px 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
+.info-platform-list li { margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; display: flex; justify-content: space-between;}
+.info-ext { color: var(--neon-blue); font-family: monospace; font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 6px;}
+
+#gameFrame { position: fixed; inset: 0; background: #000; display: none; opacity: 0; z-index: 100; overflow: hidden; transition: opacity 0.5s ease-out; will-change: opacity; }
 #html-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: none; background: #000; }
-#canvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center; transition: transform 0.1s ease-out; }
+#canvasContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center; transition: transform 0.1s ease-out; animation: fadeInGame 0.8s ease-out forwards; }
+@keyframes fadeInGame { 0% { filter: brightness(0); } 100% { filter: brightness(1); } }
+
 #dos-canvas, #nes-canvas, #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; object-fit: contain; opacity: 0.01; z-index: 10; image-rendering: pixelated; }
 #nes-canvas { width: 100% !important; height: 100% !important; }
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
-#toolbar { 
-    position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; 
-    display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; 
-    -webkit-overflow-scrolling: touch; scrollbar-width: none; 
-    transition: opacity 0.4s ease;
-}
+#toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; transition: opacity 0.4s ease; }
 #toolbar::-webkit-scrollbar { display: none; }
+.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(20, 20, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.1); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; backdrop-filter: blur(5px); }
+.tool-btn.active-tool { background: rgba(56, 189, 248, 0.4); border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(56,189,248,0.5); }
+#fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; max-width: 90%; }
+.f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
+.f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
 
-.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(30, 30, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; }
-.tool-btn.active-tool { background: rgba(56, 189, 248, 0.6); border-color: #38bdf8; }
-#fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,10,0.8); padding: 8px; border-radius: 8px; border: 1px solid #333; flex-wrap: wrap; max-width: 90%; }
-.f-btn { padding: 8px 12px; background: #333; color: #fff; border: none; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
-.f-btn:active { background: #38bdf8; }
-#screen-edit-panel, #pad-edit-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 10px; background: rgba(10,10,10,0.95); padding: 12px; border-radius: 8px; border: 1px solid #38bdf8; color: #fff; font-size: 12px; width: 240px; max-height: 80vh; overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; }
+/* --- ПАНЕЛИ НАСТРОЕК (НЕОНОВЫЕ ПОЛЗУНКИ И КНОПКИ) --- */
+#screen-edit-panel, #pad-edit-panel { 
+    position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 12px; 
+    background: rgba(15, 10, 25, 0.8) !important; backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); 
+    padding: 18px; border-radius: 16px; color: #fff; font-size: 12px; width: 270px; max-height: 85vh; overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; 
+    box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.05);
+}
+#screen-edit-panel { border: 1px solid rgba(56, 189, 248, 0.3) !important; box-shadow: 0 0 25px rgba(56,189,248,0.15), 0 15px 40px rgba(0,0,0,0.9) !important; }
+#pad-edit-panel { border: 1px solid rgba(168, 85, 247, 0.3) !important; box-shadow: 0 0 25px rgba(168,85,247,0.15), 0 15px 40px rgba(0,0,0,0.9) !important; }
+
 .edit-row { display: flex; gap: 10px; align-items: center; justify-content: center;}
-.edit-btn { padding: 8px 15px; background: #1e293b; color: #fff; border: 1px solid #475569; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; -webkit-user-select: none; touch-action: none; }
-.edit-btn:active { background: #38bdf8; }
-.hint-text { font-size: 9px; color: #888; text-align: center; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-.slider-row { display: flex; flex-direction: column; gap: 5px; }
-.slider-row label { font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }
-.slider-row input[type="range"] { width: 100%; }
+
+/* Базовая кнопка настроек */
+.edit-btn { 
+    padding: 12px 15px; background: rgba(255, 255, 255, 0.05) !important; color: #fff; 
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 10px; font-weight: bold; font-size: 11px; 
+    cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; text-transform: uppercase; transition: all 0.2s; 
+}
+.edit-btn:active { transform: scale(0.95); }
+
+/* ДИНАМИЧЕСКОЕ СВЕЧЕНИЕ КНОПОК ВКЛ/ВЫКЛ (Тематические цвета) */
+.neon-on-blue { background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; box-shadow: 0 0 15px rgba(56,189,248,0.4); text-shadow: 0 0 5px #fff; }
+.neon-on-purple { background: rgba(168, 85, 247, 0.2) !important; border-color: var(--neon-purple) !important; box-shadow: 0 0 15px rgba(168,85,247,0.4); text-shadow: 0 0 5px #fff; }
+.neon-on-red { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--neon-red) !important; box-shadow: 0 0 15px rgba(239,68,68,0.4); text-shadow: 0 0 5px #fff; }
+.neon-on-green { background: rgba(16, 185, 129, 0.2) !important; border-color: #10b981 !important; box-shadow: 0 0 15px rgba(16,185,129,0.4); text-shadow: 0 0 5px #fff; }
+.neon-on-orange { background: rgba(245, 158, 11, 0.2) !important; border-color: #f59e0b !important; box-shadow: 0 0 15px rgba(245,158,11,0.4); text-shadow: 0 0 5px #fff; }
+
+.hint-text { font-size: 9px; color: var(--neon-purple); text-align: center; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+/* ПОЛЗУНКИ (ЯРКОСТЬ ЗАВИСИТ ОТ ПРОЦЕНТА) */
+.slider-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.slider-row label { font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; }
+.slider-row input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; outline: none; margin: 10px 0; }
+.slider-row input[type="range"]::-webkit-slider-runnable-track { 
+    height: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); 
+    background: linear-gradient(90deg, rgba(168, 85, 247, 1) var(--value, 50%), rgba(255,255,255,0.05) var(--value, 50%)); 
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 calc(var(--value)*0.15px) rgba(168, 85, 247, calc(var(--value)/100)); 
+}
+.slider-row input[type="range"]::-webkit-slider-thumb { 
+    -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--neon-purple); 
+    margin-top: -8px; cursor: pointer; box-shadow: 0 0 calc(var(--value)*0.2px + 5px) rgba(168, 85, 247, 0.8); transition: transform 0.1s; 
+}
+.slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.2); }
+
+#btnToggleColors { background: linear-gradient(135deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #3b82f6 75%, #a855f7 100%) !important; border: none !important; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); }
+
+/* --- ГЕЙМПАД: 3D КНОПКИ --- */
 #hiddenInput { position: absolute; top: -1000px; opacity: 0; }
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
-
-.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; }
+.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; backdrop-filter: blur(8px); }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
 
 #joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
@@ -185,73 +301,42 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .d-arrow.down { bottom: 8%; left: 38%; }
 .d-arrow.left { top: 38%; left: 8%; }
 .d-arrow.right { top: 38%; right: 8%; }
-.d-arrow.active { color: rgba(56, 189, 248, 0.9); text-shadow: 0 0 10px rgba(56,189,248,0.8); }
+.d-arrow.active { color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); }
 .d-deadzone { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 25%; height: 25%; background: rgba(255,255,255,0.05); border-radius: 50%; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; }
-
-.d-knob { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin-top: -21px; margin-left: -21px; background: rgba(255,255,255,0.4); border-radius: 50%; pointer-events: none; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.6); }
+.d-knob { position: absolute; top: 50%; left: 50%; width: 42px; height: 42px; margin-top: -21px; margin-left: -21px; background: rgba(255,255,255,0.4); border-radius: 50%; pointer-events: none; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.6); transition: transform 0.05s linear; }
 .dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
 .dpad-shooter .d-knob { display: block; }
 
-#btn-select { bottom: 57px; left: calc(50% - 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-start { bottom: 57px; left: calc(50% + 40px); transform: translateX(-50%); width: 60px; padding: 8px; background: rgba(255,255,255,0.3); border-radius: 20px; color: #fff; text-align: center; font-weight: bold; font-size: 10px; border: 2px solid rgba(255,255,255,0.2); }
-#btn-b { bottom: 90px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.3); border: 2px solid rgba(59,130,246,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; }
-#btn-a { bottom: 145px; right: 20px; width: 70px; height: 70px; border-radius: 50%; background: rgba(239, 68, 68, 0.3); border: 2px solid rgba(239,68,68,0.6); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; }
-#btn-y { bottom: 145px; right: 150px; width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.3); border: 2px solid rgba(16,185,129,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; }
-#btn-x { bottom: 200px; right: 85px; width: 60px; height: 60px; border-radius: 50%; background: rgba(245, 158, 11, 0.3); border: 2px solid rgba(245,158,11,0.6); display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; }
-#btn-l { top: 95px; left: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
-#btn-r { top: 95px; right: 20px; width: 60px; height: 35px; border-radius: 8px; background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255,255,255,0.4); display: none; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 12px; }
+/* 3D СТИЛЬ ДЛЯ ОСНОВНЫХ КНОПОК */
+#btn-select, #btn-start { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
+#btn-b { background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59,130,246,0.6); color: #3b82f6; box-shadow: 0 6px 0 rgba(30, 58, 138, 0.8), 0 8px 15px rgba(59,130,246,0.3); transition: all 0.1s; }
+#btn-a { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.6); color: #ef4444; box-shadow: 0 6px 0 rgba(153, 27, 27, 0.8), 0 8px 15px rgba(239,68,68,0.3); transition: all 0.1s; }
+#btn-y { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16,185,129,0.6); color: #10b981; box-shadow: 0 6px 0 rgba(6, 78, 59, 0.8), 0 8px 15px rgba(16,185,129,0.3); transition: all 0.1s; }
+#btn-x { background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245,158,11,0.6); color: #f59e0b; box-shadow: 0 6px 0 rgba(120, 53, 15, 0.8), 0 8px 15px rgba(245,158,11,0.3); transition: all 0.1s; }
+#btn-l, #btn-r { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
 
-.active-key { filter: brightness(1.5) !important; border-color: #38bdf8 !important; }
-#dpad-catch-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
-#camera-catch-zone { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5; }
-.action-btn { transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s ease, filter 0.1s ease !important; }
-.action-btn:active { transform: scale(0.92) !important; box-shadow: 0 2px 4px rgba(0,0,0,0.5) !important; filter: brightness(0.8) !important; }
+/* ФИЗИЧЕСКОЕ НАЖАТИЕ (Кнопка проваливается, тень уходит, появляется неон) */
+.active-key { 
+    transform: translateY(4px) scale(0.95) !important; 
+    box-shadow: 0 0 0 transparent, 0 0 25px currentColor !important; 
+    background: currentColor !important; color: #fff !important; text-shadow: 0 0 5px #000;
+}
+.active-key#btn-start, .active-key#btn-select { background: rgba(255,255,255,0.6) !important; box-shadow: 0 0 15px #fff !important; color: #000 !important; }
 
 #bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
 #bottom-shield.active { display: block; pointer-events: auto; }
 #bottom-shield.edit-mode { background: rgba(239,68,68,0.15); border-top: 2px dashed #ef4444; }
 
-#viewToggleBtn { background: #1e293b !important; border: 1px solid #475569 !important; border-radius: 6px !important; display: flex !important; align-items: center; justify-content: center; }
-#editModeBtn { display: flex !important; align-items: center; justify-content: center; background: linear-gradient(135deg, #ef4444, #b91c1c) !important; border: 1px solid #991b1b; border-radius: 6px; }
-#editModeBtn.active { background: linear-gradient(135deg, #10b981, #059669) !important; border-color: #064e3b !important; }
-
-#sortSelect { background: #1e293b; color: #fff; border: 1px solid #475569; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: bold; height: 100%; }
-#deleteSelectedBtn { background: #ef4444 !important; }
-.edit-overlay { position: absolute; inset: 0; background: rgba(239,68,68,0.1); z-index: 3; display: flex; align-items: center; justify-content: center; border-radius: 12px; pointer-events: none; transition: background 0.2s; }
-.edit-icon { background: #ef4444; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
-.game-btn.selected { border: 3px solid #f87171; }
-.game-btn.selected .edit-overlay { background: rgba(239,68,68,0.6) !important; display: flex !important; }
-.game-btn.selected .edit-icon { display: flex !important; }
-
 .grid.list-view { display: flex; flex-direction: column; gap: 8px; }
 .grid.list-view .game-btn { flex-direction: row; height: 80px; justify-content: flex-start; padding: 10px; text-align: left; }
 .grid.list-view .game-btn-content { flex-direction: row; justify-content: flex-start; width: 100%; padding-bottom: 0; }
-.grid.list-view .game-title { position: static; background: none; padding-left: 15px; font-size: 15px; white-space: normal; border-radius: 0; }
+.grid.list-view .game-title { position: static; background: none; padding-left: 15px; font-size: 15px; white-space: normal; border-radius: 0; text-shadow: none;}
 .grid.list-view .sys-badge { right: 15px; top: 50%; transform: translateY(-50%); }
 
 .grid.large-view { grid-template-columns: 1fr; gap: 20px; }
-.grid.large-view .game-btn { 
-    height: 280px; 
-    padding: 0; 
-    align-items: flex-end; 
-    border-radius: 16px; 
-    background-size: contain !important; 
-    background-repeat: no-repeat !important; 
-    background-position: center !important; 
-    background-color: #050505 !important; 
-    border: 1px solid #374151; 
-}
+.grid.large-view .game-btn { height: 280px; padding: 0; align-items: flex-end; border-radius: 16px; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; background-color: #050505 !important; border: 1px solid #374151; }
 .grid.large-view .game-btn-content { justify-content: flex-end; padding-bottom: 0; }
-.grid.large-view .game-title { 
-    position: absolute; bottom: 0; left: 0; width: 100%;
-    font-size: 16px; 
-    white-space: normal; 
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%); 
-    padding: 40px 15px 12px 15px; 
-    border-radius: 0 0 14px 14px;
-    text-align: center; 
-    color: #fff;
-}
+.grid.large-view .game-title { position: absolute; bottom: 0; left: 0; width: 100%; font-size: 16px; white-space: normal; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%); padding: 40px 15px 12px 15px; border-radius: 0 0 14px 14px; text-align: center; color: #fff; }
 </style>
 </head>
 <body>
@@ -280,45 +365,47 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     
     <div class="top-actions">
-        <button id="mainImportBtn" class="action-btn" style="flex: 1; background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; border: 1px solid #0369a1; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);">
+        <button id="mainImportBtn" class="action-btn">
             ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
         </button>
-        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: 1px solid #7c3aed; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);">
+        <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none;">
             📡 СКАНИРОВАТЬ
         </button>
-        <button id="infoBtn" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);">
+        <button id="infoBtn" class="action-btn">
             ℹ️
         </button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 15px; height: 42px;">
-        <select id="sortSelect" class="action-btn" onchange="renderAllGames()" style="flex: 1;">
-            <option value="newest">📅 Сначала новые</option>
-            <option value="name_asc">🔤 По имени А-Я</option>
-            <option value="name_desc">🔤 По имени Я-А</option>
-            <option value="sys">🎮 По системе</option>
-            <option value="random">🎲 Вперемешку</option>
-        </select>
-        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; padding: 0;">
+        <div id="sortContainer">
+            <select id="sortSelect" onchange="renderAllGames()">
+                <option value="newest">📅 Сначала новые</option>
+                <option value="sys">🎮 По системе</option>
+                <option value="random">🎲 Вперемешку</option>
+            </select>
+            <div class="sort-arrow">▼</div>
+        </div>
+        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; padding: 0; flex: none;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </button>
-        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; padding: 0;">
+        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; padding: 0; flex: none;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
-    <div id="editPanel" style="display: none; margin-bottom: 15px; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 8px; border: 1px solid #ef4444;">
-        <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center;">
+    
+    <div id="editPanel" style="display: none;">
+        <div style="font-size: 12px; color: #fca5a5; margin-bottom: 8px; text-align: center; font-weight: bold;">
             Выбрано: <span id="selectedCount">0</span> игр
         </div>
         <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button class="action-btn" onclick="selectAllGamesForDelete()" style="flex: 1; background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">✅ ВСЕ</button>
-            <button class="action-btn" onclick="deselectAllGamesForDelete()" style="flex: 1; background: #64748b; color: white; border: none; padding: 8px; border-radius: 6px; font-weight: bold; font-size: 11px; cursor: pointer;">❌ СНЯТЬ</button>
+            <button class="action-btn" onclick="selectAllGamesForDelete()" style="background: rgba(59, 130, 246, 0.5) !important; color: white; border: none !important; font-size: 11px;">✅ ВСЕ</button>
+            <button class="action-btn" onclick="deselectAllGamesForDelete()" style="background: rgba(100, 116, 139, 0.5) !important; color: white; border: none !important; font-size: 11px;">❌ СНЯТЬ</button>
         </div>
         <div style="display: flex; gap: 10px;">
-            <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; flex: 1; background: #f59e0b; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
+            <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; background: rgba(245, 158, 11, 0.5) !important; color: white; border: none !important; font-size: 13px;">
                 🖼️ ОБЛОЖКА
             </button>
-            <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;">
+            <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="font-size: 13px;">
                 🗑️ УДАЛИТЬ
             </button>
         </div>
@@ -328,17 +415,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" oninput="renderAllGames()">
     <div class="grid" id="gameGrid"></div>
 
-    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8;">
+    <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05);">
         <span style="color: #94a3b8; font-weight: bold;">ГДЕ БРАТЬ ИГРЫ:</span><br>
-        <a href="https://www.emu-land.net/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
-        <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:#38bdf8; text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a><br>
+        <a href="https://www.emu-land.net/" target="_blank" style="color:var(--neon-blue); text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
+        <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:var(--neon-blue); text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a><br>
         <a href="https://share.google/hzuTPFPnckx9x0iS6" target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold; margin: 0 10px; display:inline-block; margin-top:8px;">✨ GameROMs (Сборники Dendy, Sega, GBA, SNES)</a>
     </div>
 </div>
 
 <div id="infoModalOverlay">
     <div id="infoModal">
-        <h3 style="margin-top:0; color: #38bdf8; border-bottom: 1px dashed #475569; padding-bottom: 10px; text-align: center;">ПОДДЕРЖИВАЕМЫЕ ПЛАТФОРМЫ</h3>
+        <h3 style="margin-top:0; color: var(--neon-blue); border-bottom: 1px dashed #475569; padding-bottom: 10px; text-align: center; text-shadow: 0 0 10px var(--neon-blue);">ПОДДЕРЖИВАЕМЫЕ ПЛАТФОРМЫ</h3>
         <ul class="info-platform-list">
             <li><span>Денди / NES</span> <span class="info-ext">.nes</span></li>
             <li><span>SEGA Mega Drive / Genesis</span> <span class="info-ext">.md, .gen, .smd, .bin</span></li>
@@ -351,26 +438,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 15px;">
             Поддерживается загрузка как чистых файлов, так и <strong>.ZIP архивов</strong>.<br>Эмулятор сам найдет нужный файл и скачает обложку.
         </p>
-                <button id="btnFetchMissingLogos" class="action-btn" style="width: 100%; background: #0284c7; color: white; border: 1px solid #0369a1; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; margin-bottom: 10px;">🖼️ ИСКАТЬ НЕДОСТАЮЩИЕ ОБЛОЖКИ</button>
-
-        <button id="exportLibraryBtn" onclick="exportLibrary()" class="action-btn" style="width: 100%; background: #0f766e; color: white; border: 1px solid #047857; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; margin-bottom: 10px;">📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)</button>
-        <button id="closeInfoBtn" class="action-btn" style="width: 100%; background: #334155; color: white; border: 1px solid #475569; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; cursor: pointer;">ЗАКРЫТЬ</button>
+        <button id="btnFetchMissingLogos" class="action-btn" style="background: rgba(2, 132, 199, 0.4) !important; border-color: rgba(3, 105, 161, 0.8) !important; margin-bottom: 10px; width: 100%;">🖼️ ИСКАТЬ НЕДОСТАЮЩИЕ ОБЛОЖКИ</button>
+        <button id="exportLibraryBtn" onclick="exportLibrary()" class="action-btn" style="background: rgba(15, 118, 110, 0.4) !important; border-color: rgba(4, 120, 87, 0.8) !important; margin-bottom: 10px; width: 100%;">📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)</button>
+        <button id="closeInfoBtn" class="action-btn" style="background: rgba(51, 65, 85, 0.4) !important; border-color: rgba(71, 85, 105, 0.8) !important; width: 100%;">ЗАКРЫТЬ</button>
     </div>
 </div>
-<div id="resetModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(3px);">
-    <div style="background: #1f2937; border: 2px solid #ef4444; border-radius: 12px; padding: 20px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.9); text-align: center;">
-        <h3 style="margin-top: 0; color: #ef4444; border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px;">ПЕРЕЗАПУСК ИГРЫ</h3>
+<div id="resetModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px);">
+    <div style="background: rgba(31, 41, 55, 0.9); border: 1px solid var(--neon-red); border-radius: 16px; padding: 25px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(239,68,68,0.2); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--neon-red); border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px; text-shadow: 0 0 10px var(--neon-red);">ПЕРЕЗАПУСК ИГРЫ</h3>
         <p style="font-size: 12px; color: #94a3b8; margin-bottom: 20px; line-height: 1.5;">Что сделать с вашим текущим прогрессом?</p>
         <div style="display: flex; flex-direction: column; gap: 10px;">
-            <button id="btnResetSave" class="action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: 1px solid #1e3a8a; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                💾 СОХРАНИТЬ И ПРОДОЛЖИТЬ
-            </button>
-            <button id="btnResetWipe" class="action-btn" style="background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; border: 1px solid #991b1b; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer;">
-                🗑️ СТЕРЕТЬ И НАЧАТЬ С НУЛЯ
-            </button>
-            <button id="btnResetCancel" class="action-btn" style="background: transparent; color: #64748b; border: 1px solid #475569; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: 5px;">
-                ОТМЕНА
-            </button>
+            <button id="btnResetSave" class="action-btn" style="background: rgba(59, 130, 246, 0.3) !important; border-color: #1e3a8a !important;">💾 СОХРАНИТЬ И ПРОДОЛЖИТЬ</button>
+            <button id="btnResetWipe" class="action-btn" style="background: rgba(239, 68, 68, 0.3) !important; border-color: #991b1b !important;">🗑️ СТЕРЕТЬ И НАЧАТЬ С НУЛЯ</button>
+            <button id="btnResetCancel" class="action-btn" style="background: transparent !important; color: #64748b !important; border: 1px solid #475569 !important; margin-top: 5px;">ОТМЕНА</button>
         </div>
     </div>
 </div>
@@ -384,9 +464,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="toolbar">
     <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()">⬅</div>
-    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; background:rgba(56,189,248,0.8); border-color:#38bdf8;">🔄</div>
-    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:#047857; border-color:#059669;">💾</div>
-    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:#b45309; border-color:#d97706;">📂</div>
+    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; background:rgba(56,189,248,0.3) !important; border-color:#38bdf8 !important;">🔄</div>
+    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:rgba(4, 120, 87, 0.4) !important; border-color:#059669 !important;">💾</div>
+    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:rgba(180, 83, 9, 0.4) !important; border-color:#d97706 !important;">📂</div>
     <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
     <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
     <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
@@ -406,12 +486,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="screen-edit-panel">
-    <div style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px; text-align: center; color: #888; font-weight: bold;">ГРАФИКА И ЭФФЕКТЫ</div>
+    <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">ГРАФИКА И ЭФФЕКТЫ</div>
     
     <div id="nes-only-settings">
         <div style="margin-bottom: 5px;">
             <div class="hint-text">ТИП ЭКРАНА (МАТРИЦА)</div>
-            <select id="crtSelector" onchange="changeCrtMode()" style="width: 100%; background: #1e293b; color: white; border: 1px solid #475569; padding: 5px; border-radius: 5px; font-size: 12px; margin-bottom: 5px;">
+            <select id="crtSelector" onchange="changeCrtMode()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
                 <option value="0">ВЫКЛ (Чистая картинка)</option>
                 <option value="1">Сканлайны (Старый ТВ)</option>
                 <option value="2">Тринитрон (Премиум ЭЛТ)</option>
@@ -420,11 +500,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </div>
         <div>
           <div class="hint-text">Искажение углов пузатого ЭЛТ</div>
-          <button class="edit-btn action-btn" id="btnToggleCurve" onclick="toggleCurve()">Выпуклость: ВКЛ</button>
+          <button class="edit-btn action-btn" id="btnToggleCurve" onclick="toggleCurve()">Выпуклость: ВЫКЛ</button>
         </div>
         <div style="margin-top: 5px;">
             <div class="hint-text">ВНУТРЕННЕЕ РАЗРЕШЕНИЕ</div>
-            <select id="resSelector" onchange="changeRes()" style="width: 100%; background: #1e293b; color: white; border: 1px solid #475569; padding: 5px; border-radius: 5px; font-size: 12px; margin-bottom: 5px;">
+            <select id="resSelector" onchange="changeRes()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
                 <option value="1">1x (Original)</option>
                 <option value="2">2x (512p)</option>
                 <option value="4">4x (1024p HD)</option>
@@ -440,54 +520,53 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     <div style="margin-top: 5px;">
         <div class="hint-text">АЛГОРИТМ СГЛАЖИВАНИЯ</div>
-        <select id="filterSelector" onchange="changeFilter()" style="width: 100%; background: #1e293b; color: white; border: 1px solid #475569; padding: 5px; border-radius: 5px; font-size: 12px; margin-bottom: 5px;">
+        <select id="filterSelector" onchange="changeFilter()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
             <option value="0">ВЫКЛ (Пиксели)</option>
             <option value="1">ОСТРОЕ (Sharp Bilinear)</option>
             <option value="2">МЯГКОЕ (Ретро-Мыло)</option>
             <option value="3">FSR (Умная резкость)</option>
         </select>
-        <button class="edit-btn action-btn" id="btnToggleColors" onclick="toggleColors()" style="margin-top: 5px;">Цветокоррекция (Гамма): ВЫКЛ</button>
     </div>
     <div>
       <div class="hint-text">Мягкое неоновое свечение ярких зон</div>
       <button class="edit-btn action-btn" id="btnToggleBloom" onclick="toggleBloom()">Свечение: ВЫКЛ</button>
     </div>
     
-    <div style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px; margin-top: 10px; text-align: center; color: #888; font-weight: bold;">РАЗМЕР ЭКРАНА</div>
+    <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; margin-top: 15px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">РАЗМЕР ЭКРАНА</div>
     <div class="edit-row">
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleX(0.05)">↔+</button>
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleX(-0.05)">↔-</button>
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleY(0.05)">↕+</button>
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleY(-0.05)">↕-</button>
     </div>
-    <button class="edit-btn action-btn" onclick="resetScale()" style="background:#ef4444; border:none; margin-top: 10px;">Сброс Экрана</button>
+    <button class="edit-btn action-btn" onclick="resetScale()" style="background:rgba(239, 68, 68, 0.3) !important; border-color: #ef4444 !important; margin-top: 10px; color: #ef4444;">Сброс Экрана</button>
 </div>
 
 <div id="pad-edit-panel">
-    <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="background: #991b1b; margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="font-size: 12px; margin-bottom: 5px; width: 100%; background: #3b82f6;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
+    <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="margin-bottom: 5px; width: 100%;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
+    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
     
-    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="font-size: 12px; margin-bottom: 5px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="margin-bottom: 10px; width: 100%; background:rgba(59,130,246,0.3)!important; border-color:#3b82f6!important;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
     
-    <div class="edit-row">
-      <span>Размер:</span>
-      <button class="edit-btn action-btn" onclick="scaleSelectedPad(0.05)">➕</button>
-      <button class="edit-btn action-btn" onclick="scaleSelectedPad(-0.05)">➖</button>
+    <div class="edit-row" style="margin-bottom: 10px;">
+      <span style="font-weight: bold; color: #cbd5e1; font-size:11px;">Размер:</span>
+      <button class="edit-btn action-btn" style="width: 50px; margin: 0;" onclick="scaleSelectedPad(0.05)">➕</button>
+      <button class="edit-btn action-btn" style="width: 50px; margin: 0;" onclick="scaleSelectedPad(-0.05)">➖</button>
     </div>
     <div class="slider-row">
-      <label>Прозрачность: <span id="opacityVal">30%</span></label>
+      <label>Прозрачность: <span id="opacityVal" style="color:var(--neon-purple); font-weight:bold;">30%</span></label>
       <input type="range" min="10" max="100" value="30" id="opacitySlider" oninput="updateOpacity(this.value)">
     </div>
     <div class="slider-row">
-      <label>Яркость: <span id="brightnessVal">100%</span></label>
+      <label>Яркость: <span id="brightnessVal" style="color:var(--neon-purple); font-weight:bold;">100%</span></label>
       <input type="range" min="50" max="200" value="100" id="brightnessSlider" oninput="updateBrightness(this.value)">
     </div>
     <div class="slider-row">
-      <label>Отдача кнопок: <span id="vibrationVal">15мс</span></label>
+      <label>Отдача кнопок: <span id="vibrationVal" style="color:var(--neon-purple); font-weight:bold;">15мс</span></label>
       <input type="range" min="0" max="60" value="15" id="vibrationSlider" oninput="updateVibration(this.value)">
     </div>
-    <button class="edit-btn action-btn" onclick="resetPad()" style="background:#ef4444; margin-top:5px;">Сброс всех настроек</button>
+    <button class="edit-btn action-btn" onclick="resetPad()" style="background:rgba(239, 68, 68, 0.3) !important; border-color:#ef4444 !important; margin-top:10px; color:#ef4444;">Сброс настроек</button>
 </div>
 
 <div id="bottom-shield"></div>
@@ -495,7 +574,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="gamepad">
     <div id="dpad-catch-zone" style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5;"></div>
-    
     <div id="camera-catch-zone"></div>
     
     <div class="draggable-btn" id="joystick-dpad" data-id="dpad">
@@ -516,7 +594,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
-
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -529,6 +606,59 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </script>
 
 <script>
+    // Твой личный топ систем для сортировки
+    const mySysPriority = ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
+    let isExitingGame = false;
+
+    // --- Бронебойный перехват НАЗАД и ПЛАВНЫЙ НЕОНОВЫЙ СТАРТ ---
+    window.addEventListener('load', () => {
+        if (window.location.hash === '#game') history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => { 
+            const splash = document.getElementById('splashScreen'); 
+            if(splash) {
+                splash.classList.add('hidden');
+                // Тот самый импакт: легкий "тук" в руку при входе
+                if (navigator.vibrate) navigator.vibrate(15);
+            }
+        }, 4000); // Даем 4 секунды насладиться логотипами из-под Пакмана
+    });
+
+    // --- ОЖИВЛЯЕМ ПОЛЗУНКИ (Яркость от процента) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // Микро-фикс для CSS, чтобы математика яркости работала правильно
+        const styleFix = document.createElement('style');
+        styleFix.innerHTML = `
+            .slider-row input[type="range"]::-webkit-slider-runnable-track {
+                background: linear-gradient(90deg, rgba(168, 85, 247, 1) var(--value-pct, 50%), rgba(255,255,255,0.05) var(--value-pct, 50%)) !important;
+                box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 calc(var(--value-num, 50) * 0.15px) rgba(168, 85, 247, calc(var(--value-num, 50) / 100)) !important;
+            }
+            .slider-row input[type="range"]::-webkit-slider-thumb {
+                box-shadow: 0 0 calc(var(--value-num, 50) * 0.2px + 5px) rgba(168, 85, 247, 0.8) !important;
+            }
+        `;
+        document.head.appendChild(styleFix);
+
+        const updateSlider = (el) => {
+            const val = (el.value - el.min) / (el.max - el.min) * 100;
+            el.style.setProperty('--value-pct', val + '%'); // Для ширины заливки
+            el.style.setProperty('--value-num', val);       // Для силы свечения
+        };
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', (e) => updateSlider(e.target));
+            updateSlider(input); // Инит при старте
+        });
+    });
+
+    window.addEventListener('hashchange', () => {
+        const gameFrame = document.getElementById('gameFrame');
+        if (window.location.hash !== '#game' && gameFrame && gameFrame.style.display === 'block') {
+            if (!isExitingGame && typeof handleBackBtn === 'function') {
+                isExitingGame = true;
+                handleBackBtn();
+            }
+        }
+    });
+
     function readBlob(blob) {
         if (blob.arrayBuffer) return blob.arrayBuffer();
         return new Promise((res, rej) => {
@@ -610,23 +740,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'unk': { brake: 88, jump: 90 }
     };
     
-    // Spotify Adaptive Background Logic
     function hexToRgb(hex) {
         let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 10, g: 10, b: 10};
     }
     
     function setSpotifyGlow(gameSys) {
-        const root = document.documentElement;
+        const root = document.getElementById('menuScreen');
         if (!gameSys || !sysColors[gameSys]) {
-            root.style.setProperty('--bg-color-base', '#0a0a0a');
-            root.style.setProperty('--bg-glow', '#111827');
+            root.style.backgroundColor = '#060608';
             return;
         }
         const rgb = hexToRgb(sysColors[gameSys].hex);
-        // Создаем темный глубокий градиент на основе цвета платформы
-        root.style.setProperty('--bg-glow', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`);
-        root.style.setProperty('--bg-color-base', `rgba(${Math.max(0, rgb.r-30)}, ${Math.max(0, rgb.g-30)}, ${Math.max(0, rgb.b-30)}, 0.15)`);
+        root.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
     }
 
     let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
@@ -742,32 +868,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGamePaused = false;
             if (audioCtx?.state === 'suspended') { audioCtx.resume(); }
         }
-    });
-
-    // --- УМНАЯ КНОПКА НАЗАД: НОВАЯ БЕЗОТКАЗНАЯ ЛОГИКА ДЛЯ APK / TWA ---
-    window.addEventListener('load', () => {
-        // Устанавливаем базовую историю, чтобы не пускать браузер назад
-        history.replaceState({ page: 'menu' }, "");
-        
-        // Убираем Сплеш Скрин через 2 секунды после прогрузки
-        setTimeout(() => {
-            const splash = document.getElementById('splashScreen');
-            if(splash) splash.classList.add('hidden');
-        }, 2000);
-    });
-
-    window.addEventListener('popstate', (e) => { 
-        // Если была нажата системная кнопка или свайп назад
-        const gameFrame = document.getElementById('gameFrame');
-        
-        if (gameFrame && gameFrame.style.display === 'block' && parseFloat(gameFrame.style.opacity) > 0) { 
-            // Мы находимся в игре. Блокируем закрытие APK! Возвращаем шаг истории.
-            history.pushState({ page: 'game' }, "");
-            
-            // Запускаем нашу мягкую функцию очистки и выхода
-            if (typeof handleBackBtn === 'function') handleBackBtn();
-        }
-        // Если мы в меню, код ничего не делает, и браузер штатно закрывает приложение
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -906,7 +1006,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (btn && !isAuto) {
                 if (success) { btn.innerHTML = '✅'; } 
                 else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { btn.innerHTML = '💾'; btn.style.background = '#047857'; }, 2000);
+                setTimeout(() => { btn.innerHTML = '💾'; btn.style.background = 'rgba(4, 120, 87, 0.4)'; }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
@@ -997,13 +1097,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (btn && !isAuto) {
                 if (success) { btn.innerHTML = '✅'; } 
                 else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { btn.innerHTML = '📂'; btn.style.background = '#b45309'; }, 2000);
+                setTimeout(() => { btn.innerHTML = '📂'; btn.style.background = 'rgba(180, 83, 9, 0.4)'; }, 2000);
             }
         } catch(e) { console.error("Load error:", e); }
     }
 
     function toggleColors() { videoConfig.colors = !videoConfig.colors; saveVideoConfig(); }
 
+    // --- ОБНОВЛЕНО ДЛЯ ДИНАМИЧЕСКИХ НЕОНОВЫХ КНОПОК ---
     function updateVideoUI() {
         const btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
         const crtSel = document.getElementById('crtSelector'), resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
@@ -1011,10 +1112,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         let currentCrt = videoConfig.crt === true ? 1 : (videoConfig.crt === false ? 0 : videoConfig.crt);
         
         if (crtSel) { crtSel.value = currentCrt; }
-        if (btnCurve) { btnCurve.innerHTML = videoConfig.curve ? 'Выпуклость: ВКЛ' : 'Выпуклость: ВЫКЛ'; btnCurve.style.background = videoConfig.curve ? '#3b82f6' : '#1e293b'; }
-        if (btnRgb) { btnRgb.innerHTML = videoConfig.rgb ? 'RGB Сдвиг: ВКЛ' : 'RGB Сдвиг: ВЫКЛ'; btnRgb.style.background = videoConfig.rgb ? '#8b5cf6' : '#1e293b'; }
-        if (btnBloom) { btnBloom.innerHTML = videoConfig.bloom ? 'Свечение: ВКЛ' : 'Свечение: ВЫКЛ'; btnBloom.style.background = videoConfig.bloom ? '#f59e0b' : '#1e293b'; }
-        if (btnColors) { btnColors.innerHTML = videoConfig.colors ? 'Цветокоррекция (Гамма): ВКЛ' : 'Цветокоррекция (Гамма): ВЫКЛ'; btnColors.style.background = videoConfig.colors ? '#10b981' : '#1e293b'; }
+        
+        if (btnCurve) { 
+            btnCurve.innerHTML = videoConfig.curve ? 'Выпуклость: ВКЛ' : 'Выпуклость: ВЫКЛ'; 
+            videoConfig.curve ? btnCurve.classList.add('neon-on-blue') : btnCurve.classList.remove('neon-on-blue');
+        }
+        if (btnRgb) { 
+            btnRgb.innerHTML = videoConfig.rgb ? 'RGB Сдвиг: ВКЛ' : 'RGB Сдвиг: ВЫКЛ'; 
+            videoConfig.rgb ? btnRgb.classList.add('neon-on-purple') : btnRgb.classList.remove('neon-on-purple');
+        }
+        if (btnBloom) { 
+            btnBloom.innerHTML = videoConfig.bloom ? 'Свечение: ВКЛ' : 'Свечение: ВЫКЛ'; 
+            videoConfig.bloom ? btnBloom.classList.add('neon-on-orange') : btnBloom.classList.remove('neon-on-orange');
+        }
+        if (btnColors) { 
+            btnColors.innerHTML = videoConfig.colors ? 'Цветокоррекция (Гамма): ВКЛ' : 'Цветокоррекция (Гамма): ВЫКЛ'; 
+            videoConfig.colors ? btnColors.classList.add('neon-on-green') : btnColors.classList.remove('neon-on-green');
+        }
         
         if (resSel) { resSel.value = videoConfig.res; }
         if (filterSel) { filterSel.value = videoConfig.filter; }
@@ -1277,11 +1391,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         isFloatingDpad = padConfig.dpad.f; isAutoStop = padConfig.autoStop; isBottomBarrier = padConfig.barrier;
         
-        const btnAS = document.getElementById('toggleAutoStopBtn'); if (btnAS) btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
+        const btnAS = document.getElementById('toggleAutoStopBtn'); 
+        if (btnAS) { 
+            btnAS.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
+            isAutoStop ? btnAS.classList.add('neon-on-blue') : btnAS.classList.remove('neon-on-blue');
+        }
         const btnBar = document.getElementById('toggleBarrierBtn');
         if (btnBar) {
             btnBar.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ';
-            btnBar.style.background = isBottomBarrier ? '#047857' : '#991b1b';
+            isBottomBarrier ? btnBar.classList.add('neon-on-green') : btnBar.classList.remove('neon-on-green');
         }
         const btnVib = document.getElementById('vibrationSlider');
         if(btnVib) { btnVib.value = padConfig.vib; document.getElementById('vibrationVal').textContent = padConfig.vib + 'мс'; }
@@ -1301,14 +1419,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     function toggleBarrier() {
         isBottomBarrier = !isBottomBarrier;
         const btn = document.getElementById('toggleBarrierBtn');
-        if (btn) { btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ'; btn.style.background = isBottomBarrier ? '#047857' : '#991b1b'; }
+        if (btn) { 
+            btn.innerHTML = isBottomBarrier ? 'Барьер кнопок (низ): ВКЛ' : 'Барьер кнопок (низ): ВЫКЛ'; 
+            isBottomBarrier ? btn.classList.add('neon-on-green') : btn.classList.remove('neon-on-green'); 
+        }
         updateBarrierVisuals();
         if (currentGame) { padConfig.barrier = isBottomBarrier; localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); }
     }
 
     function toggleAutoStop() { 
         isAutoStop = !isAutoStop; 
-        document.getElementById('toggleAutoStopBtn').innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ'; 
+        const btn = document.getElementById('toggleAutoStopBtn');
+        if (btn) {
+            btn.innerHTML = isAutoStop ? 'Авто-Тормоз (Гонки/Грузчик): ВКЛ' : 'Авто-Тормоз (Гонки/Грузчик): ВЫКЛ';
+            isAutoStop ? btn.classList.add('neon-on-blue') : btn.classList.remove('neon-on-blue'); 
+        }
         if (currentGame) { padConfig.autoStop = isAutoStop; localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); } 
     }
     
@@ -1328,17 +1453,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     function updateFloatingBtnUI() { 
         const btn = document.getElementById('toggleFloatBtn'); if (!btn) return;
-        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; btn.style.background = isFloatingDpad ? '#3b82f6' : '#1e293b'; 
+        btn.innerHTML = isFloatingDpad ? 'D-Pad: ПЛАВАЮЩИЙ' : 'D-Pad: ФИКСИРОВАННЫЙ'; 
+        isFloatingDpad ? btn.classList.add('neon-on-purple') : btn.classList.remove('neon-on-purple');
     }
     
     function updateModeBtnUI() { 
         const btn = document.getElementById('toggleModeBtn'); if (!btn) return;
-        
         btn.style.display = 'block'; 
         
-        if (dpadMode === 0) { btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.style.background = '#3b82f6'; }
-        else if (dpadMode === 1) { btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.style.background = '#ef4444'; }
-        else if (dpadMode === 2) { btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.style.background = '#8b5cf6'; }
+        btn.classList.remove('neon-on-blue', 'neon-on-red', 'neon-on-purple');
+        if (dpadMode === 0) { btn.innerHTML = 'Режим: СВАЙП (ПЛАВНЫЙ)'; btn.classList.add('neon-on-blue'); }
+        else if (dpadMode === 1) { btn.innerHTML = 'Режим: ПОШАГОВЫЙ (ДУБОВЫЙ)'; btn.classList.add('neon-on-red'); }
+        else if (dpadMode === 2) { btn.innerHTML = 'Режим: ШУТЕР (СТИК + ОБЗОР)'; btn.classList.add('neon-on-purple'); }
         
         const padEl = document.getElementById('joystick-dpad');
         if (padEl) {
@@ -1385,7 +1511,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             else if (id === 'y') { baseColor = `rgba(16, 185, 129, ${cfg.o})`; borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; }
             else if (id === 'x') { baseColor = `rgba(245, 158, 11, ${cfg.o})`; borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; }
             else { baseColor = `rgba(255, 255, 255, ${cfg.o})`; borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; }
-            el.style.background = baseColor; el.style.borderColor = borderColor; el.style.filter = `brightness(${cfg.b})`;
+            
+            el.style.background = baseColor; 
+            el.style.borderColor = borderColor; 
+            el.style.filter = `brightness(${cfg.b})`;
         }
     }
 
@@ -1396,6 +1525,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             selectedPadEl = el.dataset.id; el.classList.add('editing-active'); const cfg = padConfig[selectedPadEl];
             document.getElementById('opacitySlider').value = (cfg.o || 0.3) * 100; document.getElementById('opacityVal').textContent = Math.round((cfg.o || 0.3) * 100) + '%';
             document.getElementById('brightnessSlider').value = (cfg.b || 1) * 100; document.getElementById('brightnessVal').textContent = Math.round((cfg.b || 1) * 100) + '%';
+            
+            const eventObj = new Event('input');
+            document.getElementById('opacitySlider').dispatchEvent(eventObj);
+            document.getElementById('brightnessSlider').dispatchEvent(eventObj);
+            
             padDragTarget = selectedPadEl; padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
         }, {passive: false});
 
@@ -1460,9 +1594,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (distance > dpadRadius) { nx = (dx / distance) * dpadRadius; ny = (dy / distance) * dpadRadius; }
                 knob.style.transform = `translate(${nx}px, ${ny}px)`;
             }
-            if (normalizedDist > 0.70) {
-                if (!isShooterRunning) { sendKey(16, true); isShooterRunning = true; } 
-            } else {
+            if (normalizedDist > 0.80) {
+                if (!isShooterRunning && currentGame && currentGame.sys !== 'gba') { 
+                    sendKey(16, true); isShooterRunning = true; 
+                } 
+            } else if (normalizedDist < 0.65) {
                 if (isShooterRunning) { sendKey(16, false); isShooterRunning = false; }
             }
         }
@@ -1785,7 +1921,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- ОБНОВЛЕННЫЙ СТАРТ С ПЛАВНЫМ ПЕРЕХОДОМ И HISTORY API ---
     function startGame(game) {
         if (isGameStarting) return; 
         isGameStarting = true;
@@ -1793,8 +1928,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
         try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
 
-        // ИДЕАЛЬНАЯ КНОПКА НАЗАД (APK)
-        history.pushState({ page: 'game' }, "");
+        window.location.hash = 'game';
+        isExitingGame = false;
 
         currentGame = game;
         
@@ -1816,100 +1951,106 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         document.getElementById('searchInput').value = ''; 
         
-        // --- ПЛАВНЫЙ ПЕРЕХОД FADE OUT / FADE IN ---
         menuScreen.style.opacity = '0';
         setTimeout(() => {
             menuScreen.style.display = 'none'; 
-            
-            frameDiv.style.display = 'block'; 
-            // Принудительная перерисовка перед показом
-            void frameDiv.offsetWidth;
-            frameDiv.style.opacity = '1';
-            
-            toolbar.style.display = 'flex';
-            setTimeout(() => toolbar.style.opacity = '1', 50);
-            
-            document.getElementById('btnRestart').style.display = 'flex';
-            
-            btnGamepad.style.display = 'none'; 
-            btnKeyboard.style.display = 'none'; 
-            btnScreen.style.display = 'none'; 
-            btnPadEdit.style.display = 'none'; 
-            fkeysPanel.style.display = 'none'; 
-            screenPanel.style.display = 'none'; 
-            padPanel.style.display = 'none'; 
-            gamepad.style.display = 'none';
-            
-            const nesOnlySettings = document.getElementById('nes-only-settings');
-            if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
-
-            const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
-            document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
-            document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
-            
-            const btnSelect = document.getElementById('btn-select');
-            if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
-            
-            const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
-            document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
-            document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
-            
-            const isGba = game.sys === 'gba';
-            document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
-            document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
-            
-            isPadEditMode = false; 
-            btnPadEdit.classList.remove('active-tool');
-            
-            const savedLayout = localStorage.getItem('layout_' + game.n);
-            if (savedLayout) { 
-                const l = JSON.parse(savedLayout); 
-                scaleX = l.scaleX; 
-                scaleY = l.scaleY; 
-                screenX = l.screenX; 
-                screenY = l.screenY; 
-            } else { 
-                resetScale(); 
-            }
-            updateScreenTransform();
-
-            isEditMode = false; 
-            btnScreen.classList.remove('active-tool'); 
-            canvasContainer.style.pointerEvents = 'auto';
             document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
             
-            backTapCount = 0; 
-            nesRestartFn = null; 
-            isShuttingDown = false; 
-            isGamePaused = false;
+            frameDiv.style.opacity = '0';
+            frameDiv.style.display = 'block'; 
+            void frameDiv.offsetWidth; 
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    frameDiv.style.opacity = '1';
+                    
+                    toolbar.style.opacity = '0';
+                    toolbar.style.display = 'flex';
+                    setTimeout(() => toolbar.style.opacity = '1', 50);
+                    
+                    document.getElementById('btnRestart').style.display = 'flex';
+                    
+                    btnGamepad.style.display = 'none'; 
+                    btnKeyboard.style.display = 'none'; 
+                    btnScreen.style.display = 'none'; 
+                    btnPadEdit.style.display = 'none'; 
+                    fkeysPanel.style.display = 'none'; 
+                    screenPanel.style.display = 'none'; 
+                    padPanel.style.display = 'none'; 
+                    gamepad.style.display = 'none';
+                    
+                    const nesOnlySettings = document.getElementById('nes-only-settings');
+                    if (nesOnlySettings) nesOnlySettings.style.display = (game.t === 'h') ? 'none' : 'block';
 
-            const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
+                    const canSave = (game.t === 'n' || game.t === 'l' || game.t === 'd');
+                    document.getElementById('btnSave').style.display = canSave ? 'flex' : 'none';
+                    document.getElementById('btnLoad').style.display = canSave ? 'flex' : 'none';
+                    
+                    const btnSelect = document.getElementById('btn-select');
+                    if (btnSelect) btnSelect.style.display = (game.t === 'n' || game.t === 'l') ? 'flex' : 'none';
+                    
+                    const isSixButton = game.t === 'l' && (coreMap[game.ext] === 'snes9x_libretro' || coreMap[game.ext] === 'genesis_plus_gx_libretro');
+                    document.getElementById('btn-x').style.display = isSixButton ? 'flex' : 'none'; 
+                    document.getElementById('btn-y').style.display = isSixButton ? 'flex' : 'none'; 
+                    
+                    const isGba = game.sys === 'gba';
+                    document.getElementById('btn-l').style.display = (isSixButton || isGba) ? 'flex' : 'none'; 
+                    document.getElementById('btn-r').style.display = (isSixButton || isGba) ? 'flex' : 'none';
+                    
+                    isPadEditMode = false; 
+                    btnPadEdit.classList.remove('active-tool');
+                    
+                    const savedLayout = localStorage.getItem('layout_' + game.n);
+                    if (savedLayout) { 
+                        const l = JSON.parse(savedLayout); 
+                        scaleX = l.scaleX; 
+                        scaleY = l.scaleY; 
+                        screenX = l.screenX; 
+                        screenY = l.screenY; 
+                    } else { 
+                        resetScale(); 
+                    }
+                    updateScreenTransform();
 
-            if (game.t === 'h') {
-                const htmlUrl = URL.createObjectURL(game.fileBlob);
-                currentGame._tempUrl = htmlUrl; 
-                htmlIframe.style.display = 'block'; 
-                htmlIframe.src = htmlUrl; 
-                canvasContainer.style.pointerEvents = 'none'; 
-                isGameStarting = false;
-            } 
-            else if (game.t === 'd') {
-                setupDOS(game, shouldAutoLoad);
-            } 
-            else if (game.t === 'l') {
-                const cName = coreMap[game.ext];
-                if (cName === 'mgba_libretro') {
-                    setupModernLibretro(game, shouldAutoLoad);
-                } else {
-                    setupLibretro(game, shouldAutoLoad);
-                }
-            }
-            else if (game.t === 'n') {
-                setupNES(game, shouldAutoLoad);
-            }
-        }, 400); // 400мс совпадает с transition в CSS
+                    isEditMode = false; 
+                    btnScreen.classList.remove('active-tool'); 
+                    canvasContainer.style.pointerEvents = 'auto';
+                    
+                    backTapCount = 0; 
+                    nesRestartFn = null; 
+                    isShuttingDown = false; 
+                    isGamePaused = false;
+
+                    setTimeout(() => {
+                        const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
+
+                        if (game.t === 'h') {
+                            const htmlUrl = URL.createObjectURL(game.fileBlob);
+                            currentGame._tempUrl = htmlUrl; 
+                            htmlIframe.style.display = 'block'; 
+                            htmlIframe.src = htmlUrl; 
+                            canvasContainer.style.pointerEvents = 'none'; 
+                            isGameStarting = false;
+                        } 
+                        else if (game.t === 'd') {
+                            setupDOS(game, shouldAutoLoad);
+                        } 
+                        else if (game.t === 'l') {
+                            const cName = coreMap[game.ext];
+                            if (cName === 'mgba_libretro') {
+                                setupModernLibretro(game, shouldAutoLoad);
+                            } else {
+                                setupLibretro(game, shouldAutoLoad);
+                            }
+                        }
+                        else if (game.t === 'n') {
+                            setupNES(game, shouldAutoLoad);
+                        }
+                    }, 50);
+                });
+            });
+        }, 400); 
     }
-
     function setupModernLibretro(game, shouldAutoLoad) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
@@ -2366,6 +2507,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     async function handleBackBtn() {
+        if (window.location.hash === '#game') {
+            isExitingGame = true; 
+            history.back(); // Вызываем системный шаг назад, он триггернет hashchange
+            return; 
+        }
         if (!currentGame) {
             await executeCleanup(true);
             return;
@@ -2386,7 +2532,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- ОБНОВЛЕННАЯ ОЧИСТКА С ПЛАВНЫМ ВОЗВРАТОМ В МЕНЮ ---
+    // --- ОБНОВЛЕННАЯ ОЧИСТКА С ПЛАВНЫМ ВОЗВРАТОМ В МЕНЮ И ХЕШ-ЛОВУШКОЙ ---
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
         
@@ -2500,10 +2646,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (window.gc) window.gc();
             isGameStarting = false;
             
+            if (window.location.hash === '#game') {
+                window.location.hash = 'menu';
+            }
+            
             // Чтобы эмуляторы точно выгрузились из памяти, делаем reload, но уже под черным экраном
             location.reload(); 
-        }, 400); // Совпадает с CSS transition
+        }, 400); 
     }
+
     function injectText() {
         const text = prompt("Введите текст (англ.):");
         if (text && currentDos) {
@@ -2774,15 +2925,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         localStorage.setItem('libraryView', currentViewMode);
         applyViewMode();
     }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedSort = localStorage.getItem('librarySort');
-        const sortSelectEl = document.getElementById('sortSelect');
-        if (savedSort && sortSelectEl) {
-            sortSelectEl.value = savedSort;
-        }
-        applyViewMode();
-    });
 
     let db;
     const dbRequest = indexedDB.open("ArcadeHubDB", 2);
@@ -2917,7 +3059,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     function renderAllGames() {
-        setSpotifyGlow(null); // Сбрасываем свечение при перерисовке
+        setSpotifyGlow(null); 
         const scrollPos = menuScreen.scrollTop; 
         
         const sortSelectEl = document.getElementById('sortSelect');
@@ -2938,15 +3080,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (a.fav && !b.fav) return -1;
                 if (!a.fav && b.fav) return 1;
 
-                if (sortType === 'name_asc') return a.n.localeCompare(b.n);
-                if (sortType === 'name_desc') return b.n.localeCompare(a.n);
-                if (sortType === 'sys') return a.sys.localeCompare(b.sys) || a.n.localeCompare(b.n);
-                if (sortType === 'newest') {
-                    const idA = parseInt(a.id.split('_')[1]) || 0;
-                    const idB = parseInt(b.id.split('_')[1]) || 0;
-                    return idB - idA;
-                }
-                return 0; 
+                let pA = mySysPriority.indexOf(a.sys);
+                let pB = mySysPriority.indexOf(b.sys);
+                if (pA === -1) pA = 99;
+                if (pB === -1) pB = 99;
+
+                if (pA !== pB) return pA - pB;
+                return a.n.localeCompare(b.n);
             });
 
             if (sortType === 'random') {
@@ -2990,7 +3130,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge} ${neonClass}" id="badge-${game.id}" onclick="toggleAutoLoad('${game.id}', event)">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
-        // --- SPOTIFY ADAPTIVE GLOW TRIGGERS ---
         btn.addEventListener('mouseenter', () => setSpotifyGlow(game.sys));
         btn.addEventListener('touchstart', () => setSpotifyGlow(game.sys), {passive: true});
 
@@ -3299,70 +3438,49 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const origTxt = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
-        
         if (btn.dataset.readyToDownload === 'true') {
-            const url = btn.dataset.blobUrl;
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'ArcadeHub_Backup.zip';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            
-            btn.innerHTML = '✅ СКАЧАНО!'; btn.style.background = '#0f766e';
-            setTimeout(() => { 
-                btn.innerHTML = origTxt; 
-                btn.dataset.readyToDownload = 'false';
-                URL.revokeObjectURL(url);
-            }, 3000);
-            return;
+            window.location.assign(btn.dataset.blobUrl); return;
         }
-        
-        if (!confirm('Собрать все игры в один ZIP архив? Это может занять время.')) return;
-        
-        btn.innerHTML = '⏳ СОБИРАЮ АРХИВ...';
-        btn.style.pointerEvents = 'none';
+        if (!confirm('Собрать игры и обложки в ZIP?')) return;
+        btn.innerHTML = '⏳ ПОДГОТОВКА...'; btn.style.pointerEvents = 'none';
 
         try {
             const tx = db.transaction(["games"], "readonly");
-            const store = tx.objectStore("games");
-            const req = store.getAll();
-            
+            const req = tx.objectStore("games").getAll();
             req.onsuccess = async () => {
                 const games = req.result;
-                if (games.length === 0) {
-                    btn.innerHTML = '⚠️ БИБЛИОТЕКА ПУСТА'; 
-                    btn.style.background = '#ef4444';
-                    setTimeout(() => {
-                        btn.innerHTML = origTxt;
-                        btn.style.background = '#0f766e';
-                        btn.style.pointerEvents = 'auto';
-                    }, 3000);
-                    return;
-                }
-
                 let zipData = {};
+                let current = 0;
+
                 for (let g of games) {
+                    current++;
+                    btn.innerHTML = `⏳ ПАКУЮ: ${current} / ${games.length}`;
+                    
                     const buffer = await readBlob(g.fileBlob);
-                    let fname = g.n + '.' + g.ext;
-                    if (g.t === 'd') fname = g.n + '.zip';
-                    else if (g.t === 'h') fname = g.n + '.html';
-                    zipData[fname] = new Uint8Array(buffer);
+                    let baseName = g.n.replace(/[/\\?%*:|"<>]/g, '-'); 
+                    let gameFileName = baseName + '.' + (g.ext || 'bin');
+                    if (g.t === 'd') gameFileName = baseName + '.zip';
+                    zipData[gameFileName] = new Uint8Array(buffer);
+
+                    if (g.cover && g.cover.startsWith('data:image')) {
+                        try {
+                            const response = await fetch(g.cover);
+                            const imgBlob = await response.blob();
+                            zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
+                        } catch(e) {}
+                    }
+                    if (current % 5 === 0) await new Promise(r => setTimeout(r, 10));
                 }
 
-                const zipped = fflate.zipSync(zipData);
+                btn.innerHTML = '⚡ СЖАТИЕ...';
+                const zipped = fflate.zipSync(zipData, { level: 1 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
-                const url = URL.createObjectURL(blob);
-                
-                btn.innerHTML = '✅ СКАЧАТЬ АРХИВ'; btn.style.background = '#d97706';
-                btn.style.pointerEvents = 'auto'; btn.dataset.readyToDownload = 'true'; btn.dataset.blobUrl = url;
+                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
+                btn.style.background = '#d97706'; btn.style.pointerEvents = 'auto'; 
+                btn.dataset.readyToDownload = 'true'; btn.dataset.blobUrl = URL.createObjectURL(blob);
             };
         } catch(e) {
-            btn.innerHTML = '⚠️ ОШИБКА ВЫГРУЗКИ'; 
-            btn.style.background = '#ef4444';
-            setTimeout(() => {
-                btn.innerHTML = origTxt;
-                btn.style.background = '#0f766e';
-                btn.style.pointerEvents = 'auto';
-            }, 3000);
+            btn.innerHTML = '⚠️ ОШИБКА'; setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
         }
     }
 
@@ -3390,8 +3508,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.style.borderColor = '#047857';
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.style.background = '#0284c7'; 
-                    btn.style.borderColor = '#0369a1';
+                    btn.style.background = 'rgba(2, 132, 199, 0.4)'; 
+                    btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
                     btn.style.pointerEvents = 'auto';
                 }, 3000);
                 return;
@@ -3425,8 +3543,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.background = '#0284c7'; 
-                btn.style.borderColor = '#0369a1';
+                btn.style.background = 'rgba(2, 132, 199, 0.4)'; 
+                btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
                 btn.style.pointerEvents = 'auto';
                 renderAllGames(); 
             }, 3000);
@@ -3438,8 +3556,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btn.style.borderColor = '#b91c1c';
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.background = '#0284c7';
-                btn.style.borderColor = '#0369a1';
+                btn.style.background = 'rgba(2, 132, 199, 0.4)';
+                btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
                 btn.style.pointerEvents = 'auto';
             }, 3000);
         }
