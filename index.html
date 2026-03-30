@@ -74,7 +74,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; padding-bottom: 25px; }
 .icon { font-size: 36px; text-shadow: 0 2px 6px rgba(0,0,0,0.8); margin-bottom: 4px; }
 .game-title { position: absolute; bottom: 0; left: 0; width: 100%; padding: 6px 4px; font-size: 10px; background: rgba(0,0,0,0.8); border-radius: 0 0 11px 11px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px; z-index: 3; }
-.sys-badge { position: absolute; top: 5px; right: 5px; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: 900; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); }
+
+/* ОБНОВЛЕННЫЙ БЕЙДЖ АВТОЗАГРУЗКИ (ЖИРНЫЙ, УДОБНЫЙ) */
+.sys-badge { position: absolute; top: 5px; right: 5px; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: all 0.2s ease; }
+.neon-active { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.9), inset 0 0 6px rgba(56, 189, 248, 0.6) !important; border: 1px solid #38bdf8 !important; color: #fff !important; text-shadow: 0 0 5px #fff, 0 0 10px #38bdf8 !important; transform: scale(1.05); }
+
 .sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
 .sys-nes:active { box-shadow: 0 2px 0 #991b1b, 0 4px 6px rgba(0,0,0,0.6), inset 0 2px 4px rgba(0,0,0,0.6) !important; }
 .badge-nes { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
@@ -345,7 +349,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
 </div>
 
-
 <div id="gameFrame">
     <iframe id="html-iframe"></iframe>
     <div id="canvasContainer">
@@ -488,8 +491,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
 
-// тут начинается обычно 2 часть//
-
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -582,7 +583,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         'dos': { brake: 90, jump: 88 },
         'unk': { brake: 88, jump: 90 }
     };
-
     let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
     try {
         const savedVc = localStorage.getItem('videoV6');
@@ -698,6 +698,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
+    // УМНАЯ КНОПКА НАЗАД: Перехватчик
     window.addEventListener('load', () => {
         history.pushState({ trap: true }, "");
         history.pushState({ trap: true }, ""); 
@@ -811,7 +812,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (statePath) {
                         let fileData = fs.readFile(statePath);
                         await SaveStorage.set('savestate_lr_' + currentGame.n, packData(fileData));
-                        await SaveStorage.set('savestate_lr_path_' + currentGame.n, statePath); 
                         success = true;
                     }
                 }
@@ -856,6 +856,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     async function loadGameState(isAuto = false) {
         if (!currentGame) return;
+
+        if (isAuto) {
+            const isNeonActive = localStorage.getItem('autoload_' + currentGame.id) === 'true';
+            if (!isNeonActive) {
+                if (currentGame.t === 'l' && window.Module && window.Module._cmd_save_state) {
+                    window.Module._cmd_save_state();
+                }
+                return; 
+            }
+        }
+
         try {
             let success = false;
             const btn = document.getElementById('btnLoad');
@@ -876,24 +887,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const savedData = await SaveStorage.get('savestate_lr_' + currentGame.n);
                 if (savedData && window.Module._cmd_load_state) {
                     let fs = window.FS || (window.Module && window.Module.FS);
-                    let statePath = await SaveStorage.get('savestate_lr_path_' + currentGame.n);
-
-                    if (!statePath && fs) {
-                        window.Module._cmd_save_state();
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                        function findState(dir) {
-                            try {
-                                let nodes = fs.readdir(dir);
-                                for (let n of nodes) {
-                                    if (n === '.' || n === '..') continue;
-                                    let p = dir === '/' ? '/' + n : dir + '/' + n;
-                                    if (fs.isDir(fs.stat(p).mode)) findState(p);
-                                    else if (p.includes('/states/') || p.endsWith('.state')) statePath = p; 
-                                }
-                            } catch(e) {}
-                        }
-                        findState('/home/web_user/retroarch/userdata/states');
+                    
+                    window.Module._cmd_save_state();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    let statePath = null;
+                    function findState(dir) {
+                        try {
+                            let nodes = fs.readdir(dir);
+                            for (let n of nodes) {
+                                if (n === '.' || n === '..') continue;
+                                let p = dir === '/' ? '/' + n : dir + '/' + n;
+                                if (fs.isDir(fs.stat(p).mode)) findState(p);
+                                else if (p.includes('/states/') || p.endsWith('.state')) statePath = p; 
+                            }
+                        } catch(e) {}
                     }
+                    if (fs) findState('/home/web_user/retroarch/userdata/states');
 
                     if (statePath && fs) {
                         const stateCopy = unpackData(savedData);
@@ -1515,7 +1525,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         zone.addEventListener('touchcancel', handleDpadTouchEnd, {passive: false}); 
     });
     
-    // --- ЛОГИКА КАМЕРЫ ДЛЯ ШУТЕРОВ (СВАЙПЫ) ---
     const cameraZone = document.getElementById('camera-catch-zone');
     let camTouchId = null;
     let camStartX = 0;
@@ -1539,10 +1548,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if(!touch) return;
 
             const delta = touch.clientX - camStartX;
-            const threshold = 15; // Чувствительность поворота
+            const threshold = 15; 
             let newKey = null;
-            if (delta > threshold) newKey = 39; // Право
-            else if (delta < -threshold) newKey = 37; // Лево
+            if (delta > threshold) newKey = 39; 
+            else if (delta < -threshold) newKey = 37; 
 
             if (newKey !== camActiveKey) {
                 if (camActiveKey) sendKey(camActiveKey, false);
@@ -1661,7 +1670,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-            function showResetModal() {
+    function showResetModal() {
         return new Promise((resolve) => {
             const overlay = document.getElementById('resetModalOverlay');
             const btnWipe = document.getElementById('btnResetWipe');
@@ -1687,7 +1696,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (!currentGame) return;
         
         const choice = await showResetModal();
-        if (!choice) return; // Если нажали Отмена или кликнули мимо
+        if (!choice) return; 
         
         if (choice === 'wipe') {
             const btn = document.getElementById('btnRestart');
@@ -1718,9 +1727,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             location.reload();
         }
     }
-
-
-
     function startGame(game) {
         if (isGameStarting) return; 
         isGameStarting = true;
@@ -1807,6 +1813,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isShuttingDown = false; 
         isGamePaused = false;
 
+        // ПРОВЕРЯЕМ ФЛАГ НЕОНА
+        const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
+
         if (game.t === 'h') {
             const htmlUrl = URL.createObjectURL(game.fileBlob);
             currentGame._tempUrl = htmlUrl; 
@@ -1816,22 +1825,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             isGameStarting = false;
         } 
         else if (game.t === 'd') {
-            setupDOS(game);
+            setupDOS(game, shouldAutoLoad);
         } 
         else if (game.t === 'l') {
             const cName = coreMap[game.ext];
             if (cName === 'mgba_libretro') {
-                setupModernLibretro(game);
+                setupModernLibretro(game, shouldAutoLoad);
             } else {
-                setupLibretro(game);
+                setupLibretro(game, shouldAutoLoad);
             }
         }
         else if (game.t === 'n') {
-            setupNES(game);
+            setupNES(game, shouldAutoLoad);
         }
     }
 
-    function setupModernLibretro(game) {
+    function setupModernLibretro(game, shouldAutoLoad) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
@@ -1943,12 +1952,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [virtualFileName],
                     preRun: [function(mod) {
                         mod.FS.writeFile(virtualFileName, fileData);
-                        try {
-                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n);
-                            if (b64) {
-                                mod.FS.writeFile(virtualFileName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64));
-                            }
-                        } catch(e) {}
                     }],
                     print: (t) => console.log('CORE:', t),
                     printErr: (t) => console.error('CORE ERR:', t)
@@ -1957,7 +1960,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 glLoop();
                 setTimeout(() => libCanvas.focus(), 100); 
                 await new Promise(r => setTimeout(r, 500));
+                
+                // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                 await loadGameState(true);
+                
                 isGameStarting = false;
 
             } catch (err) {
@@ -1972,7 +1978,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    function setupLibretro(game) {
+    function setupLibretro(game, shouldAutoLoad) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
         libCanvas.id = 'canvas'; 
@@ -2055,18 +2061,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     arguments: [romName],
                     preRun: [function() { 
                         FS.writeFile(romName, fileData); 
-                        try { 
-                            const b64 = localStorage.getItem('sram_lr_' + currentGame.n); 
-                            if (b64) { 
-                                FS.writeFile(romName.replace(/\.[^/.]+$/, "") + ".srm", unpackData(b64)); 
-                            } 
-                        } catch(e) {}
                     }],
                     print: function(t) { console.log(t); }, 
                     printErr: function(t) { console.error(t); },
                     onRuntimeInitialized: async function() { 
                         glLoop(); 
                         await new Promise(r => setTimeout(r, 500)); 
+                        
+                        // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                         await loadGameState(true); 
                     }
                 };
@@ -2087,7 +2089,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    function setupDOS(game) {
+    function setupDOS(game, shouldAutoLoad) {
         const dosCanvas = document.createElement('canvas'); 
         dosCanvas.id = 'dos-canvas'; 
         dosCanvas.width = 640; 
@@ -2141,7 +2143,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             Dos(dosCanvas, { wdosboxUrl: "wdosbox.js", wasmUrl: "wdosbox.wasm.js" }).ready((fs, main) => {
                 window.WDOSBOX = { FS: fs }; 
                 fs.extract(e.target.result).then(async () => {
+                    
+                    // ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                     await loadGameState(true); 
+                    
                     let cmd = ["-c", "cycles auto"]; 
                     if (game.e) cmd.push("-c", game.e);
                     main(cmd).then(ci => currentDos = ci).catch(err => console.log("DOS:", err));
@@ -2167,7 +2172,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         reader.readAsDataURL(game.fileBlob);
     }
 
-    function setupNES(game) {
+    function setupNES(game, shouldAutoLoad) {
         const nesCanvas = document.createElement('canvas'); 
         nesCanvas.id = 'nes-canvas'; 
         nesCanvas.width = 256; 
@@ -2198,7 +2203,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         updateVideoUI();
         
         readBlob(game.fileBlob).then(arrayBuffer => { 
-            launchNes(window.jsnes?.NES || window.NES, arrayBuffer, nesCanvas); 
+            launchNes(window.jsnes?.NES || window.NES, arrayBuffer, nesCanvas, shouldAutoLoad); 
             isGameStarting = false;
         }).catch(err => { 
             alert("Ошибка чтения ROM: " + err.message); 
@@ -2207,7 +2212,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    function launchNes(Constructor, arrayBuffer, canvas) {
+    function launchNes(Constructor, arrayBuffer, canvas, shouldAutoLoad) {
         const currentSampleRate = initAudio(); 
         windowCurrentROMString = null; 
         try {
@@ -2248,19 +2253,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 nes.loadROM(windowCurrentROMString);
                 
                 if (!isReset) {
-                    const autoLoadData = localStorage.getItem('savestate_' + currentGame.n);
-                    if (autoLoadData) { 
-                        try { 
-                            const decoder = window.TextDecoder ? new TextDecoder() : { decode: a => String.fromCharCode.apply(null, a) }; 
-                            nes.fromJSON(JSON.parse(decoder.decode(unpackData(autoLoadData)))); 
-                        } catch(e) {
-                            try {
-                                if (autoLoadData.startsWith('{')) {
-                                    nes.fromJSON(JSON.parse(autoLoadData));
-                                }
-                            } catch(e2) {}
-                        } 
-                    }
+                    loadGameState(true); // <--- ВЫЗЫВАЕМ С ФЛАГОМ TRUE
                 }
                 
                 lastTime = performance.now(); 
@@ -2311,27 +2304,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return;
         }
         
-        if (backTapCount === 0) {
-            backTapCount++; 
-            const btn = document.getElementById('btnBack'); 
-            if (btn) {
-                btn.style.background = 'rgba(239, 68, 68, 0.9)'; 
-                btn.style.fontSize = '10px'; 
-                btn.innerHTML = 'ВЫХОД';
-            }
-            
-            await saveGameState(); 
-            
-            setTimeout(() => { 
-                backTapCount = 0; 
-                if (btn) {
-                    btn.style.background = 'rgba(30, 30, 30, 0.7)'; 
-                    btn.style.fontSize = '18px'; 
-                    btn.innerHTML = '⬅'; 
-                }
-            }, 2000);
-        } else { 
-            await executeCleanup(true); 
+        const btn = document.getElementById('btnBack'); 
+        if (btn) {
+            btn.style.background = '#059669'; 
+            btn.innerHTML = '⏳';
+        }
+        
+        // УМНАЯ КНОПКА НАЗАД: ДЕЛАЕТ ТИХИЙ СЕЙВ
+        await saveGameState(true); 
+        await executeCleanup(true); 
+        
+        if (btn) {
+            btn.style.background = 'rgba(30, 30, 30, 0.7)'; 
+            btn.innerHTML = '⬅'; 
         }
     }
 
@@ -2339,7 +2324,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isShuttingDown = true; 
         
         if (!skipSave) {
-            await saveGameState(); 
+            await saveGameState(true); 
         }
         
         if (currentGame?._tempUrl) { 
@@ -2565,7 +2550,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch (e) { return false; }
     }
 
-        const coverQueue = [];
+    const coverQueue = [];
     let isFetchingCover = false;
 
     function fetchNetCover(gameName, sysType) {
@@ -2582,7 +2567,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         isFetchingCover = true;
         
-        // Берем первую задачу из очереди
         const task = coverQueue.shift();
 
         try {
@@ -2676,90 +2660,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
             
-            // Если дошли сюда успешно — отдаем картинку
             task.resolve(foundUrl);
 
         } catch (error) {
-            console.error("Очередь поймала сбой, но мы идем дальше:", error);
-            // САМОЕ ВАЖНОЕ: даже если всё взорвалось, мы ОБЯЗАНЫ отпустить кнопку!
+            console.error("Очередь поймала сбой:", error);
             task.resolve(null); 
         }
 
-        // Запускаем следующий элемент очереди несмотря ни на что
-        setTimeout(processCoverQueue, 150);
-    }
-
-    
-
-        const localWords = getWords(gameName);
-        const localSquashed = localWords.join('');
-        const localNumbers = localWords.filter(w => !isNaN(w));
-
-        let scoredMatches = githubCovers.map(name => {
-            const dbWords = getWords(name);
-            const dbSquashed = dbWords.join('');
-            const dbNumbers = dbWords.filter(w => !isNaN(w));
-            let score = 0;
-
-            if (dbSquashed === localSquashed) score += 100;
-            else if (dbSquashed.includes(localSquashed) || localSquashed.includes(dbSquashed)) score += 40;
-
-            const matchedWords = localWords.filter(w => dbWords.includes(w));
-            score += matchedWords.length * 10;
-            if (matchedWords.length > 0 && matchedWords.length === localWords.length) score += 50;
-
-            if (localNumbers.length > 0 && dbNumbers.length > 0) {
-                if (localNumbers[0] === dbNumbers[0]) score += 40;
-                else score -= 100; 
-            }
-
-            return { name, score };
-        }).filter(m => m.score > 0);
-
-        scoredMatches.sort((a, b) => b.score - a.score);
-        let matches = scoredMatches.map(m => m.name).slice(0, 5);
-
-        if (matches.length === 0) {
-            for (let name of githubCovers) {
-                let safeName = name.replace(/\.png$/i, '');
-                let url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folders[0])}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-                if (!window.usedCovers.has(url)) {
-                    matches.push(name);
-                    if (matches.length >= 3) break;
-                }
-            }
-            if (matches.length === 0) {
-                matches = githubCovers.slice(0, 3); 
-            }
-        }
-
-        let foundUrl = null;
-        let fallbackUrl = null;
-
-        for (const match of matches) {
-            const safeName = match.replace(/\.png$/i, '');
-            
-            for (const folder of folders) {
-                const url = `https://raw.githubusercontent.com/libretro/libretro-thumbnails/master/${encodeURIComponent(folder)}/Named_Boxarts/${encodeURIComponent(safeName)}.png`;
-                
-                if (await checkImageExists(url)) {
-                    if (window.usedCovers.has(url)) {
-                        if (!fallbackUrl) fallbackUrl = url; 
-                        continue; 
-                    } else {
-                        foundUrl = url;
-                        window.usedCovers.add(url);
-                        break;
-                    }
-                }
-                await new Promise(r => setTimeout(r, 50));
-            }
-            if (foundUrl) break; 
-        }
-
-        if (!foundUrl && fallbackUrl) foundUrl = fallbackUrl;
-
-        resolve(foundUrl);
         setTimeout(processCoverQueue, 150);
     }
 
@@ -2920,6 +2827,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         };
     }
 
+    // НАША КРАСИВАЯ И НАДЕЖНАЯ ФУНКЦИЯ ДЛЯ НЕОНА
+    function toggleAutoLoad(id, e) {
+        if (e) { e.preventDefault(); e.stopPropagation(); } 
+        if (isLibraryEditMode) return; 
+        
+        const currentStatus = localStorage.getItem('autoload_' + id) === 'true';
+        const badgeEl = document.getElementById('badge-' + id);
+        
+        if (currentStatus) {
+            localStorage.removeItem('autoload_' + id);
+            if (badgeEl) badgeEl.classList.remove('neon-active');
+        } else {
+            localStorage.setItem('autoload_' + id, 'true');
+            if (badgeEl) badgeEl.classList.add('neon-active');
+        }
+        if (typeof doVibrate === 'function') doVibrate(15);
+    }
+
     function renderAllGames() {
         const scrollPos = menuScreen.scrollTop; 
         
@@ -2988,7 +2913,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const favIcon = game.fav ? '⭐' : '☆';
         const favHtml = `<div style="position: absolute; top: 5px; left: 5px; z-index: 4; font-size: 18px; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.8);" onclick="toggleFavorite('${game.id}', event)">${favIcon}</div>`;
         
-        btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge}">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
+        // Читаем статус автозагрузки при создании кнопки
+        const isAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
+        const neonClass = isAutoLoad ? 'neon-active' : '';
+
+        // Внедряем интерактивный бейдж с ИНЛАЙН-кликом
+        btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge} ${neonClass}" id="badge-${game.id}" onclick="toggleAutoLoad('${game.id}', event)">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
         btn.onclick = (e) => { 
             e.preventDefault(); 
@@ -3007,7 +2937,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 startGame(game); 
             }
         };
-        
+
         if (isCustom && !isLibraryEditMode) {
             const delBtn = document.createElement('div'); 
             delBtn.className = 'del-btn'; 
@@ -3047,14 +2977,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         document.body.appendChild(globalFileInput);
     }
 
-        async function flattenAndProcessFiles(files) {
+    async function flattenAndProcessFiles(files) {
         const extractedFiles = [];
         const btn = document.getElementById('mainImportBtn');
         const origText = btn.innerHTML;
 
-        // Рекурсивная функция для глубокого поиска
         async function processItem(item, depth) {
-            if (depth > 3) return; // Ограничение глубины: не больше 3 матрешек
+            if (depth > 3) return; 
             const lowName = item.name.toLowerCase();
 
             if (lowName.endsWith('.zip')) {
@@ -3084,21 +3013,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     }
 
                     if (hasExe) {
-                        // DOS-игра — оставляем единым архивом
                         extractedFiles.push(item);
                     } else {
-                        // Вытаскиваем найденные игры
                         for (const rom of romsInZip) {
                             const blob = new Blob([rom.data], {type: 'application/octet-stream'});
                             extractedFiles.push(new File([blob], rom.name));
-                            await new Promise(r => setTimeout(r, 10)); // Даем системе "подышать"
+                            await new Promise(r => setTimeout(r, 10));
                         }
-                        // Проваливаемся во вложенные ZIP-архивы
                         for (const nZip of nestedZips) {
                             const blob = new Blob([nZip.data], {type: 'application/zip'});
                             await processItem(new File([blob], nZip.name), depth + 1);
                         }
-                        // Если это пустой архив, сохраняем как есть
                         if (romsInZip.length === 0 && nestedZips.length === 0) {
                             extractedFiles.push(item);
                         }
@@ -3111,11 +3036,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         }
 
-        // Обрабатываем файлы с отображением прогресса
         for (let i = 0; i < files.length; i++) {
             btn.innerHTML = `⏳ РАСПАКОВКА ${i + 1}/${files.length}...`;
             await processItem(files[i], 0);
-            await new Promise(r => setTimeout(r, 30)); // Спасает от зависания (OOM)
+            await new Promise(r => setTimeout(r, 30)); 
         }
 
         btn.innerHTML = origText;
@@ -3125,9 +3049,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             return coreMap[ext] || ['nes', 'zip', 'html'].includes(ext);
         });
     }
-
-
-
 
     globalFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files || []);
@@ -3300,7 +3221,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-        async function exportLibrary() {
+    async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const origTxt = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
         
@@ -3370,9 +3291,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // =========================================================
-    // ПРАВИЛЬНАЯ ЛОГИКА ПОИСКА (КРАСИВЫЕ КНОПКИ, БЕЗ ЗАВИСАНИЙ)
-    // =========================================================
     document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
         const btn = e.target;
         const originalText = btn.innerHTML;
@@ -3380,7 +3298,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btn.style.pointerEvents = 'none';
 
         try {
-            // 1. Быстро читаем базу
             const gamesToUpdate = await new Promise((resolve, reject) => {
                 const tx = db.transaction(["games"], "readonly");
                 const store = tx.objectStore("games");
@@ -3392,7 +3309,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 req.onerror = () => reject(req.error);
             });
 
-            // Если изначально всё найдено
             if (gamesToUpdate.length === 0) {
                 btn.innerHTML = '✨ У ВСЕХ ИГР ЕСТЬ ОБЛОЖКИ!';
                 btn.style.background = '#10b981'; 
@@ -3409,7 +3325,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let missingCount = gamesToUpdate.length;
             let updatedCount = 0;
 
-            // 2. Спокойно ищем обложки в интернете
             for (const game of gamesToUpdate) {
                 btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
                 
@@ -3418,7 +3333,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (newCover) {
                     game.cover = newCover;
                     
-                    // 3. Сохраняем в микро-транзакции
                     await new Promise((resolve) => {
                         const writeTx = db.transaction(["games"], "readwrite");
                         writeTx.objectStore("games").put(game);
@@ -3427,11 +3341,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     updatedCount++;
                 }
                 
-                // Защита от бана на GitHub
                 await new Promise(r => setTimeout(r, 400));
             }
 
-            // Финал: красиво показываем итог
             btn.innerHTML = `✅ НАЙДЕНО НОВЫХ: ${updatedCount} из ${missingCount}`;
             btn.style.background = '#10b981'; 
             btn.style.borderColor = '#047857';
@@ -3457,7 +3369,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }, 3000);
         }
     });
-    // =========================================================
 
 </script>
 
@@ -3465,4 +3376,3 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
-
