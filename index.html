@@ -110,24 +110,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 .pacman-container { position: absolute; top: 50%; left: 0; width: 100%; height: 35px; margin-top: -17px; overflow: hidden; z-index: 4; pointer-events: none; }
 
-/* БРОНЕБОЙНЫЙ ПАКМАН (Без квадратов и сплющивания, работает через border) */
 .pacman { 
-    width: 26px; height: 26px; 
+    width: 26px; height: 26px; border-radius: 50%; 
+    background: radial-gradient(circle at 13px 6px, #fff 2px, transparent 2px), #fde047; 
     position: absolute; top: 2px; left: 0; z-index: 5; 
-    animation: movePacman 5s linear infinite; 
-    filter: drop-shadow(0 0 10px rgba(253, 224, 71, 0.8)); 
+    clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); 
+    animation: chomp 0.25s infinite alternate, movePacman 5s linear infinite; 
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.3); 
 }
-.pacman::before, .pacman::after {
-    content: ''; position: absolute; top: 0; left: 0;
-    width: 0; height: 0;
-    border: 13px solid #fde047;
-    border-radius: 50%;
-    border-right-color: transparent;
-}
-.pacman::before { animation: chompTop 0.25s ease-in-out infinite alternate; }
-.pacman::after { animation: chompBottom 0.25s ease-in-out infinite alternate; }
-
-/* Разноцветные неоновые шарики, которые ест Пакман */
 .dot-track { 
     position: absolute; top: 13px; left: 0; width: 100%; height: 6px; z-index: 1; 
     background: linear-gradient(90deg, #ef4444, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #d946ef);
@@ -138,11 +128,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     animation: eatDots 5s linear infinite; 
     filter: drop-shadow(0 0 4px rgba(255,255,255,0.6)); 
 }
-
 .om-nom { position: absolute; color: #eab308; font-weight: 900; font-size: 13px; animation: floatNom 0.8s infinite alternate; left: 50%; bottom: 2px; z-index: 6; text-shadow: 2px 2px 0 #000; transform: translateX(-50%); white-space: nowrap; }
 
-@keyframes chompTop { 0% { transform: rotate(0deg); } 100% { transform: rotate(-45deg); } }
-@keyframes chompBottom { 0% { transform: rotate(0deg); } 100% { transform: rotate(45deg); } }
+@keyframes chomp { 100% { clip-path: polygon(100% 50%, 50% 50%, 100% 50%, 100% 0, 0 0, 0 100%, 100% 100%); } }
 @keyframes movePacman { 0% { left: -10%; transform: scaleX(1); } 100% { left: 110%; transform: scaleX(1); } }
 @keyframes eatDots { 0%, 8% { clip-path: inset(0 0 0 0); } 92%, 100% { clip-path: inset(0 0 0 100%); } }
 @keyframes floatNom { 0% { transform: translate(-50%, 0) scale(1); opacity: 1; } 100% { transform: translate(-50%, -6px) scale(1.1); opacity: 0.7; } }
@@ -163,15 +151,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #mainImportBtn, #infoBtn { background: rgba(56, 189, 248, 0.1) !important; border: 1px solid rgba(56, 189, 248, 0.3) !important; color: #bae6fd !important; box-shadow: 0 0 10px rgba(56, 189, 248, 0.1); }
 #editModeBtn.active { background: rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.6) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
 
-/* --- КАСТОМНАЯ СОРТИРОВКА (Только нужные опции) --- */
-#sortContainer { position: relative; flex: 1; height: 44px; }
-#sortSelect { 
-    width: 100%; height: 100%; padding: 0 15px; color: #fff; font-size: 13px; font-weight: bold; border-radius: 10px; 
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); outline: none; -webkit-appearance: none;
-    backdrop-filter: blur(10px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s;
-}
-#sortSelect:focus { border-color: var(--neon-purple); box-shadow: 0 0 15px rgba(168,85,247,0.4), inset 0 1px 0 rgba(255,255,255,0.1); }
-.sort-arrow { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 10px; pointer-events: none; }
+/* --- НОВЫЕ КНОПКИ СОРТИРОВКИ --- */
+.sys-filter-container { display: flex; gap: 8px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
+.sys-filter-container::-webkit-scrollbar { display: none; }
+.sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 13px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+.sys-filter-btn:active { transform: scale(0.95); filter: brightness(1.2); }
+.sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
 
 #searchInput { width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid #374151; background: rgba(17, 24, 39, 0.6); backdrop-filter: blur(10px); color: #fff; font-weight: bold; font-size: 14px; margin-bottom: 15px; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: border-color 0.2s, box-shadow 0.2s; }
 #searchInput:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.3), inset 0 2px 5px rgba(0,0,0,0.5); }
@@ -193,23 +178,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .sys-badge { position: absolute; top: 5px; right: 5px; padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 900; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: all 0.2s ease; }
 .neon-active { box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.9), inset 0 0 6px rgba(56, 189, 248, 0.6) !important; border: 1px solid var(--neon-blue) !important; color: #fff !important; text-shadow: 0 0 5px #fff, 0 0 10px var(--neon-blue) !important; transform: scale(1.05); }
 
-/* ЦВЕТА СИСТЕМ (Оригинал) */
-.sys-nes { box-shadow: 0 6px 0 #991b1b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #ef4444; }
-.badge-nes { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
+/* ЦВЕТА СИСТЕМ (Добавлено яркое свечение) */
+.sys-nes { box-shadow: 0 6px 0 #dc2626, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f87171; }
+.badge-nes { background: linear-gradient(135deg, #f87171, #ef4444); color: white; box-shadow: 0 0 12px rgba(239,68,68,0.7); }
 .sys-smd { box-shadow: 0 6px 0 #1e3a8a, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #3b82f6; }
-.badge-smd { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; }
-.sys-snes { box-shadow: 0 6px 0 #4c1d95, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #8b5cf6; }
-.badge-snes { background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; }
-.sys-ngp { box-shadow: 0 6px 0 #164e63, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #06b6d4; }
-.badge-ngp { background: linear-gradient(135deg, #06b6d4, #0e7490); color: white; }
-.sys-dos { box-shadow: 0 6px 0 #064e3b, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #10b981; }
-.badge-dos { background: linear-gradient(135deg, #10b981, #047857); color: white; }
+.badge-smd { background: linear-gradient(135deg, #60a5fa, #2563eb); color: white; box-shadow: 0 0 12px rgba(59,130,246,0.7); }
+.sys-snes { box-shadow: 0 6px 0 #6d28d9, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #a855f7; }
+.badge-snes { background: linear-gradient(135deg, #c084fc, #9333ea); color: white; box-shadow: 0 0 12px rgba(168,85,247,0.7); }
+.sys-ngp { box-shadow: 0 6px 0 #0e7490, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #06b6d4; }
+.badge-ngp { background: linear-gradient(135deg, #22d3ee, #0891b2); color: white; box-shadow: 0 0 12px rgba(6,182,212,0.7); }
+.sys-dos { box-shadow: 0 6px 0 #047857, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #10b981; }
+.badge-dos { background: linear-gradient(135deg, #34d399, #059669); color: white; box-shadow: 0 0 12px rgba(16,185,129,0.7); }
 .sys-unk { box-shadow: 0 6px 0 #334155, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #64748b; }
-.badge-unk { background: linear-gradient(135deg, #64748b, #334155); color: white; }
-.sys-html { box-shadow: 0 6px 0 #78350f, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
-.badge-html { background: linear-gradient(135deg, #f59e0b, #b45309); color: white; }
+.badge-unk { background: linear-gradient(135deg, #94a3b8, #475569); color: white; box-shadow: 0 0 12px rgba(100,116,139,0.7); }
+.sys-html { box-shadow: 0 6px 0 #b45309, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #f59e0b; }
+.badge-html { background: linear-gradient(135deg, #fbbf24, #d97706); color: white; box-shadow: 0 0 12px rgba(245,158,11,0.7); }
 .sys-gba { box-shadow: 0 6px 0 #a21caf, 0 10px 15px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.2) !important; border-color: #d946ef; }
-.badge-gba { background: linear-gradient(135deg, #d946ef, #a21caf); color: white; }
+.badge-gba { background: linear-gradient(135deg, #e879f9, #c026d3); color: white; box-shadow: 0 0 12px rgba(217,70,239,0.7); }
 
 .del-btn { position: absolute; top: 8px; left: 8px; background: rgba(239,68,68,0.8); border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 11px; display: flex; align-items: center; justify-content: center; color: #fff; z-index: 4; box-shadow: 0 2px 4px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.4); }
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
@@ -239,53 +224,63 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 .f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
 
-/* --- ПАНЕЛИ НАСТРОЕК (НЕОНОВЫЕ ПОЛЗУНКИ И КНОПКИ) --- */
+/* --- ПАНЕЛИ НАСТРОЕК --- */
 #screen-edit-panel, #pad-edit-panel { 
     position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 12px; 
     background: rgba(15, 10, 25, 0.8) !important; backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); 
     padding: 18px; border-radius: 16px; color: #fff; font-size: 12px; width: 270px; max-height: 85vh; overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; 
     box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.05);
 }
-#screen-edit-panel { border: 1px solid rgba(56, 189, 248, 0.3) !important; box-shadow: 0 0 25px rgba(56,189,248,0.15), 0 15px 40px rgba(0,0,0,0.9) !important; }
-#pad-edit-panel { border: 1px solid rgba(168, 85, 247, 0.3) !important; box-shadow: 0 0 25px rgba(168,85,247,0.15), 0 15px 40px rgba(0,0,0,0.9) !important; }
+
+/* КРАСИВЫЕ ВЫПАДАЮЩИЕ СПИСКИ (ШЕЙДЕРЫ) */
+#screen-edit-panel select {
+    -webkit-appearance: none; appearance: none;
+    background: rgba(15, 20, 30, 0.9); color: #fff; border: 1px solid rgba(56, 189, 248, 0.4);
+    padding: 10px 15px; border-radius: 10px; font-size: 12px; font-weight: bold;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), 0 0 10px rgba(56, 189, 248, 0.2);
+    text-align: center; cursor: pointer;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat; background-position: right 10px center;
+}
+#screen-edit-panel select:focus {
+    border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.6); outline: none;
+}
 
 .edit-row { display: flex; gap: 10px; align-items: center; justify-content: center;}
+.edit-btn { padding: 12px 15px; background: rgba(255, 255, 255, 0.05) !important; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 10px; font-weight: bold; font-size: 11px; cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; text-transform: uppercase; transition: all 0.2s; }
 
-/* Базовая кнопка настроек */
-.edit-btn { 
-    padding: 12px 15px; background: rgba(255, 255, 255, 0.05) !important; color: #fff; 
-    border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 10px; font-weight: bold; font-size: 11px; 
-    cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; text-transform: uppercase; transition: all 0.2s; 
-}
-.edit-btn:active { transform: scale(0.95); }
-
-/* ДИНАМИЧЕСКОЕ СВЕЧЕНИЕ КНОПОК ВКЛ/ВЫКЛ (Тематические цвета) */
-.neon-on-blue { background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; box-shadow: 0 0 15px rgba(56,189,248,0.4); text-shadow: 0 0 5px #fff; }
-.neon-on-purple { background: rgba(168, 85, 247, 0.2) !important; border-color: var(--neon-purple) !important; box-shadow: 0 0 15px rgba(168,85,247,0.4); text-shadow: 0 0 5px #fff; }
-.neon-on-red { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--neon-red) !important; box-shadow: 0 0 15px rgba(239,68,68,0.4); text-shadow: 0 0 5px #fff; }
-.neon-on-green { background: rgba(16, 185, 129, 0.2) !important; border-color: #10b981 !important; box-shadow: 0 0 15px rgba(16,185,129,0.4); text-shadow: 0 0 5px #fff; }
-.neon-on-orange { background: rgba(245, 158, 11, 0.2) !important; border-color: #f59e0b !important; box-shadow: 0 0 15px rgba(245,158,11,0.4); text-shadow: 0 0 5px #fff; }
+/* ДИНАМИЧЕСКОЕ СВЕЧЕНИЕ КНОПОК ВКЛ/ВЫКЛ В НАСТРОЙКАХ */
+.neon-on-blue { background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; box-shadow: 0 0 15px rgba(56,189,248,0.6) !important; text-shadow: 0 0 5px #fff !important; }
+.neon-on-purple { background: rgba(168, 85, 247, 0.2) !important; border-color: var(--neon-purple) !important; box-shadow: 0 0 15px rgba(168,85,247,0.6) !important; text-shadow: 0 0 5px #fff !important; }
+.neon-on-orange { background: rgba(245, 158, 11, 0.2) !important; border-color: #f59e0b !important; box-shadow: 0 0 15px rgba(245,158,11,0.6) !important; text-shadow: 0 0 5px #fff !important; }
+.neon-on-green { background: rgba(16, 185, 129, 0.2) !important; border-color: #10b981 !important; box-shadow: 0 0 15px rgba(16,185,129,0.6) !important; text-shadow: 0 0 5px #fff !important; }
 
 .hint-text { font-size: 9px; color: var(--neon-purple); text-align: center; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
-/* ПОЛЗУНКИ (ЯРКОСТЬ ЗАВИСИТ ОТ ПРОЦЕНТА) */
+/* ПОЛЗУНКИ (Исправлена ширина, добавлено свечение!) */
 .slider-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .slider-row label { font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; }
 .slider-row input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; outline: none; margin: 10px 0; }
+
 .slider-row input[type="range"]::-webkit-slider-runnable-track { 
-    height: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); 
-    background: linear-gradient(90deg, rgba(168, 85, 247, 1) var(--value, 50%), rgba(255,255,255,0.05) var(--value, 50%)); 
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 calc(var(--value)*0.15px) rgba(168, 85, 247, calc(var(--value)/100)); 
+    height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.05);
+    background-image: linear-gradient(90deg, rgba(147, 51, 234, 0.3) 0%, rgba(217, 70, 239, 1) var(--val, 50%), transparent var(--val, 50%));
+    box-shadow: 0 0 calc(var(--val-num, 50) * 0.15px) rgba(217, 70, 239, calc(var(--val-num, 50) / 100));
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .slider-row input[type="range"]::-webkit-slider-thumb { 
-    -webkit-appearance: none; height: 22px; width: 22px; border-radius: 50%; background: #fff; border: 3px solid var(--neon-purple); 
-    margin-top: -8px; cursor: pointer; box-shadow: 0 0 calc(var(--value)*0.2px + 5px) rgba(168, 85, 247, 0.8); transition: transform 0.1s; 
+    -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #fff; border: 2px solid #d946ef; 
+    margin-top: -8px; cursor: pointer; transition: transform 0.1s; 
+    box-shadow: 0 0 calc(5px + var(--val-num, 50) * 0.1px) rgba(217, 70, 239, 0.9);
 }
-.slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.2); }
+.slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.3); }
+
+
 
 #btnToggleColors { background: linear-gradient(135deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #3b82f6 75%, #a855f7 100%) !important; border: none !important; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); }
 
-/* --- ГЕЙМПАД: 3D КНОПКИ --- */
+/* --- ГЕЙМПАД: 3D КНОПКИ (Круглые, Овальные, Жестко по краям) --- */
 #hiddenInput { position: absolute; top: -1000px; opacity: 0; }
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
 .draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; backdrop-filter: blur(8px); }
@@ -307,21 +302,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
 .dpad-shooter .d-knob { display: block; }
 
-/* 3D СТИЛЬ ДЛЯ ОСНОВНЫХ КНОПОК */
-#btn-select, #btn-start { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
-#btn-b { background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59,130,246,0.6); color: #3b82f6; box-shadow: 0 6px 0 rgba(30, 58, 138, 0.8), 0 8px 15px rgba(59,130,246,0.3); transition: all 0.1s; }
-#btn-a { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.6); color: #ef4444; box-shadow: 0 6px 0 rgba(153, 27, 27, 0.8), 0 8px 15px rgba(239,68,68,0.3); transition: all 0.1s; }
-#btn-y { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16,185,129,0.6); color: #10b981; box-shadow: 0 6px 0 rgba(6, 78, 59, 0.8), 0 8px 15px rgba(16,185,129,0.3); transition: all 0.1s; }
-#btn-x { background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245,158,11,0.6); color: #f59e0b; box-shadow: 0 6px 0 rgba(120, 53, 15, 0.8), 0 8px 15px rgba(245,158,11,0.3); transition: all 0.1s; }
-#btn-l, #btn-r { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
+/* Полукруглые таблетки START и SELECT */
+#btn-select, #btn-start { width: 60px; height: 24px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
 
-/* ФИЗИЧЕСКОЕ НАЖАТИЕ (Кнопка проваливается, тень уходит, появляется неон) */
-.active-key { 
-    transform: translateY(4px) scale(0.95) !important; 
-    box-shadow: 0 0 0 transparent, 0 0 25px currentColor !important; 
-    background: currentColor !important; color: #fff !important; text-shadow: 0 0 5px #000;
-}
-.active-key#btn-start, .active-key#btn-select { background: rgba(255,255,255,0.6) !important; box-shadow: 0 0 15px #fff !important; color: #000 !important; }
+/* Круглые ABXY */
+#btn-b { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59,130,246,0.6); color: #3b82f6; box-shadow: 0 6px 0 rgba(30, 58, 138, 0.8), 0 8px 15px rgba(59,130,246,0.3); transition: all 0.1s; }
+#btn-a { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.6); color: #ef4444; box-shadow: 0 6px 0 rgba(153, 27, 27, 0.8), 0 8px 15px rgba(239,68,68,0.3); transition: all 0.1s; }
+#btn-y { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16,185,129,0.6); color: #10b981; box-shadow: 0 6px 0 rgba(6, 78, 59, 0.8), 0 8px 15px rgba(16,185,129,0.3); transition: all 0.1s; }
+#btn-x { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245,158,11,0.6); color: #f59e0b; box-shadow: 0 6px 0 rgba(120, 53, 15, 0.8), 0 8px 15px rgba(245,158,11,0.3); transition: all 0.1s; }
+
+/* L И R ЖЕСТКО ПО БОКАМ */
+#btn-l { width: 60px; height: 35px; border-radius: 8px; left: 20px !important; right: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; color: #fff; }
+#btn-r { width: 60px; height: 35px; border-radius: 8px; right: 20px !important; left: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; color: #fff; }
+
+/* ФИЗИЧЕСКОЕ НАЖАТИЕ: Строго вниз, без съезда вбок! */
+.active-key { transform: translateY(4px) scale(0.95) !important; box-shadow: 0 0 0 transparent, 0 0 25px currentColor !important; background: currentColor !important; color: #fff !important; text-shadow: 0 0 5px #000; }
+#btn-start.active-key, #btn-select.active-key { transform: translateX(-50%) translateY(4px) scale(0.95) !important; background: rgba(255,255,255,0.6) !important; box-shadow: 0 0 15px #fff !important; color: #000 !important; }
 
 #bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
 #bottom-shield.active { display: block; pointer-events: auto; }
@@ -376,19 +372,50 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </button>
     </div>
 
-    <div style="display: flex; gap: 10px; margin-bottom: 15px; height: 42px;">
-        <div id="sortContainer">
-            <select id="sortSelect" onchange="renderAllGames()">
-                <option value="newest">📅 Сначала новые</option>
-                <option value="sys">🎮 По системе</option>
-                <option value="random">🎲 Вперемешку</option>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; height: 44px; align-items: center;">
+        <div class="sys-filter-container">
+            <select id="sortSelect" onchange="renderAllGames()" style="display:none;">
+                <option value="newest">Новые</option>
+                <option value="sys" selected>Система</option>
+                <option value="random">Рандом</option>
             </select>
-            <div class="sort-arrow">▼</div>
+            <script>
+                function setFilter(sys, el) {
+                    if(sys === 'random') {
+                        document.getElementById('sortSelect').value = 'random';
+                    } else {
+                        document.getElementById('sortSelect').value = 'sys';
+                        let p = JSON.parse(localStorage.getItem('sysPriority') || '["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"]');
+                        p = p.filter(s => s !== sys);
+                        p.unshift(sys);
+                        localStorage.setItem('sysPriority', JSON.stringify(p));
+                    }
+                    document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
+                    if(el) el.classList.add('active');
+                    if(typeof renderAllGames === 'function') renderAllGames();
+                }
+            </script>
+            <style>
+                .sys-filter-container { display: flex; gap: 8px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
+                .sys-filter-container::-webkit-scrollbar { display: none; }
+                .sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 40px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+                .sys-filter-btn:active { transform: scale(0.95); filter: brightness(1.2); }
+                .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
+            </style>
+            
+            <button class="sys-filter-btn active" style="border-color:#ef4444; color:#ef4444;" onclick="setFilter('nes', this)">DENDY</button>
+            <button class="sys-filter-btn" style="border-color:#3b82f6; color:#3b82f6;" onclick="setFilter('smd', this)">SEGA</button>
+            <button class="sys-filter-btn" style="border-color:#a855f7; color:#a855f7;" onclick="setFilter('snes', this)">SNES</button>
+            <button class="sys-filter-btn" style="border-color:#f43f5e; color:#f43f5e;" onclick="setFilter('gba', this)">GBA</button>
+            <button class="sys-filter-btn" style="border-color:#10b981; color:#10b981;" onclick="setFilter('dos', this)">DOS</button>
+            <button class="sys-filter-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="setFilter('html', this)">HTML</button>
+            <button class="sys-filter-btn" style="border-color:#fff; color:#fff;" onclick="setFilter('random', this)">🎲</button>
         </div>
-        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 50px; padding: 0; flex: none;">
+
+        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </button>
-        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 50px; padding: 0; flex: none;">
+        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
     </div>
@@ -477,12 +504,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <button class="f-btn" onclick="injectText()">A-Z (Текст)</button>
     <button class="f-btn" data-f="27">ESC</button>
     <button class="f-btn" data-f="13">ENTER</button>
-    <button class="f-btn" data-f="112">F1</button>
-    <button class="f-btn" data-f="113">F2</button>
-    <button class="f-btn" data-f="114">F3</button>
-    <button class="f-btn" data-f="115">F4</button>
-    <button class="f-btn" data-f="116">F5</button>
-    <button class="f-btn" data-f="117">F6</button>
 </div>
 
 <div id="screen-edit-panel">
@@ -491,7 +512,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div id="nes-only-settings">
         <div style="margin-bottom: 5px;">
             <div class="hint-text">ТИП ЭКРАНА (МАТРИЦА)</div>
-            <select id="crtSelector" onchange="changeCrtMode()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
+            <select id="crtSelector" onchange="changeCrtMode()">
                 <option value="0">ВЫКЛ (Чистая картинка)</option>
                 <option value="1">Сканлайны (Старый ТВ)</option>
                 <option value="2">Тринитрон (Премиум ЭЛТ)</option>
@@ -504,7 +525,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </div>
         <div style="margin-top: 5px;">
             <div class="hint-text">ВНУТРЕННЕЕ РАЗРЕШЕНИЕ</div>
-            <select id="resSelector" onchange="changeRes()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
+            <select id="resSelector" onchange="changeRes()">
                 <option value="1">1x (Original)</option>
                 <option value="2">2x (512p)</option>
                 <option value="4">4x (1024p HD)</option>
@@ -520,7 +541,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     <div style="margin-top: 5px;">
         <div class="hint-text">АЛГОРИТМ СГЛАЖИВАНИЯ</div>
-        <select id="filterSelector" onchange="changeFilter()" style="width: 100%; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; outline:none;">
+        <select id="filterSelector" onchange="changeFilter()">
             <option value="0">ВЫКЛ (Пиксели)</option>
             <option value="1">ОСТРОЕ (Sharp Bilinear)</option>
             <option value="2">МЯГКОЕ (Ретро-Мыло)</option>
@@ -531,8 +552,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
       <div class="hint-text">Мягкое неоновое свечение ярких зон</div>
       <button class="edit-btn action-btn" id="btnToggleBloom" onclick="toggleBloom()">Свечение: ВЫКЛ</button>
     </div>
+    <button class="edit-btn action-btn" id="btnToggleColors" onclick="toggleColors()" style="margin-top: 5px;">Цветокоррекция (Гамма): ВЫКЛ</button>
     
-    <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; margin-top: 15px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">РАЗМЕР ЭКРАНА</div>
+      <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; margin-top: 15px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">РАЗМЕР ЭКРАНА</div>
     <div class="edit-row">
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleX(0.05)">↔+</button>
       <button class="edit-btn action-btn" style="width:40px; margin:0;" onclick="adjustScaleX(-0.05)">↔-</button>
@@ -547,7 +569,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="margin-bottom: 5px; width: 100%;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
     <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
     
-    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="margin-bottom: 10px; width: 100%; background:rgba(59,130,246,0.3)!important; border-color:#3b82f6!important;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="margin-bottom: 10px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
     
     <div class="edit-row" style="margin-bottom: 10px;">
       <span style="font-weight: bold; color: #cbd5e1; font-size:11px;">Размер:</span>
@@ -594,6 +616,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
+
+
+
 <script src="js-dos.js"></script>
 <script>
     if (typeof window.globalThis === 'undefined') { window.globalThis = window; }
@@ -606,8 +631,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </script>
 
 <script>
-    // Твой личный топ систем для сортировки
-    const mySysPriority = ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
+    // Оживляем неоновые ползунки (пересчет яркости)
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.slider-row input[type="range"]').forEach(slider => {
+            const updateSliderGlow = () => {
+                const val = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+                slider.style.setProperty('--val', val + '%'); // Ширина заливки
+                slider.style.setProperty('--val-num', val);   // Сила свечения
+            };
+            slider.addEventListener('input', updateSliderGlow);
+            updateSliderGlow(); // Инициализация при старте
+        });
+    });
+
+    // Твой личный топ систем для сортировки (Изменено на let для кнопок-фильтров)
+    let mySysPriority = JSON.parse(localStorage.getItem('sysPriority')) || ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
     let isExitingGame = false;
 
     // --- Бронебойный перехват НАЗАД и ПЛАВНЫЙ НЕОНОВЫЙ СТАРТ ---
@@ -621,32 +659,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (navigator.vibrate) navigator.vibrate(15);
             }
         }, 4000); // Даем 4 секунды насладиться логотипами из-под Пакмана
-    });
-
-    // --- ОЖИВЛЯЕМ ПОЛЗУНКИ (Яркость от процента) ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Микро-фикс для CSS, чтобы математика яркости работала правильно
-        const styleFix = document.createElement('style');
-        styleFix.innerHTML = `
-            .slider-row input[type="range"]::-webkit-slider-runnable-track {
-                background: linear-gradient(90deg, rgba(168, 85, 247, 1) var(--value-pct, 50%), rgba(255,255,255,0.05) var(--value-pct, 50%)) !important;
-                box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 0 calc(var(--value-num, 50) * 0.15px) rgba(168, 85, 247, calc(var(--value-num, 50) / 100)) !important;
-            }
-            .slider-row input[type="range"]::-webkit-slider-thumb {
-                box-shadow: 0 0 calc(var(--value-num, 50) * 0.2px + 5px) rgba(168, 85, 247, 0.8) !important;
-            }
-        `;
-        document.head.appendChild(styleFix);
-
-        const updateSlider = (el) => {
-            const val = (el.value - el.min) / (el.max - el.min) * 100;
-            el.style.setProperty('--value-pct', val + '%'); // Для ширины заливки
-            el.style.setProperty('--value-num', val);       // Для силы свечения
-        };
-        document.querySelectorAll('input[type="range"]').forEach(input => {
-            input.addEventListener('input', (e) => updateSlider(e.target));
-            updateSlider(input); // Инит при старте
-        });
     });
 
     window.addEventListener('hashchange', () => {
@@ -683,6 +695,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const screenPanel = document.getElementById('screen-edit-panel');
     const padPanel = document.getElementById('pad-edit-panel');
     const gamepad = document.getElementById('gamepad');
+
 
     let currentDos = null, nes = null, nesLoop = null, glLoopId = null;
     let currentGame = null;
@@ -745,14 +758,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 10, g: 10, b: 10};
     }
     
+    // ПРАВКА ТЗ: ЯРКОСТЬ И ЧИСТЫЙ ФОН
     function setSpotifyGlow(gameSys) {
         const root = document.getElementById('menuScreen');
         if (!gameSys || !sysColors[gameSys]) {
-            root.style.backgroundColor = '#060608';
+            root.style.backgroundColor = ''; // Очищаем фон, чтобы работал radial-gradient из CSS
             return;
         }
         const rgb = hexToRgb(sysColors[gameSys].hex);
-        root.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.25)`;
+        root.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`; // Выкрутили до 0.5
     }
 
     let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
@@ -1104,7 +1118,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     function toggleColors() { videoConfig.colors = !videoConfig.colors; saveVideoConfig(); }
 
-    // --- ОБНОВЛЕНО ДЛЯ ДИНАМИЧЕСКИХ НЕОНОВЫХ КНОПОК ---
     function updateVideoUI() {
         const btnCurve = document.getElementById('btnToggleCurve'), btnRgb = document.getElementById('btnToggleRGB'), btnBloom = document.getElementById('btnToggleBloom'), btnColors = document.getElementById('btnToggleColors');
         const crtSel = document.getElementById('crtSelector'), resSel = document.getElementById('resSelector'), filterSel = document.getElementById('filterSelector'), glCanvas = document.getElementById('universal-gl-canvas');
@@ -1558,8 +1571,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; } 
                 else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; } 
                 else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; } 
-                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.bottom = 'auto'; } 
-                else if (id === 'r') { el.style.top = '95px'; right = '20px'; el.style.bottom = 'auto'; } 
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.right = 'auto'; el.style.bottom = 'auto'; } 
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.left = 'auto'; el.style.bottom = 'auto'; } 
                 else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; } 
                 else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; } 
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`; el.style.pointerEvents = 'auto'; 
@@ -2051,6 +2064,86 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             });
         }, 400); 
     }
+
+    // ОРИГИНАЛЬНЫЙ РЕНДЕР С ДОБАВЛЕНИЕМ СОРТИРОВКИ ПО НОВЫМ КНОПКАМ
+    function renderAllGames() {
+        setSpotifyGlow(null); 
+        const scrollPos = menuScreen.scrollTop; 
+        
+        const sortSelectEl = document.getElementById('sortSelect');
+        let sortType = 'newest';
+        if (sortSelectEl) {
+            sortType = sortSelectEl.value;
+            localStorage.setItem('librarySort', sortType);
+        }
+        
+        // Читаем обновленный массив из кнопок
+        mySysPriority = JSON.parse(localStorage.getItem('sysPriority')) || ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
+
+        gameGrid.innerHTML = '';
+        const tx = db.transaction(["games"], "readonly"); 
+        const store = tx.objectStore("games"); 
+        const req = store.getAll();
+        req.onsuccess = () => { 
+            let customGames = req.result; 
+            
+            customGames.sort((a, b) => {
+                if (a.fav && !b.fav) return -1;
+                if (!a.fav && b.fav) return 1;
+
+                if (sortType === 'sys') {
+                    let pA = mySysPriority.indexOf(a.sys);
+                    let pB = mySysPriority.indexOf(b.sys);
+                    if (pA === -1) pA = 99;
+                    if (pB === -1) pB = 99;
+
+                    if (pA !== pB) return pA - pB;
+                    return a.n.localeCompare(b.n);
+                }
+
+                if (sortType === 'newest') {
+                    const timeA = parseInt(a.id.split('_')[1]) || 0;
+                    const timeB = parseInt(b.id.split('_')[1]) || 0;
+                    return timeB - timeA; 
+                }
+
+                return 0;
+            });
+
+            if (sortType === 'random') {
+                let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
+                let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
+                customGames = favs.concat(nonFavs);
+            }
+
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            customGames = customGames.filter(g => !term || g.n.toLowerCase().includes(term));
+            
+            if (customGames.length === 0) { 
+                gameGrid.innerHTML = '<div id="empty-library-msg">Библиотека пуста. Жми огромную синюю кнопку и загружай игры!</div>'; 
+            } else { 
+                let currentSysGroup = null;
+                customGames.forEach(gameData => { 
+                    // Группировка для красивого отображения (как было в оригинале)
+                    if (sortType === 'sys' && gameData.sys !== currentSysGroup && !term) {
+                        currentSysGroup = gameData.sys;
+                        const div = document.createElement('div');
+                        div.className = 'sys-divider';
+                        const sysInfo = sysColors[currentSysGroup] || sysColors['unk'];
+                        
+                        div.style.cssText = `grid-column: 1 / -1; color: ${sysInfo.hex}; font-weight: 900; font-size: 16px; padding: 15px 10px 5px 10px; border-bottom: 2px dashed rgba(${hexToRgb(sysInfo.hex).r}, ${hexToRgb(sysInfo.hex).g}, ${hexToRgb(sysInfo.hex).b}, 0.3); text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 10px currentColor; display: flex; align-items: center; cursor: pointer;`;
+                        div.innerHTML = `<span>${sysInfo.name}</span>`;
+                        gameGrid.appendChild(div);
+                    }
+                    createGameBtn(gameData, true); 
+                }); 
+            } 
+            
+            applyViewMode();
+            menuScreen.scrollTop = scrollPos;
+        };
+    }
+
     function setupModernLibretro(game, shouldAutoLoad) {
         document.querySelectorAll('#canvas, #universal-gl-canvas').forEach(e => e.remove());
         const libCanvas = document.createElement('canvas'); 
@@ -3056,57 +3149,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (badgeEl) badgeEl.classList.add('neon-active');
         }
         if (typeof doVibrate === 'function') doVibrate(15);
-    }
-
-    function renderAllGames() {
-        setSpotifyGlow(null); 
-        const scrollPos = menuScreen.scrollTop; 
-        
-        const sortSelectEl = document.getElementById('sortSelect');
-        let sortType = 'newest';
-        if (sortSelectEl) {
-            sortType = sortSelectEl.value;
-            localStorage.setItem('librarySort', sortType);
-        }
-        
-        gameGrid.innerHTML = '';
-        const tx = db.transaction(["games"], "readonly"); 
-        const store = tx.objectStore("games"); 
-        const req = store.getAll();
-        req.onsuccess = () => { 
-            let customGames = req.result; 
-            
-            customGames.sort((a, b) => {
-                if (a.fav && !b.fav) return -1;
-                if (!a.fav && b.fav) return 1;
-
-                let pA = mySysPriority.indexOf(a.sys);
-                let pB = mySysPriority.indexOf(b.sys);
-                if (pA === -1) pA = 99;
-                if (pB === -1) pB = 99;
-
-                if (pA !== pB) return pA - pB;
-                return a.n.localeCompare(b.n);
-            });
-
-            if (sortType === 'random') {
-                let favs = customGames.filter(g => g.fav).sort(() => Math.random() - 0.5);
-                let nonFavs = customGames.filter(g => !g.fav).sort(() => Math.random() - 0.5);
-                customGames = favs.concat(nonFavs);
-            }
-
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            customGames = customGames.filter(g => !term || g.n.toLowerCase().includes(term));
-            
-            if (customGames.length === 0) { 
-                gameGrid.innerHTML = '<div id="empty-library-msg">Библиотека пуста. Жми огромную синюю кнопку и загружай игры!</div>'; 
-            } else { 
-                customGames.forEach(gameData => createGameBtn(gameData, true)); 
-            } 
-            
-            applyViewMode();
-            menuScreen.scrollTop = scrollPos;
-        };
     }
 
     function createGameBtn(game, isCustom) {
