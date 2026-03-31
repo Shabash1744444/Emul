@@ -358,20 +358,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </div>
     </div>
     
-    <div class="top-actions">
-        <button id="mainImportBtn" class="action-btn">
-            ➕ ДОБАВИТЬ ИГРЫ (ZIP / ROM)
+                <div class="top-actions">
+        <button id="mainImportBtn" class="action-btn" style="flex: 1; padding: 0 5px;">
+            ➕ ДОБАВИТЬ ИГРЫ
         </button>
         <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none;">
             📡 СКАНИРОВАТЬ
         </button>
-        <button id="infoBtn" class="action-btn">
+        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+        </button>
+        <button id="infoBtn" class="action-btn" style="width: 44px; padding: 0; margin: 0; flex: none;">
             ℹ️
         </button>
     </div>
 
     <div style="display: flex; gap: 10px; margin-bottom: 15px; height: 44px; align-items: center;">
-        <div class="sys-filter-container">
+        <div class="sys-filter-container" style="width: 100%; display: flex;">
             <select id="sortSelect" onchange="renderAllGames()" style="display:none;">
                 <option value="newest">Новые</option>
                 <option value="sys" selected>Система</option>
@@ -394,9 +397,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
             </script>
             <style>
-                .sys-filter-container { display: flex; gap: 8px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
+                .sys-filter-container { display: flex; gap: 6px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
                 .sys-filter-container::-webkit-scrollbar { display: none; }
-                .sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 40px; border-radius: 10px; font-weight: 900; font-size: 12px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+                /* flex: 1 заставит кнопки растянуться и поделить всё место поровну */
+                .sys-filter-btn { flex: 1; flex-shrink: 0; padding: 0 5px; height: 38px; border-radius: 10px; font-weight: 900; font-size: 11px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-width: fit-content; }
                 .sys-filter-btn:active { transform: scale(0.95); filter: brightness(1.2); }
                 .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
             </style>
@@ -409,13 +413,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <button class="sys-filter-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="setFilter('html', this)">HTML</button>
             <button class="sys-filter-btn" style="border-color:#fff; color:#fff;" onclick="setFilter('random', this)">🎲</button>
         </div>
-
-        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-        </button>
-        <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-        </button>
     </div>
     
     <div id="editPanel" style="display: none;">
@@ -437,9 +434,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     <input type="file" id="customCoverInput" accept="image/*" style="display:none">
 
-    <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" oninput="renderAllGames()">
-    <div class="grid" id="gameGrid"></div>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+        <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск игр..." autocomplete="off" oninput="renderAllGames()" style="margin-bottom: 0; flex: 1; width: 100%;">
+        <button id="viewToggleBtn" class="action-btn" onclick="toggleViewMode()" style="width: 44px; height: 44px; padding: 0; margin: 0; flex: none;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+    </div>
 
+
+<div class="grid" id="gameGrid"></div>
+    
     <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05);">
         <span style="color: #94a3b8; font-weight: bold;">ГДЕ БРАТЬ ИГРЫ:</span><br>
         <a href="https://www.emu-land.net/" target="_blank" style="color:var(--neon-blue); text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
