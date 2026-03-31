@@ -216,10 +216,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
-#toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; transition: opacity 0.4s ease; }
+/* --- ВЕРХНИЕ КНОПКИ МЕНЮ (Круглые иконки в игре) --- */
+#toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; transition: opacity 0.4s ease; background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-shadow: none !important; }
 #toolbar::-webkit-scrollbar { display: none; }
-.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(20, 20, 30, 0.7); border: 2px solid rgba(255, 255, 255, 0.1); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; user-select: none; -webkit-user-select: none; touch-action: none; backdrop-filter: blur(5px); }
-.tool-btn.active-tool { background: rgba(56, 189, 248, 0.4); border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(56,189,248,0.5); }
+.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(20, 20, 25, 0.85) !important; border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; user-select: none; -webkit-user-select: none; touch-action: none; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; will-change: transform; transform: translateZ(0); }
+.tool-btn:active { transform: scale(0.9) translateZ(0) !important; background: rgba(255, 255, 255, 0.2) !important; }
+.tool-btn.active-tool { background: var(--neon-blue) !important; border-color: var(--neon-blue) !important; color: #000 !important; box-shadow: none !important; }
 #fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; max-width: 90%; }
 .f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 .f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
@@ -276,17 +278,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 }
 .slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.3); }
 
-
-
 #btnToggleColors { background: linear-gradient(135deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #3b82f6 75%, #a855f7 100%) !important; border: none !important; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); }
 
-/* --- ГЕЙМПАД: 3D КНОПКИ (Круглые, Овальные, Жестко по краям) --- */
+/* --- ГЕЙМПАД: Оптимизированный Neon Flat стиль (Без теней и блюра) --- */
 #hiddenInput { position: absolute; top: -1000px; opacity: 0; }
 #gamepad { position: fixed; inset: 0; z-index: 150; display: none; pointer-events: none; }
-.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; backdrop-filter: blur(8px); }
+.draggable-btn { position: absolute; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; z-index: 20; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; will-change: transform; transform: translateZ(0); }
 .editing-active { outline: 3px dashed #fbbf24; z-index: 200 !important; }
 
-#joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.1); }
+#joystick-dpad { bottom: 95px; left: 20px; width: 150px; height: 150px; border-radius: 50%; background: rgba(255,255,255,0.03) !important; border: 2px solid rgba(255,255,255,0.1) !important; backdrop-filter: none !important; }
 .d-cross { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; pointer-events: none; }
 .d-cross::before, .d-cross::after { content: ''; position: absolute; background: rgba(255,255,255,0.15); border-radius: 4px; }
 .d-cross::before { width: 100%; height: 30%; top: 35%; left: 0; }
@@ -302,22 +302,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
 .dpad-shooter .d-knob { display: block; }
 
-/* Полукруглые таблетки START и SELECT */
-#btn-select, #btn-start { width: 60px; height: 24px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; }
+#btn-a, #btn-b, #btn-x, #btn-y, #btn-select, #btn-start, #btn-l, #btn-r { border: 2px solid rgba(255, 255, 255, 0.3); background: rgba(20, 20, 25, 0.8) !important; box-shadow: none !important; transition: all 0.1s; }
 
-/* Круглые ABXY */
-#btn-b { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(59, 130, 246, 0.2); border: 1px solid rgba(59,130,246,0.6); color: #3b82f6; box-shadow: 0 6px 0 rgba(30, 58, 138, 0.8), 0 8px 15px rgba(59,130,246,0.3); transition: all 0.1s; }
-#btn-a { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.6); color: #ef4444; box-shadow: 0 6px 0 rgba(153, 27, 27, 0.8), 0 8px 15px rgba(239,68,68,0.3); transition: all 0.1s; }
-#btn-y { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16,185,129,0.6); color: #10b981; box-shadow: 0 6px 0 rgba(6, 78, 59, 0.8), 0 8px 15px rgba(16,185,129,0.3); transition: all 0.1s; }
-#btn-x { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245,158,11,0.6); color: #f59e0b; box-shadow: 0 6px 0 rgba(120, 53, 15, 0.8), 0 8px 15px rgba(245,158,11,0.3); transition: all 0.1s; }
+#btn-b { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; border-color: #3b82f6 !important; font-size: 18px; }
+#btn-a { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; border-color: #ef4444 !important; font-size: 18px; }
+#btn-y { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; border-color: #10b981 !important; font-size: 18px; }
+#btn-x { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; border-color: #f59e0b !important; font-size: 18px; }
 
-/* L И R ЖЕСТКО ПО БОКАМ */
-#btn-l { width: 60px; height: 35px; border-radius: 8px; left: 20px !important; right: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; color: #fff; }
-#btn-r { width: 60px; height: 35px; border-radius: 8px; right: 20px !important; left: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 0 rgba(100,100,100,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: all 0.1s; color: #fff; }
+#btn-select, #btn-start { width: 65px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
 
-/* ФИЗИЧЕСКОЕ НАЖАТИЕ: Строго вниз, без съезда вбок! */
-.active-key { transform: translateY(4px) scale(0.95) !important; box-shadow: 0 0 0 transparent, 0 0 25px currentColor !important; background: currentColor !important; color: #fff !important; text-shadow: 0 0 5px #000; }
-#btn-start.active-key, #btn-select.active-key { transform: translateX(-50%) translateY(4px) scale(0.95) !important; background: rgba(255,255,255,0.6) !important; box-shadow: 0 0 15px #fff !important; color: #000 !important; }
+#btn-l { width: 60px; height: 35px; border-radius: 8px; left: 20px !important; right: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
+#btn-r { width: 60px; height: 35px; border-radius: 8px; right: 20px !important; left: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
+
+.active-key { background: currentColor !important; color: #000 !important; transform: scale(0.92) translateZ(0) !important; border-color: transparent !important; }
+#btn-select.active-key, #btn-start.active-key { transform: translateX(-50%) scale(0.92) translateZ(0) !important; }
 
 #bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
 #bottom-shield.active { display: block; pointer-events: auto; }
@@ -593,6 +591,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="bottom-shield"></div>
 <input type="text" id="hiddenInput" autocomplete="off">
+
+
+
+
+
 
 <div id="gamepad">
     <div id="dpad-catch-zone" style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5;"></div>
