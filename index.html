@@ -302,20 +302,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .dpad-shooter .d-cross, .dpad-shooter .d-arrow, .dpad-shooter .d-deadzone { display: none; }
 .dpad-shooter .d-knob { display: block; }
 
-#btn-a, #btn-b, #btn-x, #btn-y, #btn-select, #btn-start, #btn-l, #btn-r { border: 2px solid rgba(255, 255, 255, 0.3); background: rgba(20, 20, 25, 0.8) !important; box-shadow: none !important; transition: all 0.1s; }
+#btn-a, #btn-b, #btn-x, #btn-y, #btn-select, #btn-start, #btn-l, #btn-r { border: 2px solid rgba(255, 255, 255, 0.3); background: rgba(20, 20, 25, 0.8); box-shadow: none !important; transition: all 0.1s; }
 
-#btn-b { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; border-color: #3b82f6 !important; font-size: 18px; }
-#btn-a { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; border-color: #ef4444 !important; font-size: 18px; }
-#btn-y { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; border-color: #10b981 !important; font-size: 18px; }
-#btn-x { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; border-color: #f59e0b !important; font-size: 18px; }
+#btn-b { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #3b82f6; border-color: #3b82f6; font-size: 18px; }
+#btn-a { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ef4444; border-color: #ef4444; font-size: 18px; }
+#btn-y { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #10b981; border-color: #10b981; font-size: 18px; }
+#btn-x { width: 60px; height: 60px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; color: #f59e0b; border-color: #f59e0b; font-size: 18px; }
 
-#btn-select, #btn-start { width: 65px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
+#btn-select, #btn-start { width: 65px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: #fff; border-color: rgba(255,255,255,0.4); }
 
-#btn-l { width: 60px; height: 35px; border-radius: 8px; left: 20px !important; right: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
-#btn-r { width: 60px; height: 35px; border-radius: 8px; right: 20px !important; left: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4) !important; }
+#btn-l { width: 60px; height: 35px; border-radius: 8px; left: 20px !important; right: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4); }
+#btn-r { width: 60px; height: 35px; border-radius: 8px; right: 20px !important; left: auto !important; display: none; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #fff; border-color: rgba(255,255,255,0.4); }
 
-.active-key { background: currentColor !important; color: #000 !important; transform: scale(0.92) translateZ(0) !important; border-color: transparent !important; }
-#btn-select.active-key, #btn-start.active-key { transform: translateX(-50%) scale(0.92) translateZ(0) !important; }
+.active-key { filter: brightness(2) contrast(1.2) !important; box-shadow: 0 0 20px currentColor !important; color: #000 !important; border-color: transparent !important; background: currentColor; }
+#btn-select.active-key, #btn-start.active-key { filter: brightness(2) !important; background: currentColor; }
 
 #bottom-shield { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; z-index: 10000; touch-action: none; display: none; pointer-events: none; }
 #bottom-shield.active { display: block; pointer-events: auto; }
@@ -331,7 +331,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .grid.large-view .game-btn { height: 280px; padding: 0; align-items: flex-end; border-radius: 16px; background-size: contain !important; background-repeat: no-repeat !important; background-position: center !important; background-color: #050505 !important; border: 1px solid #374151; }
 .grid.large-view .game-btn-content { justify-content: flex-end; padding-bottom: 0; }
 .grid.large-view .game-title { position: absolute; bottom: 0; left: 0; width: 100%; font-size: 16px; white-space: normal; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, transparent 100%); padding: 40px 15px 12px 15px; border-radius: 0 0 14px 14px; text-align: center; color: #fff; }
+
+.game-btn.selected { border: 3px solid #fbbf24 !important; box-shadow: 0 0 20px #fbbf24, inset 0 0 15px rgba(251, 191, 36, 0.4) !important; transform: scale(0.95) translateY(5px); filter: brightness(1.3) saturate(1.2); }
+.game-btn.selected .edit-overlay { display: flex !important; background: rgba(239, 68, 68, 0.4); }
+.game-btn:focus, .game-btn.gp-focus { outline: none; border: 3px solid var(--neon-blue) !important; box-shadow: 0 0 25px var(--neon-blue), inset 0 0 10px var(--neon-blue) !important; transform: scale(1.05) translateY(-5px); z-index: 10; }
 </style>
+
+
 </head>
 <body>
 
@@ -358,7 +364,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </div>
     </div>
     
-                <div class="top-actions">
+    <div class="top-actions">
         <button id="mainImportBtn" class="action-btn" style="flex: 1; padding: 0 5px;">
             ➕ ДОБАВИТЬ ИГРЫ
         </button>
@@ -399,7 +405,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <style>
                 .sys-filter-container { display: flex; gap: 6px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
                 .sys-filter-container::-webkit-scrollbar { display: none; }
-                /* flex: 1 заставит кнопки растянуться и поделить всё место поровну */
                 .sys-filter-btn { flex: 1; flex-shrink: 0; padding: 0 5px; height: 38px; border-radius: 10px; font-weight: 900; font-size: 11px; cursor: pointer; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; text-transform: uppercase; transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-width: fit-content; }
                 .sys-filter-btn:active { transform: scale(0.95); filter: brightness(1.2); }
                 .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
@@ -420,16 +425,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             Выбрано: <span id="selectedCount">0</span> игр
         </div>
         <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button class="action-btn" onclick="selectAllGamesForDelete()" style="background: rgba(59, 130, 246, 0.5) !important; color: white; border: none !important; font-size: 11px;">✅ ВСЕ</button>
-            <button class="action-btn" onclick="deselectAllGamesForDelete()" style="background: rgba(100, 116, 139, 0.5) !important; color: white; border: none !important; font-size: 11px;">❌ СНЯТЬ</button>
+            <button class="action-btn" onclick="selectAllGamesForDelete()" style="background: rgba(59, 130, 246, 0.4) !important; color: white; border: none !important; font-size: 10px; flex: 1;">✅ ВСЕ</button>
+            <button class="action-btn" onclick="deselectAllGamesForDelete()" style="background: rgba(100, 116, 139, 0.4) !important; color: white; border: none !important; font-size: 10px; flex: 1;">❌ СНЯТЬ</button>
+            <button id="exportLibraryBtn" onclick="exportLibrary()" class="action-btn" style="background: rgba(16, 185, 129, 0.4) !important; color: white; border: none !important; font-size: 10px; flex: 1;">📦 В ZIP</button>
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; background: rgba(245, 158, 11, 0.5) !important; color: white; border: none !important; font-size: 13px;">
-                🖼️ ОБЛОЖКА
-            </button>
-            <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="font-size: 13px;">
-                🗑️ УДАЛИТЬ
-            </button>
+        <div style="display: flex; gap: 5px;">
+            <button id="btnFetchMissingLogos" class="action-btn" style="background: rgba(168, 85, 247, 0.4) !important; color: white; border: none !important; font-size: 10px; flex: 1;">🖼️ ЛОГО</button>
+            <button id="changeCoverBtn" class="action-btn" onclick="triggerCoverChange()" style="display: none; background: rgba(245, 158, 11, 0.4) !important; color: white; border: none !important; font-size: 10px; flex: 1;">📷 ФОТО</button>
+            <button id="deleteSelectedBtn" class="action-btn" onclick="deleteSelectedGames()" style="background: rgba(239, 68, 68, 0.4) !important; border: none !important; font-size: 10px; flex: 1;">🗑️ УДАЛИТЬ</button>
         </div>
     </div>
     <input type="file" id="customCoverInput" accept="image/*" style="display:none">
@@ -441,14 +444,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         </button>
     </div>
 
-
 <div class="grid" id="gameGrid"></div>
     
     <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; font-size: 11px; text-align: center; line-height: 1.8; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05);">
         <span style="color: #94a3b8; font-weight: bold;">ГДЕ БРАТЬ ИГРЫ:</span><br>
         <a href="https://www.emu-land.net/" target="_blank" style="color:var(--neon-blue); text-decoration:none; font-weight:bold; margin: 0 10px;">🎮 EMU-LAND.NET</a>
         <a href="https://myrient.erista.me/files/No-Intro/" target="_blank" style="color:var(--neon-blue); text-decoration:none; font-weight:bold; margin: 0 10px;">🌎 MYRIENT (NO-INTRO)</a><br>
-        <a href="https://share.google/hzuTPFPnckx9x0iS6" target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold; margin: 0 10px; display:inline-block; margin-top:8px;">✨ GameROMs (Сборники Dendy, Sega, GBA, SNES)</a>
+        <a href="https://share.google/hzuTPFPnckx9x0iS6" target="_blank" style="color:#10b981; text-decoration:none; font-weight:bold; margin: 0 10px; display:inline-block; margin-top:8px;">✨ GameROMs (Сборники)</a>
     </div>
 </div>
 
@@ -467,11 +469,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         <p style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 15px;">
             Поддерживается загрузка как чистых файлов, так и <strong>.ZIP архивов</strong>.<br>Эмулятор сам найдет нужный файл и скачает обложку.
         </p>
-        <button id="btnFetchMissingLogos" class="action-btn" style="background: rgba(2, 132, 199, 0.4) !important; border-color: rgba(3, 105, 161, 0.8) !important; margin-bottom: 10px; width: 100%;">🖼️ ИСКАТЬ НЕДОСТАЮЩИЕ ОБЛОЖКИ</button>
-        <button id="exportLibraryBtn" onclick="exportLibrary()" class="action-btn" style="background: rgba(15, 118, 110, 0.4) !important; border-color: rgba(4, 120, 87, 0.8) !important; margin-bottom: 10px; width: 100%;">📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)</button>
         <button id="closeInfoBtn" class="action-btn" style="background: rgba(51, 65, 85, 0.4) !important; border-color: rgba(71, 85, 105, 0.8) !important; width: 100%;">ЗАКРЫТЬ</button>
     </div>
 </div>
+
 <div id="resetModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px);">
     <div style="background: rgba(31, 41, 55, 0.9); border: 1px solid var(--neon-red); border-radius: 16px; padding: 25px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(239,68,68,0.2); text-align: center;">
         <h3 style="margin-top: 0; color: var(--neon-red); border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px; text-shadow: 0 0 10px var(--neon-red);">ПЕРЕЗАПУСК ИГРЫ</h3>
@@ -596,11 +597,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <div id="bottom-shield"></div>
 <input type="text" id="hiddenInput" autocomplete="off">
 
-
-
-
-
-
 <div id="gamepad">
     <div id="dpad-catch-zone" style="position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; display: none; z-index: 5;"></div>
     <div id="camera-catch-zone"></div>
@@ -623,8 +619,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <div class="draggable-btn" id="btn-l" data-id="l" data-k="81">L</div>
     <div class="draggable-btn" id="btn-r" data-id="r" data-k="87">R</div>
 </div>
-
-
 
 <script src="js-dos.js"></script>
 <script>
@@ -651,21 +645,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     });
 
-    // Твой личный топ систем для сортировки (Изменено на let для кнопок-фильтров)
     let mySysPriority = JSON.parse(localStorage.getItem('sysPriority')) || ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
     let isExitingGame = false;
 
-    // --- Бронебойный перехват НАЗАД и ПЛАВНЫЙ НЕОНОВЫЙ СТАРТ ---
     window.addEventListener('load', () => {
         if (window.location.hash === '#game') history.replaceState(null, '', window.location.pathname);
         setTimeout(() => { 
             const splash = document.getElementById('splashScreen'); 
             if(splash) {
                 splash.classList.add('hidden');
-                // Тот самый импакт: легкий "тук" в руку при входе
                 if (navigator.vibrate) navigator.vibrate(15);
             }
-        }, 4000); // Даем 4 секунды насладиться логотипами из-под Пакмана
+        }, 4000); 
     });
 
     window.addEventListener('hashchange', () => {
@@ -702,7 +693,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     const screenPanel = document.getElementById('screen-edit-panel');
     const padPanel = document.getElementById('pad-edit-panel');
     const gamepad = document.getElementById('gamepad');
-
 
     let currentDos = null, nes = null, nesLoop = null, glLoopId = null;
     let currentGame = null;
@@ -765,15 +755,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : {r: 10, g: 10, b: 10};
     }
     
-    // ПРАВКА ТЗ: ЯРКОСТЬ И ЧИСТЫЙ ФОН
     function setSpotifyGlow(gameSys) {
         const root = document.getElementById('menuScreen');
         if (!gameSys || !sysColors[gameSys]) {
-            root.style.backgroundColor = ''; // Очищаем фон, чтобы работал radial-gradient из CSS
+            root.style.backgroundColor = ''; 
             return;
         }
         const rgb = hexToRgb(sysColors[gameSys].hex);
-        root.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`; // Выкрутили до 0.5
+        root.style.backgroundColor = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`; 
     }
 
     let videoConfig = { crt: 1, curve: true, filter: 1, rgb: false, bloom: false, res: 1, colors: false };
@@ -904,6 +893,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     window.addEventListener('beforeunload', () => {
         if (currentGame) saveGameState(true);
     });
+    
     const SaveStorage = {
         _db: null,
         init() {
@@ -1218,6 +1208,36 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     frameDiv.addEventListener('touchend', () => isDragging = false);
 
+    // --- ИСПРАВЛЕННАЯ ФУНКЦИЯ ЯРКОСТИ И ПРОЗРАЧНОСТИ ---
+    function updateOpacity(val) { const opacity = val / 100; document.getElementById('opacityVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].o = opacity; applyVisuals(selectedPadEl); } }
+    function updateBrightness(val) { const brightness = val / 100; document.getElementById('brightnessVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].b = brightness; applyVisuals(selectedPadEl); } }
+
+    function applyVisuals(id) {
+        const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
+        if (!el) return; const cfg = padConfig[id];
+        
+        if (id === 'dpad') {
+            el.style.backgroundColor = `rgba(255,255,255,${cfg.o * 0.1})`; 
+            el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
+            const cross = el.querySelector('.d-cross'); 
+            if (cross) { cross.style.opacity = cfg.o; cross.style.filter = `brightness(${cfg.b})`; }
+        } else {
+            let baseColor, borderColor;
+            if (id === 'a') { baseColor = `rgba(239, 68, 68, ${cfg.o})`; borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'b') { baseColor = `rgba(59, 130, 246, ${cfg.o})`; borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'y') { baseColor = `rgba(16, 185, 129, ${cfg.o})`; borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; }
+            else if (id === 'x') { baseColor = `rgba(245, 158, 11, ${cfg.o})`; borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; }
+            else { baseColor = `rgba(255, 255, 255, ${cfg.o})`; borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; }
+            
+            el.style.backgroundColor = baseColor; 
+            el.style.borderColor = borderColor; 
+            el.style.filter = `brightness(${cfg.b})`;
+        }
+    }
+
+
+
+
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
         uCrtLoc: null, uCurveLoc: null, uFilterLoc: null, uRgbLoc: null, uBloomLoc: null, uResLoc: null, uTexSizeLoc: null, uSystemLoc: null, uColorsLoc: null,
@@ -1512,29 +1532,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (currentGame) localStorage.setItem('padV4_' + currentGame.n, JSON.stringify(padConfig)); 
             updatePadTransforms(); 
             if(camZone && dpadMode === 2 && isGamepadVisible) camZone.style.display = 'block';
-        }
-    }
-
-    function updateOpacity(val) { const opacity = val / 100; document.getElementById('opacityVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].o = opacity; applyVisuals(selectedPadEl); } }
-    function updateBrightness(val) { const brightness = val / 100; document.getElementById('brightnessVal').textContent = val + '%'; if (selectedPadEl) { padConfig[selectedPadEl].b = brightness; applyVisuals(selectedPadEl); } }
-
-    function applyVisuals(id) {
-        const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id);
-        if (!el) return; const cfg = padConfig[id];
-        if (id === 'dpad') {
-            el.style.background = `rgba(255,255,255,${cfg.o * 0.1})`; el.style.borderColor = `rgba(255,255,255,${cfg.o})`;
-            const cross = el.querySelector('.d-cross'); if (cross) { cross.style.opacity = cfg.o; cross.style.filter = `brightness(${cfg.b})`; }
-        } else {
-            let baseColor, borderColor;
-            if (id === 'a') { baseColor = `rgba(239, 68, 68, ${cfg.o})`; borderColor = `rgba(239, 68, 68, ${Math.min(1, cfg.o + 0.3)})`; }
-            else if (id === 'b') { baseColor = `rgba(59, 130, 246, ${cfg.o})`; borderColor = `rgba(59, 130, 246, ${Math.min(1, cfg.o + 0.3)})`; }
-            else if (id === 'y') { baseColor = `rgba(16, 185, 129, ${cfg.o})`; borderColor = `rgba(16, 185, 129, ${Math.min(1, cfg.o + 0.3)})`; }
-            else if (id === 'x') { baseColor = `rgba(245, 158, 11, ${cfg.o})`; borderColor = `rgba(245, 158, 11, ${Math.min(1, cfg.o + 0.3)})`; }
-            else { baseColor = `rgba(255, 255, 255, ${cfg.o})`; borderColor = `rgba(255, 255, 255, ${Math.min(1, cfg.o + 0.3)})`; }
-            
-            el.style.background = baseColor; 
-            el.style.borderColor = borderColor; 
-            el.style.filter = `brightness(${cfg.b})`;
         }
     }
 
@@ -2072,7 +2069,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }, 400); 
     }
 
-    // ОРИГИНАЛЬНЫЙ РЕНДЕР С ДОБАВЛЕНИЕМ СОРТИРОВКИ ПО НОВЫМ КНОПКАМ
     function renderAllGames() {
         setSpotifyGlow(null); 
         const scrollPos = menuScreen.scrollTop; 
@@ -2084,7 +2080,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             localStorage.setItem('librarySort', sortType);
         }
         
-        // Читаем обновленный массив из кнопок
         mySysPriority = JSON.parse(localStorage.getItem('sysPriority')) || ["gba", "smd", "nes", "snes", "ngp", "dos", "html", "unk"];
 
         gameGrid.innerHTML = '';
@@ -2131,7 +2126,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } else { 
                 let currentSysGroup = null;
                 customGames.forEach(gameData => { 
-                    // Группировка для красивого отображения (как было в оригинале)
                     if (sortType === 'sys' && gameData.sys !== currentSysGroup && !term) {
                         currentSysGroup = gameData.sys;
                         const div = document.createElement('div');
@@ -2609,7 +2603,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     async function handleBackBtn() {
         if (window.location.hash === '#game') {
             isExitingGame = true; 
-            history.back(); // Вызываем системный шаг назад, он триггернет hashchange
+            history.back();
             return; 
         }
         if (!currentGame) {
@@ -2632,7 +2626,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    // --- ОБНОВЛЕННАЯ ОЧИСТКА С ПЛАВНЫМ ВОЗВРАТОМ В МЕНЮ И ХЕШ-ЛОВУШКОЙ ---
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
         
@@ -2717,7 +2710,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         nesRestartFn = null; 
         nes = null;
 
-        // --- ПЛАВНОЕ РАСТВОРЕНИЕ ПЕРЕД ПЕРЕЗАГРУЗКОЙ ---
         frameDiv.style.opacity = '0';
         toolbar.style.opacity = '0';
         
@@ -2750,7 +2742,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 window.location.hash = 'menu';
             }
             
-            // Чтобы эмуляторы точно выгрузились из памяти, делаем reload, но уже под черным экраном
             location.reload(); 
         }, 400); 
     }
@@ -3453,11 +3444,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     };
 
-    function triggerCoverChange() {
-        if (selectedGamesForDelete.size !== 1) return;
-        document.getElementById('customCoverInput').click();
-    }
-
     document.getElementById('customCoverInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || selectedGamesForDelete.size !== 1) return;
@@ -3484,31 +3470,54 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
+    // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ ТОЛЬКО ВЫБРАННОЕ И ОТДАЕТ ФАЙЛ СРАЗУ ---
+        // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ ТОЛЬКО ВЫБРАННОЕ И ОТДАЕТ ФАЙЛ СРАЗУ ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
-        const origTxt = '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
+        const isSelective = selectedGamesForDelete.size > 0;
+        const origTxt = '📦 В ZIP';
+        
         if (btn.dataset.readyToDownload === 'true') {
-            window.location.assign(btn.dataset.blobUrl); return;
+            const a = document.createElement('a');
+            a.href = btn.dataset.blobUrl;
+            a.download = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            return;
         }
-        if (!confirm('Собрать игры и обложки в ZIP?')) return;
-        btn.innerHTML = '⏳ ПОДГОТОВКА...'; btn.style.pointerEvents = 'none';
+
+        const confirmMsg = isSelective 
+            ? `Собрать в ZIP только выбранные игры (${selectedGamesForDelete.size} шт.)?` 
+            : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это может занять время.`;
+
+        if (!confirm(confirmMsg)) return;
+        
+        btn.innerHTML = '⏳ ПАКУЮ...'; 
+        btn.style.pointerEvents = 'none';
 
         try {
             const tx = db.transaction(["games"], "readonly");
             const req = tx.objectStore("games").getAll();
+            
             req.onsuccess = async () => {
-                const games = req.result;
+                let games = req.result;
+                if (isSelective) {
+                    games = games.filter(g => selectedGamesForDelete.has(g.id));
+                }
+                
                 let zipData = {};
                 let current = 0;
 
                 for (let g of games) {
                     current++;
-                    btn.innerHTML = `⏳ ПАКУЮ: ${current} / ${games.length}`;
+                    btn.innerHTML = `⏳ ${current}/${games.length}`;
                     
                     const buffer = await readBlob(g.fileBlob);
                     let baseName = g.n.replace(/[/\\?%*:|"<>]/g, '-'); 
                     let gameFileName = baseName + '.' + (g.ext || 'bin');
                     if (g.t === 'd') gameFileName = baseName + '.zip';
+                    
                     zipData[gameFileName] = new Uint8Array(buffer);
 
                     if (g.cover && g.cover.startsWith('data:image')) {
@@ -3518,25 +3527,45 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
                         } catch(e) {}
                     }
-                    if (current % 5 === 0) await new Promise(r => setTimeout(r, 10));
+                    // Микро-пауза каждые 10 игр, чтобы телефон не "задохнулся"
+                    if (current % 10 === 0) await new Promise(r => setTimeout(r, 10)); 
                 }
 
                 btn.innerHTML = '⚡ СЖАТИЕ...';
+                await new Promise(r => setTimeout(r, 100));
+
                 const zipped = fflate.zipSync(zipData, { level: 1 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
-                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
-                btn.style.background = '#d97706'; btn.style.pointerEvents = 'auto'; 
-                btn.dataset.readyToDownload = 'true'; btn.dataset.blobUrl = URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
+
+                btn.innerHTML = `✅ ${(blob.size/1024/1024).toFixed(1)}MB`; 
+                btn.style.background = '#d97706'; 
+                btn.style.pointerEvents = 'auto'; 
+                btn.dataset.readyToDownload = 'true'; 
+                btn.dataset.blobUrl = url;
+
+                // Принудительный триггер скачивания
+                const autoLink = document.createElement('a');
+                autoLink.href = url;
+                autoLink.download = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
+                document.body.appendChild(autoLink);
+                autoLink.click();
+                document.body.removeChild(autoLink);
             };
         } catch(e) {
-            btn.innerHTML = '⚠️ ОШИБКА'; setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
+            console.error(e);
+            btn.innerHTML = '⚠️ ОШИБКА'; 
+            setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
         }
     }
 
+    // --- УМНЫЙ ПОИСК ЛОГОТИПОВ ---
     document.getElementById('btnFetchMissingLogos').addEventListener('click', async (e) => {
         const btn = e.target;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '⏳ СКАНИРУЕМ БАЗУ...';
+        const isSelective = selectedGamesForDelete.size > 0;
+        
+        btn.innerHTML = '⏳ СКАНИРУЕМ...';
         btn.style.pointerEvents = 'none';
 
         try {
@@ -3545,20 +3574,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const store = tx.objectStore("games");
                 const req = store.getAll();
                 req.onsuccess = () => {
-                    const needsCover = req.result.filter(g => !g.cover && g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
-                    resolve(needsCover);
+                    let filtered = req.result.filter(g => g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
+                    if (isSelective) {
+                        // Если игры выбраны галочками, ищем обложки ТОЛЬКО для них
+                        filtered = filtered.filter(g => selectedGamesForDelete.has(g.id));
+                    } else {
+                        // Иначе ищем только для тех, у кого нет обложки
+                        filtered = filtered.filter(g => !g.cover);
+                    }
+                    resolve(filtered);
                 };
                 req.onerror = () => reject(req.error);
             });
 
             if (gamesToUpdate.length === 0) {
-                btn.innerHTML = '✨ У ВСЕХ ИГР ЕСТЬ ОБЛОЖКИ!';
+                btn.innerHTML = isSelective ? '✨ ВЫБЕРИТЕ ДРУГИЕ ИГРЫ' : '✨ У ВСЕХ ИГР ЕСТЬ ОБЛОЖКИ!';
                 btn.style.background = '#10b981'; 
-                btn.style.borderColor = '#047857';
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.style.background = 'rgba(2, 132, 199, 0.4)'; 
-                    btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
+                    btn.style.background = 'rgba(168, 85, 247, 0.4)'; 
                     btn.style.pointerEvents = 'auto';
                 }, 3000);
                 return;
@@ -3568,13 +3602,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let updatedCount = 0;
 
             for (const game of gamesToUpdate) {
-                btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 15)}...`;
-                
+                btn.innerHTML = `⏳ ИЩЕМ: ${game.n.substring(0, 10)}...`;
                 const newCover = await fetchNetCover(game.n, game.sys);
                 
                 if (newCover) {
                     game.cover = newCover;
-                    
                     await new Promise((resolve) => {
                         const writeTx = db.transaction(["games"], "readwrite");
                         writeTx.objectStore("games").put(game);
@@ -3582,35 +3614,97 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     });
                     updatedCount++;
                 }
-                
                 await new Promise(r => setTimeout(r, 400));
             }
 
-            btn.innerHTML = `✅ НАЙДЕНО НОВЫХ: ${updatedCount} из ${missingCount}`;
+            btn.innerHTML = `✅ НАЙДЕНО: ${updatedCount}/${missingCount}`;
             btn.style.background = '#10b981'; 
-            btn.style.borderColor = '#047857';
             
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.background = 'rgba(2, 132, 199, 0.4)'; 
-                btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
+                btn.style.background = 'rgba(168, 85, 247, 0.4)'; 
                 btn.style.pointerEvents = 'auto';
                 renderAllGames(); 
             }, 3000);
 
         } catch (err) {
             console.error(err);
-            btn.innerHTML = '⚠️ ОШИБКА ПОИСКА';
+            btn.innerHTML = '⚠️ ОШИБКА';
             btn.style.background = '#ef4444'; 
-            btn.style.borderColor = '#b91c1c';
             setTimeout(() => {
                 btn.innerHTML = originalText;
-                btn.style.background = 'rgba(2, 132, 199, 0.4)';
-                btn.style.borderColor = 'rgba(3, 105, 161, 0.8)';
+                btn.style.background = 'rgba(168, 85, 247, 0.4)';
                 btn.style.pointerEvents = 'auto';
             }, 3000);
         }
     });
+
+
+    // --- НАВИГАЦИЯ ПО МЕНЮ С ПОМОЩЬЮ ГЕЙМПАДА ---
+    let gpMenuIndex = -1;
+    let lastGpMenuUpdate = 0;
+
+    function updateGamepadMenu() {
+        if (currentGame || menuScreen.style.display === 'none') {
+            requestAnimationFrame(updateGamepadMenu);
+            return;
+        }
+
+        const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gp = pads[0]; 
+
+        if (!gp) {
+            requestAnimationFrame(updateGamepadMenu);
+            return;
+        }
+
+        const now = Date.now();
+        if (now - lastGpMenuUpdate < 150) { 
+            requestAnimationFrame(updateGamepadMenu);
+            return;
+        }
+
+        const btns = Array.from(document.querySelectorAll('.game-btn'));
+        if (btns.length === 0) {
+            requestAnimationFrame(updateGamepadMenu);
+            return;
+        }
+
+        let move = 0;
+        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -2; // Вверх
+        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = 2;   // Вниз
+        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) move = -1; // Влево
+        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) move = 1;   // Вправо
+
+        if (move !== 0) {
+            lastGpMenuUpdate = now;
+            if (gpMenuIndex >= 0 && btns[gpMenuIndex]) btns[gpMenuIndex].classList.remove('gp-focus');
+            
+            gpMenuIndex += move;
+            if (gpMenuIndex < 0) gpMenuIndex = 0;
+            if (gpMenuIndex >= btns.length) gpMenuIndex = btns.length - 1;
+
+            btns[gpMenuIndex].classList.add('gp-focus');
+            btns[gpMenuIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            doVibrate(10);
+        }
+
+        // Кнопка A (Запуск)
+        if (gp.buttons[0] && gp.buttons[0].pressed && gpMenuIndex >= 0 && btns[gpMenuIndex]) {
+            lastGpMenuUpdate = now + 500; 
+            btns[gpMenuIndex].click();
+        }
+
+        // Кнопка B (Отмена/Назад из карандаша)
+        if (gp.buttons[1] && gp.buttons[1].pressed) {
+            lastGpMenuUpdate = now + 500;
+            if (isLibraryEditMode) toggleLibraryEditMode();
+        }
+
+        requestAnimationFrame(updateGamepadMenu);
+    }
+
+    requestAnimationFrame(updateGamepadMenu);
 
 </script>
 
