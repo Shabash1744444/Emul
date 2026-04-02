@@ -54,8 +54,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     background-color: var(--bg-color-base); 
     background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 30%, rgba(0,0,0,0.95) 100%);
     display: flex; flex-direction: column; 
-    transition: opacity 0.4s ease, background-color 1.2s cubic-bezier(0.4, 0, 0.2, 1); 
-    will-change: opacity, background-color;
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s ease, background-color 1.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    will-change: opacity, transform, filter, background-color;
+    transform-origin: center top;
+}
+
+/* Анимация ухода меню в темноту при старте игры */
+#menuScreen.zoomed-out {
+    transform: scale(0.95);
+    opacity: 0;
+    filter: brightness(0.2);
+    pointer-events: none;
+}
+/* Плавное проявление при возврате (skipSplash) */
+#menuScreen.fade-in {
+    animation: menuFadeIn 0.6s ease-out forwards;
+}
+@keyframes menuFadeIn {
+    0% { opacity: 0; transform: scale(0.95); filter: brightness(0); }
+    100% { opacity: 1; transform: scale(1); filter: brightness(1); }
 }
 
 /* --- ДЫШАЩИЙ ЛОГОТИП ARCADE HUB (С неоном) --- */
@@ -162,7 +179,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #searchInput:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.3), inset 0 2px 5px rgba(0,0,0,0.5); }
 
 /* --- ПАНЕЛЬ РЕДАКТИРОВАНИЯ --- */
-#editPanel { margin-bottom: 15px; padding: 15px; border-radius: 12px; background: rgba(20, 10, 10, 0.7) !important; backdrop-filter: blur(15px); border: 1px solid rgba(239, 68, 68, 0.4) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 0 20px rgba(239, 68, 68, 0.1); }
+#editPanel { margin-bottom: 15px; padding: 15px; border-radius: 12px; background: rgba(20, 10, 10, 0.7) !important; backdrop-filter: blur(15px); border: 1px solid rgba(239, 68, 68, 0.4) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 0 20px rgba(239, 68, 68, 0.1); display: none; opacity: 0; transform: translateY(-10px); transition: opacity 0.3s ease, transform 0.3s ease; }
+#editPanel.show { opacity: 1; transform: translateY(0); }
 #deleteSelectedBtn { background: rgba(239, 68, 68, 0.15) !important; border: 1px solid rgba(239, 68, 68, 0.7) !important; color: #fca5a5 !important; animation: neonDeletePulse 2s infinite; }
 @keyframes neonDeletePulse { 0%, 100% { box-shadow: 0 0 10px rgba(239,68,68,0.3); } 50% { box-shadow: 0 0 25px rgba(239,68,68,0.7); } }
 
@@ -200,8 +218,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #empty-library-msg { text-align: center; padding: 40px 20px; color: #666; font-size: 14px; grid-column: 1 / -1; }
 
 /* --- МОДАЛЬНЫЕ ОКНА И ИНФО --- */
-#infoModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
-#infoModal { background: rgba(15,20,30,0.85); border: 1px solid var(--neon-blue); border-radius: 16px; padding: 25px; max-width: 400px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(56,189,248,0.2); }
+#infoModalOverlay, #resetModalOverlay { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); 
+    opacity: 0; transition: opacity 0.3s ease;
+}
+#infoModalOverlay.show, #resetModalOverlay.show { opacity: 1; }
+
+#infoModal, .modal-box { 
+    background: rgba(15,20,30,0.85); border: 1px solid var(--neon-blue); border-radius: 16px; padding: 25px; max-width: 400px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(56,189,248,0.2); 
+    transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#infoModalOverlay.show #infoModal, #resetModalOverlay.show .modal-box { transform: scale(1); }
+
 .info-platform-list { margin: 15px 0; padding: 0; list-style: none; font-size: 13px; line-height: 1.6; }
 .info-platform-list li { margin-bottom: 8px; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px; display: flex; justify-content: space-between;}
 .info-ext { color: var(--neon-blue); font-family: monospace; font-weight: bold; background: rgba(56, 189, 248, 0.1); padding: 2px 6px; border-radius: 6px;}
@@ -216,6 +244,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #universal-gl-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: none; object-fit: contain; pointer-events: none; z-index: 5; }
 #dos-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
 
+/* --- ЭФФЕКТЫ ВКЛЮЧЕНИЯ И ВЫКЛЮЧЕНИЯ ЭЛТ ТЕЛЕВИЗОРА --- */
+#crt-shutdown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; pointer-events: none; display: none; background: transparent; }
+#crt-shutdown-overlay.shutdown-on { display: block; animation: crtShutdownBg 0.6s ease-in forwards; }
+#crt-shutdown-line { position: absolute; top: 50%; left: 0; width: 100%; height: 100%; transform: translateY(-50%); background: var(--crt-color, #fff); box-shadow: 0 0 30px 5px var(--crt-color, #fff); animation: crtLineCollapse 0.6s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
+#crt-shutdown-dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--crt-color, #fff); box-shadow: 0 0 20px 8px var(--crt-color, #fff), 0 0 40px 15px var(--crt-color, #fff); opacity: 0; animation: crtDotFade 0.6s ease-in forwards; }
+@keyframes crtShutdownBg { 0% { background: transparent; } 40% { background: rgba(0,0,0,0.5); } 100% { background: #000; } }
+@keyframes crtLineCollapse { 0% { height: 100%; opacity: 0.8; filter: blur(0px); } 30% { height: 40%; opacity: 0.9; filter: blur(2px); } 60% { height: 4px; opacity: 1; filter: blur(1px); } 80% { height: 2px; opacity: 1; filter: blur(0px); } 90% { height: 2px; opacity: 0.8; } 100% { height: 0px; opacity: 0; } }
+@keyframes crtDotFade { 0% { opacity: 0; transform: scale(0); } 55% { opacity: 0; transform: scale(0); } 65% { opacity: 1; transform: scale(1.5); } 80% { opacity: 1; transform: scale(1); } 95% { opacity: 0.6; transform: scale(0.5); } 100% { opacity: 0; transform: scale(0); } }
+
+#crt-turnon-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 101; pointer-events: none; display: none; background: #000; }
+#crt-turnon-overlay.turn-on { display: block; animation: crtTurnOnBg 0.5s ease-out forwards; }
+#crt-turnon-line { position: absolute; top: 50%; left: 50%; width: 100%; height: 2px; background: var(--crt-color, #fff); box-shadow: 0 0 30px 5px var(--crt-color, #fff); transform: translate(-50%, -50%) scaleX(0); animation: crtLineExpand 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+@keyframes crtTurnOnBg { 0% { background: #000; } 100% { background: transparent; } }
+@keyframes crtLineExpand { 0% { height: 2px; transform: translate(-50%, -50%) scaleX(0); opacity: 1; } 30% { height: 2px; transform: translate(-50%, -50%) scaleX(1); opacity: 1; filter: blur(0px); } 60% { height: 60%; transform: translate(-50%, -50%) scaleX(1); opacity: 0.9; filter: blur(2px); } 100% { height: 100%; transform: translate(-50%, -50%) scaleX(1); opacity: 0; filter: blur(0px); } }
+
+/* --- СИСТЕМА УВЕДОМЛЕНИЙ (TOAST) --- */
+#toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 999999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; width: 90%; max-width: 380px; }
+.toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #fff; text-align: center; pointer-events: auto; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 8px 32px rgba(0,0,0,0.6); animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px) scale(0.95); }
+.toast-msg.toast-out { animation: toastOut 0.3s ease-in forwards; }
+.toast-success { background: rgba(16, 185, 129, 0.85); }
+.toast-error { background: rgba(239, 68, 68, 0.85); }
+.toast-info { background: rgba(56, 189, 248, 0.85); }
+.toast-warning { background: rgba(245, 158, 11, 0.85); }
+@keyframes toastIn { 0% { opacity: 0; transform: translateY(20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes toastOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-10px) scale(0.95); } }
+
 /* --- ВЕРХНИЕ КНОПКИ МЕНЮ (Круглые иконки в игре) --- */
 #toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; transition: opacity 0.4s ease; background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-shadow: none !important; }
 #toolbar::-webkit-scrollbar { display: none; }
@@ -226,27 +280,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 .f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
 
-/* --- ПАНЕЛИ НАСТРОЕК --- */
+/* --- ПАНЕЛИ НАСТРОЕК В ИГРЕ --- */
 #screen-edit-panel, #pad-edit-panel { 
     position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 12px; 
     background: rgba(15, 10, 25, 0.8) !important; backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); 
     padding: 18px; border-radius: 16px; color: #fff; font-size: 12px; width: 270px; max-height: 85vh; overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; 
     box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.05);
+    display: none; opacity: 0; transform: translateX(-10px); transition: opacity 0.3s ease, transform 0.3s ease;
 }
+#screen-edit-panel.show, #pad-edit-panel.show { opacity: 1; transform: translateX(0); }
 
 /* КРАСИВЫЕ ВЫПАДАЮЩИЕ СПИСКИ (ШЕЙДЕРЫ) */
 #screen-edit-panel select {
-    -webkit-appearance: none; appearance: none;
-    background: rgba(15, 20, 30, 0.9); color: #fff; border: 1px solid rgba(56, 189, 248, 0.4);
-    padding: 10px 15px; border-radius: 10px; font-size: 12px; font-weight: bold;
-    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), 0 0 10px rgba(56, 189, 248, 0.2);
-    text-align: center; cursor: pointer;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat; background-position: right 10px center;
+    -webkit-appearance: none; appearance: none; background: rgba(15, 20, 30, 0.9); color: #fff; border: 1px solid rgba(56, 189, 248, 0.4);
+    padding: 10px 15px; border-radius: 10px; font-size: 12px; font-weight: bold; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5), 0 0 10px rgba(56, 189, 248, 0.2);
+    text-align: center; cursor: pointer; background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position: right 10px center;
 }
-#screen-edit-panel select:focus {
-    border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.6); outline: none;
-}
+#screen-edit-panel select:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.6); outline: none; }
 
 .edit-row { display: flex; gap: 10px; align-items: center; justify-content: center;}
 .edit-btn { padding: 12px 15px; background: rgba(255, 255, 255, 0.05) !important; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 10px; font-weight: bold; font-size: 11px; cursor: pointer; width: 100%; margin-bottom: 5px; user-select: none; text-transform: uppercase; transition: all 0.2s; }
@@ -263,19 +313,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .slider-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
 .slider-row label { font-size: 11px; color: #cbd5e1; display: flex; justify-content: space-between; }
 .slider-row input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; outline: none; margin: 10px 0; }
-
-.slider-row input[type="range"]::-webkit-slider-runnable-track { 
-    height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.05);
-    background-image: linear-gradient(90deg, rgba(147, 51, 234, 0.3) 0%, rgba(217, 70, 239, 1) var(--val, 50%), transparent var(--val, 50%));
-    box-shadow: 0 0 calc(var(--val-num, 50) * 0.15px) rgba(217, 70, 239, calc(var(--val-num, 50) / 100));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.slider-row input[type="range"]::-webkit-slider-thumb { 
-    -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #fff; border: 2px solid #d946ef; 
-    margin-top: -8px; cursor: pointer; transition: transform 0.1s; 
-    box-shadow: 0 0 calc(5px + var(--val-num, 50) * 0.1px) rgba(217, 70, 239, 0.9);
-}
+.slider-row input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.05); background-image: linear-gradient(90deg, rgba(147, 51, 234, 0.3) 0%, rgba(217, 70, 239, 1) var(--val, 50%), transparent var(--val, 50%)); box-shadow: 0 0 calc(var(--val-num, 50) * 0.15px) rgba(217, 70, 239, calc(var(--val-num, 50) / 100)); border: 1px solid rgba(255, 255, 255, 0.1); }
+.slider-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #fff; border: 2px solid #d946ef; margin-top: -8px; cursor: pointer; transition: transform 0.1s; box-shadow: 0 0 calc(5px + var(--val-num, 50) * 0.1px) rgba(217, 70, 239, 0.9); }
 .slider-row input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.3); }
 
 #btnToggleColors { background: linear-gradient(135deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #3b82f6 75%, #a855f7 100%) !important; border: none !important; text-shadow: 1px 1px 0 rgba(0,0,0,0.8); }
@@ -336,7 +375,84 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { display: flex !important; background: rgba(239, 68, 68, 0.4); }
 .game-btn:focus, .game-btn.gp-focus { outline: none; border: 3px solid var(--neon-blue) !important; box-shadow: 0 0 25px var(--neon-blue), inset 0 0 10px var(--neon-blue) !important; transform: scale(1.05) translateY(-5px); z-index: 10; }
 </style>
-
+<script>
+    // --- ИНСТРУМЕНТ СОЗДАНИЯ ЗВУКОВ (Web Audio API - Тонкая настройка) ---
+    const AudioGen = {
+        ctx: null,
+        init() {
+            if (!this.ctx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            }
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+        },
+        playShutdown() {
+            this.init();
+            const osc = this.ctx.createOscillator(); 
+            const gain = this.ctx.createGain();
+            osc.connect(gain); 
+            gain.connect(this.ctx.destination);
+            
+            // Глухой "пумс" выключения ТВ (убрали ультразвук)
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.4);
+            
+            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+            
+            osc.start(); 
+            osc.stop(this.ctx.currentTime + 0.45);
+        },
+        playClick() {
+            this.init();
+            const osc = this.ctx.createOscillator(); 
+            const gain = this.ctx.createGain();
+            osc.connect(gain); 
+            gain.connect(this.ctx.destination);
+            
+            // Мягкий "бульк" для UI (без жестких квадратных волн)
+            osc.type = 'sine'; 
+            osc.frequency.setValueAtTime(800, this.ctx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.03);
+            
+            gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.03);
+            
+            osc.start(); 
+            osc.stop(this.ctx.currentTime + 0.04);
+        },
+        playTurnOn() {
+            this.init();
+            const osc = this.ctx.createOscillator(); 
+            const gain = this.ctx.createGain();
+            osc.connect(gain); 
+            gain.connect(this.ctx.destination);
+            
+            // Звук резкого разряда тока и разгона луча кинескопа
+            osc.type = 'square'; 
+            osc.frequency.setValueAtTime(20, this.ctx.currentTime); // Старт с низкого гула
+            osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.3); // Быстрый взлет частоты
+            
+            gain.gain.setValueAtTime(0.4, this.ctx.currentTime); // Громкий "щелчок" включения
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4); // Быстрое затухание
+            
+            osc.start(); 
+            osc.stop(this.ctx.currentTime + 0.45);
+        }
+    };
+    
+    // --- СИСТЕМА УВЕДОМЛЕНИЙ TOAST (Заменяет alert) ---
+    function showToast(message, type = 'info', duration = 3000) {
+        let container = document.getElementById('toast-container');
+        if (!container) { container = document.createElement('div'); container.id = 'toast-container'; document.body.appendChild(container); }
+        const toast = document.createElement('div'); toast.className = `toast-msg toast-${type}`; toast.textContent = message;
+        container.appendChild(toast); void toast.offsetWidth; toast.style.opacity = '1'; toast.style.transform = 'translateY(0) scale(1)';
+        const timeout = setTimeout(() => { toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); }, duration);
+        toast.addEventListener('click', () => { clearTimeout(timeout); toast.classList.add('toast-out'); setTimeout(() => toast.remove(), 300); });
+    }
+    window.alert = function(msg) { showToast(msg, 'warning'); };
+</script>
 
 </head>
 <body>
@@ -388,6 +504,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             </select>
             <script>
                 function setFilter(sys, el) {
+                    if (typeof doVibrate === 'function') doVibrate(10);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                    
                     if(sys === 'random') {
                         document.getElementById('sortSelect').value = 'random';
                     } else {
@@ -413,6 +532,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <button class="sys-filter-btn active" style="border-color:#ef4444; color:#ef4444;" onclick="setFilter('nes', this)">DENDY</button>
             <button class="sys-filter-btn" style="border-color:#3b82f6; color:#3b82f6;" onclick="setFilter('smd', this)">SEGA</button>
             <button class="sys-filter-btn" style="border-color:#a855f7; color:#a855f7;" onclick="setFilter('snes', this)">SNES</button>
+            <button class="sys-filter-btn" style="border-color:#06b6d4; color:#06b6d4;" onclick="setFilter('ngp', this)">NG</button>
             <button class="sys-filter-btn" style="border-color:#f43f5e; color:#f43f5e;" onclick="setFilter('gba', this)">GBA</button>
             <button class="sys-filter-btn" style="border-color:#10b981; color:#10b981;" onclick="setFilter('dos', this)">DOS</button>
             <button class="sys-filter-btn" style="border-color:#f59e0b; color:#f59e0b;" onclick="setFilter('html', this)">HTML</button>
@@ -489,6 +609,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <iframe id="html-iframe"></iframe>
     <div id="canvasContainer">
         <div id="dos-overlay"></div>
+        
+        <!-- --- БЛОКИ АНИМАЦИИ ПЕРЕНЕСЕНЫ СЮДА ДЛЯ РАЗМЕРА ИГРЫ --- -->
+        <div id="crt-shutdown-overlay">
+            <div id="crt-shutdown-line"></div>
+            <div id="crt-shutdown-dot"></div>
+        </div>
+        <div id="crt-turnon-overlay">
+            <div id="crt-turnon-line"></div>
+        </div>
+        <!-- -------------------------------------------------------- -->
+        
     </div>
 </div>
 
@@ -649,22 +780,74 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     let isExitingGame = false;
 
     window.addEventListener('load', () => {
-        if (window.location.hash === '#game') history.replaceState(null, '', window.location.pathname);
+        if (!window.location.hash) {
+            history.replaceState(null, '', '#menu');
+        }
+        
+        const isReturning = sessionStorage.getItem('returnFromGame');
+        sessionStorage.removeItem('returnFromGame'); 
+        
+        const splashDelay = isReturning ? 50 : 4000; 
+        
         setTimeout(() => { 
             const splash = document.getElementById('splashScreen'); 
             if(splash) {
                 splash.classList.add('hidden');
                 if (navigator.vibrate) navigator.vibrate(15);
             }
-        }, 4000); 
+            if (isReturning) {
+                const ms = document.getElementById('menuScreen');
+                if (ms) {
+                    ms.classList.add('fade-in');
+                    setTimeout(() => ms.classList.remove('fade-in'), 600);
+                }
+            }
+        }, splashDelay); 
     });
 
-    window.addEventListener('hashchange', () => {
+    window.addEventListener('popstate', (e) => {
+        const hash = window.location.hash;
+        
         const gameFrame = document.getElementById('gameFrame');
-        if (window.location.hash !== '#game' && gameFrame && gameFrame.style.display === 'block') {
+        if (hash !== '#game' && gameFrame && gameFrame.style.display === 'block') {
             if (!isExitingGame && typeof handleBackBtn === 'function') {
                 isExitingGame = true;
-                handleBackBtn();
+                handleBackBtn(); 
+            }
+            return;
+        }
+
+        if (hash === '#menu' || hash === '') {
+            const infoOverlay = document.getElementById('infoModalOverlay');
+            const resetOverlay = document.getElementById('resetModalOverlay');
+            let closedSomething = false;
+            
+            if (infoOverlay && (infoOverlay.style.display === 'flex' || infoOverlay.classList.contains('show'))) {
+                infoOverlay.classList.remove('show');
+                setTimeout(() => infoOverlay.style.display = 'none', 300);
+                closedSomething = true;
+            }
+            if (resetOverlay && (resetOverlay.style.display === 'flex' || resetOverlay.classList.contains('show'))) {
+                resetOverlay.classList.remove('show');
+                setTimeout(() => resetOverlay.style.display = 'none', 300);
+                closedSomething = true;
+            }
+            if (typeof isLibraryEditMode !== 'undefined' && isLibraryEditMode && typeof toggleLibraryEditMode === 'function') {
+                toggleLibraryEditMode();
+                closedSomething = true;
+            }
+
+            if (closedSomething) {
+                history.pushState(null, '', '#menu');
+            } else {
+                if (backTapCount === 0) {
+                    if (typeof showToast === 'function') showToast('Нажмите "Назад" еще раз для выхода', 'info', 2000);
+                    backTapCount++;
+                    history.pushState(null, '', '#menu'); 
+                    setTimeout(() => backTapCount = 0, 2000);
+                } else {
+                    history.back(); 
+                }
             }
         }
     });
@@ -853,14 +1036,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     document.getElementById('infoBtn').addEventListener('click', (e) => { 
         e.preventDefault(); 
-        document.getElementById('infoModalOverlay').style.display = 'flex'; 
+        const overlay = document.getElementById('infoModalOverlay');
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('show'), 10);
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
     });
+    
     document.getElementById('closeInfoBtn').addEventListener('click', () => { 
-        document.getElementById('infoModalOverlay').style.display = 'none'; 
+        const overlay = document.getElementById('infoModalOverlay');
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 300);
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
     });
+    
     document.getElementById('infoModalOverlay').addEventListener('click', (e) => { 
         if (e.target === document.getElementById('infoModalOverlay')) { 
-            document.getElementById('infoModalOverlay').style.display = 'none'; 
+            const overlay = document.getElementById('infoModalOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
         } 
     });
 
@@ -1175,22 +1368,78 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         saveVideoConfig(); 
     }
 
+          // --- АВТО-ОБЖИМКА ЭКРАНА (ТВ 4:3 против Портативок) ---
+    function autoFitCanvasContainer(sys) {
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+        
+        // Разделяем домашние приставки и портативки
+        let ratio = 4 / 3; // Классический ЭЛТ телевизор (NES, SNES, SEGA, DOS)
+        if (sys === 'gba') ratio = 240 / 160;      // Вытянутый экран GBA
+        else if (sys === 'ngp') ratio = 160 / 152; // Почти квадратный NGP
+
+        let targetW = winW;
+        let targetH = targetW / ratio;
+
+        // Если не влезает по высоте — упираемся в потолок
+        if (targetH > winH) {
+            targetH = winH;
+            targetW = targetH * ratio;
+        }
+
+        // Жестко задаем размеры и центрируем
+        canvasContainer.style.width = Math.round(targetW) + 'px';
+        canvasContainer.style.height = Math.round(targetH) + 'px';
+        canvasContainer.style.left = Math.round((winW - targetW) / 2) + 'px';
+        canvasContainer.style.top = Math.round((winH - targetH) / 2) + 'px';
+
+        // Заставляем саму игру заполнить этот контейнер без черных полос
+        const canvases = document.querySelectorAll('#dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas');
+        canvases.forEach(c => {
+            c.style.objectFit = 'fill';
+            c.style.width = '100%';
+            c.style.height = '100%';
+        });
+    }
+
+
     function updateScreenTransform() { canvasContainer.style.transform = `translate(${screenX}px, ${screenY}px) scale(${scaleX}, ${scaleY})`; }
     function adjustScaleX(delta) { scaleX += delta; updateScreenTransform(); }
     function adjustScaleY(delta) { scaleY += delta; updateScreenTransform(); }
-    function resetScale() { scaleX = 1; scaleY = 1; screenX = 0; screenY = 0; updateScreenTransform(); }
+    
+    function resetScale() { 
+        scaleX = 1; scaleY = 1; screenX = 0; screenY = 0; 
+        if (currentGame) autoFitCanvasContainer(currentGame.sys);
+        updateScreenTransform(); 
+    }
+
+    // Пересчитываем рамки, если пользователь перевернул телефон
+    window.addEventListener('resize', () => {
+        if (currentGame && window.location.hash === '#game') {
+            autoFitCanvasContainer(currentGame.sys);
+        }
+    });
+
     
     function toggleScreenEdit() {
         isEditMode = !isEditMode;
         btnScreen.classList.toggle('active-tool', isEditMode);
-        screenPanel.style.display = isEditMode ? 'flex' : 'none';
+        
+        if (isEditMode) {
+            screenPanel.style.display = 'flex';
+            setTimeout(() => screenPanel.classList.add('show'), 10);
+        } else {
+            screenPanel.classList.remove('show');
+            setTimeout(() => screenPanel.style.display = 'none', 300);
+        }
+        
         canvasContainer.style.pointerEvents = isEditMode ? 'none' : 'auto';
         updateVideoUI();
         if (!isEditMode && currentGame) {
             localStorage.setItem('layout_' + currentGame.n, JSON.stringify({scaleX, scaleY, screenX, screenY}));
         }
     }
-
+    
     frameDiv.addEventListener('touchstart', (e) => { 
         if(!isEditMode) return; 
         isDragging = true; 
@@ -1234,9 +1483,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             el.style.filter = `brightness(${cfg.b})`;
         }
     }
-
-
-
 
     const UniversalWebGL = {
         gl: null, program: null, texture: null,
@@ -1519,13 +1765,29 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
     
     function togglePadEdit() {
-        isPadEditMode = !isPadEditMode; btnPadEdit.classList.toggle('active-tool', isPadEditMode); padPanel.style.display = isPadEditMode ? 'flex' : 'none';
+        isPadEditMode = !isPadEditMode; 
+        btnPadEdit.classList.toggle('active-tool', isPadEditMode); 
+        
+        if (isPadEditMode) {
+            padPanel.style.display = 'flex';
+            setTimeout(() => padPanel.classList.add('show'), 10);
+        } else {
+            padPanel.classList.remove('show');
+            setTimeout(() => padPanel.style.display = 'none', 300);
+        }
+        
         updateBarrierVisuals();
         updateModeBtnUI();
         
         const camZone = document.getElementById('camera-catch-zone');
         if (isPadEditMode) {
-            const el = document.getElementById('joystick-dpad'); el.style.opacity = padConfig.dpad.o; el.style.pointerEvents = 'auto'; document.getElementById('dpad-catch-zone').style.display = 'none';
+            const el = document.getElementById('joystick-dpad'); 
+            if (el && padConfig && padConfig.dpad) {
+                el.style.opacity = padConfig.dpad.o; 
+                el.style.pointerEvents = 'auto'; 
+            }
+            const catchZone = document.getElementById('dpad-catch-zone');
+            if (catchZone) catchZone.style.display = 'none';
             if(camZone) camZone.style.display = 'none';
         } else {
             document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
@@ -1534,7 +1796,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if(camZone && dpadMode === 2 && isGamepadVisible) camZone.style.display = 'block';
         }
     }
-
+   
+   
+   
+   
     document.querySelectorAll('.draggable-btn').forEach(el => {
         el.addEventListener('touchstart', e => {
             if (!isPadEditMode) return; e.preventDefault(); 
@@ -1888,9 +2153,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const btnCancel = document.getElementById('btnResetCancel');
 
             overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
 
             const cleanup = () => {
-                overlay.style.display = 'none';
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.style.display = 'none', 300);
                 btnWipe.onclick = null;
                 btnSave.onclick = null;
                 btnCancel.onclick = null;
@@ -1942,6 +2209,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (isGameStarting) return; 
         isGameStarting = true;
         
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+        
+        // Устанавливаем цвет неона под консоль для вспышки ТВ
+        const sysColor = sysColors[game.sys] ? sysColors[game.sys].hex : '#fff';
+        document.documentElement.style.setProperty('--crt-color', sysColor);
+
+        const ms = document.getElementById('menuScreen');
+        if (ms) ms.classList.add('zoomed-out');
+
         try { screen.orientation.lock('landscape').catch(function(){}); } catch(e) {}
         try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{}); } catch(e) {}
 
@@ -1968,9 +2244,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         document.getElementById('searchInput').value = ''; 
         
-        menuScreen.style.opacity = '0';
+        if (ms) ms.style.opacity = '0';
         setTimeout(() => {
-            menuScreen.style.display = 'none'; 
+            if (ms) ms.style.display = 'none'; 
             document.querySelectorAll('.dosbox-container, #dos-canvas, #nes-canvas, #canvas, #universal-gl-canvas').forEach(e => e.remove());
             
             frameDiv.style.opacity = '0';
@@ -1980,6 +2256,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     frameDiv.style.opacity = '1';
+                    
+                    // Запуск эффекта включения ТВ
+                    if (typeof AudioGen !== 'undefined') AudioGen.playTurnOn();
+                    const crtOn = document.getElementById('crt-turnon-overlay');
+                    if (crtOn) {
+                        crtOn.classList.remove('turn-on');
+                        void crtOn.offsetWidth; // рестарт анимации
+                        crtOn.classList.add('turn-on');
+                    }
                     
                     toolbar.style.opacity = '0';
                     toolbar.style.display = 'flex';
@@ -2017,6 +2302,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     isPadEditMode = false; 
                     btnPadEdit.classList.remove('active-tool');
                     
+                                        // Мгновенно обжимаем контейнер под консоль ДО начала анимации
+                    autoFitCanvasContainer(game.sys);
+                    
                     const savedLayout = localStorage.getItem('layout_' + game.n);
                     if (savedLayout) { 
                         const l = JSON.parse(savedLayout); 
@@ -2025,9 +2313,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         screenX = l.screenX; 
                         screenY = l.screenY; 
                     } else { 
-                        resetScale(); 
+                        scaleX = 1; scaleY = 1; screenX = 0; screenY = 0;
                     }
                     updateScreenTransform();
+
 
                     isEditMode = false; 
                     btnScreen.classList.remove('active-tool'); 
@@ -2633,6 +2922,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             await saveGameState(true); 
         }
         
+        if (typeof AudioGen !== 'undefined') AudioGen.playShutdown();
+        const crt = document.getElementById('crt-shutdown-overlay');
+        if (crt) {
+            crt.style.display = 'block';
+            void crt.offsetWidth;
+            crt.classList.add('shutdown-on');
+        }
+        
         if (currentGame?._tempUrl) { 
             URL.revokeObjectURL(currentGame._tempUrl); 
             currentGame._tempUrl = null; 
@@ -2710,7 +3007,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         nesRestartFn = null; 
         nes = null;
 
-        frameDiv.style.opacity = '0';
+        
         toolbar.style.opacity = '0';
         
         setTimeout(() => {
@@ -2742,8 +3039,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 window.location.hash = 'menu';
             }
             
+            sessionStorage.setItem('returnFromGame', 'true');
+            
             location.reload(); 
-        }, 400); 
+        }, 600); 
     }
 
     function injectText() {
@@ -3065,11 +3364,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const panel = document.getElementById('editPanel');
         
         btn.classList.toggle('active', isLibraryEditMode);
-        panel.style.display = isLibraryEditMode ? 'block' : 'none';
+        
+        if (isLibraryEditMode) {
+            panel.style.display = 'block';
+            setTimeout(() => panel.classList.add('show'), 10);
+            if (typeof showToast === 'function') showToast('Режим редактирования', 'info', 1500);
+        } else {
+            panel.classList.remove('show');
+            setTimeout(() => panel.style.display = 'none', 300);
+        }
         
         if (!isLibraryEditMode) {
             selectedGamesForDelete.clear();
         }
+        
         updateEditCount();
         renderAllGames();
     }
@@ -3176,6 +3484,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btn.onclick = (e) => { 
             e.preventDefault(); 
             e.stopPropagation(); 
+            
+            // Мягкий вибро-отклик при тапе по карточке
+            if (typeof doVibrate === 'function') doVibrate(15);
             
             if (isLibraryEditMode) {
                 if (selectedGamesForDelete.has(game.id)) {
@@ -3470,20 +3781,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ ТОЛЬКО ВЫБРАННОЕ И ОТДАЕТ ФАЙЛ СРАЗУ ---
-        // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ ТОЛЬКО ВЫБРАННОЕ И ОТДАЕТ ФАЙЛ СРАЗУ ---
+    // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ И ВЫДАЕТ ЧЕРЕЗ МЕНЮ "ПОДЕЛИТЬСЯ" ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = selectedGamesForDelete.size > 0;
         const origTxt = '📦 В ZIP';
+        const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
         if (btn.dataset.readyToDownload === 'true') {
-            const a = document.createElement('a');
-            a.href = btn.dataset.blobUrl;
-            a.download = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            triggerDownloadFallback(btn.dataset.blobUrl, fileName, btn.fileBlob);
             return;
         }
 
@@ -3527,14 +3833,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
                         } catch(e) {}
                     }
-                    // Микро-пауза каждые 10 игр, чтобы телефон не "задохнулся"
                     if (current % 10 === 0) await new Promise(r => setTimeout(r, 10)); 
                 }
 
                 btn.innerHTML = '⚡ СЖАТИЕ...';
                 await new Promise(r => setTimeout(r, 100));
 
-                const zipped = fflate.zipSync(zipData, { level: 1 });
+                // Уровень сжатия 0, чтобы сберечь память телефона!
+                const zipped = fflate.zipSync(zipData, { level: 0 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
 
@@ -3543,20 +3849,41 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
                 btn.dataset.blobUrl = url;
+                btn.fileBlob = blob; // Сохраняем для Web Share API
 
-                // Принудительный триггер скачивания
-                const autoLink = document.createElement('a');
-                autoLink.href = url;
-                autoLink.download = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
-                document.body.appendChild(autoLink);
-                autoLink.click();
-                document.body.removeChild(autoLink);
+                triggerDownloadFallback(url, fileName, blob);
             };
         } catch(e) {
             console.error(e);
             btn.innerHTML = '⚠️ ОШИБКА'; 
             setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
         }
+    }
+
+    // Умная функция отдачи файла
+    async function triggerDownloadFallback(url, fileName, blob) {
+        if (blob) {
+            const file = new File([blob], fileName, { type: "application/zip" });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Бэкап Arcade Hub',
+                        text: 'Сохранение библиотеки игр'
+                    });
+                    return; 
+                } catch (e) {
+                    console.log("Отмена шаринга или ошибка", e);
+                }
+            }
+        }
+        
+        const autoLink = document.createElement('a');
+        autoLink.href = url;
+        autoLink.download = fileName;
+        document.body.appendChild(autoLink);
+        autoLink.click();
+        document.body.removeChild(autoLink);
     }
 
     // --- УМНЫЙ ПОИСК ЛОГОТИПОВ ---
@@ -3576,10 +3903,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 req.onsuccess = () => {
                     let filtered = req.result.filter(g => g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
                     if (isSelective) {
-                        // Если игры выбраны галочками, ищем обложки ТОЛЬКО для них
                         filtered = filtered.filter(g => selectedGamesForDelete.has(g.id));
                     } else {
-                        // Иначе ищем только для тех, у кого нет обложки
                         filtered = filtered.filter(g => !g.cover);
                     }
                     resolve(filtered);
@@ -3639,7 +3964,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-
     // --- НАВИГАЦИЯ ПО МЕНЮ С ПОМОЩЬЮ ГЕЙМПАДА ---
     let gpMenuIndex = -1;
     let lastGpMenuUpdate = 0;
@@ -3671,10 +3995,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
 
         let move = 0;
-        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -2; // Вверх
-        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = 2;   // Вниз
-        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) move = -1; // Влево
-        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) move = 1;   // Вправо
+        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -2; 
+        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = 2;   
+        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) move = -1; 
+        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) move = 1;   
 
         if (move !== 0) {
             lastGpMenuUpdate = now;
@@ -3687,15 +4011,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             btns[gpMenuIndex].classList.add('gp-focus');
             btns[gpMenuIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
             doVibrate(10);
+            
+            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
         }
 
-        // Кнопка A (Запуск)
         if (gp.buttons[0] && gp.buttons[0].pressed && gpMenuIndex >= 0 && btns[gpMenuIndex]) {
             lastGpMenuUpdate = now + 500; 
             btns[gpMenuIndex].click();
         }
 
-        // Кнопка B (Отмена/Назад из карандаша)
         if (gp.buttons[1] && gp.buttons[1].pressed) {
             lastGpMenuUpdate = now + 500;
             if (isLibraryEditMode) toggleLibraryEditMode();
