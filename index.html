@@ -974,7 +974,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return fflate.unzlibSync(compressed);
     }
 
-    function doVibrate(pattern) {
+        function doVibrate(pattern) {
         const now = Date.now();
         if (now - lastVibrateTime < VIBRATE_COOLDOWN) return false;
         lastVibrateTime = now;
@@ -994,6 +994,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         return false;
     }
+
 
     function initAudio() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -2102,7 +2103,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btnKeyboard.classList.toggle('active-tool', !isVisible); 
     }
 
-    function sendKey(defaultCode, down) {
+        function sendKey(defaultCode, down) {
         let finalCode = defaultCode;
         if (currentGame?.keys) { 
             if (defaultCode === 90 && currentGame.keys.a) finalCode = currentGame.keys.a; 
@@ -2144,6 +2145,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (nesMap[defaultCode] !== undefined) down ? nes.buttonDown(1, nesMap[defaultCode]) : nes.buttonUp(1, nesMap[defaultCode]);
         }
     }
+
 
     function showResetModal() {
         return new Promise((resolve) => {
