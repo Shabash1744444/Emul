@@ -974,26 +974,50 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return fflate.unzlibSync(compressed);
     }
 
-        function doVibrate(pattern) {
+          function doVibrate(pattern) {
+        // Проверка наличия моторчика
+        if (typeof navigator === 'undefined' || !navigator.vibrate) return false;
+
         const now = Date.now();
-        if (now - lastVibrateTime < VIBRATE_COOLDOWN) return false;
-        lastVibrateTime = now;
         
+        // Используем свой независимый таймер, чтобы не цеплять VIBRATE_COOLDOWN (100мс)
+        if (typeof window._lastVib === 'undefined') window._lastVib = 0;
+
+        // Оставляем микро-кулдаун 30мс: спам убирает, но кнопки A/B не блокирует!
+        if (now - window._lastVib < 30) return false;
+
         let vibStrength = pattern;
-        if (pattern === 15 && padConfig.vib !== undefined) {
-            vibStrength = padConfig.vib; 
-        } else if (pattern === 10 && padConfig.vib !== undefined) {
-             vibStrength = Math.max(0, padConfig.vib - 5); 
-        }
         
+        // Исправление от Kimi: правильная обработка нуля (без || 15)
+        if (typeof padConfig !== 'undefined' && padConfig.vib !== undefined) {
+            const customVib = parseInt(padConfig.vib);
+            if (!isNaN(customVib)) {
+                if (pattern === 15) {
+                    vibStrength = customVib; 
+                } else if (pattern === 10) {
+                    vibStrength = Math.max(0, customVib - 5); 
+                }
+            }
+        }
+
+        // Если выкрутили в ноль — отключаем полностью
         if (vibStrength <= 0) return false;
 
-        if (typeof navigator === 'undefined') return false;
-        if (navigator.vibrate) { 
-            try { if (navigator.vibrate(vibStrength) !== false) return true; } catch (e) {} 
+        // ВАЖНО: Обновляем таймер только если вибрация реально сработает
+        window._lastVib = now;
+
+        // Запуск
+        try { 
+            navigator.vibrate(vibStrength); 
+            return true; 
+        } catch (e) {
+            return false;
         }
-        return false;
     }
+
+
+
+
 
 
     function initAudio() {
