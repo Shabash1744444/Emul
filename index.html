@@ -3819,6 +3819,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     };
 
+    function triggerCoverChange() {
+        if (selectedGamesForDelete.size !== 1) return;
+        document.getElementById('customCoverInput').click();
+    }
+
     document.getElementById('customCoverInput').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file || selectedGamesForDelete.size !== 1) return;
@@ -3845,21 +3850,28 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ: ПАКУЕТ И ВЫДАЕТ ЧЕРЕЗ МЕНЮ "ПОДЕЛИТЬСЯ" ---
+       // --- НАДЕЖНЫЙ ЭКСПОРТ (Откат к рабочему методу + Защита памяти) ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = selectedGamesForDelete.size > 0;
         const origTxt = '📦 В ZIP';
         const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
+        // ВТОРОЙ КЛИК: Мгновенное скачивание проверенным старым методом
         if (btn.dataset.readyToDownload === 'true') {
-            triggerDownloadFallback(btn.dataset.blobUrl, fileName, btn.fileBlob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = btn.dataset.blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => document.body.removeChild(a), 100);
             return;
         }
 
         const confirmMsg = isSelective 
             ? `Собрать в ZIP только выбранные игры (${selectedGamesForDelete.size} шт.)?` 
-            : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это может занять время.`;
+            : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это займет время.`;
 
         if (!confirm(confirmMsg)) return;
         
@@ -3897,25 +3909,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
                         } catch(e) {}
                     }
-                    if (current % 10 === 0) await new Promise(r => setTimeout(r, 10)); 
+                    // Даем телефону "подышать" каждые 5 игр, чтобы не завис
+                    if (current % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
                 }
 
-                btn.innerHTML = '⚡ СЖАТИЕ...';
+                btn.innerHTML = '⚡ СБОРКА...';
                 await new Promise(r => setTimeout(r, 100));
 
-                // Уровень сжатия 0, чтобы сберечь память телефона!
+                // level: 0 критически важен для слабых телефонов при больших объемах!
                 const zipped = fflate.zipSync(zipData, { level: 0 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
 
-                btn.innerHTML = `✅ ${(blob.size/1024/1024).toFixed(1)}MB`; 
-                btn.style.background = '#d97706'; 
+                // Готово! Ждем второго клика пользователя.
+                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
+                btn.style.background = '#10b981'; 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
                 btn.dataset.blobUrl = url;
-                btn.fileBlob = blob; // Сохраняем для Web Share API
-
-                triggerDownloadFallback(url, fileName, blob);
             };
         } catch(e) {
             console.error(e);
@@ -3923,6 +3934,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
         }
     }
+
 
     // Умная функция отдачи файла
     async function triggerDownloadFallback(url, fileName, blob) {
@@ -4093,6 +4105,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     requestAnimationFrame(updateGamepadMenu);
+
+    // --- ГЛОБАЛЬНЫЙ РАДАР КНОПОК UI (ЗВУК И ВИБРАЦИЯ) ---
+    document.addEventListener('touchstart', (e) => {
+        // Ищем, тапнули ли мы по кнопке интерфейса
+        const btn = e.target.closest('.action-btn, .sys-filter-btn, .tool-btn, .edit-btn, .f-btn, .game-btn');
+        if (btn) {
+            // Мягкий вибро-импульс (10мс)
+            if (typeof doVibrate === 'function') doVibrate(10);
+            // Воспроизводим системный звук (если это не кнопка самой игры)
+            if (typeof AudioGen !== 'undefined' && !btn.classList.contains('game-btn')) {
+                AudioGen.playClick();
+            }
+        }
+    }, {passive: true});
+
+
+
 
 </script>
 
