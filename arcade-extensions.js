@@ -22,6 +22,44 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
+// --- НОВЫЙ МОСТ ДЛЯ ЖЕСТКОГО СОХРАНЕНИЯ ZIP В ПАМЯТЬ ANDROID ---
+window.nativeSaveZip = async (blob, fileName) => {
+    try {
+        // Конвертируем Blob в чистый Base64 (без префикса data:...)
+        const base64Data = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+
+        // Жестко пишем файл в папку "Документы" устройства
+        await Filesystem.writeFile({
+            path: fileName,
+            data: base64Data,
+            directory: Directory.Documents
+        });
+
+        if (typeof showToast === 'function') {
+            showToast(`Успешно! Архив ${fileName} сохранен в папку "Документы".`, 'success', 4000);
+        } else {
+            alert(`Архив ${fileName} сохранен в папку "Документы"!`);
+        }
+        return true;
+    } catch (err) {
+        console.error('Ошибка Capacitor Filesystem:', err);
+        if (typeof showToast === 'function') {
+            showToast('Ошибка сохранения: ' + err.message, 'error', 4000);
+        } else {
+            alert('Ошибка сохранения: ' + err.message);
+        }
+        return false;
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
@@ -47,8 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             window.open(targetUrl, '_blank');
         });
     });
-
-    // АВТОСКАН ОТКЛЮЧЕН
 });
 
 async function scanDownloadFolder() {
@@ -86,7 +122,6 @@ async function scanDownloadFolder() {
 
 window.isRadarRunning = false;
 
-// ФИКС: РАДАР ПОЛНОСТЬЮ ОТКЛЮЧЕН (Оставлена заглушка)
 async function runDownloadRadar(manualTrigger = true) {
     console.log("📡 Сканер загрузок временно отключен. Используйте ручное добавление игр.");
     return;
@@ -94,11 +129,9 @@ async function runDownloadRadar(manualTrigger = true) {
 window.runDownloadRadar = runDownloadRadar;
 
 function promptRadarInstall(filesObjects) {
-    // Функция оставлена для совместимости, но вызываться не будет из-за заглушки выше
     console.log("📡 Окно установки радара заблокировано.");
 }
 
-// СУРОВЫЙ ФИЛЬТР МУСОРА (Без изменений)
 function isRealRom(fileName, fileDataU8) {
     const lower = fileName.toLowerCase();
     const ext = lower.split('.').pop();
@@ -187,7 +220,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // ЖЕСТКИЙ ФИЛЬТР DOS для архивов внутри .7z / .rar
                 if (!hasValidContent && dosFiles.length > 0) {
                     const exes = dosFiles.map(f => f.path.split('/').pop().toLowerCase());
                     const priority = ['go.bat', 'go.exe', 'start.bat', 'start.exe', 'play.bat', 'play.exe', 'run.bat', 'run.exe']; 
@@ -254,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // ЖЕСТКИЙ ФИЛЬТР DOS для .zip
                 if (!hasValidContent && hasDos) {
                     let hasExe = false;
                     for (const path in unzipped) {
@@ -279,5 +310,3 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     initExtendedProcessor();
 });
-
-
