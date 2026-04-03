@@ -3852,16 +3852,60 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     
     
-// --- ИСПРАВЛЕННЫЙ ЭКСПОРТ ---
-async function exportLibrary() {
+    // --- БРОНЕБОЙНЫЙ ЭКСПОРТ ДЛЯ APK ---
+    async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
         const origTxt = '📦 В ZIP';
+        const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
-        // --- ВТОРОЙ КЛИК: Рабочий метод из старого APK ---
+        // --- ВТОРОЙ КЛИК: Пробиваем WebView ---
         if (btn.dataset.readyToDownload === 'true') {
-            // WebView перехватит эту смену локации и начнет скачивание!
-            window.location.assign(btn.dataset.blobUrl); 
+            const blob = window._lastZipBlob;
+            if (!blob) return;
+
+            // ПОПЫТКА 1: Системное окно "Поделиться" (Идеально для APK, работает в 90% случаев)
+            if (navigator.share) {
+                try {
+                    const file = new File([blob], fileName, { type: "application/zip" });
+                    await navigator.share({
+                        files: [file],
+                        title: 'Бэкап Arcade Hub',
+                        text: 'Мои сохранения и игры'
+                    });
+                    return; // Если шторка открылась - мы победили, выходим!
+                } catch (e) {
+                    console.log("Шаринг отменен или заблокирован", e);
+                }
+            }
+
+            // ПОПЫТКА 2: Хак с Base64 и octet-stream (Для самых глухих WebView)
+            btn.innerHTML = '⏳ ПЕРЕДАЧА В ОС...';
+            
+            const reader = new FileReader();
+            reader.onload = function() {
+                // Подменяем тип файла на "сырые данные", чтобы заставить систему вызвать диалог сохранения
+                const base64Data = reader.result.replace('application/zip', 'application/octet-stream');
+                
+                // Способ А: Скрытый клик
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = base64Data;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => document.body.removeChild(a), 200);
+
+                // Способ Б: Прямой выстрел в адресную строку (дублирующий)
+                setTimeout(() => {
+                    window.location.href = base64Data;
+                }, 300);
+
+                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`;
+            };
+            // Читаем Blob как строку data:URL (это обходит блокировку ссылок blob:)
+            reader.readAsDataURL(blob);
+            
             return;
         }
 
@@ -3906,20 +3950,20 @@ async function exportLibrary() {
                             zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
                         } catch(e) {}
                     }
-                    // Микро-пауза каждые 5 игр, чтобы телефон не завис
                     if (current % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
                 }
 
                 btn.innerHTML = '⚡ СБОРКА...';
                 await new Promise(r => setTimeout(r, 100));
 
-                // ВАЖНО: level 0. Без компрессии! Это спасает телефон от вылета при большом весе.
-                const zipped = fflate.zipSync(zipData, { level: 0 });
+                const zipped = fflate.zipSync(zipData, { level: 0 }); // Без сжатия!
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
 
+                window._lastZipBlob = blob; // Сохраняем сам объект для второй фазы
+
                 btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
-                btn.style.background = '#10b981'; // Зеленый цвет успеха
+                btn.style.background = '#10b981'; 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
                 btn.dataset.blobUrl = url;
