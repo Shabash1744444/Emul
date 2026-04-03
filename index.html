@@ -3849,8 +3849,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         reader.readAsDataURL(file);
         e.target.value = '';
     });
-
-           // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ     async function exportLibrary() {
+    
+    
+    
+// --- ИСПРАВЛЕННЫЙ ЭКСПОРТ ---
+async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
         const origTxt = '📦 В ZIP';
@@ -3935,6 +3938,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 
 
+    // Умная функция отдачи файла
     async function triggerDownloadFallback(url, fileName, blob) {
         if (blob) {
             const file = new File([blob], fileName, { type: "application/zip" });
