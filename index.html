@@ -3850,47 +3850,19 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-           // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ (Пробиваем защиту APK) ---
-    async function exportLibrary() {
+           // --- ИСПРАВЛЕННЫЙ ЭКСПОРТ     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
-        const isSelective = selectedGamesForDelete.size > 0;
+        const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
         const origTxt = '📦 В ZIP';
-        const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
-        // ВТОРОЙ КЛИК: Пользователь нажал "СКАЧАТЬ"
+        // --- ВТОРОЙ КЛИК: Рабочий метод из старого APK ---
         if (btn.dataset.readyToDownload === 'true') {
-            // МЕТОД 1: Обычная ссылка (БЕЗ display: none, чтобы APK не проигнорировал клик)
-            const a = document.createElement('a');
-            a.style.position = 'absolute';
-            a.style.opacity = '0'; // Делаем прозрачной, но физически оставляем на экране
-            a.href = btn.dataset.blobUrl;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 100);
-
-            // МЕТОД 2: Бронебойный резерв. Если APK заблокировал Blob-ссылку,
-            // через 0.5с ударит Base64, который принудительно отдаст файл WebView
-            if (window._lastZipBlob) {
-                setTimeout(() => {
-                    const reader = new FileReader();
-                    reader.onload = function() {
-                        const a2 = document.createElement('a');
-                        a2.style.position = 'absolute';
-                        a2.style.opacity = '0';
-                        a2.href = reader.result;
-                        a2.download = fileName;
-                        document.body.appendChild(a2);
-                        a2.click();
-                        setTimeout(() => document.body.removeChild(a2), 100);
-                    };
-                    reader.readAsDataURL(window._lastZipBlob);
-                }, 500);
-            }
+            // WebView перехватит эту смену локации и начнет скачивание!
+            window.location.assign(btn.dataset.blobUrl); 
             return;
         }
 
-        // ПЕРВЫЙ КЛИК: Запуск упаковки
+        // --- ПЕРВЫЙ КЛИК: Запуск упаковки ---
         const confirmMsg = isSelective 
             ? `Собрать в ZIP только выбранные игры (${selectedGamesForDelete.size} шт.)?` 
             : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это займет время.`;
@@ -3931,20 +3903,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
                         } catch(e) {}
                     }
+                    // Микро-пауза каждые 5 игр, чтобы телефон не завис
                     if (current % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
                 }
 
                 btn.innerHTML = '⚡ СБОРКА...';
                 await new Promise(r => setTimeout(r, 100));
 
-                const zipped = fflate.zipSync(zipData, { level: 0 }); // Без сжатия, чтобы APK не вылетел
+                // ВАЖНО: level 0. Без компрессии! Это спасает телефон от вылета при большом весе.
+                const zipped = fflate.zipSync(zipData, { level: 0 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 const url = URL.createObjectURL(blob);
-                
-                window._lastZipBlob = blob; // Сохраняем для резервного метода скачивания
 
                 btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
-                btn.style.background = '#10b981'; 
+                btn.style.background = '#10b981'; // Зеленый цвет успеха
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
                 btn.dataset.blobUrl = url;
@@ -3952,9 +3924,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } catch(e) {
             console.error(e);
             btn.innerHTML = '⚠️ ОШИБКА'; 
-            setTimeout(() => { btn.innerHTML = origTxt; btn.style.pointerEvents = 'auto'; }, 3000);
+            setTimeout(() => { 
+                btn.innerHTML = origTxt; 
+                btn.style.background = 'rgba(16, 185, 129, 0.4)'; 
+                btn.style.pointerEvents = 'auto'; 
+            }, 3000);
         }
     }
+
 
 
 
