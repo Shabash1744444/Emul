@@ -3852,11 +3852,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     
     
-    // --- БРОНЕБОЙНЫЙ ЭКСПОРТ ДЛЯ APK ---
+    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
-        const origTxt = '📦 В ZIP';
+        const origTxt = isSelective ? '📦 В ZIP' : '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
         const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
         // --- ВТОРОЙ КЛИК: Пробиваем WebView ---
@@ -3864,48 +3864,40 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const blob = window._lastZipBlob;
             if (!blob) return;
 
-            // ПОПЫТКА 1: Системное окно "Поделиться" (Идеально для APK, работает в 90% случаев)
-            if (navigator.share) {
-                try {
-                    const file = new File([blob], fileName, { type: "application/zip" });
-                    await navigator.share({
-                        files: [file],
-                        title: 'Бэкап Arcade Hub',
-                        text: 'Мои сохранения и игры'
-                    });
-                    return; // Если шторка открылась - мы победили, выходим!
-                } catch (e) {
-                    console.log("Шаринг отменен или заблокирован", e);
-                }
-            }
+            btn.innerHTML = '⏳ ПЕРЕДАЧА...';
+            btn.style.pointerEvents = 'none';
 
-            // ПОПЫТКА 2: Хак с Base64 и octet-stream (Для самых глухих WebView)
-            btn.innerHTML = '⏳ ПЕРЕДАЧА В ОС...';
-            
+            // Конвертируем архив в строку Base64 (Capacitor это разрешает скачать)
             const reader = new FileReader();
-            reader.onload = function() {
-                // Подменяем тип файла на "сырые данные", чтобы заставить систему вызвать диалог сохранения
-                const base64Data = reader.result.replace('application/zip', 'application/octet-stream');
-                
-                // Способ А: Скрытый клик
+            reader.onload = async function() {
+                const base64data = reader.result;
+
+                // Метод 1: Нативное окно "Поделиться" (откроет шторку Android)
+                if (navigator.canShare) {
+                    try {
+                        const file = new File([blob], fileName, { type: "application/zip" });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({ files: [file], title: fileName });
+                            btn.innerHTML = `✅ СКАЧАТЬ`; 
+                            btn.style.pointerEvents = 'auto';
+                            return; 
+                        }
+                    } catch (e) { console.log("Шаринг отменен", e); }
+                }
+
+                // Метод 2: Скрытая ссылка с Base64 (обходит блок Blob)
                 const a = document.createElement('a');
                 a.style.display = 'none';
-                a.href = base64Data;
+                a.href = base64data;
                 a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
                 setTimeout(() => document.body.removeChild(a), 200);
 
-                // Способ Б: Прямой выстрел в адресную строку (дублирующий)
-                setTimeout(() => {
-                    window.location.href = base64Data;
-                }, 300);
-
-                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`;
+                btn.innerHTML = `✅ СКАЧАТЬ`; 
+                btn.style.pointerEvents = 'auto';
             };
-            // Читаем Blob как строку data:URL (это обходит блокировку ссылок blob:)
-            reader.readAsDataURL(blob);
-            
+            reader.readAsDataURL(blob); // Запускаем чтение
             return;
         }
 
@@ -3916,7 +3908,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         if (!confirm(confirmMsg)) return;
         
-        btn.innerHTML = '⏳ ПАКУЮ...'; 
+        btn.innerHTML = '⏳ ПОДГОТОВКА...'; 
         btn.style.pointerEvents = 'none';
 
         try {
@@ -3934,7 +3926,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
                 for (let g of games) {
                     current++;
-                    btn.innerHTML = `⏳ ${current}/${games.length}`;
+                    btn.innerHTML = `⏳ ПАКУЮ: ${current} / ${games.length}`;
                     
                     const buffer = await readBlob(g.fileBlob);
                     let baseName = g.n.replace(/[/\\?%*:|"<>]/g, '-'); 
@@ -3953,31 +3945,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     if (current % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
                 }
 
-                btn.innerHTML = '⚡ СБОРКА...';
+                btn.innerHTML = '⚡ СЖАТИЕ...';
                 await new Promise(r => setTimeout(r, 100));
 
-                const zipped = fflate.zipSync(zipData, { level: 0 }); // Без сжатия!
+                // Сжатие отключено (level: 0), чтобы ОЗУ телефона не лопнула!
+                const zipped = fflate.zipSync(zipData, { level: 0 });
                 const blob = new Blob([zipped], { type: 'application/zip' });
-                const url = URL.createObjectURL(blob);
-
-                window._lastZipBlob = blob; // Сохраняем сам объект для второй фазы
+                
+                window._lastZipBlob = blob; // Сохраняем в глобальную память
 
                 btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
-                btn.style.background = '#10b981'; 
+                btn.style.background = '#d97706'; 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
-                btn.dataset.blobUrl = url;
             };
         } catch(e) {
             console.error(e);
             btn.innerHTML = '⚠️ ОШИБКА'; 
             setTimeout(() => { 
                 btn.innerHTML = origTxt; 
-                btn.style.background = 'rgba(16, 185, 129, 0.4)'; 
+                btn.style.background = 'rgba(15, 118, 110, 0.4)'; 
                 btn.style.pointerEvents = 'auto'; 
             }, 3000);
         }
     }
+
 
 
 
