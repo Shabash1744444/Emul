@@ -3851,57 +3851,53 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     });
     
     
-    
-    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK ---
+    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK (С НАТИВНЫМ СОХРАНЕНИЕМ) ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
         const origTxt = isSelective ? '📦 В ZIP' : '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
         const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
         
-        // --- ВТОРОЙ КЛИК: Пробиваем WebView ---
+        // --- ВТОРОЙ КЛИК: Нативное сохранение ---
         if (btn.dataset.readyToDownload === 'true') {
             const blob = window._lastZipBlob;
             if (!blob) return;
 
-            btn.innerHTML = '⏳ ПЕРЕДАЧА...';
+            btn.innerHTML = '⏳ СОХРАНЕНИЕ...';
             btn.style.pointerEvents = 'none';
 
-            // Конвертируем архив в строку Base64 (Capacitor это разрешает скачать)
-            const reader = new FileReader();
-            reader.onload = async function() {
-                const base64data = reader.result;
-
-                // Метод 1: Нативное окно "Поделиться" (откроет шторку Android)
-                if (navigator.canShare) {
-                    try {
-                        const file = new File([blob], fileName, { type: "application/zip" });
-                        if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({ files: [file], title: fileName });
-                            btn.innerHTML = `✅ СКАЧАТЬ`; 
-                            btn.style.pointerEvents = 'auto';
-                            return; 
-                        }
-                    } catch (e) { console.log("Шаринг отменен", e); }
+            // Если мы внутри Capacitor (функция подтянулась из JS-файла)
+            if (typeof window.nativeSaveZip === 'function') {
+                const success = await window.nativeSaveZip(blob, fileName);
+                if (success) {
+                    btn.innerHTML = '✅ ГОТОВО';
+                } else {
+                    btn.innerHTML = '⚠️ ОШИБКА';
+                    btn.style.background = '#ef4444';
                 }
-
-                // Метод 2: Скрытая ссылка с Base64 (обходит блок Blob)
+            } else {
+                // Резервный метод для обычного браузера на ПК
                 const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = base64data;
+                a.href = URL.createObjectURL(blob);
                 a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
-                setTimeout(() => document.body.removeChild(a), 200);
+                document.body.removeChild(a);
+                btn.innerHTML = '✅ СКАЧАНО';
+            }
 
-                btn.innerHTML = `✅ СКАЧАТЬ`; 
+            // Возвращаем кнопку в исходное состояние через 3 секунды
+            setTimeout(() => {
+                btn.innerHTML = origTxt;
+                btn.dataset.readyToDownload = 'false';
+                btn.style.background = 'rgba(15, 118, 110, 0.4)';
                 btn.style.pointerEvents = 'auto';
-            };
-            reader.readAsDataURL(blob); // Запускаем чтение
+            }, 3000);
+            
             return;
         }
 
-        // --- ПЕРВЫЙ КЛИК: Запуск упаковки ---
+        // --- ПЕРВЫЙ КЛИК: Запуск сборки архива ---
         const confirmMsg = isSelective 
             ? `Собрать в ZIP только выбранные игры (${selectedGamesForDelete.size} шт.)?` 
             : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это займет время.`;
@@ -3948,11 +3944,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.innerHTML = '⚡ СЖАТИЕ...';
                 await new Promise(r => setTimeout(r, 100));
 
-                // Сжатие отключено (level: 0), чтобы ОЗУ телефона не лопнула!
-                const zipped = fflate.zipSync(zipData, { level: 0 });
+                const zipped = fflate.zipSync(zipData, { level: 0 }); // Без сжатия!
                 const blob = new Blob([zipped], { type: 'application/zip' });
                 
-                window._lastZipBlob = blob; // Сохраняем в глобальную память
+                window._lastZipBlob = blob; // Сохраняем архив в память
 
                 btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
                 btn.style.background = '#d97706'; 
@@ -3969,6 +3964,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }, 3000);
         }
     }
+
 
 
 
