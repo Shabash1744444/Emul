@@ -2,6 +2,7 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
+import { Share } from '@capacitor/share';
 
 // --- ЗАЩИТА КНОПКИ "НАЗАД" (ДВОЙНОЙ КЛИК) ---
 let lastBackPress = 0;
@@ -32,9 +33,9 @@ App.addListener('backButton', async () => {
                     window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
                 }
             } else {
-                // HTML игры - только предупреждаем (исправленный текст)
+                // HTML игры - только предупреждаем
                 if (typeof window.showToast === 'function') {
-                    window.showToast("нажмите еще раз для выхода", "info", 2000);
+                    window.showToast("Нажмите еще раз для выхода", "info", 2000);
                 }
             }
         }
@@ -89,12 +90,17 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
-// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
+// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" + SHARE ---
 window.nativeSaveZip = async (blob, fileName) => {
     try {
-        const chunkSize = 5 * 1024 * 1024; 
-        const totalChunks = Math.ceil(blob.size / chunkSize);
         const btn = document.getElementById('exportLibraryBtn');
+        
+        // Разбиваем на мелкие куски по 2МБ, чтобы мост Capacitor не захлебнулся
+        const chunkSize = 2 * 1024 * 1024; 
+        const totalChunks = Math.ceil(blob.size / chunkSize);
+        
+        // Очищаем старый файл из кэша, если он завис с прошлого раза
+        try { await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache }); } catch(e) {}
         
         for (let i = 0; i < totalChunks; i++) {
             const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
@@ -105,20 +111,32 @@ window.nativeSaveZip = async (blob, fileName) => {
                 reader.readAsDataURL(chunk);
             });
 
+            // Пишем в Cache - туда всегда есть права без запросов у пользователя
             if (i === 0) {
-                await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: Directory.Documents });
+                await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: Directory.Cache });
             } else {
-                await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: Directory.Documents });
+                await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: Directory.Cache });
             }
             if (btn) btn.innerHTML = `⏳ ЗАПИСЬ... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
         }
 
+        if (btn) btn.innerHTML = '⏳ ВЫЗОВ МЕНЮ...';
+
+        // Вызываем системное диалоговое окно (Поделиться / Сохранить в)
+        const fileUri = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
+        await Share.share({
+            title: 'Бэкап Arcade Hub',
+            text: 'Архив с вашими играми.',
+            url: fileUri.uri,
+            dialogTitle: 'Куда сохранить бэкап?'
+        });
+
         if (typeof window.showToast === 'function') {
-            window.showToast(`Архив ${fileName} сохранен в Документы.`, 'success', 4000);
+            window.showToast(`Готово! Файл передан системе.`, 'success', 3000);
         }
         return true;
     } catch (err) {
-        console.error('Ошибка Capacitor Filesystem:', err);
+        console.error('Ошибка сохранения Capacitor Filesystem/Share:', err);
         return false;
     }
 };
@@ -274,7 +292,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // ЖЕСТКИЙ ФИЛЬТР DOS для архивов внутри .7z / .rar
                 if (!hasValidContent && dosFiles.length > 0) {
                     const exes = dosFiles.map(f => f.path.split('/').pop().toLowerCase());
                     let hasExe = exes.some(e => e.endsWith('.exe') || e.endsWith('.bat') || e.endsWith('.com'));
@@ -335,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
-                // ЖЕСТКИЙ ФИЛЬТР DOS для .zip
                 if (!hasValidContent && hasDos) {
                     let hasExe = false;
                     for (const path in unzipped) {
