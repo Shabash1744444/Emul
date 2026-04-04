@@ -246,9 +246,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 /* --- ЭФФЕКТЫ ВКЛЮЧЕНИЯ И ВЫКЛЮЧЕНИЯ ЭЛТ ТЕЛЕВИЗОРА --- */
 #crt-shutdown-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 99999; pointer-events: none; display: none; background: transparent; }
-#crt-shutdown-overlay.shutdown-on { display: block; animation: crtShutdownBg 0.6s ease-in forwards; }
+#crt-shutdown-overlay.shutdown-on { display: block; animation: crtShutdownBg 1s ease-in forwards; }
 #crt-shutdown-line { position: absolute; top: 50%; left: 0; width: 100%; height: 100%; transform: translateY(-50%); background: var(--crt-color, #fff); box-shadow: 0 0 30px 5px var(--crt-color, #fff); animation: crtLineCollapse 0.6s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
-#crt-shutdown-dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--crt-color, #fff); box-shadow: 0 0 20px 8px var(--crt-color, #fff), 0 0 40px 15px var(--crt-color, #fff); opacity: 0; animation: crtDotFade 0.6s ease-in forwards; }
+#crt-shutdown-dot { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--crt-color, #fff); box-shadow: 0 0 20px 8px var(--crt-color, #fff), 0 0 40px 15px var(--crt-color, #fff); opacity: 0; animation: crtDotFade 0.8s ease-in forwards; }
 @keyframes crtShutdownBg { 0% { background: transparent; } 40% { background: rgba(0,0,0,0.5); } 100% { background: #000; } }
 @keyframes crtLineCollapse { 0% { height: 100%; opacity: 0.8; filter: blur(0px); } 30% { height: 40%; opacity: 0.9; filter: blur(2px); } 60% { height: 4px; opacity: 1; filter: blur(1px); } 80% { height: 2px; opacity: 1; filter: blur(0px); } 90% { height: 2px; opacity: 0.8; } 100% { height: 0px; opacity: 0; } }
 @keyframes crtDotFade { 0% { opacity: 0; transform: scale(0); } 55% { opacity: 0; transform: scale(0); } 65% { opacity: 1; transform: scale(1.5); } 80% { opacity: 1; transform: scale(1); } 95% { opacity: 0.6; transform: scale(0.5); } 100% { opacity: 0; transform: scale(0); } }
@@ -376,9 +376,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn:focus, .game-btn.gp-focus { outline: none; border: 3px solid var(--neon-blue) !important; box-shadow: 0 0 25px var(--neon-blue), inset 0 0 10px var(--neon-blue) !important; transform: scale(1.05) translateY(-5px); z-index: 10; }
 </style>
 <script>
-    // --- ИНСТРУМЕНТ СОЗДАНИЯ ЗВУКОВ (Web Audio API - Тонкая настройка) ---
+               // --- ИНСТРУМЕНТ СОЗДАНИЯ ЗВУКОВ (Интеграция MP3 + Web Audio API) ---
     const AudioGen = {
         ctx: null,
+        customTurnOnSound: null, 
+        customTurnOffSound: null, 
+
         init() {
             if (!this.ctx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -386,24 +389,57 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             if (this.ctx.state === 'suspended') this.ctx.resume();
         },
+        
         playShutdown() {
-            this.init();
-            const osc = this.ctx.createOscillator(); 
-            const gain = this.ctx.createGain();
-            osc.connect(gain); 
-            gain.connect(this.ctx.destination);
+            // Подготавливаем файл
+            if (!this.customTurnOffSound) {
+                this.customTurnOffSound = new Audio('0003993.mp3');
+            }
+            this.customTurnOffSound.currentTime = 0;
+            this.customTurnOffSound.volume = 1.0;
             
-            // Глухой "пумс" выключения ТВ (убрали ультразвук)
-            osc.type = 'sine'; 
-            osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(10, this.ctx.currentTime + 0.4);
+            // Функция нашего "пиу"
+            const playPew = () => {
+                this.init();
+                const osc = this.ctx.createOscillator(); 
+                const gain = this.ctx.createGain();
+                osc.connect(gain); 
+                gain.connect(this.ctx.destination);
+                
+                const t = this.ctx.currentTime;
+                
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(600, t);
+                osc.frequency.exponentialRampToValueAtTime(10, t + 0.4);
+                
+                gain.gain.setValueAtTime(0.4, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                
+                osc.start(t); 
+                osc.stop(t + 0.45);
+            };
+
+            // НАСТРОЙКА ТАЙМИНГА: 
+            // 150 = 0.15 секунды после щелчка. 
+            // Если "пиу" звучит слишком поздно, ставь 100 или 50. Если рано - 200.
+            const delayMs = 800; 
+
+            // Пытаемся запустить щелчок
+            const playPromise = this.customTurnOffSound.play();
             
-            gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
-            
-            osc.start(); 
-            osc.stop(this.ctx.currentTime + 0.45);
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // Щелчок РЕАЛЬНО зазвучал! Ждем долю секунды и пускаем "пиу"
+                    setTimeout(playPew, delayMs);
+                }).catch(e => {
+                    console.error('Ошибка щелчка:', e);
+                    playPew(); // Если mp3 заблокирован, всё равно играем пиу
+                });
+            } else {
+                setTimeout(playPew, delayMs);
+            }
         },
+        
         playClick() {
             this.init();
             const osc = this.ctx.createOscillator(); 
@@ -411,7 +447,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             osc.connect(gain); 
             gain.connect(this.ctx.destination);
             
-            // Мягкий "бульк" для UI (без жестких квадратных волн)
             osc.type = 'sine'; 
             osc.frequency.setValueAtTime(800, this.ctx.currentTime); 
             osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.03);
@@ -422,25 +457,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             osc.start(); 
             osc.stop(this.ctx.currentTime + 0.04);
         },
+        
         playTurnOn() {
-            this.init();
-            const osc = this.ctx.createOscillator(); 
-            const gain = this.ctx.createGain();
-            osc.connect(gain); 
-            gain.connect(this.ctx.destination);
+            if (!this.customTurnOnSound) {
+                this.customTurnOnSound = new Audio('0003992.mp3');
+            }
+            this.customTurnOnSound.currentTime = 0;
+            this.customTurnOnSound.volume = 1.0;
             
-            // Звук резкого разряда тока и разгона луча кинескопа
-            osc.type = 'square'; 
-            osc.frequency.setValueAtTime(20, this.ctx.currentTime); // Старт с низкого гула
-            osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.3); // Быстрый взлет частоты
-            
-            gain.gain.setValueAtTime(0.4, this.ctx.currentTime); // Громкий "щелчок" включения
-            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4); // Быстрое затухание
-            
-            osc.start(); 
-            osc.stop(this.ctx.currentTime + 0.45);
+            this.customTurnOnSound.play().catch(err => {
+                console.error('Не удалось воспроизвести 0003992.mp3:', err);
+            });
         }
     };
+
+
+
     
     // --- СИСТЕМА УВЕДОМЛЕНИЙ TOAST (Заменяет alert) ---
     function showToast(message, type = 'info', duration = 3000) {
@@ -2409,8 +2441,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
                         
                         
-                        if (game.t === 'h') {
-                            const htmlUrl = URL.createObjectURL(game.fileBlob);
+                                                if (game.t === 'h') {
+                            // ПРИНУДИТЕЛЬНО задаем тип text/html, чтобы избежать скачивания
+                            const safeHtmlBlob = new Blob([game.fileBlob], { type: 'text/html' });
+                            const htmlUrl = URL.createObjectURL(safeHtmlBlob);
+                            
                             currentGame._tempUrl = htmlUrl; 
                             htmlIframe.style.display = 'block'; 
                             htmlIframe.src = htmlUrl; 
@@ -2421,6 +2456,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             
                             isGameStarting = false;
                         } 
+
  
 
                         else if (game.t === 'd') {
@@ -3691,7 +3727,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         }
                      
 
-                        }
+                        
                         for (const nZip of nestedZips) {
                             const blob = new Blob([nZip.data], {type: 'application/zip'});
                             await processItem(new File([blob], nZip.name), depth + 1);
