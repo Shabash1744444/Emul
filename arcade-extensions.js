@@ -3,41 +3,11 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 
-// --- ЗАЩИТА КНОПКИ "НАЗАД" (ДВОЙНОЙ КЛИК) ---
-let lastBackPress = 0;
-const exitThreshold = 2000; // 2 секунды на второе нажатие
-
-App.addListener('backButton', async () => {
-    // 1. Если мы в игре
+App.addListener('backButton', ({ canGoBack }) => {
+    // 1. Если мы в игре - имитируем нажатие браузерной кнопки. 
+    // Вся логика двойного клика, сохранений и HTML теперь лежит в popstate (index.html)
     if (window.location.hash === '#game') {
-        const now = Date.now();
-        
-        // Проверяем, было ли нажатие недавно (второй клик)
-        if (now - lastBackPress < exitThreshold) {
-            // ВТОРОЙ КЛИК: Выходим окончательно
-            if (typeof window.executeCleanup === 'function') {
-                window.executeCleanup(true); // true значит "пропустить сохранение", т.к. уже сохранили при первом клике
-            }
-            lastBackPress = 0;
-        } else {
-            // ПЕРВЫЙ КЛИК: Подготовка к выходу
-            lastBackPress = now;
-            
-            const isHtml = window.currentGame && window.currentGame.t === 'h';
-            
-            if (!isHtml && typeof window.saveGameState === 'function') {
-                // Если это НЕ HTML игра - сохраняем прогресс
-                await window.saveGameState(true); 
-                if (typeof window.showToast === 'function') {
-                    window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
-                }
-            } else {
-                // Если это HTML - просто предупреждаем
-                if (typeof window.showToast === 'function') {
-                    window.showToast("Нажмите 'Назад' еще раз для выхода", "info", 2000);
-                }
-            }
-        }
+        window.history.back();
         return;
     }
     
@@ -55,19 +25,20 @@ App.addListener('backButton', async () => {
         return;
     }
     
-    // 4. Если открыта панель редактирования (удаление/лого)
+    // 4. Если открыта панель редактирования
     const editPanel = document.getElementById('editPanel');
     if (editPanel && (editPanel.style.display === 'block' || editPanel.classList.contains('show'))) {
-        if (typeof window.toggleLibraryEditMode === 'function') {
-            window.toggleLibraryEditMode();
-        }
+        if (typeof window.toggleLibraryEditMode === 'function') window.toggleLibraryEditMode();
         return;
     }
 
     // 5. Иначе - закрываем приложение
-    App.exitApp();
+    if (canGoBack) {
+        window.history.back();
+    } else {
+        App.exitApp();
+    }
 });
-
 
 const readBlobSafe = (b) => {
     if (b.arrayBuffer) return b.arrayBuffer();
@@ -77,16 +48,6 @@ const readBlobSafe = (b) => {
         r.onerror = rej;
         r.readAsArrayBuffer(b);
     });
-};
-
-const makeFakeFile = (blob, fileName) => {
-    try {
-        return new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
-    } catch (e) {
-        blob.name = fileName;
-        blob.lastModified = Date.now();
-        return blob;
-    }
 };
 
 // --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
@@ -124,9 +85,7 @@ window.nativeSaveZip = async (blob, fileName) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof Archive !== 'undefined') {
-        Archive.init({ workerUrl: 'worker-bundle.js' });
-    }
+    if (typeof Archive !== 'undefined') Archive.init({ workerUrl: 'worker-bundle.js' });
 
     const externalLinks = document.querySelectorAll('a[target="_blank"]');
     externalLinks.forEach(link => {
@@ -144,69 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-async function scanDownloadFolder() {
-    let allFiles = [];
-    async function walk(currentPath, depth) {
-        if (depth > 3) return; 
-        try {
-            let dir = await Filesystem.readdir({ path: currentPath, directory: Directory.ExternalStorage });
-            let filesArray = dir.files || [];
-            for (let i = 0; i < filesArray.length; i++) {
-                let item = filesArray[i];
-                let name = typeof item === 'string' ? item : item.name;
-                let type = typeof item === 'string' ? 'unknown' : item.type;
-                let fullPath = currentPath === 'Download' ? `Download/${name}` : `${currentPath}/${name}`;
-                if (type === 'directory' || (typeof item === 'object' && item.type === 'directory')) {
-                    await walk(fullPath, depth + 1);
-                } else {
-                    allFiles.push({ name: name, path: fullPath });
-                }
-            }
-        } catch(e) {}
-    }
-    await walk('Download', 0);
-    return allFiles;
-}
-
+async function scanDownloadFolder() { return []; }
 window.isRadarRunning = false;
-async function runDownloadRadar(manualTrigger = true) { return; }
-window.runDownloadRadar = runDownloadRadar;
-
-function isRealRom(fileName, fileDataU8) {
-    const lower = fileName.toLowerCase();
-    const ext = lower.split('.').pop();
-    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
-    if (fileDataU8.length < 4096) return false;
-    return true; 
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const initExtendedProcessor = () => {
-        if (typeof window.processSingleFile !== 'function') {
-            setTimeout(initExtendedProcessor, 50);
-            return;
-        }
-        if (window.processSingleFile.isExtended) return;
-        const coreProcessSingleFile = window.processSingleFile;
-        
-        window.processSingleFileExtended = async function(file) {
-            const fileName = file.name.toLowerCase();
-            if (fileName.endsWith('.zip')) {
-                const buffer = await readBlobSafe(file);
-                const arr = new Uint8Array(buffer);
-                let unzipped = fflate.unzipSync(arr);
-                for (const path in unzipped) {
-                    const ext = path.toLowerCase().split('.').pop();
-                    if (['nes','md','sfc','smc','gba'].includes(ext)) {
-                        await coreProcessSingleFile(new File([unzipped[path]], path.split('/').pop()));
-                    }
-                }
-                return;
-            }
-            return await coreProcessSingleFile(file);
-        };
-        window.processSingleFileExtended.isExtended = true;
-        window.processSingleFile = window.processSingleFileExtended;
-    };
-    initExtendedProcessor();
-});
+window.runDownloadRadar = async function(manualTrigger = true) { return; };
