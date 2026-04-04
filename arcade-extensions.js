@@ -12,10 +12,11 @@ App.addListener('backButton', async () => {
     if (window.location.hash === '#game') {
         const now = Date.now();
         
+        // Проверяем, было ли нажатие недавно (второй клик)
         if (now - lastBackPress < exitThreshold) {
             // ВТОРОЙ КЛИК: Выходим окончательно
             if (typeof window.executeCleanup === 'function') {
-                window.executeCleanup(true); 
+                window.executeCleanup(true); // true значит "пропустить сохранение", т.к. уже сохранили при первом клике
             }
             lastBackPress = 0;
         } else {
@@ -31,26 +32,30 @@ App.addListener('backButton', async () => {
                     window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
                 }
             } else {
-                // ПРАВКА №1: Текст только для HTML игр
+                // HTML игры - только предупреждаем (исправленный текст)
                 if (typeof window.showToast === 'function') {
-                    window.showToast("Для выхода нажмите 2 раз", "info", 2000);
+                    window.showToast("нажмите еще раз для выхода", "info", 2000);
                 }
             }
         }
         return;
     }
     
-    // Закрытие модалок (остается без изменений)
+    // 2. Если открыто инфо-модальное окно
     const infoOverlay = document.getElementById('infoModalOverlay');
     if (infoOverlay && (infoOverlay.style.display === 'flex' || infoOverlay.classList.contains('show'))) {
         document.getElementById('closeInfoBtn').click();
         return;
     }
+    
+    // 3. Если открыто окно сброса прогресса
     const resetOverlay = document.getElementById('resetModalOverlay');
     if (resetOverlay && (resetOverlay.style.display === 'flex' || resetOverlay.classList.contains('show'))) {
         document.getElementById('btnResetCancel').click();
         return;
     }
+    
+    // 4. Если открыта панель редактирования (удаление/лого)
     const editPanel = document.getElementById('editPanel');
     if (editPanel && (editPanel.style.display === 'block' || editPanel.classList.contains('show'))) {
         if (typeof window.toggleLibraryEditMode === 'function') {
@@ -59,9 +64,11 @@ App.addListener('backButton', async () => {
         return;
     }
 
+    // 5. Иначе - закрываем приложение
     App.exitApp();
 });
 
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
 const readBlobSafe = (b) => {
     if (b.arrayBuffer) return b.arrayBuffer();
     return new Promise((res, rej) => {
@@ -137,7 +144,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Ориентируемся на твой код фильтра мусора
+// --- СКАНЕР ПАПКИ ЗАГРУЗОК (ОТКЛЮЧЕН, НО РАБОЧИЙ) ---
+async function scanDownloadFolder() {
+    let allFiles = [];
+    async function walk(currentPath, depth) {
+        if (depth > 3) return; 
+        try {
+            let dir = await Filesystem.readdir({ path: currentPath, directory: Directory.ExternalStorage });
+            let filesArray = dir.files || [];
+            for (let i = 0; i < filesArray.length; i++) {
+                let item = filesArray[i];
+                let name = typeof item === 'string' ? item : item.name;
+                let type = typeof item === 'string' ? 'unknown' : item.type;
+                let fullPath = currentPath === 'Download' ? `Download/${name}` : `${currentPath}/${name}`;
+                
+                if (type === 'directory' || (typeof item === 'object' && item.type === 'directory')) {
+                    await walk(fullPath, depth + 1);
+                } else if (type === 'file' || (typeof item === 'object' && item.type === 'file')) {
+                    allFiles.push({ name: name, path: fullPath });
+                } else {
+                    try {
+                        let stat = await Filesystem.stat({ path: fullPath, directory: Directory.ExternalStorage });
+                        if (stat.type === 'directory') await walk(fullPath, depth + 1);
+                        else allFiles.push({ name: name, path: fullPath });
+                    } catch(e) {
+                        allFiles.push({ name: name, path: fullPath });
+                    }
+                }
+            }
+        } catch(e) { console.error("Ошибка чтения папки:", currentPath, e); }
+    }
+    await walk('Download', 0);
+    return allFiles;
+}
+
+window.isRadarRunning = false;
+async function runDownloadRadar(manualTrigger = true) {
+    console.log("📡 Сканер загрузок временно отключен. Используйте ручное добавление игр.");
+    return;
+}
+window.runDownloadRadar = runDownloadRadar;
+
+// --- СУРОВЫЙ ФИЛЬТР МУСОРА (ПОЛНАЯ ВЕРСИЯ) ---
 function isRealRom(fileName, fileDataU8) {
     const lower = fileName.toLowerCase();
     const ext = lower.split('.').pop();
@@ -162,7 +210,7 @@ function isRealRom(fileName, fileDataU8) {
     return true; 
 }
 
-// --- ПРАВКА №2: ПОЛНАЯ ЛОГИКА ПАРСИНГА ИЗ ТВОЕГО ИСХОДНИКА ---
+// --- РАСШИРЕННЫЙ ПАРСЕР АРХИВОВ (DOS + RAR/7Z/ZIP + ROMS) ---
 document.addEventListener('DOMContentLoaded', () => {
     const initExtendedProcessor = () => {
         if (typeof window.processSingleFile !== 'function') {
@@ -226,6 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
+                // ЖЕСТКИЙ ФИЛЬТР DOS для архивов внутри .7z / .rar
                 if (!hasValidContent && dosFiles.length > 0) {
                     const exes = dosFiles.map(f => f.path.split('/').pop().toLowerCase());
                     let hasExe = exes.some(e => e.endsWith('.exe') || e.endsWith('.bat') || e.endsWith('.com'));
@@ -286,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasValidContent = true;
                 }
 
+                // ЖЕСТКИЙ ФИЛЬТР DOS для .zip
                 if (!hasValidContent && hasDos) {
                     let hasExe = false;
                     for (const path in unzipped) {
@@ -309,8 +359,3 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     initExtendedProcessor();
 });
-
-// Заглушки радара (из твоего короткого кода)
-window.isRadarRunning = false;
-async function runDownloadRadar(manualTrigger = true) { return; }
-window.runDownloadRadar = runDownloadRadar;
