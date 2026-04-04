@@ -5,53 +5,58 @@ import { App } from '@capacitor/app';
 
 // --- ЗАЩИТА КНОПКИ "НАЗАД" (ДВОЙНОЙ КЛИК) ---
 let lastBackPress = 0;
-const exitThreshold = 2000; 
+const exitThreshold = 2000; // 2 секунды на второе нажатие
 
 App.addListener('backButton', async () => {
+    // 1. Если мы в игре
     if (window.location.hash === '#game') {
         const now = Date.now();
-        const isHtml = window.currentGame && window.currentGame.t === 'h';
         
         if (now - lastBackPress < exitThreshold) {
-            // ВТОРОЙ КЛИК: Выход
+            // ВТОРОЙ КЛИК: Выходим окончательно
             if (typeof window.executeCleanup === 'function') {
                 window.executeCleanup(true); 
             }
             lastBackPress = 0;
         } else {
-            // ПЕРВЫЙ КЛИК
+            // ПЕРВЫЙ КЛИК: Подготовка к выходу
             lastBackPress = now;
             
-            if (isHtml) {
-                // ПРАВКА: Для HTML просто просим нажать еще раз (без сохранения)
+            const isHtml = window.currentGame && window.currentGame.t === 'h';
+            
+            if (!isHtml && typeof window.saveGameState === 'function') {
+                // Если это НЕ HTML игра - сохраняем прогресс
+                await window.saveGameState(true); 
                 if (typeof window.showToast === 'function') {
-                    window.showToast("Нажмите 'Назад' еще раз для выхода", "info", 2000);
+                    window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
                 }
             } else {
-                // Для всех остальных: сохраняем и пишем про сейв
-                if (typeof window.saveGameState === 'function') {
-                    await window.saveGameState(true); 
-                    if (typeof window.showToast === 'function') {
-                        window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
-                    }
+                // ПРАВКА №1: Текст только для HTML игр
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Для выхода нажмите 2 раз", "info", 2000);
                 }
             }
         }
         return;
     }
     
-    // Закрытие модалок
+    // Закрытие модалок (остается без изменений)
     const infoOverlay = document.getElementById('infoModalOverlay');
     if (infoOverlay && (infoOverlay.style.display === 'flex' || infoOverlay.classList.contains('show'))) {
-        document.getElementById('closeInfoBtn').click(); return;
+        document.getElementById('closeInfoBtn').click();
+        return;
     }
     const resetOverlay = document.getElementById('resetModalOverlay');
     if (resetOverlay && (resetOverlay.style.display === 'flex' || resetOverlay.classList.contains('show'))) {
-        document.getElementById('btnResetCancel').click(); return;
+        document.getElementById('btnResetCancel').click();
+        return;
     }
     const editPanel = document.getElementById('editPanel');
     if (editPanel && (editPanel.style.display === 'block' || editPanel.classList.contains('show'))) {
-        if (typeof window.toggleLibraryEditMode === 'function') window.toggleLibraryEditMode(); return;
+        if (typeof window.toggleLibraryEditMode === 'function') {
+            window.toggleLibraryEditMode();
+        }
+        return;
     }
 
     App.exitApp();
@@ -105,39 +110,79 @@ window.nativeSaveZip = async (blob, fileName) => {
             window.showToast(`Архив ${fileName} сохранен в Документы.`, 'success', 4000);
         }
         return true;
-    } catch (err) { return false; }
+    } catch (err) {
+        console.error('Ошибка Capacitor Filesystem:', err);
+        return false;
+    }
 };
 
-function isRealRom(fileName, fileDataU8) {
-    const lower = fileName.toLowerCase();
-    const ext = lower.split('.').pop();
-    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc', 'gba', 'gbc', 'gb'].includes(ext)) return false;
-    if (fileDataU8.length < 4096) return false;
-    return true; 
-}
-
-// --- ТВОЯ ОРИГИНАЛЬНАЯ ЛОГИКА ПАРСИНГА (ВОССТАНОВЛЕНО ПОЛНОСТЬЮ) ---
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof Archive !== 'undefined') {
         Archive.init({ workerUrl: 'worker-bundle.js' });
     }
 
+    const externalLinks = document.querySelectorAll('a[target="_blank"]');
+    externalLinks.forEach(link => {
+        link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const targetUrl = link.href;
+            if (Capacitor.isNativePlatform()) {
+                try {
+                    await Browser.open({ url: targetUrl, presentationStyle: 'popover', toolbarColor: '#1f2937' });
+                    return; 
+                } catch (err) {}
+            }
+            window.open(targetUrl, '_blank');
+        });
+    });
+});
+
+// Ориентируемся на твой код фильтра мусора
+function isRealRom(fileName, fileDataU8) {
+    const lower = fileName.toLowerCase();
+    const ext = lower.split('.').pop();
+    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
+
+    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual', 'caching', 'code_of_conduct', 'changes', 'contributing', 'contributors'];
+    const baseName = lower.replace(/\.[^/.]+$/, '');
+    if (trashPatterns.some(p => baseName.includes(p))) return false;
+
+    if (fileDataU8.length < 4096) return false;
+
+    let isText = true;
+    let checkLen = Math.min(fileDataU8.length, 100);
+    for(let i = 0; i < checkLen; i++) {
+        let b = fileDataU8[i];
+        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
+            isText = false; break;
+        }
+    }
+    if (isText) return false;
+
+    return true; 
+}
+
+// --- ПРАВКА №2: ПОЛНАЯ ЛОГИКА ПАРСИНГА ИЗ ТВОЕГО ИСХОДНИКА ---
+document.addEventListener('DOMContentLoaded', () => {
     const initExtendedProcessor = () => {
         if (typeof window.processSingleFile !== 'function') {
-            setTimeout(initExtendedProcessor, 50); return;
+            setTimeout(initExtendedProcessor, 50);
+            return;
         }
         if (window.processSingleFile.isExtended) return;
+        
         const coreProcessSingleFile = window.processSingleFile;
         
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
-            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc', '.gba', '.gbc', '.gb'];
+            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc'];
             const validDosExts = ['.exe', '.bin', '.bat', '.com'];
             const validArchiveExts = ['.zip', '.rar', '.7z'];
             
             if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
                 const archive = await Archive.open(file);
                 const extractedFiles = await archive.getFilesObject();
+                
                 let fileList = [];
                 function flatten(obj, path = '') {
                     for (let key in obj) {
@@ -149,66 +194,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
                 let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                
                 let romFiles = [];
                 for (let f of fileList) {
                     if (validRomExts.some(ext => f.path.toLowerCase().endsWith(ext))) {
                         const buffer = await readBlobSafe(f.file);
-                        if (isRealRom(f.path.split('/').pop(), new Uint8Array(buffer))) romFiles.push({ path: f.path, file: f.file });
+                        if (isRealRom(f.path.split('/').pop(), new Uint8Array(buffer))) {
+                            romFiles.push({ path: f.path, file: f.file });
+                        }
                     }
                 }
 
                 let hasValidContent = false;
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
-                        await window.processSingleFileExtended(new File([await readBlobSafe(f.file)], f.path.split('/').pop()));
+                        let cleanName = f.path.split('/').pop();
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        await window.processSingleFileExtended(newFile);
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
+
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
-                        await coreProcessSingleFile(new File([await readBlobSafe(f.file)], f.path.split('/').pop()));
+                        let cleanName = f.path.split('/').pop();
+                        let newFile = new File([await readBlobSafe(f.file)], cleanName);
+                        await coreProcessSingleFile(newFile);
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
+
                 if (!hasValidContent && dosFiles.length > 0) {
-                    const zipData = {};
-                    for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
-                    const zipped = fflate.zipSync(zipData);
-                    await coreProcessSingleFile(makeFakeFile(new Blob([zipped]), file.name.replace(/\.(rar|7z)$/i, '.zip')));
-                    hasValidContent = true;
+                    const exes = dosFiles.map(f => f.path.split('/').pop().toLowerCase());
+                    let hasExe = exes.some(e => e.endsWith('.exe') || e.endsWith('.bat') || e.endsWith('.com'));
+                    if (hasExe) {
+                        const zipData = {};
+                        for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                        if (typeof fflate !== 'undefined') {
+                            const zipped = fflate.zipSync(zipData);
+                            let zipBlob = new Blob([zipped], {type: 'application/zip'});
+                            let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
+                            await coreProcessSingleFile(newZipFile);
+                            hasValidContent = true;
+                        }
+                    }
                 }
+                if (!hasValidContent) throw new Error("Архив пуст или содержит мусор");
                 return;
             } 
             else if (fileName.endsWith('.zip')) {
                 const buffer = await readBlobSafe(file);
-                const unzipped = fflate.unzipSync(new Uint8Array(buffer));
+                const arr = new Uint8Array(buffer);
+                let unzipped;
+                try { unzipped = fflate.unzipSync(arr); } catch(e) { throw new Error("Ошибка чтения ZIP"); }
+
                 let hasDos = false, romFiles = [], nestedArchives = [];
                 for (const path in unzipped) {
-                    const low = path.toLowerCase();
-                    if (validDosExts.some(ext => low.endsWith(ext))) hasDos = true;
-                    if (validArchiveExts.some(ext => low.endsWith(ext))) nestedArchives.push({ path, data: unzipped[path] });
-                    if (validRomExts.some(ext => low.endsWith(ext))) {
-                        if (isRealRom(path.split('/').pop(), unzipped[path])) romFiles.push({ path, data: unzipped[path] });
+                    const lowPath = path.toLowerCase();
+                    const data = unzipped[path];
+                    if (validDosExts.some(ext => lowPath.endsWith(ext))) hasDos = true;
+                    if (validArchiveExts.some(ext => lowPath.endsWith(ext))) nestedArchives.push({ path, data });
+                    if (validRomExts.some(ext => lowPath.endsWith(ext))) {
+                        if (isRealRom(path.split('/').pop(), data)) {
+                            romFiles.push({ path, data });
+                        }
                     }
                 }
 
                 let hasValidContent = false;
                 if (nestedArchives.length > 0) {
                     for (let arc of nestedArchives) {
-                        await window.processSingleFileExtended(makeFakeFile(new Blob([arc.data]), arc.path.split('/').pop()));
+                        let cleanName = arc.path.split('/').pop();
+                        let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await window.processSingleFileExtended(newFile);
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
+
                 if (romFiles.length > 0) {
                     for (let rom of romFiles) {
-                        await coreProcessSingleFile(makeFakeFile(new Blob([rom.data]), rom.path.split('/').pop()));
+                        let cleanName = rom.path.split('/').pop();
+                        let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
+                        let newFile = makeFakeFile(newBlob, cleanName);
+                        await coreProcessSingleFile(newFile);
+                        await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
                 }
+
                 if (!hasValidContent && hasDos) {
-                    await coreProcessSingleFile(file);
-                    hasValidContent = true;
+                    let hasExe = false;
+                    for (const path in unzipped) {
+                        const low = path.toLowerCase();
+                        if (low.endsWith('.exe') || low.endsWith('.bat') || low.endsWith('.com')) {
+                            hasExe = true; break;
+                        }
+                    }
+                    if (hasExe) {
+                        await coreProcessSingleFile(file);
+                        hasValidContent = true;
+                    }
                 }
+                if (!hasValidContent) throw new Error("Архив пуст или содержит мусор");
                 return;
             }
             return await coreProcessSingleFile(file);
@@ -217,18 +308,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.processSingleFile = window.processSingleFileExtended;
     };
     initExtendedProcessor();
-
-    // Ссылки
-    const externalLinks = document.querySelectorAll('a[target="_blank"]');
-    externalLinks.forEach(link => {
-        link.addEventListener('click', async (e) => {
-            e.preventDefault();
-            if (Capacitor.isNativePlatform()) {
-                await Browser.open({ url: link.href, presentationStyle: 'popover', toolbarColor: '#1f2937' });
-            } else { window.open(link.href, '_blank'); }
-        });
-    });
 });
 
-async function scanDownloadFolder() { return []; }
-window.runDownloadRadar = async () => { return; };
+// Заглушки радара (из твоего короткого кода)
+window.isRadarRunning = false;
+async function runDownloadRadar(manualTrigger = true) { return; }
+window.runDownloadRadar = runDownloadRadar;
