@@ -3750,8 +3750,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     }
 
     window.processSingleFile = async function(file) {
-        const fileBuffer = await readBlob(file); 
-        const persistentBlob = new Blob([fileBuffer], { type: file.type || 'application/octet-stream' });
+        const persistentBlob = new Blob([fileBuffer], { 
+    type: fileName.endsWith('.html') ? 'text/html' : (file.type || 'application/octet-stream') 
+});
         const fileName = file.name.toLowerCase(); 
         const rawExt = fileName.split('.').pop(); 
         const cleanGameName = file.name.replace(/\.[^/.]+$/, "");
