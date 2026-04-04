@@ -3639,23 +3639,30 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     const arr = new Uint8Array(buffer);
                     const unzipped = fflate.unzipSync(arr);
 
-                    let romsInZip = [];
+                                        let romsInZip = [];
                     let nestedZips = [];
                     let hasExe = false;
+                    let coversInZip = {}; // <-- 1. ДОБАВЛЯЕМ ХРАНИЛИЩЕ ДЛЯ КАРТИНОК
 
                     for (const path in unzipped) {
                         const lowPath = path.toLowerCase();
                         const ext = lowPath.split('.').pop();
+                        const cleanName = path.split('/').pop().replace(/\.[^/.]+$/, ""); // Имя файла без расширения
 
-                        if (['exe', 'com', 'bat'].includes(ext)) {
+                        // 2. ЕСЛИ ЭТО КАРТИНКА - ЗАПОМИНАЕМ ЕЁ
+                        if (['png', 'jpg', 'jpeg'].includes(ext)) {
+                            coversInZip[cleanName] = { data: unzipped[path], ext: ext };
+                        }
+                        else if (['exe', 'com', 'bat'].includes(ext)) {
                             hasExe = true;
                             break;
                         }
-                        if (ext === 'zip') {
+                        else if (ext === 'zip') {
                             nestedZips.push({ name: path.split('/').pop(), data: unzipped[path] });
                         }
                         else if (coreMap[ext] || ext === 'nes' || ext === 'html') {
-                            romsInZip.push({ name: path.split('/').pop(), data: unzipped[path] });
+                            // 3. СОХРАНЯЕМ РОМ И ЕГО ЧИСТОЕ ИМЯ ДЛЯ СВЕРКИ
+                            romsInZip.push({ name: path.split('/').pop(), data: unzipped[path], cleanName: cleanName });
                         }
                     }
 
@@ -3664,8 +3671,26 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     } else {
                         for (const rom of romsInZip) {
                             const blob = new Blob([rom.data], {type: 'application/octet-stream'});
-                            extractedFiles.push(new File([blob], rom.name));
+                            const newFile = new File([blob], rom.name);
+                            
+                            // 4. ИЩЕМ КАРТИНКУ С ТАКИМ ЖЕ ИМЕНЕМ И КОНВЕРТИРУЕМ ОБРАТНО В BASE64
+                            if (coversInZip[rom.cleanName]) {
+                                const imgInfo = coversInZip[rom.cleanName];
+                                const mime = imgInfo.ext === 'png' ? 'image/png' : 'image/jpeg';
+                                const imgBlob = new Blob([imgInfo.data], {type: mime});
+                                const base64 = await new Promise(r => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => r(reader.result);
+                                    reader.readAsDataURL(imgBlob);
+                                });
+                                newFile._customCover = base64; // <-- ВЕШАЕМ КАРТИНКУ ПРЯМО НА ФАЙЛ
+                            }
+                            
+                            extractedFiles.push(newFile);
                             await new Promise(r => setTimeout(r, 10));
+                        }
+                     
+
                         }
                         for (const nZip of nestedZips) {
                             const blob = new Blob([nZip.data], {type: 'application/zip'});
@@ -3766,6 +3791,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         let gameType = '', gameIcon = '', execCmd = '', controlMode = 'pad'; 
         let romExt = rawExt, sysType = 'unk', coverData = null;
+        
+        if (file._customCover) coverData = file._customCover;
 
         if (fileName.endsWith('.nes')) { 
             gameType = 'n'; gameIcon = '🎮'; controlMode = 'pad'; sysType = 'nes'; 
