@@ -3,41 +3,58 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 
-App.addListener('backButton', ({ canGoBack }) => {
-    // 1. Если мы в игре - имитируем нажатие браузерной кнопки. 
-    // Вся логика двойного клика, сохранений и HTML теперь лежит в popstate (index.html)
+// --- ЗАЩИТА КНОПКИ "НАЗАД" (ДВОЙНОЙ КЛИК) ---
+let lastBackPress = 0;
+const exitThreshold = 2000; 
+
+App.addListener('backButton', async () => {
     if (window.location.hash === '#game') {
-        window.history.back();
+        const now = Date.now();
+        const isHtml = window.currentGame && window.currentGame.t === 'h';
+        
+        if (now - lastBackPress < exitThreshold) {
+            // ВТОРОЙ КЛИК: Выход
+            if (typeof window.executeCleanup === 'function') {
+                window.executeCleanup(true); 
+            }
+            lastBackPress = 0;
+        } else {
+            // ПЕРВЫЙ КЛИК
+            lastBackPress = now;
+            
+            if (isHtml) {
+                // ПРАВКА: Для HTML просто просим нажать еще раз (без сохранения)
+                if (typeof window.showToast === 'function') {
+                    window.showToast("Нажмите 'Назад' еще раз для выхода", "info", 2000);
+                }
+            } else {
+                // Для всех остальных: сохраняем и пишем про сейв
+                if (typeof window.saveGameState === 'function') {
+                    await window.saveGameState(true); 
+                    if (typeof window.showToast === 'function') {
+                        window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
+                    }
+                }
+            }
+        }
         return;
     }
     
-    // 2. Если открыто инфо-модальное окно
+    // Закрытие модалок
     const infoOverlay = document.getElementById('infoModalOverlay');
     if (infoOverlay && (infoOverlay.style.display === 'flex' || infoOverlay.classList.contains('show'))) {
-        document.getElementById('closeInfoBtn').click();
-        return;
+        document.getElementById('closeInfoBtn').click(); return;
     }
-    
-    // 3. Если открыто окно сброса прогресса
     const resetOverlay = document.getElementById('resetModalOverlay');
     if (resetOverlay && (resetOverlay.style.display === 'flex' || resetOverlay.classList.contains('show'))) {
-        document.getElementById('btnResetCancel').click();
-        return;
+        document.getElementById('btnResetCancel').click(); return;
     }
-    
-    // 4. Если открыта панель редактирования
     const editPanel = document.getElementById('editPanel');
     if (editPanel && (editPanel.style.display === 'block' || editPanel.classList.contains('show'))) {
-        if (typeof window.toggleLibraryEditMode === 'function') window.toggleLibraryEditMode();
-        return;
+        if (typeof window.toggleLibraryEditMode === 'function') window.toggleLibraryEditMode(); return;
     }
 
-    // 5. Иначе - закрываем приложение
-    if (canGoBack) {
-        window.history.back();
-    } else {
-        App.exitApp();
-    }
+    App.exitApp();
 });
 
 const readBlobSafe = (b) => {
@@ -48,6 +65,16 @@ const readBlobSafe = (b) => {
         r.onerror = rej;
         r.readAsArrayBuffer(b);
     });
+};
+
+const makeFakeFile = (blob, fileName) => {
+    try {
+        return new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+    } catch (e) {
+        blob.name = fileName;
+        blob.lastModified = Date.now();
+        return blob;
+    }
 };
 
 // --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
@@ -78,31 +105,130 @@ window.nativeSaveZip = async (blob, fileName) => {
             window.showToast(`Архив ${fileName} сохранен в Документы.`, 'success', 4000);
         }
         return true;
-    } catch (err) {
-        console.error('Ошибка Capacitor Filesystem:', err);
-        return false;
-    }
+    } catch (err) { return false; }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof Archive !== 'undefined') Archive.init({ workerUrl: 'worker-bundle.js' });
+function isRealRom(fileName, fileDataU8) {
+    const lower = fileName.toLowerCase();
+    const ext = lower.split('.').pop();
+    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc', 'gba', 'gbc', 'gb'].includes(ext)) return false;
+    if (fileDataU8.length < 4096) return false;
+    return true; 
+}
 
+// --- ТВОЯ ОРИГИНАЛЬНАЯ ЛОГИКА ПАРСИНГА (ВОССТАНОВЛЕНО ПОЛНОСТЬЮ) ---
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof Archive !== 'undefined') {
+        Archive.init({ workerUrl: 'worker-bundle.js' });
+    }
+
+    const initExtendedProcessor = () => {
+        if (typeof window.processSingleFile !== 'function') {
+            setTimeout(initExtendedProcessor, 50); return;
+        }
+        if (window.processSingleFile.isExtended) return;
+        const coreProcessSingleFile = window.processSingleFile;
+        
+        window.processSingleFileExtended = async function(file) {
+            const fileName = file.name.toLowerCase();
+            const validRomExts = ['.nes', '.md', '.sfc', '.smc', '.gen', '.bin', '.ngp', '.ngc', '.gba', '.gbc', '.gb'];
+            const validDosExts = ['.exe', '.bin', '.bat', '.com'];
+            const validArchiveExts = ['.zip', '.rar', '.7z'];
+            
+            if ((fileName.endsWith('.rar') || fileName.endsWith('.7z')) && typeof Archive !== 'undefined') {
+                const archive = await Archive.open(file);
+                const extractedFiles = await archive.getFilesObject();
+                let fileList = [];
+                function flatten(obj, path = '') {
+                    for (let key in obj) {
+                        if (obj[key] instanceof File) fileList.push({ path: path + key, file: obj[key] });
+                        else if (typeof obj[key] === 'object') flatten(obj[key], path + key + '/');
+                    }
+                }
+                flatten(extractedFiles);
+
+                let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                let romFiles = [];
+                for (let f of fileList) {
+                    if (validRomExts.some(ext => f.path.toLowerCase().endsWith(ext))) {
+                        const buffer = await readBlobSafe(f.file);
+                        if (isRealRom(f.path.split('/').pop(), new Uint8Array(buffer))) romFiles.push({ path: f.path, file: f.file });
+                    }
+                }
+
+                let hasValidContent = false;
+                if (nestedArchives.length > 0) {
+                    for (let f of nestedArchives) {
+                        await window.processSingleFileExtended(new File([await readBlobSafe(f.file)], f.path.split('/').pop()));
+                    }
+                    hasValidContent = true;
+                }
+                if (romFiles.length > 0) {
+                    for (let f of romFiles) {
+                        await coreProcessSingleFile(new File([await readBlobSafe(f.file)], f.path.split('/').pop()));
+                    }
+                    hasValidContent = true;
+                }
+                if (!hasValidContent && dosFiles.length > 0) {
+                    const zipData = {};
+                    for (let f of fileList) zipData[f.path] = new Uint8Array(await readBlobSafe(f.file));
+                    const zipped = fflate.zipSync(zipData);
+                    await coreProcessSingleFile(makeFakeFile(new Blob([zipped]), file.name.replace(/\.(rar|7z)$/i, '.zip')));
+                    hasValidContent = true;
+                }
+                return;
+            } 
+            else if (fileName.endsWith('.zip')) {
+                const buffer = await readBlobSafe(file);
+                const unzipped = fflate.unzipSync(new Uint8Array(buffer));
+                let hasDos = false, romFiles = [], nestedArchives = [];
+                for (const path in unzipped) {
+                    const low = path.toLowerCase();
+                    if (validDosExts.some(ext => low.endsWith(ext))) hasDos = true;
+                    if (validArchiveExts.some(ext => low.endsWith(ext))) nestedArchives.push({ path, data: unzipped[path] });
+                    if (validRomExts.some(ext => low.endsWith(ext))) {
+                        if (isRealRom(path.split('/').pop(), unzipped[path])) romFiles.push({ path, data: unzipped[path] });
+                    }
+                }
+
+                let hasValidContent = false;
+                if (nestedArchives.length > 0) {
+                    for (let arc of nestedArchives) {
+                        await window.processSingleFileExtended(makeFakeFile(new Blob([arc.data]), arc.path.split('/').pop()));
+                    }
+                    hasValidContent = true;
+                }
+                if (romFiles.length > 0) {
+                    for (let rom of romFiles) {
+                        await coreProcessSingleFile(makeFakeFile(new Blob([rom.data]), rom.path.split('/').pop()));
+                    }
+                    hasValidContent = true;
+                }
+                if (!hasValidContent && hasDos) {
+                    await coreProcessSingleFile(file);
+                    hasValidContent = true;
+                }
+                return;
+            }
+            return await coreProcessSingleFile(file);
+        };
+        window.processSingleFileExtended.isExtended = true;
+        window.processSingleFile = window.processSingleFileExtended;
+    };
+    initExtendedProcessor();
+
+    // Ссылки
     const externalLinks = document.querySelectorAll('a[target="_blank"]');
     externalLinks.forEach(link => {
         link.addEventListener('click', async (e) => {
             e.preventDefault();
-            const targetUrl = link.href;
             if (Capacitor.isNativePlatform()) {
-                try {
-                    await Browser.open({ url: targetUrl, presentationStyle: 'popover', toolbarColor: '#1f2937' });
-                    return; 
-                } catch (err) {}
-            }
-            window.open(targetUrl, '_blank');
+                await Browser.open({ url: link.href, presentationStyle: 'popover', toolbarColor: '#1f2937' });
+            } else { window.open(link.href, '_blank'); }
         });
     });
 });
 
 async function scanDownloadFolder() { return []; }
-window.isRadarRunning = false;
-window.runDownloadRadar = async function(manualTrigger = true) { return; };
+window.runDownloadRadar = async () => { return; };
