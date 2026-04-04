@@ -270,25 +270,77 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 @keyframes toastIn { 0% { opacity: 0; transform: translateY(20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes toastOut { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-10px) scale(0.95); } }
 
-/* --- ВЕРХНИЕ КНОПКИ МЕНЮ (Круглые иконки в игре) --- */
-#toolbar { position: fixed; top: calc(15px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px; z-index: 9999; display: none; opacity: 0; gap: 6px; padding: 0 5px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; transition: opacity 0.4s ease; background: rgba(0, 0, 0, 0.5) !important; backdrop-filter: none !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1); box-shadow: none !important; }
+/* --- ВЕРХНЯЯ ПЛАВАЮЩАЯ ПАНЕЛЬ И КНОПКИ --- */
+#toolbar { 
+    position: fixed; top: calc(35px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); 
+    z-index: 9999; display: none; opacity: 1; gap: 6px; padding: 6px 10px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; 
+    background: rgba(15, 10, 25, 0.8) !important; backdrop-filter: blur(25px) saturate(200%) !important; -webkit-backdrop-filter: blur(25px) saturate(200%) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 25px; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.1) !important; 
+    transition: opacity 0.3s ease, top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: max-content; max-width: 95%;
+}
 #toolbar::-webkit-scrollbar { display: none; }
-.tool-btn { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; background: rgba(20, 20, 25, 0.85) !important; border: 2px solid rgba(255, 255, 255, 0.2); color: white; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; user-select: none; -webkit-user-select: none; touch-action: none; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; will-change: transform; transform: translateZ(0); }
-.tool-btn:active { transform: scale(0.9) translateZ(0) !important; background: rgba(255, 255, 255, 0.2) !important; }
-.tool-btn.active-tool { background: var(--neon-blue) !important; border-color: var(--neon-blue) !important; color: #000 !important; box-shadow: none !important; }
+#toolbar.toolbar-hidden { top: -100px; opacity: 0 !important; pointer-events: none; }
+
+#toolbar-toggle { 
+    position: fixed; top: env(safe-area-inset-top, 0px); left: 50%; transform: translateX(-50%); 
+    background: rgba(15, 10, 25, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2); border-top: none; border-radius: 0 0 15px 15px; 
+    padding: 3px 18px; color: var(--neon-blue); font-size: 9px; font-weight: 900; 
+    z-index: 10000; display: none; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+    letter-spacing: 1px; transition: all 0.3s ease; user-select: none;
+}
+#toolbar-toggle:active { transform: translateX(-50%) scale(0.95); background: var(--neon-blue); color: #000; }
+
+.tool-btn { 
+    flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; 
+    background: rgba(255, 255, 255, 0.05) !important; 
+    border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-size: 16px; 
+    display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    user-select: none; -webkit-user-select: none; touch-action: none; position: relative; overflow: hidden;
+}
+.tool-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tool-btn:active { transform: scale(0.9) !important; background: rgba(255, 255, 255, 0.15) !important; box-shadow: 0 0 15px var(--neon-blue) !important; border-color: var(--neon-blue) !important; }
+.tool-btn.active-tool { 
+    background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; color: #fff !important; 
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.3) !important;
+}
+
+
 #fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; max-width: 90%; }
 .f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 .f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
 
 /* --- ПАНЕЛИ НАСТРОЕК В ИГРЕ --- */
 #screen-edit-panel, #pad-edit-panel { 
-    position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 12px; 
+    position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; flex-direction: column; gap: 8px; 
     background: rgba(15, 10, 25, 0.8) !important; backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); 
-    padding: 18px; border-radius: 16px; color: #fff; font-size: 12px; width: 270px; max-height: 85vh; overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; 
+    padding: 15px 15px 30px 15px; border-radius: 16px; color: #fff; font-size: 12px; width: 250px; max-height: calc(100vh - 20px); overflow-y: auto; touch-action: pan-y; overscroll-behavior-y: contain; 
     box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.05);
     display: none; opacity: 0; transform: translateX(-10px); transition: opacity 0.3s ease, transform 0.3s ease;
 }
 #screen-edit-panel.show, #pad-edit-panel.show { opacity: 1; transform: translateX(0); }
+
+/* Ручка для перетаскивания окна */
+.drag-handle {
+    width: 40px; height: 5px; background: rgba(255,255,255,0.3); 
+    border-radius: 3px; margin: 0 auto 10px auto; 
+    cursor: grab; touch-action: none; transition: background 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+}
+.drag-handle:active { background: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+
+/* Анимация скрытия умного меню */
+.smart-collapse {
+    display: flex; flex-direction: column;
+    transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+    max-height: 400px; opacity: 1; overflow: hidden;
+}
+.smart-collapse.hidden {
+    max-height: 0; opacity: 0; margin: 0; pointer-events: none; border: none;
+}
+
 
 /* КРАСИВЫЕ ВЫПАДАЮЩИЕ СПИСКИ (ШЕЙДЕРЫ) */
 #screen-edit-panel select {
@@ -655,16 +707,27 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
 </div>
 
-<div id="toolbar">
-    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()">⬅</div>
-    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none; background:rgba(56,189,248,0.3) !important; border-color:#38bdf8 !important;">🔄</div>
-    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none; background:rgba(4, 120, 87, 0.4) !important; border-color:#059669 !important;">💾</div>
-    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none; background:rgba(180, 83, 9, 0.4) !important; border-color:#d97706 !important;">📂</div>
-    <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;">🎮</div>
-    <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;">⌨️</div>
-    <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;">🔲</div>
-    <div id="btnPadEdit" class="tool-btn action-btn" onclick="togglePadEdit()" style="display:none;">🕹️</div>
+<div id="toolbar-toggle" onclick="toggleMainToolbar()">▼ МЕНЮ</div>
+<div id="toolbar" class="toolbar-hidden">
+    <!-- Назад -->
+    <div id="btnBack" class="tool-btn action-btn" onclick="handleBackBtn()"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></div>
+    <!-- Рестарт -->
+    <div id="btnRestart" class="tool-btn action-btn" onclick="hardResetGame()" style="display:none;"><svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></div>
+    <!-- Сохранить (Стрелка вниз в бокс) -->
+    <div id="btnSave" class="tool-btn action-btn" onclick="saveGameState()" style="display:none;"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg></div>
+    <!-- Загрузить (Стрелка вверх из бокса) -->
+    <div id="btnLoad" class="tool-btn action-btn" onclick="loadGameState()" style="display:none;"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
+    <!-- Геймпад (Наэкранный) -->
+    <div id="btnGamepad" class="tool-btn action-btn" onclick="toggleGamepad()" style="display:none;"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01"/></svg></div>
+    <!-- Клавиатура -->
+    <div id="btnKeyboard" class="tool-btn action-btn" onclick="toggleKeysPanel()" style="display:none;"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 8h.01M12 8h.01M17 8h.01M7 12h.01M12 12h.01M17 12h.01M7 16h10"/></svg></div>
+    <!-- Настройки экрана -->
+    <div id="btnScreen" class="tool-btn action-btn" onclick="toggleScreenEdit()" style="display:none;"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+    <!-- Редактор кнопок -->
+    <div id="btnPadEdit" class="tool-btn action-btn" onclick="togglePadEdit()" style="display:none;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></div>
 </div>
+
+
 
 <div id="fkeys-panel">
     <button class="f-btn" onclick="injectText()">A-Z</button>
@@ -687,6 +750,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 
 <div id="screen-edit-panel">
+    <div class="drag-handle"></div>
     <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">ГРАФИКА И ЭФФЕКТЫ</div>
     
     <div id="nes-only-settings">
@@ -745,11 +809,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="pad-edit-panel">
-    <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="margin-bottom: 5px; width: 100%;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
-    <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
+    <div class="drag-handle"></div>
     
-    <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="margin-bottom: 10px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    <div id="pad-general-settings" class="smart-collapse">
+        <button class="edit-btn action-btn" id="toggleBarrierBtn" onclick="toggleBarrier()" style="margin-bottom: 5px;">Барьер кнопок (низ): ВЫКЛ</button>
+        <button class="edit-btn action-btn" id="toggleAutoStopBtn" onclick="toggleAutoStop()" style="margin-bottom: 5px; width: 100%;">Авто-Тормоз (Гонки/Грузчик): ВЫКЛ</button>
+        <button class="edit-btn action-btn" id="toggleFloatBtn" onclick="toggleFloatingDpad()" style="margin-bottom: 5px; width: 100%;">D-Pad: ФИКСИРОВАННЫЙ</button>
+        <button class="edit-btn action-btn" id="toggleModeBtn" onclick="cycleDpadMode()" style="margin-bottom: 10px; width: 100%;">Режим: СВАЙП (ПЛАВНЫЙ)</button>
+    </div>
     
     <div class="edit-row" style="margin-bottom: 10px;">
       <span style="font-weight: bold; color: #cbd5e1; font-size:11px;">Размер:</span>
@@ -770,6 +837,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
     <button class="edit-btn action-btn" onclick="resetPad()" style="background:rgba(239, 68, 68, 0.3) !important; border-color:#ef4444 !important; margin-top:10px; color:#ef4444;">Сброс настроек</button>
 </div>
+
+
 
 <div id="bottom-shield"></div>
 <input type="text" id="hiddenInput" autocomplete="off">
@@ -1405,8 +1474,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         
         if (resSel) { resSel.value = videoConfig.res; }
-        if (filterSel) { filterSel.value = videoConfig.filter; }
-        if (glCanvas) { glCanvas.style.imageRendering = videoConfig.filter === 0 ? 'pixelated' : 'auto'; }
+                if (filterSel) { filterSel.value = videoConfig.filter; }
+        // Финальный холст ВСЕГДА должен быть 'auto', чтобы сетка не ломалась при сжатии и зуме экрана
+        if (glCanvas) { glCanvas.style.imageRendering = 'auto'; }
+
     }
     
     function getMaxScaleForSystem(sys) { 
@@ -1636,15 +1707,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         color += (sum / 4.0) * 0.3; 
                     }
                     
-                    if (u_crt > 0) {
+                                        if (u_crt > 0) {
                         if (u_crt == 3) {
                             vec2 cell_uv = fract(orig_uv * u_tex_size);
                             float dist = length(cell_uv - vec2(0.5));
                             float bump = 1.15 - dist * 0.6; 
-                            float gridX = smoothstep(0.0, 0.15, cell_uv.x) - smoothstep(0.85, 1.0, cell_uv.x);
-                            float gridY = smoothstep(0.0, 0.15, cell_uv.y) - smoothstep(0.85, 1.0, cell_uv.y);
+                            
+                            // Магия: утолщенные линии
+                            float gridX = smoothstep(0.0, 0.25, cell_uv.x) - smoothstep(0.75, 1.0, cell_uv.x);
+                            float gridY = smoothstep(0.0, 0.25, cell_uv.y) - smoothstep(0.75, 1.0, cell_uv.y);
+                            
                             float grid = gridX * gridY;
-                            color.rgb *= bump * mix(0.4, 1.0, grid);
+                            color.rgb *= bump * mix(0.3, 1.0, grid); 
                         } else if (u_crt == 2) {
                             float cell = 0.9 + 0.1 * cos(orig_uv.y * u_tex_size.y * 6.2831); 
                             float r = 1.0 + 0.15 * cos(orig_uv.x * u_tex_size.x * 18.8495);
@@ -1656,6 +1730,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             color.rgb *= vec3(0.8 + 0.2 * pow(abs(wave), 1.5));
                         }
                     }
+
                     color.rgb *= vec3(vignette); gl_FragColor = color;
                 }`;
 
@@ -1814,7 +1889,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         isFloatingDpad ? btn.classList.add('neon-on-purple') : btn.classList.remove('neon-on-purple');
     }
     
-    function updateModeBtnUI() { 
+        function updateModeBtnUI() { 
         const btn = document.getElementById('toggleModeBtn'); if (!btn) return;
         btn.style.display = 'block'; 
         
@@ -1834,7 +1909,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             camZone.style.display = (dpadMode === 2 && !isPadEditMode && isGamepadVisible) ? 'block' : 'none';
         }
     }
-    
+
     function togglePadEdit() {
         isPadEditMode = !isPadEditMode; 
         btnPadEdit.classList.toggle('active-tool', isPadEditMode); 
@@ -1842,6 +1917,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (isPadEditMode) {
             padPanel.style.display = 'flex';
             setTimeout(() => padPanel.classList.add('show'), 10);
+            
+            // --- УМНОЕ МЕНЮ: При открытии всегда показываем общие настройки ---
+            const genSet = document.getElementById('pad-general-settings');
+            if (genSet) genSet.classList.remove('hidden');
+            
         } else {
             padPanel.classList.remove('show');
             setTimeout(() => padPanel.style.display = 'none', 300);
@@ -1867,11 +1947,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if(camZone && dpadMode === 2 && isGamepadVisible) camZone.style.display = 'block';
         }
     }
+
    
    
    
    
-    document.querySelectorAll('.draggable-btn').forEach(el => {
+        document.querySelectorAll('.draggable-btn').forEach(el => {
         el.addEventListener('touchstart', e => {
             if (!isPadEditMode) return; e.preventDefault(); 
             document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
@@ -1884,6 +1965,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             document.getElementById('brightnessSlider').dispatchEvent(eventObj);
             
             padDragTarget = selectedPadEl; padDragStartX = e.touches[0].clientX - padConfig[padDragTarget].x; padDragStartY = e.touches[0].clientY - padConfig[padDragTarget].y;
+            
+            // --- УМНОЕ МЕНЮ: Прячем общие настройки при выделении кнопки ---
+            const genSet = document.getElementById('pad-general-settings');
+            if (genSet) genSet.classList.add('hidden');
+            
         }, {passive: false});
 
         document.addEventListener('touchmove', e => { 
@@ -1898,6 +1984,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }, {passive: false});
         document.addEventListener('touchend', () => padDragTarget = null);
     });
+
+
+    // --- УМНОЕ МЕНЮ: Возвращаем меню при тапе в пустоту экрана ---
+    document.addEventListener('touchstart', (e) => {
+        if (!isPadEditMode) return;
+        // Если тапнули не по кнопке, не по самой панели и не по верхнему тулбару
+        if (!e.target.closest('.draggable-btn') && !e.target.closest('#pad-edit-panel') && !e.target.closest('#toolbar')) {
+            document.querySelectorAll('.draggable-btn').forEach(b => b.classList.remove('editing-active'));
+            // Показываем настройки обратно
+            const genSet = document.getElementById('pad-general-settings');
+            if (genSet) genSet.classList.remove('hidden');
+        }
+    }, {passive: true});
+
+
 
     function updatePadTransforms() {
         ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(id => {
@@ -2376,9 +2477,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         crtOn.classList.add('turn-on');
                     }
                     
-                    toolbar.style.opacity = '0';
+                                        const tbToggle = document.getElementById('toolbar-toggle');
+                    if (tbToggle) {
+                        tbToggle.style.display = 'flex';
+                        tbToggle.innerHTML = '▼ МЕНЮ';
+                    }
                     toolbar.style.display = 'flex';
-                    setTimeout(() => toolbar.style.opacity = '1', 50);
+                    toolbar.classList.add('toolbar-hidden'); 
+
                     
                     document.getElementById('btnRestart').style.display = 'flex';
                     
@@ -3133,9 +3239,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             htmlIframe.style.display = 'none';
             
             canvasContainer.innerHTML = '<div id="dos-overlay"></div>';
-            frameDiv.style.display = 'none'; 
+                        frameDiv.style.display = 'none'; 
             toolbar.style.display = 'none'; 
+            const tbToggle = document.getElementById('toolbar-toggle');
+            if (tbToggle) tbToggle.style.display = 'none';
             gamepad.style.display = 'none'; 
+ 
             fkeysPanel.style.display = 'none'; 
             screenPanel.style.display = 'none'; 
             padPanel.style.display = 'none'; 
@@ -4178,10 +4287,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
-    // --- НАВИГАЦИЯ ПО МЕНЮ С ПОМОЩЬЮ ГЕЙМПАДА ---
-    let gpMenuIndex = -1;
-    let lastGpMenuUpdate = 0;
-
     function updateGamepadMenu() {
         if (currentGame || menuScreen.style.display === 'none') {
             requestAnimationFrame(updateGamepadMenu);
@@ -4197,7 +4302,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
 
         const now = Date.now();
-        if (now - lastGpMenuUpdate < 150) { 
+        // УВЕЛИЧИЛИ ЗАДЕРЖКУ (было 150)
+        if (now - lastGpMenuUpdate < 250) { 
             requestAnimationFrame(updateGamepadMenu);
             return;
         }
@@ -4209,8 +4315,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
 
         let move = 0;
-        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -2; 
-        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = 2;   
+        // УМНЫЙ ШАГ: проверяем режим отображения
+        let rowStep = (currentViewMode === 'grid') ? 2 : 1;
+
+        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -rowStep; 
+        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = rowStep;   
         if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) move = -1; 
         if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) move = 1;   
 
@@ -4224,8 +4333,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
             btns[gpMenuIndex].classList.add('gp-focus');
             btns[gpMenuIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            doVibrate(10);
             
+            if (typeof doVibrate === 'function') doVibrate(10);
             if (typeof AudioGen !== 'undefined') AudioGen.playClick();
         }
 
@@ -4242,8 +4351,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         requestAnimationFrame(updateGamepadMenu);
     }
 
-    requestAnimationFrame(updateGamepadMenu);
-
       // --- ГЛОБАЛЬНЫЙ РАДАР КНОПОК UI (ЗВУК И ВИБРАЦИЯ НА ВСЁ) ---
     document.addEventListener('touchstart', (e) => {
         // Ловим клики вообще по всем возможным кнопкам, карточкам игр и настройкам
@@ -4256,6 +4363,142 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }, {passive: true});
 
+
+    // --- ВЫЕЗЖАЮЩАЯ ВЕРХНЯЯ ПАНЕЛЬ ---
+    function toggleMainToolbar() {
+        const tb = document.getElementById('toolbar');
+        const toggleBtn = document.getElementById('toolbar-toggle');
+        if (!tb || !toggleBtn) return;
+        
+        if (typeof doVibrate === 'function') doVibrate(10);
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+        
+        if (tb.classList.contains('toolbar-hidden')) {
+            tb.classList.remove('toolbar-hidden');
+            toggleBtn.innerHTML = '▲ СКРЫТЬ';
+        } else {
+            tb.classList.add('toolbar-hidden');
+            toggleBtn.innerHTML = '▼ МЕНЮ';
+            
+            if (typeof isEditMode !== 'undefined' && isEditMode) toggleScreenEdit();
+            if (typeof isPadEditMode !== 'undefined' && isPadEditMode) togglePadEdit();
+            const fkeys = document.getElementById('fkeys-panel');
+            if (fkeys && fkeys.style.display === 'flex') toggleKeysPanel();
+        }
+    }
+
+
+
+    // --- ПЛАВАЮЩИЕ ОКНА (DRAG & DROP) ---
+    function makePanelDraggable(panelId) {
+        const panel = document.getElementById(panelId);
+        if (!panel) return;
+        const handle = panel.querySelector('.drag-handle');
+        if (!handle) return;
+
+        let isDragging = false;
+        let startX, startY;
+        let currentX = 0;
+        let currentY = 0;
+
+        handle.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            
+            // Фирменная отдача Arcade Hub при захвате окна
+            if (typeof doVibrate === 'function') doVibrate(10);
+            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+
+            // Отключаем CSS-анимации на время перетаскивания, чтобы окно не "сопротивлялось"
+            panel.style.transition = 'none'; 
+            
+            // Читаем текущую позицию, если окно уже двигали
+            currentX = parseFloat(panel.dataset.x || 0);
+            currentY = parseFloat(panel.dataset.y || 0);
+
+            startX = e.touches[0].clientX - currentX;
+            startY = e.touches[0].clientY - currentY;
+            e.preventDefault(); // Запрещаем скролл самой панели при захвате ручки
+        }, {passive: false});
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            currentX = e.touches[0].clientX - startX;
+            currentY = e.touches[0].clientY - startY;
+            
+            // Двигаем окно поверх всех стилей
+            panel.style.transform = `translate(${currentX}px, ${currentY}px)`;
+        }, {passive: false});
+
+        const stopDrag = () => {
+            if (isDragging) {
+                isDragging = false;
+                // Запоминаем позицию
+                panel.dataset.x = currentX;
+                panel.dataset.y = currentY;
+                // Возвращаем плавность для opacity (когда окно будет закрываться)
+                panel.style.transition = ''; 
+            }
+        };
+
+        document.addEventListener('touchend', stopDrag);
+        document.addEventListener('touchcancel', stopDrag);
+    }
+
+    // Инициализируем перетаскивание для обеих панелей
+    document.addEventListener('DOMContentLoaded', () => {
+        makePanelDraggable('screen-edit-panel');
+        makePanelDraggable('pad-edit-panel');
+    });
+
+
+
+
+    // --- ОПРОС ФИЗИЧЕСКОГО ГЕЙМПАДА ВНУТРИ ИГРЫ ---
+    let gpInGameState = {};
+    
+    function pollGamepadInGame() {
+        // Работаем только если игра запущена, мы на экране игры и не на паузе
+        if (currentGame && window.location.hash === '#game' && !isGamePaused && !isShuttingDown) {
+            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+            const gp = pads[0];
+            
+            if (gp) {
+                // Карта: [индекс кнопки физического геймпада] -> [твой внутренний код клавиши]
+                const map = { 
+                    0: 90,  // A -> Z
+                    1: 88,  // B -> X
+                    2: 65,  // X -> A
+                    3: 83,  // Y -> S
+                    8: 16,  // Select -> Shift
+                    9: 13,  // Start -> Enter
+                    12: 38, // D-pad Up -> ArrowUp
+                    13: 40, // D-pad Down -> ArrowDown
+                    14: 37, // D-pad Left -> ArrowLeft
+                    15: 39, // D-pad Right -> ArrowRight
+                    4: 81,  // L1 -> Q
+                    5: 87   // R1 -> W
+                };
+                
+                for (let b in map) {
+                    let pressed = gp.buttons[b] && gp.buttons[b].pressed;
+                    
+                    if (pressed && !gpInGameState[b]) {
+                        sendKey(map[b], true);
+                        gpInGameState[b] = true;
+                    } else if (!pressed && gpInGameState[b]) {
+                        sendKey(map[b], false);
+                        gpInGameState[b] = false;
+                    }
+                }
+            }
+        }
+        requestAnimationFrame(pollGamepadInGame);
+    }
+
+    // Запускаем фоновый цикл опроса геймпада
+    requestAnimationFrame(pollGamepadInGame);
 
 
 
