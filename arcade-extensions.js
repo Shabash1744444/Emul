@@ -1,6 +1,47 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
+
+// --- ПЕРЕХВАТ СИСТЕМНОЙ КНОПКИ "НАЗАД" ---
+App.addListener('backButton', ({ canGoBack }) => {
+    // 1. Если мы в игре - выходим из нее в главное меню
+    if (window.location.hash === '#game') {
+        if (typeof window.handleBackBtn === 'function') {
+            window.handleBackBtn();
+        } else {
+            window.history.back();
+        }
+        return;
+    }
+    
+    // 2. Если открыто инфо-модальное окно
+    const infoOverlay = document.getElementById('infoModalOverlay');
+    if (infoOverlay && (infoOverlay.style.display === 'flex' || infoOverlay.classList.contains('show'))) {
+        document.getElementById('closeInfoBtn').click();
+        return;
+    }
+    
+    // 3. Если открыто окно сброса прогресса
+    const resetOverlay = document.getElementById('resetModalOverlay');
+    if (resetOverlay && (resetOverlay.style.display === 'flex' || resetOverlay.classList.contains('show'))) {
+        document.getElementById('btnResetCancel').click();
+        return;
+    }
+    
+    // 4. Если открыта панель редактирования (удаление/лого)
+    const editPanel = document.getElementById('editPanel');
+    if (editPanel && (editPanel.style.display === 'block' || editPanel.classList.contains('show'))) {
+        if (typeof window.toggleLibraryEditMode === 'function') {
+            window.toggleLibraryEditMode();
+        }
+        return;
+    }
+
+    // 5. Иначе - мы на главном экране, сворачиваем/закрываем приложение
+    App.exitApp();
+});
+
 
 const readBlobSafe = (b) => {
     if (b.arrayBuffer) return b.arrayBuffer();
@@ -22,26 +63,47 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
-// --- НОВЫЙ МОСТ ДЛЯ ЖЕСТКОГО СОХРАНЕНИЯ ZIP В ПАМЯТЬ ANDROID ---
+// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
 window.nativeSaveZip = async (blob, fileName) => {
     try {
-        // Конвертируем Blob в чистый Base64 (без префикса data:...)
-        const base64Data = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64 = reader.result.split(',')[1];
-                resolve(base64);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
+        // Режем файл на чанки по 5 Мегабайт, чтобы мост Capacitor не лопнул
+        const chunkSize = 5 * 1024 * 1024; 
+        const totalChunks = Math.ceil(blob.size / chunkSize);
+        const btn = document.getElementById('exportLibraryBtn');
+        
+        for (let i = 0; i < totalChunks; i++) {
+            const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
+            
+            // Читаем текущий кусочек в Base64
+            const base64Chunk = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(chunk);
+            });
 
-        // Жестко пишем файл в папку "Документы" устройства
-        await Filesystem.writeFile({
-            path: fileName,
-            data: base64Data,
-            directory: Directory.Documents
-        });
+            if (i === 0) {
+                // Первый кусочек - СОЗДАЕМ файл
+                await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64Chunk,
+                    directory: Directory.Documents
+                });
+            } else {
+                // Остальные кусочки - ДОПИСЫВАЕМ в конец файла
+                await Filesystem.appendFile({
+                    path: fileName,
+                    data: base64Chunk,
+                    directory: Directory.Documents
+                });
+            }
+            
+            // Показываем проценты на кнопке прямо во время записи
+            if (btn) btn.innerHTML = `⏳ ЗАПИСЬ НА ДИСК... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
+        }
 
         if (typeof showToast === 'function') {
             showToast(`Успешно! Архив ${fileName} сохранен в папку "Документы".`, 'success', 4000);
@@ -74,9 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     await Browser.open({ url: targetUrl, presentationStyle: 'popover', toolbarColor: '#1f2937' });
                     if (!window._browserListenerAdded) {
-                        Browser.addListener('browserFinished', () => { 
-                            // Автозапуск радара отключен
-                        });
+                        Browser.addListener('browserFinished', () => { });
                         window._browserListenerAdded = true;
                     }
                     return; 
