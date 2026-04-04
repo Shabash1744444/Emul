@@ -635,10 +635,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 </div>
 
 <div id="fkeys-panel">
-    <button class="f-btn" onclick="injectText()">A-Z (Текст)</button>
+    <button class="f-btn" onclick="injectText()">A-Z</button>
     <button class="f-btn" data-f="27">ESC</button>
-    <button class="f-btn" data-f="13">ENTER</button>
+    <button class="f-btn" data-f="13">ENT</button>
+    <button class="f-btn" data-f="32">SPC</button>
+    <button class="f-btn" data-f="112">F1</button>
+    <button class="f-btn" data-f="113">F2</button>
+    <button class="f-btn" data-f="114">F3</button>
+    <button class="f-btn" data-f="115">F4</button>
+    <button class="f-btn" data-f="116">F5</button>
+    <button class="f-btn" data-f="117">F6</button>
+    <button class="f-btn" data-f="118">F7</button>
+    <button class="f-btn" data-f="119">F8</button>
+    <button class="f-btn" data-f="120">F9</button>
+    <button class="f-btn" data-f="121">F10</button>
+    <button class="f-btn" data-f="122">F11</button>
+    <button class="f-btn" data-f="123">F12</button>
 </div>
+
 
 <div id="screen-edit-panel">
     <div style="border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 5px; margin-bottom: 10px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue);">ГРАФИКА И ЭФФЕКТЫ</div>
@@ -2393,15 +2407,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
                     setTimeout(() => {
                         const shouldAutoLoad = localStorage.getItem('autoload_' + game.id) === 'true';
-
+                        
+                        
                         if (game.t === 'h') {
                             const htmlUrl = URL.createObjectURL(game.fileBlob);
                             currentGame._tempUrl = htmlUrl; 
                             htmlIframe.style.display = 'block'; 
                             htmlIframe.src = htmlUrl; 
                             canvasContainer.style.pointerEvents = 'none'; 
+                            
+                            // Прячем тулбар полностью для HTML-игр
+                            toolbar.style.display = 'none';
+                            
                             isGameStarting = false;
                         } 
+ 
+
                         else if (game.t === 'd') {
                             setupDOS(game, shouldAutoLoad);
                         } 
@@ -2953,31 +2974,28 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    async function handleBackBtn() {
+        async function handleBackBtn() {
+        const isHtml = currentGame && currentGame.t === 'h';
+        
         if (window.location.hash === '#game') {
-            isExitingGame = true; 
-            history.back();
+            // Если это HTML - выходим сразу по клику на кнопку тулбара (т.к. сохранения нет)
+            // Если эмулятор - сохраняем и выходим
+            if (!isHtml) {
+                const btn = document.getElementById('btnBack'); 
+                if (btn) { btn.style.background = '#059669'; btn.innerHTML = '⏳'; }
+                await saveGameState(true); 
+            }
+            
+            await executeCleanup(true); 
             return; 
         }
+        
         if (!currentGame) {
             await executeCleanup(true);
             return;
         }
-        
-        const btn = document.getElementById('btnBack'); 
-        if (btn) {
-            btn.style.background = '#059669'; 
-            btn.innerHTML = '⏳';
-        }
-        
-        await saveGameState(true); 
-        await executeCleanup(true); 
-        
-        if (btn) {
-            btn.style.background = 'rgba(30, 30, 30, 0.7)'; 
-            btn.innerHTML = '⬅'; 
-        }
     }
+
 
     async function executeCleanup(skipSave = false) {
         isShuttingDown = true; 
@@ -3841,7 +3859,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     g.cover = base64Cover;
                     store.put(g).onsuccess = () => {
                         renderAllGames();
-                        toggleLibraryEditMode(); 
+                        // Убрали toggleLibraryEditMode(), чтобы панель не закрывалась
                     };
                 }
             };
@@ -3849,6 +3867,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         reader.readAsDataURL(file);
         e.target.value = '';
     });
+
     
     
     // --- ЭКСПОРТ ДЛЯ CAPACITOR APK (С НАТИВНЫМ СОХРАНЕНИЕМ) ---
