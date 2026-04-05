@@ -59,42 +59,66 @@ const makeFakeFile = (blob, fileName) => {
     catch (e) { blob.name = fileName; blob.lastModified = Date.now(); return blob; }
 };
 
-const blobToDataURL = (blob) => new Promise(res => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.readAsDataURL(blob);
-});
-
 // --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
 window.nativeSaveZip = async (blob, fileName) => {
     try {
         const btn = document.getElementById('exportLibraryBtn');
-        const chunkSize = 2 * 1024 * 1024; 
+        const chunkSize = 4 * 1024 * 1024; // Увеличили чанк до 4MB
         const totalChunks = Math.ceil(blob.size / chunkSize);
 
-        // Используем Directory.Data - эта системная папка официально разрешает 
-        // передачу файлов (Share) в Телеграм и другие приложения без ошибок прав доступа!
-        try { await Filesystem.deleteFile({ path: fileName, directory: Directory.Data }); } catch(e) {}
+        let currentDir = Directory.Documents;
+        let useShare = false;
+
+        // Проверяем прямой доступ в Documents
+        try {
+            await Filesystem.writeFile({ path: 'test.tmp', data: '1', directory: currentDir });
+            await Filesystem.deleteFile({ path: 'test.tmp', directory: currentDir });
+        } catch (e) {
+            currentDir = Directory.Data; 
+            useShare = true; 
+        }
+
+        try { await Filesystem.deleteFile({ path: fileName, directory: currentDir }); } catch(e) {}
         
         for (let i = 0; i < totalChunks; i++) {
             const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
-            const base64Chunk = await blobToDataURL(chunk).then(res => res.split(',')[1]);
+            
+            const base64Chunk = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const res = reader.result;
+                    resolve(res.substr(res.indexOf(',') + 1));
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(chunk);
+            });
 
             if (i === 0) {
-                await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: Directory.Data });
+                await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: currentDir });
             } else {
-                await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: Directory.Data });
+                await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: currentDir });
             }
+            
             if (btn) btn.innerHTML = `⏳ ЗАПИСЬ... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
+            
+            // ВАЖНО: Очистка памяти!
+            await new Promise(r => setTimeout(r, 20)); 
         }
 
-        if (btn) btn.innerHTML = '⏳ ВЫЗОВ МЕНЮ...';
-        
-        const fileUri = await Filesystem.getUri({ path: fileName, directory: Directory.Data });
-        await Share.share({ title: 'Бэкап Arcade Hub', text: 'Архив с играми.', url: fileUri.uri, dialogTitle: 'Сохранить файл' });
+        if (btn) btn.innerHTML = '⏳ ФИНИШ...';
+        // Ждем, пока система закроет файл на диске
+        await new Promise(r => setTimeout(r, 1000));
 
-        if (btn) btn.innerHTML = '✅ ГОТОВО';
-        if (typeof window.showToast === 'function') window.showToast(`Файл успешно передан`, 'success', 3000);
+        if (useShare) {
+            if (btn) btn.innerHTML = '⏳ МЕНЮ...';
+            const fileUri = await Filesystem.getUri({ path: fileName, directory: currentDir });
+            await Share.share({ title: 'Бэкап Arcade Hub', text: 'Архив с играми.', url: fileUri.uri, dialogTitle: 'Сохранить файл' });
+            if (btn) btn.innerHTML = '✅ ГОТОВО';
+        } else {
+            if (btn) btn.innerHTML = '✅ СОХРАНЕНО';
+            if (typeof window.showToast === 'function') window.showToast(`Файл успешно сохранен в папку "Документы"`, 'success', 4000);
+        }
+
         return true;
         
     } catch (err) {
@@ -179,7 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         let coverFile = covers[cleanName] || covers[baseName];
                         if (coverFile) {
-                            newFile._customCover = await blobToDataURL(coverFile);
+                            newFile._customCover = await new Promise((res, rej) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => res(reader.result);
+                                reader.readAsDataURL(coverFile);
+                            });
                         } else if (file._customCover) {
                             newFile._customCover = file._customCover;
                         }
@@ -198,7 +226,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         let coverFile = covers[cleanName] || covers[baseName];
                         if (coverFile) {
-                            newFile._customCover = await blobToDataURL(coverFile);
+                            newFile._customCover = await new Promise((res, rej) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => res(reader.result);
+                                reader.readAsDataURL(coverFile);
+                            });
                         } else if (file._customCover) {
                             newFile._customCover = file._customCover;
                         }
@@ -268,7 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (coverObj) {
                             let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
                             let imgBlob = new Blob([coverObj.data], {type: mime});
-                            newFile._customCover = await blobToDataURL(imgBlob);
+                            newFile._customCover = await new Promise((res, rej) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => res(reader.result);
+                                reader.readAsDataURL(imgBlob);
+                            });
                         } else if (file._customCover) {
                             newFile._customCover = file._customCover;
                         }
@@ -288,7 +324,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (coverObj) {
                             let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
                             let imgBlob = new Blob([coverObj.data], {type: mime});
-                            newFile._customCover = await blobToDataURL(imgBlob);
+                            newFile._customCover = await new Promise((res, rej) => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => res(reader.result);
+                                reader.readAsDataURL(imgBlob);
+                            });
                         } else if (file._customCover) {
                             newFile._customCover = file._customCover;
                         }
@@ -317,7 +357,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (coverObj) {
                                 let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
                                 let imgBlob = new Blob([coverObj.data], {type: mime});
-                                file._customCover = await blobToDataURL(imgBlob);
+                                file._customCover = await new Promise((res, rej) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => res(reader.result);
+                                    reader.readAsDataURL(imgBlob);
+                                });
                             }
                         }
                         await coreProcessSingleFile(file);
