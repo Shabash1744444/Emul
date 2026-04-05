@@ -17,7 +17,7 @@ App.addListener('backButton', async () => {
         if (now - lastBackPress < exitThreshold) {
             // ВТОРОЙ КЛИК: Выходим окончательно
             if (typeof window.executeCleanup === 'function') {
-                window.executeCleanup(true); // true значит "пропустить сохранение", т.к. уже сохранили при первом клике
+                window.executeCleanup(true); 
             }
             lastBackPress = 0;
         } else {
@@ -27,13 +27,11 @@ App.addListener('backButton', async () => {
             const isHtml = window.currentGame && window.currentGame.t === 'h';
             
             if (!isHtml && typeof window.saveGameState === 'function') {
-                // Если это НЕ HTML игра - сохраняем прогресс
                 await window.saveGameState(true); 
                 if (typeof window.showToast === 'function') {
                     window.showToast("Прогресс сохранен. Нажмите 'Назад' еще раз для выхода", "info", 2000);
                 }
             } else {
-                // HTML игры - только предупреждаем
                 if (typeof window.showToast === 'function') {
                     window.showToast("Нажмите еще раз для выхода", "info", 2000);
                 }
@@ -90,16 +88,51 @@ const makeFakeFile = (blob, fileName) => {
     }
 };
 
-// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" + SHARE ---
+// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
 window.nativeSaveZip = async (blob, fileName) => {
     try {
         const btn = document.getElementById('exportLibraryBtn');
-        
-        // Разбиваем на мелкие куски по 2МБ, чтобы мост Capacitor не захлебнулся
         const chunkSize = 2 * 1024 * 1024; 
         const totalChunks = Math.ceil(blob.size / chunkSize);
         
-        // Очищаем старый файл из кэша, если он завис с прошлого раза
+        let savedDirectly = false;
+
+        // ВАРИАНТ 1: Пытаемся записать файл напрямую в папку "Документы"
+        try {
+            // Очищаем старый файл, если есть
+            try { await Filesystem.deleteFile({ path: fileName, directory: Directory.Documents }); } catch(e) {}
+            
+            for (let i = 0; i < totalChunks; i++) {
+                const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
+                const base64Chunk = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(chunk);
+                });
+
+                if (i === 0) {
+                    await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: Directory.Documents });
+                } else {
+                    await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: Directory.Documents });
+                }
+                if (btn) btn.innerHTML = `⏳ ЗАПИСЬ... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
+            }
+            savedDirectly = true;
+        } catch (directErr) {
+            console.log("Система заблокировала прямой доступ к Документам. Используем меню Share.", directErr);
+        }
+
+        // Если прямой доступ сработал
+        if (savedDirectly) {
+            if (btn) btn.innerHTML = '✅ СОХРАНЕНО';
+            if (typeof window.showToast === 'function') {
+                window.showToast(`Архив ${fileName} сохранен в папку "Документы"`, 'success', 4000);
+            }
+            return true;
+        }
+
+        // ВАРИАНТ 2: Фолбэк (Если Android заблокировал прямую запись)
         try { await Filesystem.deleteFile({ path: fileName, directory: Directory.Cache }); } catch(e) {}
         
         for (let i = 0; i < totalChunks; i++) {
@@ -111,7 +144,6 @@ window.nativeSaveZip = async (blob, fileName) => {
                 reader.readAsDataURL(chunk);
             });
 
-            // Пишем в Cache - туда всегда есть права без запросов у пользователя
             if (i === 0) {
                 await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: Directory.Cache });
             } else {
@@ -122,21 +154,21 @@ window.nativeSaveZip = async (blob, fileName) => {
 
         if (btn) btn.innerHTML = '⏳ ВЫЗОВ МЕНЮ...';
 
-        // Вызываем системное диалоговое окно (Поделиться / Сохранить в)
         const fileUri = await Filesystem.getUri({ path: fileName, directory: Directory.Cache });
         await Share.share({
             title: 'Бэкап Arcade Hub',
             text: 'Архив с вашими играми.',
             url: fileUri.uri,
-            dialogTitle: 'Куда сохранить бэкап?'
+            dialogTitle: 'Сохранить файл бэкапа'
         });
 
         if (typeof window.showToast === 'function') {
-            window.showToast(`Готово! Файл передан системе.`, 'success', 3000);
+            window.showToast(`Файл передан системе`, 'success', 3000);
         }
         return true;
+        
     } catch (err) {
-        console.error('Ошибка сохранения Capacitor Filesystem/Share:', err);
+        console.error('Ошибка сохранения Capacitor Filesystem:', err);
         return false;
     }
 };
@@ -160,76 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.open(targetUrl, '_blank');
         });
     });
-});
 
-// --- СКАНЕР ПАПКИ ЗАГРУЗОК (ОТКЛЮЧЕН, НО РАБОЧИЙ) ---
-async function scanDownloadFolder() {
-    let allFiles = [];
-    async function walk(currentPath, depth) {
-        if (depth > 3) return; 
-        try {
-            let dir = await Filesystem.readdir({ path: currentPath, directory: Directory.ExternalStorage });
-            let filesArray = dir.files || [];
-            for (let i = 0; i < filesArray.length; i++) {
-                let item = filesArray[i];
-                let name = typeof item === 'string' ? item : item.name;
-                let type = typeof item === 'string' ? 'unknown' : item.type;
-                let fullPath = currentPath === 'Download' ? `Download/${name}` : `${currentPath}/${name}`;
-                
-                if (type === 'directory' || (typeof item === 'object' && item.type === 'directory')) {
-                    await walk(fullPath, depth + 1);
-                } else if (type === 'file' || (typeof item === 'object' && item.type === 'file')) {
-                    allFiles.push({ name: name, path: fullPath });
-                } else {
-                    try {
-                        let stat = await Filesystem.stat({ path: fullPath, directory: Directory.ExternalStorage });
-                        if (stat.type === 'directory') await walk(fullPath, depth + 1);
-                        else allFiles.push({ name: name, path: fullPath });
-                    } catch(e) {
-                        allFiles.push({ name: name, path: fullPath });
-                    }
-                }
-            }
-        } catch(e) { console.error("Ошибка чтения папки:", currentPath, e); }
-    }
-    await walk('Download', 0);
-    return allFiles;
-}
-
-window.isRadarRunning = false;
-async function runDownloadRadar(manualTrigger = true) {
-    console.log("📡 Сканер загрузок временно отключен. Используйте ручное добавление игр.");
-    return;
-}
-window.runDownloadRadar = runDownloadRadar;
-
-// --- СУРОВЫЙ ФИЛЬТР МУСОРА (ПОЛНАЯ ВЕРСИЯ) ---
-function isRealRom(fileName, fileDataU8) {
-    const lower = fileName.toLowerCase();
-    const ext = lower.split('.').pop();
-    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
-
-    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual', 'caching', 'code_of_conduct', 'changes', 'contributing', 'contributors'];
-    const baseName = lower.replace(/\.[^/.]+$/, '');
-    if (trashPatterns.some(p => baseName.includes(p))) return false;
-
-    if (fileDataU8.length < 4096) return false;
-
-    let isText = true;
-    let checkLen = Math.min(fileDataU8.length, 100);
-    for(let i = 0; i < checkLen; i++) {
-        let b = fileDataU8[i];
-        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
-            isText = false; break;
-        }
-    }
-    if (isText) return false;
-
-    return true; 
-}
-
-// --- РАСШИРЕННЫЙ ПАРСЕР АРХИВОВ (DOS + RAR/7Z/ZIP + ROMS) ---
-document.addEventListener('DOMContentLoaded', () => {
     const initExtendedProcessor = () => {
         if (typeof window.processSingleFile !== 'function') {
             setTimeout(initExtendedProcessor, 50);
@@ -375,3 +338,28 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     initExtendedProcessor();
 });
+
+// --- СУРОВЫЙ ФИЛЬТР МУСОРА ---
+function isRealRom(fileName, fileDataU8) {
+    const lower = fileName.toLowerCase();
+    const ext = lower.split('.').pop();
+    if (!['nes', 'md', 'sfc', 'smc', 'gen', 'bin', 'ngp', 'ngc'].includes(ext)) return false;
+
+    const trashPatterns = ['readme', 'aliases', 'utech', 'info', 'license', 'manual', 'caching', 'code_of_conduct', 'changes', 'contributing', 'contributors'];
+    const baseName = lower.replace(/\.[^/.]+$/, '');
+    if (trashPatterns.some(p => baseName.includes(p))) return false;
+
+    if (fileDataU8.length < 4096) return false;
+
+    let isText = true;
+    let checkLen = Math.min(fileDataU8.length, 100);
+    for(let i = 0; i < checkLen; i++) {
+        let b = fileDataU8[i];
+        if (!( (b >= 32 && b < 127) || b === 0x0A || b === 0x0D || b === 0x09 )) {
+            isText = false; break;
+        }
+    }
+    if (isText) return false;
+
+    return true; 
+}
