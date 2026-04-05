@@ -59,27 +59,34 @@ const makeFakeFile = (blob, fileName) => {
     catch (e) { blob.name = fileName; blob.lastModified = Date.now(); return blob; }
 };
 
-// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
+// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" (С ПРАВКАМИ ОТ KIMI) ---
 window.nativeSaveZip = async (blob, fileName) => {
+    console.log(`[Export] Старт сохранения: ${fileName}, размер: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+    const btn = document.getElementById('exportLibraryBtn');
+    
     try {
-        const btn = document.getElementById('exportLibraryBtn');
-        const chunkSize = 4 * 1024 * 1024; // Увеличили чанк до 4MB
+        const chunkSize = 4 * 1024 * 1024; // Чанки по 4MB
         const totalChunks = Math.ceil(blob.size / chunkSize);
 
         let currentDir = Directory.Documents;
         let useShare = false;
 
-        // Проверяем прямой доступ в Documents
+        // Проверяем прямой доступ в Documents. Если Android 11+ заблокирует - падаем в catch
         try {
+            console.log('[Export] Тест доступа к Directory.Documents...');
             await Filesystem.writeFile({ path: 'test.tmp', data: '1', directory: currentDir });
             await Filesystem.deleteFile({ path: 'test.tmp', directory: currentDir });
+            console.log('[Export] Доступ разрешен, используем Documents напрямую.');
         } catch (e) {
+            console.log('[Export] Ошибка доступа к Documents, переключаемся на Directory.Data + Share API.');
             currentDir = Directory.Data; 
             useShare = true; 
         }
 
+        // Удаляем старый файл, если он там застрял
         try { await Filesystem.deleteFile({ path: fileName, directory: currentDir }); } catch(e) {}
         
+        console.log(`[Export] Начинаем запись. Всего чанков: ${totalChunks}`);
         for (let i = 0; i < totalChunks; i++) {
             const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
             
@@ -101,30 +108,40 @@ window.nativeSaveZip = async (blob, fileName) => {
             
             if (btn) btn.innerHTML = `⏳ ЗАПИСЬ... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
             
-            // ВАЖНО: Очистка памяти!
-            await new Promise(r => setTimeout(r, 20)); 
+            // ВАЖНО: Увеличенная задержка (50мс) для освобождения event loop и очистки памяти
+            await new Promise(r => setTimeout(r, 50)); 
         }
 
         if (btn) btn.innerHTML = '⏳ ФИНИШ...';
-        // Ждем, пока система закроет файл на диске
+        console.log('[Export] Файл собран на диске. Ожидание закрытия потоков...');
         await new Promise(r => setTimeout(r, 1000));
 
         if (useShare) {
             if (btn) btn.innerHTML = '⏳ МЕНЮ...';
             const fileUri = await Filesystem.getUri({ path: fileName, directory: currentDir });
-            await Share.share({ title: 'Бэкап Arcade Hub', text: 'Архив с играми.', url: fileUri.uri, dialogTitle: 'Сохранить файл' });
+            console.log('[Export] Вызов Share API с URI:', fileUri.uri);
+            
+            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Передаем массив files, а не url!
+            await Share.share({ 
+                title: 'Бэкап Arcade Hub', 
+                files: [fileUri.uri], 
+                dialogTitle: 'Сохранить файл' 
+            });
+            
             if (btn) btn.innerHTML = '✅ ГОТОВО';
         } else {
             if (btn) btn.innerHTML = '✅ СОХРАНЕНО';
             if (typeof window.showToast === 'function') window.showToast(`Файл успешно сохранен в папку "Документы"`, 'success', 4000);
+            console.log('[Export] Успешно сохранено напрямую.');
         }
 
         return true;
         
     } catch (err) {
-        console.error('Ошибка сохранения:', err); 
+        console.error('[Export] Критическая ошибка сохранения:', err.message, err.stack); 
         const btn = document.getElementById('exportLibraryBtn');
         if (btn) btn.innerHTML = '⚠️ ОШИБКА';
+        if (typeof window.showToast === 'function') window.showToast(`Ошибка сохранения: ${err.message}`, 'error', 4000);
         return false;
     }
 };
