@@ -97,7 +97,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 }
 @keyframes subPulse { 0%, 100% { opacity: 0.6; } 15% { opacity: 0.9; } 60% { opacity: 0.4; } }
 
-/* --- ПАКМАН И КИБЕР-ХЕДЕР --- */
+/* --- ПАКМАН И КИБЕР-ХЕДЕР (ПОЛНЫЙ ИСПРАВЛЕННЫЙ БЛОК) --- */
 .retro-glass {
     background: var(--glass-bg) !important;
     backdrop-filter: blur(25px) saturate(200%) !important; -webkit-backdrop-filter: blur(25px) saturate(200%) !important;
@@ -105,36 +105,88 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     box-shadow: 0 4px 15px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.04) !important;
 }
 
-.meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0 25px 0; margin-bottom: 20px; border-bottom: 2px dashed var(--neon-blue); position: relative; overflow: hidden; border-radius: 0 0 20px 20px; margin-left: -15px; margin-right: -15px; background: rgba(0,0,0,0.4); }
-.crazy-titles { display: flex; gap: 8px; font-weight: 900; font-size: 16px; font-style: italic; text-transform: uppercase; margin-bottom: 5px; flex-wrap: nowrap; justify-content: center; position: relative; z-index: 3; width: 100%; }
+.meme-header { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 40px 0 20px 0; 
+    margin-bottom: 20px; 
+    border-bottom: 2px dashed var(--neon-blue); 
+    position: relative; 
+    overflow: hidden; 
+    border-radius: 0 0 20px 20px; 
+    margin-left: -15px; 
+    margin-right: -15px; 
+    background: rgba(0,0,0,0.4); 
+}
 
-/* Анимации: Логотипы ВЫПРЫГИВАЮТ после Пакмана */
-@keyframes pop1 { 0%, 15% { opacity: 0; transform: scale(0.1) rotate(-6deg); } 20%, 95% { opacity: 1; transform: scale(1.1) rotate(-6deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop2 { 0%, 25% { opacity: 0; transform: scale(0.1) rotate(5deg); } 30%, 95% { opacity: 1; transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop3 { 0%, 35% { opacity: 0; transform: scale(0.1) rotate(-3deg); } 40%, 95% { opacity: 1; transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop4 { 0%, 45% { opacity: 0; transform: scale(0.1) rotate(4deg); } 50%, 95% { opacity: 1; transform: scale(1.1) rotate(4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop5 { 0%, 55% { opacity: 0; transform: scale(0.1) rotate(-2deg); } 60%, 95% { opacity: 1; transform: scale(1.1) rotate(-2deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop6 { 0%, 65% { opacity: 0; transform: scale(0.1) rotate(-4deg); } 70%, 95% { opacity: 1; transform: scale(1.1) rotate(-4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
-@keyframes pop7 { 0%, 75% { opacity: 0; transform: scale(0.1) rotate(3deg); } 80%, 95% { opacity: 1; transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+.pacman-stage {
+    position: relative;
+    width: 100%;
+    max-width: 360px; /* Сузили коридор для идеальной синхры */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
 
-.t-dendy { color: #ef4444; animation: pop1 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-mega { color: #3b82f6; animation: pop2 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-snes { color: #8b5cf6; animation: pop3 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-ngp { color: #06b6d4; animation: pop4 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-dos { color: #10b981; animation: pop5 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-html { color: #f59e0b; font-size: 14px; animation: pop6 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
-.t-gba { color: #d946ef; animation: pop7 5s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.crazy-titles { 
+    display: flex; 
+    gap: 8px; /* Вернули оригинальный отступ между словами */
+    font-weight: 900; 
+    font-size: 16px; 
+    font-style: italic; 
+    text-transform: uppercase; 
+    margin-bottom: 5px; 
+    flex-wrap: nowrap; 
+    white-space: nowrap; 
+    justify-content: center; 
+    position: relative; 
+    z-index: 1; 
+    width: 100%; 
+}
 
-.pacman-container { position: absolute; top: 50%; left: 0; width: 100%; height: 35px; margin-top: -17px; overflow: hidden; z-index: 4; pointer-events: none; }
+.crazy-titles span {
+    white-space: nowrap;
+    display: inline-block;
+}
 
+/* Идеально подогнанные тайминги (Синхронность с Пакманом) */
+@keyframes pop1 { 0%, 15% { opacity: 0; transform: scale(0.1) rotate(-6deg); } 17%, 95% { opacity: 1; transform: scale(1.1) rotate(-6deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop2 { 0%, 28% { opacity: 0; transform: scale(0.1) rotate(5deg); } 30%, 95% { opacity: 1; transform: scale(1.1) rotate(5deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop3 { 0%, 40% { opacity: 0; transform: scale(0.1) rotate(-3deg); } 42%, 95% { opacity: 1; transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop4 { 0%, 53% { opacity: 0; transform: scale(0.1) rotate(4deg); } 55%, 95% { opacity: 1; transform: scale(1.1) rotate(4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop5 { 0%, 65% { opacity: 0; transform: scale(0.1) rotate(-2deg); } 67%, 95% { opacity: 1; transform: scale(1.1) rotate(-2deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop6 { 0%, 75% { opacity: 0; transform: scale(0.1) rotate(-4deg); } 77%, 95% { opacity: 1; transform: scale(1.1) rotate(-4deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+@keyframes pop7 { 0%, 84% { opacity: 0; transform: scale(0.1) rotate(3deg); } 86%, 95% { opacity: 1; transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 0 8px currentColor); } 96%, 100% { opacity: 0; } }
+
+/* Применяем 6s к буквам */
+.t-dendy { color: #ef4444; animation: pop1 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-mega { color: #3b82f6; animation: pop2 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-snes { color: #8b5cf6; animation: pop3 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-ngp { color: #06b6d4; animation: pop4 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-dos { color: #10b981; animation: pop5 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-html { color: #f59e0b; font-size: 14px; animation: pop6 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+.t-gba { color: #d946ef; animation: pop7 6s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite; }
+
+/* УБРАЛИ overflow: hidden, чтобы Пакман не обрезался в конце, добавили z-index: 10 */
+.pacman-container { 
+    position: absolute; top: 50%; left: 0; width: 100%; height: 35px; margin-top: -17px; 
+    overflow: visible; z-index: 10; pointer-events: none; 
+}
+
+/* Замедлили бег до 6s, жевание до 0.35s */
 .pacman { 
     width: 26px; height: 26px; border-radius: 50%; 
     background: radial-gradient(circle at 13px 6px, #fff 2px, transparent 2px), #fde047; 
     position: absolute; top: 2px; left: 0; z-index: 5; 
     clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); 
-    animation: chomp 0.25s infinite alternate, movePacman 5s linear infinite; 
+    animation: chomp 0.35s infinite alternate, movePacman 6s linear infinite; 
     box-shadow: inset 0 0 10px rgba(0,0,0,0.3); 
 }
+
 .dot-track { 
     position: absolute; top: 13px; left: 0; width: 100%; height: 6px; z-index: 1; 
     background: linear-gradient(90deg, #ef4444, #3b82f6, #8b5cf6, #06b6d4, #10b981, #f59e0b, #d946ef);
@@ -142,15 +194,32 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     -webkit-mask-size: 30px 6px; -webkit-mask-repeat: repeat-x;
     mask-image: radial-gradient(circle, #fff 3px, transparent 3px);
     mask-size: 30px 6px; mask-repeat: repeat-x;
-    animation: eatDots 5s linear infinite; 
+    animation: eatDots 6s linear infinite; 
     filter: drop-shadow(0 0 4px rgba(255,255,255,0.6)); 
 }
-.om-nom { position: absolute; color: #eab308; font-weight: 900; font-size: 13px; animation: floatNom 0.8s infinite alternate; left: 50%; bottom: 2px; z-index: 6; text-shadow: 2px 2px 0 #000; transform: translateX(-50%); white-space: nowrap; }
 
+.om-nom { 
+    position: absolute; 
+    color: #eab308; 
+    font-weight: 900; 
+    font-size: 13px; 
+    animation: floatNom 0.8s infinite alternate; 
+    left: 50%; 
+    bottom: 25px; /* Опустили ниже */
+    z-index: 6; 
+    text-shadow: 2px 2px 0 #000; 
+    transform: translateX(-50%); 
+    white-space: nowrap; 
+}
+
+/* КЕЙФРЕЙМЫ ПАКМАНА */
 @keyframes chomp { 100% { clip-path: polygon(100% 50%, 50% 50%, 100% 50%, 100% 0, 0 0, 0 100%, 100% 100%); } }
 @keyframes movePacman { 0% { left: -10%; transform: scaleX(1); } 100% { left: 110%; transform: scaleX(1); } }
 @keyframes eatDots { 0%, 8% { clip-path: inset(0 0 0 0); } 92%, 100% { clip-path: inset(0 0 0 100%); } }
 @keyframes floatNom { 0% { transform: translate(-50%, 0) scale(1); opacity: 1; } 100% { transform: translate(-50%, -6px) scale(1.1); opacity: 0.7; } }
+
+
+
 
 
 /* --- КНОПКИ ДЕЙСТВИЙ (Стекло + Неон) --- */
@@ -571,21 +640,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 <div id="menuScreen">
     <div class="meme-header">
-        <div class="om-nom">ОМ НОМ НОМ!</div>
-        <div class="pacman-container">
-            <div class="dot-track"></div>
-            <div class="pacman"></div>
-        </div>
-        <div class="crazy-titles">
-            <span class="t-dendy">ДЕНДИ</span>
-            <span class="t-mega">СЕГА</span>
-            <span class="t-snes">СНЕС</span>
-            <span class="t-ngp">НЕО ГЕО</span>
-            <span class="t-dos">ДОС</span>
-            <span class="t-html">HTML</span>
-            <span class="t-gba">ГБА</span>
+        <div class="pacman-stage"> <!-- Наш неразрушимый аквариум -->
+            <div class="om-nom">ОМ НОМ НОМ!</div>
+            <div class="pacman-container">
+                <div class="dot-track"></div>
+                <div class="pacman"></div>
+            </div>
+            <div class="crazy-titles">
+                <span class="t-dendy">ДЕНДИ</span>
+                <span class="t-mega">СЕГА</span>
+                <span class="t-snes">СНЕС</span>
+                <span class="t-ngp">НЕО ГЕО</span>
+                <span class="t-dos">ДОС</span>
+                <span class="t-html">HTML</span>
+                <span class="t-gba">ГБА</span>
+            </div>
         </div>
     </div>
+
+
     
     <div class="top-actions">
         <button id="mainImportBtn" class="action-btn" style="flex: 1; padding: 0 5px;">
