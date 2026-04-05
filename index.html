@@ -308,16 +308,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 }
 
 
-#fkeys-panel { position: fixed; top: calc(65px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; max-width: 90%; }
+#fkeys-panel { position: fixed; top: calc(95px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; display: none; gap: 5px; background: rgba(10,10,15,0.85); backdrop-filter: blur(10px); padding: 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; max-width: 90%; }
+
 .f-btn { padding: 8px 12px; background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; }
 .f-btn:active { background: var(--neon-blue); color:#000; box-shadow: 0 0 15px var(--neon-blue); }
 
 /* --- ПАНЕЛИ НАСТРОЕК В ИГРЕ --- */
 #screen-edit-panel, #pad-edit-panel { 
     position: absolute; /* ВАЖНО: absolute вместо fixed спасает от багов обрезки экрана */
-    top: calc(85px + env(safe-area-inset-top, 0px)); 
+    top: calc(95px + env(safe-area-inset-top, 0px)); 
     left: 15px; 
-    z-index: 9998; 
+    z-index: 9998;  
     display: none; 
     flex-direction: column; 
     gap: 6px; 
