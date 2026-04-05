@@ -4038,10 +4038,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             else if (['ngp','ngc'].includes(rawExt)) sysType = 'ngp'; 
             else if (['gba','gbc','gb'].includes(rawExt)) sysType = 'gba'; 
         } 
-        else if (fileName.endsWith('.zip')) { 
+                else if (fileName.endsWith('.zip')) { 
             const analysis = await analyzeZipAndCovers(persistentBlob);
             if(analysis) { 
-                gameType = analysis.type; romExt = analysis.ext; sysType = analysis.sys; coverData = analysis.cover; 
+                gameType = analysis.type; romExt = analysis.ext; sysType = analysis.sys; 
+                coverData = coverData || analysis.cover; // ИЗЯЩНОЕ РЕШЕНИЕ
+
                 if(gameType === 'n') gameIcon = '🎮'; 
                 else if(gameType === 'l') gameIcon = '🕹️'; 
                 else if(gameType === 'd') { gameIcon = '💾'; execCmd = analysis.exec; controlMode = 'pad'; } 
@@ -4678,3 +4680,4 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
+.
