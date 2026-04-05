@@ -4141,56 +4141,75 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
     
     
-    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK (С НАТИВНЫМ СОХРАНЕНИЕМ) ---
+    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK (СОРТИРОВКА ПО ПЛАТФОРМАМ И РАЗБИВКА ПО 200 МБ) ---
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
-        const origTxt = isSelective ? '📦 В ZIP' : '📦 РЕЗЕРВНАЯ КОПИЯ ИГР (ZIP)';
-        const fileName = isSelective ? "Selected_Games.zip" : "ArcadeHub_Backup.zip";
-        
+
+        // Вспомогательная функция для определения платформы
+        const getPlatformName = (g) => {
+            if (g.t === 'd') return 'DOS';
+            if (g.t === 'h') return 'HTML';
+            const ext = (g.ext || '').toLowerCase();
+            if (['nes'].includes(ext)) return 'DENDY';
+            if (['md', 'gen', 'bin'].includes(ext)) return 'SEGA';
+            if (['sfc', 'smc'].includes(ext)) return 'SNES';
+            if (['gba'].includes(ext)) return 'GBA';
+            if (['ngp', 'ngc'].includes(ext)) return 'NG';
+            if (typeof g.t === 'string' && g.t.length > 1) return g.t.toUpperCase();
+            return 'ARCADE';
+        };
+
         // --- ВТОРОЙ КЛИК: Нативное сохранение ---
         if (btn.dataset.readyToDownload === 'true') {
-            const blob = window._lastZipBlob;
-            if (!blob) return;
+            const items = window._lastZipBlobs; // Теперь это массив объектов { blob, name }
+            if (!items || items.length === 0) return;
 
             btn.innerHTML = '⏳ СОХРАНЕНИЕ...';
             btn.style.pointerEvents = 'none';
 
-            // Если мы внутри Capacitor (функция подтянулась из JS-файла)
-            if (typeof window.nativeSaveZip === 'function') {
-                const success = await window.nativeSaveZip(blob, fileName);
-                if (success) {
-                    btn.innerHTML = '✅ ГОТОВО';
-                } else {
-                    btn.innerHTML = '⚠️ ОШИБКА';
-                    btn.style.background = '#ef4444';
+            for (let i = 0; i < items.length; i++) {
+                let fileName = items[i].name;
+                let blob = items[i].blob;
+                
+                if (items.length > 1) {
+                    btn.innerHTML = `⏳ ПИШУ ${i + 1} ИЗ ${items.length}...`;
                 }
-            } else {
-                // Резервный метод для обычного браузера на ПК
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                btn.innerHTML = '✅ СКАЧАНО';
+
+                if (typeof window.nativeSaveZip === 'function') {
+                    const success = await window.nativeSaveZip(blob, fileName);
+                    if (!success) {
+                        btn.innerHTML = '⚠️ ОШИБКА';
+                        btn.style.background = '#ef4444';
+                    }
+                    // Даем файловой системе 2 секунды на сохранение перед следующим файлом
+                    await new Promise(r => setTimeout(r, 2000));
+                } else {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    await new Promise(r => setTimeout(r, 1500)); 
+                }
             }
 
-            // Возвращаем кнопку в исходное состояние через 3 секунды
+            btn.innerHTML = '✅ ГОТОВО';
             setTimeout(() => {
-                btn.innerHTML = origTxt;
+                btn.innerHTML = '📦 В ZIP';
                 btn.dataset.readyToDownload = 'false';
-                btn.style.background = 'rgba(15, 118, 110, 0.4)';
+                btn.style.background = 'rgba(16, 185, 129, 0.4)';
                 btn.style.pointerEvents = 'auto';
             }, 3000);
             
             return;
         }
 
-        // --- ПЕРВЫЙ КЛИК: Запуск сборки архива ---
+        // --- ПЕРВЫЙ КЛИК: Запуск сборки архивов ---
         const confirmMsg = isSelective 
-            ? `Собрать в ZIP только выбранные игры (${selectedGamesForDelete.size} шт.)?` 
-            : `Ничего не выбрано. Собрать ВЕСЬ каталог игр в ZIP? Это займет время.`;
+            ? `Собрать выбранные игры (${selectedGamesForDelete.size} шт.)? Они будут разбиты по платформам.` 
+            : `Собрать ВСЕ игры в ZIP? Они будут рассортированы по платформам (SEGA, DOS и т.д.) и разбиты на части по ~200 МБ.`;
 
         if (!confirm(confirmMsg)) return;
         
@@ -4203,43 +4222,108 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             
             req.onsuccess = async () => {
                 let games = req.result;
-                if (isSelective) {
-                    games = games.filter(g => selectedGamesForDelete.has(g.id));
-                }
-                
-                let zipData = {};
-                let current = 0;
+                if (isSelective) games = games.filter(g => selectedGamesForDelete.has(g.id));
 
+                if (games.length === 0) {
+                    alert("Нет игр для выгрузки!");
+                    btn.innerHTML = '📦 В ZIP'; 
+                    btn.style.pointerEvents = 'auto';
+                    return;
+                }
+
+                // 1. Группируем игры по платформам
+                const groupedGames = {};
                 for (let g of games) {
-                    current++;
-                    btn.innerHTML = `⏳ ПАКУЮ: ${current} / ${games.length}`;
-                    
-                    const buffer = await readBlob(g.fileBlob);
-                    let baseName = g.n.replace(/[/\\?%*:|"<>]/g, '-'); 
-                    let gameFileName = baseName + '.' + (g.ext || 'bin');
-                    if (g.t === 'd') gameFileName = baseName + '.zip';
-                    
-                    zipData[gameFileName] = new Uint8Array(buffer);
-
-                    if (g.cover && g.cover.startsWith('data:image')) {
-                        try {
-                            const response = await fetch(g.cover);
-                            const imgBlob = await response.blob();
-                            zipData[baseName + '.png'] = new Uint8Array(await imgBlob.arrayBuffer());
-                        } catch(e) {}
-                    }
-                    if (current % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
+                    let platform = getPlatformName(g);
+                    if (!groupedGames[platform]) groupedGames[platform] = [];
+                    groupedGames[platform].push(g);
                 }
 
-                btn.innerHTML = '⚡ СЖАТИЕ...';
-                await new Promise(r => setTimeout(r, 100));
+                const MAX_PART_SIZE = 200 * 1024 * 1024; // Лимит: 200 МБ
+                let zipItems = []; // Хранилище готовых архивов { blob, name }
+                let totalGamesProcessed = 0;
 
-                const zipped = fflate.zipSync(zipData, { level: 0 }); // Без сжатия!
-                const blob = new Blob([zipped], { type: 'application/zip' });
-                
-                window._lastZipBlob = blob; // Сохраняем архив в память
+                // 2. Обрабатываем каждую платформу отдельно
+                for (let platform in groupedGames) {
+                    let platformGames = groupedGames[platform];
+                    let currentZipData = {};
+                    let currentSize = 0;
+                    let partNumber = 1;
 
-                btn.innerHTML = `✅ СКАЧАТЬ (${(blob.size/1024/1024).toFixed(1)}MB)`; 
+                    for (let g of platformGames) {
+                        totalGamesProcessed++;
+                        btn.innerHTML = `⏳ [${platform}] ${totalGamesProcessed}/${games.length}`;
+                        
+                        const buffer = await readBlob(g.fileBlob);
+                        let itemSize = buffer.byteLength;
+                        let coverBytes = null;
+
+                        let baseName = g.n.replace(/[/\\?%*:|"<>]/g, '-'); 
+                        let gameFileName = baseName + '.' + (g.ext || 'bin');
+                        if (g.t === 'd') gameFileName = baseName + '.zip';
+                        if (g.t === 'h') gameFileName = baseName + '.html';
+
+                        // Конвертация картинки в биты
+                        if (g.cover && g.cover.startsWith('data:image')) {
+                            try {
+                                const b64Data = g.cover.split(',')[1];
+                                const binaryStr = window.atob(b64Data);
+                                const len = binaryStr.length;
+                                coverBytes = new Uint8Array(len);
+                                for (let i = 0; i < len; i++) coverBytes[i] = binaryStr.charCodeAt(i);
+                                itemSize += len;
+                            } catch(e) {}
+                        }
+
+                        // Если пачка платформы превышает 200 МБ - пакуем её
+                        if (currentSize + itemSize > MAX_PART_SIZE && Object.keys(currentZipData).length > 0) {
+                            btn.innerHTML = `⚡ ПАКУЮ ${platform} (ЧАСТЬ ${partNumber})...`;
+                            await new Promise(r => setTimeout(r, 50));
+                            
+                            const zipped = fflate.zipSync(currentZipData, { level: 0 }); // Без сжатия
+                            zipItems.push({
+                                blob: new Blob([zipped], { type: 'application/zip' }),
+                                name: `${platform}_Part_${partNumber}.zip`
+                            });
+                            
+                            partNumber++;
+                            currentZipData = {}; // Очищаем память
+                            currentSize = 0;
+                        }
+
+                        // Добавляем игру в текущую пачку
+                        currentZipData[gameFileName] = new Uint8Array(buffer);
+                        if (coverBytes) {
+                            const mime = g.cover.split(';')[0].split(':')[1];
+                            const ext = mime === 'image/png' ? '.png' : '.jpg';
+                            currentZipData[baseName + ext] = coverBytes;
+                        }
+                        currentSize += itemSize;
+
+                        // Пауза для интерфейса
+                        if (totalGamesProcessed % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
+                    }
+
+                    // Упаковываем остатки текущей платформы
+                    if (Object.keys(currentZipData).length > 0) {
+                        btn.innerHTML = `⚡ ПАКУЮ ${platform} ФИНАЛ...`;
+                        await new Promise(r => setTimeout(r, 50));
+                        const zipped = fflate.zipSync(currentZipData, { level: 0 });
+                        
+                        // Если часть всего одна, называем красиво "SEGA_Games.zip"
+                        let finalName = partNumber === 1 ? `${platform}_Games.zip` : `${platform}_Part_${partNumber}.zip`;
+                        
+                        zipItems.push({
+                            blob: new Blob([zipped], { type: 'application/zip' }),
+                            name: finalName
+                        });
+                    }
+                }
+
+                window._lastZipBlobs = zipItems; // Сохраняем массив готовых объектов
+
+                const totalMb = zipItems.reduce((acc, item) => acc + item.blob.size, 0) / 1024 / 1024;
+                btn.innerHTML = `✅ СКАЧАТЬ (${zipItems.length}шт, ~${Math.round(totalMb)}MB)`; 
                 btn.style.background = '#d97706'; 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
@@ -4248,13 +4332,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             console.error(e);
             btn.innerHTML = '⚠️ ОШИБКА'; 
             setTimeout(() => { 
-                btn.innerHTML = origTxt; 
-                btn.style.background = 'rgba(15, 118, 110, 0.4)'; 
+                btn.innerHTML = '📦 В ZIP'; 
+                btn.style.background = 'rgba(16, 185, 129, 0.4)'; 
                 btn.style.pointerEvents = 'auto'; 
             }, 3000);
         }
     }
-
 
 
 
