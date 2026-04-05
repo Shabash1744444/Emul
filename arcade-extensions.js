@@ -4,7 +4,7 @@ import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { Share } from '@capacitor/share';
 
-// --- ЗАЩИТА КНОПКИ "НАЗАД" (ДВОЙНОЙ КЛИК) ---
+// --- ЗАЩИТА КНОПКИ "НАЗАД" ---
 let lastBackPress = 0;
 const exitThreshold = 2000;
 
@@ -59,9 +59,9 @@ const makeFakeFile = (blob, fileName) => {
     catch (e) { blob.name = fileName; blob.lastModified = Date.now(); return blob; }
 };
 
-// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" (С ПРАВКАМИ ОТ KIMI) ---
+// --- НАДЕЖНОЕ СОХРАНЕНИЕ ГИГАНТСКИХ ФАЙЛОВ "КУСОЧКАМИ" ---
 window.nativeSaveZip = async (blob, fileName) => {
-    console.log(`[Export] Старт сохранения: ${fileName}, размер: ${(blob.size / 1024 / 1024).toFixed(2)} MB`);
+    console.log(`[Export] Старт сохранения: ${fileName}`);
     const btn = document.getElementById('exportLibraryBtn');
     
     try {
@@ -71,57 +71,40 @@ window.nativeSaveZip = async (blob, fileName) => {
         let currentDir = Directory.Documents;
         let useShare = false;
 
-        // Проверяем прямой доступ в Documents. Если Android 11+ заблокирует - падаем в catch
         try {
-            console.log('[Export] Тест доступа к Directory.Documents...');
             await Filesystem.writeFile({ path: 'test.tmp', data: '1', directory: currentDir });
             await Filesystem.deleteFile({ path: 'test.tmp', directory: currentDir });
-            console.log('[Export] Доступ разрешен, используем Documents напрямую.');
         } catch (e) {
-            console.log('[Export] Ошибка доступа к Documents, переключаемся на Directory.Data + Share API.');
-            currentDir = Directory.Data; 
+            currentDir = Directory.Cache; 
             useShare = true; 
         }
 
-        // Удаляем старый файл, если он там застрял
         try { await Filesystem.deleteFile({ path: fileName, directory: currentDir }); } catch(e) {}
         
-        console.log(`[Export] Начинаем запись. Всего чанков: ${totalChunks}`);
         for (let i = 0; i < totalChunks; i++) {
             const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
             
             const base64Chunk = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onloadend = () => {
-                    const res = reader.result;
-                    resolve(res.substr(res.indexOf(',') + 1));
-                };
+                reader.onloadend = () => resolve(reader.result.substr(reader.result.indexOf(',') + 1));
                 reader.onerror = reject;
                 reader.readAsDataURL(chunk);
             });
 
-            if (i === 0) {
-                await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: currentDir });
-            } else {
-                await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: currentDir });
-            }
+            if (i === 0) await Filesystem.writeFile({ path: fileName, data: base64Chunk, directory: currentDir });
+            else await Filesystem.appendFile({ path: fileName, data: base64Chunk, directory: currentDir });
             
             if (btn) btn.innerHTML = `⏳ ЗАПИСЬ... ${Math.round(((i + 1) / totalChunks) * 100)}%`;
-            
-            // ВАЖНО: Увеличенная задержка (50мс) для освобождения event loop и очистки памяти
             await new Promise(r => setTimeout(r, 50)); 
         }
 
         if (btn) btn.innerHTML = '⏳ ФИНИШ...';
-        console.log('[Export] Файл собран на диске. Ожидание закрытия потоков...');
         await new Promise(r => setTimeout(r, 1000));
 
         if (useShare) {
             if (btn) btn.innerHTML = '⏳ МЕНЮ...';
             const fileUri = await Filesystem.getUri({ path: fileName, directory: currentDir });
-            console.log('[Export] Вызов Share API с URI:', fileUri.uri);
             
-            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Передаем массив files, а не url!
             await Share.share({ 
                 title: 'Бэкап Arcade Hub', 
                 files: [fileUri.uri], 
@@ -132,16 +115,13 @@ window.nativeSaveZip = async (blob, fileName) => {
         } else {
             if (btn) btn.innerHTML = '✅ СОХРАНЕНО';
             if (typeof window.showToast === 'function') window.showToast(`Файл успешно сохранен в папку "Документы"`, 'success', 4000);
-            console.log('[Export] Успешно сохранено напрямую.');
         }
-
         return true;
         
     } catch (err) {
-        console.error('[Export] Критическая ошибка сохранения:', err.message, err.stack); 
+        console.error('Ошибка сохранения:', err); 
         const btn = document.getElementById('exportLibraryBtn');
         if (btn) btn.innerHTML = '⚠️ ОШИБКА';
-        if (typeof window.showToast === 'function') window.showToast(`Ошибка сохранения: ${err.message}`, 'error', 4000);
         return false;
     }
 };
@@ -161,12 +141,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-// --- РАСШИРЕННЫЙ ПАРСЕР АРХИВОВ (DOS + RAR/7Z/ZIP + ROMS + ОБЛОЖКИ) ---
     const initExtendedProcessor = () => {
         if (typeof window.processSingleFile !== 'function') { setTimeout(initExtendedProcessor, 50); return; }
         if (window.processSingleFile.isExtended) return;
         
         const coreProcessSingleFile = window.processSingleFile;
+
+        // --- БРУТФОРС ИНЖЕКТОР ОБЛОЖЕК (ТЕРМИНАТОР) ---
+        const injectCoverToDB = (fileName, coverUrl) => {
+            if (!coverUrl) return;
+            // Очищаем имя от спецсимволов для идеального совпадения
+            const bName = fileName.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9а-яё]/gi, '');
+            
+            let attempts = 0;
+            const tryInject = () => {
+                if (typeof db === 'undefined') return;
+                try {
+                    const tx = db.transaction(["games"], "readwrite");
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const games = req.result.sort((a, b) => b.id - a.id); 
+                        let target = games.find(g => {
+                            let gn = (g.n || '').toLowerCase().replace(/[^a-z0-9а-яё]/gi, '');
+                            if (!gn) return false;
+                            return gn === bName || gn.includes(bName) || bName.includes(gn);
+                        });
+                        
+                        if (target) {
+                            if (target.cover !== coverUrl) {
+                                target.cover = coverUrl;
+                                store.put(target); // Насильно перезаписываем обложку в базе
+                                
+                                // Мгновенно обновляем интерфейс, убивая дискету
+                                const cards = document.querySelectorAll(`.game-btn[data-game-id="${target.id}"]`);
+                                cards.forEach(card => {
+                                    const icons = card.querySelectorAll('.sys-icon-large, .floppy-icon, .globe-icon, svg');
+                                    icons.forEach(el => el.remove());
+
+                                    let img = card.querySelector('.game-cover');
+                                    if (!img) {
+                                        img = document.createElement('div');
+                                        img.className = 'game-cover';
+                                        card.insertBefore(img, card.firstChild);
+                                    }
+                                    if (img.tagName === 'IMG') img.src = coverUrl;
+                                    else img.style.backgroundImage = `url(${coverUrl})`;
+                                    img.style.display = 'block';
+                                    img.style.opacity = '1';
+                                });
+                            }
+                        } else if (attempts < 20) { // Опрашиваем базу целых 20 секунд!
+                            attempts++;
+                            setTimeout(tryInject, 1000); 
+                        }
+                    };
+                } catch(e) {}
+            };
+            setTimeout(tryInject, 500); // Даем фору полсекунды
+        };
+
+        // Запускаем инжектор в фон ПЕРЕД сохранением, чтобы он ждал появления игры
+        const callCore = async (f) => {
+            if (f._customCover) injectCoverToDB(f.name, f._customCover);
+            return await coreProcessSingleFile(f);
+        };
         
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
@@ -187,23 +226,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 flatten(extractedFiles);
 
-                // МАГИЯ ОБЛОЖЕК
                 let covers = {};
                 for (let f of fileList) {
-                    let ext = f.path.split('.').pop().toLowerCase();
-                    if (['png', 'jpg', 'jpeg'].includes(ext)) {
+                    let fExt = f.path.split('.').pop().toLowerCase();
+                    if (['png', 'jpg', 'jpeg'].includes(fExt)) {
                         let name = f.path.split('/').pop();
                         covers[name] = f.file;
                         covers[name.replace(/\.[^/.]+$/, "")] = f.file;
                     }
                 }
 
-                let dosFiles = fileList.filter(f => validDosExts.some(ext => f.path.toLowerCase().endsWith(ext)));
-                let nestedArchives = fileList.filter(f => validArchiveExts.some(ext => f.path.toLowerCase().endsWith(ext)));
+                let dosFiles = fileList.filter(f => validDosExts.some(e => f.path.toLowerCase().endsWith(e)));
+                let nestedArchives = fileList.filter(f => validArchiveExts.some(e => f.path.toLowerCase().endsWith(e)));
                 let romFiles = [];
                 
                 for (let f of fileList) {
-                    if (validRomExts.some(ext => f.path.toLowerCase().endsWith(ext))) {
+                    if (validRomExts.some(e => f.path.toLowerCase().endsWith(e))) {
                         const buffer = await readBlobSafe(f.file);
                         if (f.path.toLowerCase().endsWith('.html') || isRealRom(f.path.split('/').pop(), new Uint8Array(buffer))) {
                             romFiles.push({ path: f.path, file: f.file });
@@ -215,19 +253,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (nestedArchives.length > 0) {
                     for (let f of nestedArchives) {
                         let cleanName = f.path.split('/').pop();
-                        let baseName = cleanName.replace(/\.[^/.]+$/, "");
+                        let bName = cleanName.replace(/\.[^/.]+$/, "");
                         let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         
-                        let coverFile = covers[cleanName] || covers[baseName];
+                        let coverFile = covers[cleanName] || covers[bName] || Object.values(covers)[0];
                         if (coverFile) {
-                            newFile._customCover = await new Promise((res, rej) => {
+                            newFile._customCover = await new Promise((res) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => res(reader.result);
                                 reader.readAsDataURL(coverFile);
                             });
-                        } else if (file._customCover) {
-                            newFile._customCover = file._customCover;
-                        }
+                        } else if (file._customCover) newFile._customCover = file._customCover;
 
                         await window.processSingleFileExtended(newFile);
                         await new Promise(r => setTimeout(r, 500));
@@ -238,21 +274,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (romFiles.length > 0) {
                     for (let f of romFiles) {
                         let cleanName = f.path.split('/').pop();
-                        let baseName = cleanName.replace(/\.[^/.]+$/, "");
+                        let bName = cleanName.replace(/\.[^/.]+$/, "");
                         let newFile = new File([await readBlobSafe(f.file)], cleanName);
                         
-                        let coverFile = covers[cleanName] || covers[baseName];
+                        let coverFile = covers[cleanName] || covers[bName] || Object.values(covers)[0];
                         if (coverFile) {
-                            newFile._customCover = await new Promise((res, rej) => {
+                            newFile._customCover = await new Promise((res) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => res(reader.result);
                                 reader.readAsDataURL(coverFile);
                             });
-                        } else if (file._customCover) {
-                            newFile._customCover = file._customCover;
-                        }
+                        } else if (file._customCover) newFile._customCover = file._customCover;
 
-                        await coreProcessSingleFile(newFile);
+                        await callCore(newFile);
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -269,9 +303,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             let zipBlob = new Blob([zipped], {type: 'application/zip'});
                             let newZipFile = makeFakeFile(zipBlob, file.name.replace(/\.(rar|7z)$/i, '.zip'));
                             
-                            if (file._customCover) newZipFile._customCover = file._customCover;
+                            let coverFile = Object.values(covers)[0];
+                            if (coverFile) {
+                                newZipFile._customCover = await new Promise((res) => {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => res(reader.result);
+                                    reader.readAsDataURL(coverFile);
+                                });
+                            } else if (file._customCover) newZipFile._customCover = file._customCover;
                             
-                            await coreProcessSingleFile(newZipFile);
+                            await callCore(newZipFile);
                             hasValidContent = true;
                         }
                     }
@@ -290,19 +331,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const path in unzipped) {
                     const lowPath = path.toLowerCase();
                     const data = unzipped[path];
-                    const ext = lowPath.split('.').pop();
+                    const fExt = lowPath.split('.').pop();
                     const cleanName = path.split('/').pop();
-                    const baseName = cleanName.replace(/\.[^/.]+$/, "");
+                    const bName = cleanName.replace(/\.[^/.]+$/, "");
 
-                    if (['png', 'jpg', 'jpeg'].includes(ext)) {
-                        covers[cleanName] = { data, ext };
-                        covers[baseName] = { data, ext };
+                    if (['png', 'jpg', 'jpeg'].includes(fExt)) {
+                        covers[cleanName] = { data, fExt };
+                        covers[bName] = { data, fExt };
                     }
                     else if (validDosExts.some(e => lowPath.endsWith(e))) hasDos = true;
-                    else if (validArchiveExts.some(e => lowPath.endsWith(e))) nestedArchives.push({ path, data, cleanName, baseName });
+                    else if (validArchiveExts.some(e => lowPath.endsWith(e))) nestedArchives.push({ path, data, cleanName, bName });
                     else if (validRomExts.some(e => lowPath.endsWith(e))) {
                         if (lowPath.endsWith('.html') || isRealRom(path.split('/').pop(), data)) {
-                            romFiles.push({ path, data, cleanName, baseName });
+                            romFiles.push({ path, data, cleanName, bName });
                         }
                     }
                 }
@@ -313,18 +354,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([arc.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, arc.cleanName);
                         
-                        let coverObj = covers[arc.cleanName] || covers[arc.baseName];
+                        let coverObj = covers[arc.cleanName] || covers[arc.bName] || Object.values(covers)[0];
                         if (coverObj) {
-                            let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
+                            let mime = coverObj.fExt === 'png' ? 'image/png' : 'image/jpeg';
                             let imgBlob = new Blob([coverObj.data], {type: mime});
-                            newFile._customCover = await new Promise((res, rej) => {
+                            newFile._customCover = await new Promise((res) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => res(reader.result);
                                 reader.readAsDataURL(imgBlob);
                             });
-                        } else if (file._customCover) {
-                            newFile._customCover = file._customCover;
-                        }
+                        } else if (file._customCover) newFile._customCover = file._customCover;
 
                         await window.processSingleFileExtended(newFile);
                         await new Promise(r => setTimeout(r, 500));
@@ -337,20 +376,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         let newBlob = new Blob([rom.data], {type: 'application/octet-stream'});
                         let newFile = makeFakeFile(newBlob, rom.cleanName);
                         
-                        let coverObj = covers[rom.cleanName] || covers[rom.baseName];
+                        let coverObj = covers[rom.cleanName] || covers[rom.bName] || Object.values(covers)[0];
                         if (coverObj) {
-                            let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
+                            let mime = coverObj.fExt === 'png' ? 'image/png' : 'image/jpeg';
                             let imgBlob = new Blob([coverObj.data], {type: mime});
-                            newFile._customCover = await new Promise((res, rej) => {
+                            newFile._customCover = await new Promise((res) => {
                                 const reader = new FileReader();
                                 reader.onloadend = () => res(reader.result);
                                 reader.readAsDataURL(imgBlob);
                             });
-                        } else if (file._customCover) {
-                            newFile._customCover = file._customCover;
-                        }
+                        } else if (file._customCover) newFile._customCover = file._customCover;
 
-                        await coreProcessSingleFile(newFile);
+                        await callCore(newFile);
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -365,30 +402,28 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                     if (hasExe) {
-                        if (file._customCover) {
-                            // Уже есть картинка от внешнего парсера
-                        } else {
+                        if (!file._customCover) {
                             let gameName = file.name.split('/').pop();
-                            let baseName = gameName.replace(/\.[^/.]+$/, "");
-                            let coverObj = covers[gameName] || covers[baseName];
+                            let bName = gameName.replace(/\.[^/.]+$/, "");
+                            let coverObj = covers[gameName] || covers[bName] || Object.values(covers)[0];
                             if (coverObj) {
-                                let mime = coverObj.ext === 'png' ? 'image/png' : 'image/jpeg';
+                                let mime = coverObj.fExt === 'png' ? 'image/png' : 'image/jpeg';
                                 let imgBlob = new Blob([coverObj.data], {type: mime});
-                                file._customCover = await new Promise((res, rej) => {
+                                file._customCover = await new Promise((res) => {
                                     const reader = new FileReader();
                                     reader.onloadend = () => res(reader.result);
                                     reader.readAsDataURL(imgBlob);
                                 });
                             }
                         }
-                        await coreProcessSingleFile(file);
+                        await callCore(file);
                         hasValidContent = true;
                     }
                 }
                 if (!hasValidContent) throw new Error("Архив пуст или содержит мусор");
                 return;
             }
-            return await coreProcessSingleFile(file);
+            return await callCore(file);
         };
         window.processSingleFileExtended.isExtended = true;
         window.processSingleFile = window.processSingleFileExtended;
@@ -396,46 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initExtendedProcessor();
 });
 
-// --- СКАНЕР ПАПКИ ЗАГРУЗОК (ОТКЛЮЧЕН, НО РАБОЧИЙ) ---
-async function scanDownloadFolder() {
-    let allFiles = [];
-    async function walk(currentPath, depth) {
-        if (depth > 3) return; 
-        try {
-            let dir = await Filesystem.readdir({ path: currentPath, directory: Directory.ExternalStorage });
-            let filesArray = dir.files || [];
-            for (let i = 0; i < filesArray.length; i++) {
-                let item = filesArray[i];
-                let name = typeof item === 'string' ? item : item.name;
-                let type = typeof item === 'string' ? 'unknown' : item.type;
-                let fullPath = currentPath === 'Download' ? `Download/${name}` : `${currentPath}/${name}`;
-                
-                if (type === 'directory' || (typeof item === 'object' && item.type === 'directory')) {
-                    await walk(fullPath, depth + 1);
-                } else if (type === 'file' || (typeof item === 'object' && item.type === 'file')) {
-                    allFiles.push({ name: name, path: fullPath });
-                } else {
-                    try {
-                        let stat = await Filesystem.stat({ path: fullPath, directory: Directory.ExternalStorage });
-                        if (stat.type === 'directory') await walk(fullPath, depth + 1);
-                        else allFiles.push({ name: name, path: fullPath });
-                    } catch(e) {
-                        allFiles.push({ name: name, path: fullPath });
-                    }
-                }
-            }
-        } catch(e) { console.error("Ошибка чтения папки:", currentPath, e); }
-    }
-    await walk('Download', 0);
-    return allFiles;
-}
-
-window.isRadarRunning = false;
-async function runDownloadRadar(manualTrigger = true) {
-    console.log("📡 Сканер загрузок временно отключен. Используйте ручное добавление игр.");
-    return;
-}
-window.runDownloadRadar = runDownloadRadar;
+// --- СКАНЕР ПАПКИ ЗАГРУЗОК (ОТКЛЮЧЕН) ---
+async function scanDownloadFolder() { return []; }
+window.runDownloadRadar = async function(manualTrigger = true) {};
 
 // --- СУРОВЫЙ ФИЛЬТР МУСОРА ---
 function isRealRom(fileName, fileDataU8) {
