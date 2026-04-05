@@ -3415,6 +3415,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             await coversReady;
 
             const repoMap = {
+                "dos": ["DOS"],
                 "nes": ["Nintendo - Nintendo Entertainment System"],
                 "snes": ["Nintendo - Super Nintendo Entertainment System"],
                 "sfc": ["Nintendo - Super Nintendo Entertainment System"],
@@ -3988,7 +3989,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             i: gameIcon, m: controlMode, e: execCmd, fit: 'contain', cover: coverData, fav: false
         };
 
-        if (!coverData && sysType !== 'dos' && sysType !== 'unk' && sysType !== 'html') { 
+        if (!coverData && sysType !== 'unk' && sysType !== 'html') {
+ 
             fetchNetCover(cleanGameName, sysType).then(netCover => {
                 if (netCover) {
                     const tx = db.transaction(["games"], "readwrite");
@@ -4226,7 +4228,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 const store = tx.objectStore("games");
                 const req = store.getAll();
                 req.onsuccess = () => {
-                    let filtered = req.result.filter(g => g.sys !== 'dos' && g.sys !== 'unk' && g.sys !== 'html');
+                    let filtered = req.result.filter(g => g.sys !== 'unk' && g.sys !== 'html');
+
                     if (isSelective) {
                         filtered = filtered.filter(g => selectedGamesForDelete.has(g.id));
                     } else {
