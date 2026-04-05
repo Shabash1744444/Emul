@@ -65,7 +65,7 @@ window.nativeSaveZip = async (blob, fileName) => {
     const btn = document.getElementById('exportLibraryBtn');
     
     try {
-        const chunkSize = 4 * 1024 * 1024; // Чанки по 4MB
+        const chunkSize = 4 * 1024 * 1024;
         const totalChunks = Math.ceil(blob.size / chunkSize);
 
         let currentDir = Directory.Documents;
@@ -83,7 +83,6 @@ window.nativeSaveZip = async (blob, fileName) => {
         
         for (let i = 0; i < totalChunks; i++) {
             const chunk = blob.slice(i * chunkSize, (i + 1) * chunkSize);
-            
             const base64Chunk = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onloadend = () => resolve(reader.result.substr(reader.result.indexOf(',') + 1));
@@ -104,13 +103,7 @@ window.nativeSaveZip = async (blob, fileName) => {
         if (useShare) {
             if (btn) btn.innerHTML = '⏳ МЕНЮ...';
             const fileUri = await Filesystem.getUri({ path: fileName, directory: currentDir });
-            
-            await Share.share({ 
-                title: 'Бэкап Arcade Hub', 
-                files: [fileUri.uri], 
-                dialogTitle: 'Сохранить файл' 
-            });
-            
+            await Share.share({ title: 'Бэкап Arcade Hub', files: [fileUri.uri], dialogTitle: 'Сохранить файл' });
             if (btn) btn.innerHTML = '✅ ГОТОВО';
         } else {
             if (btn) btn.innerHTML = '✅ СОХРАНЕНО';
@@ -146,66 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.processSingleFile.isExtended) return;
         
         const coreProcessSingleFile = window.processSingleFile;
-
-        // --- БРУТФОРС ИНЖЕКТОР ОБЛОЖЕК (ТЕРМИНАТОР) ---
-        const injectCoverToDB = (fileName, coverUrl) => {
-            if (!coverUrl) return;
-            // Очищаем имя от спецсимволов для идеального совпадения
-            const bName = fileName.replace(/\.[^/.]+$/, "").toLowerCase().replace(/[^a-z0-9а-яё]/gi, '');
-            
-            let attempts = 0;
-            const tryInject = () => {
-                if (typeof db === 'undefined') return;
-                try {
-                    const tx = db.transaction(["games"], "readwrite");
-                    const store = tx.objectStore("games");
-                    const req = store.getAll();
-                    req.onsuccess = () => {
-                        const games = req.result.sort((a, b) => b.id - a.id); 
-                        let target = games.find(g => {
-                            let gn = (g.n || '').toLowerCase().replace(/[^a-z0-9а-яё]/gi, '');
-                            if (!gn) return false;
-                            return gn === bName || gn.includes(bName) || bName.includes(gn);
-                        });
-                        
-                        if (target) {
-                            if (target.cover !== coverUrl) {
-                                target.cover = coverUrl;
-                                store.put(target); // Насильно перезаписываем обложку в базе
-                                
-                                // Мгновенно обновляем интерфейс, убивая дискету
-                                const cards = document.querySelectorAll(`.game-btn[data-game-id="${target.id}"]`);
-                                cards.forEach(card => {
-                                    const icons = card.querySelectorAll('.sys-icon-large, .floppy-icon, .globe-icon, svg');
-                                    icons.forEach(el => el.remove());
-
-                                    let img = card.querySelector('.game-cover');
-                                    if (!img) {
-                                        img = document.createElement('div');
-                                        img.className = 'game-cover';
-                                        card.insertBefore(img, card.firstChild);
-                                    }
-                                    if (img.tagName === 'IMG') img.src = coverUrl;
-                                    else img.style.backgroundImage = `url(${coverUrl})`;
-                                    img.style.display = 'block';
-                                    img.style.opacity = '1';
-                                });
-                            }
-                        } else if (attempts < 20) { // Опрашиваем базу целых 20 секунд!
-                            attempts++;
-                            setTimeout(tryInject, 1000); 
-                        }
-                    };
-                } catch(e) {}
-            };
-            setTimeout(tryInject, 500); // Даем фору полсекунды
-        };
-
-        // Запускаем инжектор в фон ПЕРЕД сохранением, чтобы он ждал появления игры
-        const callCore = async (f) => {
-            if (f._customCover) injectCoverToDB(f.name, f._customCover);
-            return await coreProcessSingleFile(f);
-        };
         
         window.processSingleFileExtended = async function(file) {
             const fileName = file.name.toLowerCase();
@@ -286,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         } else if (file._customCover) newFile._customCover = file._customCover;
 
-                        await callCore(newFile);
+                        await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -312,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                             } else if (file._customCover) newZipFile._customCover = file._customCover;
                             
-                            await callCore(newZipFile);
+                            await coreProcessSingleFile(newZipFile);
                             hasValidContent = true;
                         }
                     }
@@ -387,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         } else if (file._customCover) newFile._customCover = file._customCover;
 
-                        await callCore(newFile);
+                        await coreProcessSingleFile(newFile);
                         await new Promise(r => setTimeout(r, 500));
                     }
                     hasValidContent = true;
@@ -416,14 +349,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 });
                             }
                         }
-                        await callCore(file);
+                        await coreProcessSingleFile(file);
                         hasValidContent = true;
                     }
                 }
                 if (!hasValidContent) throw new Error("Архив пуст или содержит мусор");
                 return;
             }
-            return await callCore(file);
+            return await coreProcessSingleFile(file);
         };
         window.processSingleFileExtended.isExtended = true;
         window.processSingleFile = window.processSingleFileExtended;
