@@ -773,6 +773,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     </div>
 </div>
 
+
+<div id="exportModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); opacity: 0; transition: opacity 0.3s ease;">
+    <div class="modal-box" style="background: rgba(31, 41, 55, 0.9); border: 1px solid var(--neon-blue); border-radius: 16px; padding: 25px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(56,189,248,0.2); text-align: center;">
+        <h3 style="margin-top: 0; color: var(--neon-blue); border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px; text-shadow: 0 0 10px var(--neon-blue);">РЕЖИМ ЭКСПОРТА</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+            <button id="btnExpSingle" class="action-btn" style="background: rgba(16, 185, 129, 0.3) !important; border-color: #047857 !important;">📦 ОДНИМ ФАЙЛОМ</button>
+            <button id="btnExpPlatform" class="action-btn" style="background: rgba(59, 130, 246, 0.3) !important; border-color: #1e3a8a !important;">🗂 ПО ПРИСТАВКАМ</button>
+            <button id="btnExpChunked" class="action-btn" style="background: rgba(168, 85, 247, 0.3) !important; border-color: #7e22ce !important;">✂️ ПО ПРИСТАВКАМ (До 200МБ)</button>
+            <button id="btnExpCancel" class="action-btn" style="background: transparent !important; color: #64748b !important; border: 1px solid #475569 !important; margin-top: 5px;">ОТМЕНА</button>
+        </div>
+    </div>
+</div>
+
+
 <div id="resetModalOverlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px);">
     <div style="background: rgba(31, 41, 55, 0.9); border: 1px solid var(--neon-red); border-radius: 16px; padding: 25px; max-width: 320px; width: 100%; color: #e2e8f0; box-shadow: 0 15px 50px rgba(0,0,0,0.9), 0 0 20px rgba(239,68,68,0.2); text-align: center;">
         <h3 style="margin-top: 0; color: var(--neon-red); border-bottom: 1px dashed #475569; padding-bottom: 10px; font-size: 16px; text-shadow: 0 0 10px var(--neon-red);">ПЕРЕЗАПУСК ИГРЫ</h3>
@@ -4110,7 +4124,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     };
 
-    function triggerCoverChange() {
+       
+       
+       
+       
+       
+       
+       function triggerCoverChange() {
         if (selectedGamesForDelete.size !== 1) return;
         document.getElementById('customCoverInput').click();
     }
@@ -4132,7 +4152,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     g.cover = base64Cover;
                     store.put(g).onsuccess = () => {
                         renderAllGames();
-                        // Убрали toggleLibraryEditMode(), чтобы панель не закрывалась
                     };
                 }
             };
@@ -4141,79 +4160,83 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         e.target.value = '';
     });
 
-    
-    
-    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK (СОРТИРОВКА ПО ПЛАТФОРМАМ И РАЗБИВКА ПО 200 МБ) ---
+    // --- ЭКСПОРТ ДЛЯ CAPACITOR APK ---
+    function showExportModal() {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('exportModalOverlay');
+            const btnSingle = document.getElementById('btnExpSingle');
+            const btnPlatform = document.getElementById('btnExpPlatform');
+            const btnChunked = document.getElementById('btnExpChunked');
+            const btnCancel = document.getElementById('btnExpCancel');
+
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
+
+            const cleanup = () => {
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.style.display = 'none', 300);
+                btnSingle.onclick = null; btnPlatform.onclick = null; btnChunked.onclick = null; btnCancel.onclick = null;
+            };
+
+            btnSingle.onclick = () => { cleanup(); resolve('single'); };
+            btnPlatform.onclick = () => { cleanup(); resolve('platform'); };
+            btnChunked.onclick = () => { cleanup(); resolve('chunked'); };
+            btnCancel.onclick = () => { cleanup(); resolve(null); };
+        });
+    }
+
     async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
 
-        // Вспомогательная функция для определения платформы
-        const getPlatformName = (g) => {
-            if (g.t === 'd') return 'DOS';
-            if (g.t === 'h') return 'HTML';
-            const ext = (g.ext || '').toLowerCase();
-            if (['nes'].includes(ext)) return 'DENDY';
-            if (['md', 'gen', 'bin'].includes(ext)) return 'SEGA';
-            if (['sfc', 'smc'].includes(ext)) return 'SNES';
-            if (['gba'].includes(ext)) return 'GBA';
-            if (['ngp', 'ngc'].includes(ext)) return 'NG';
-            if (typeof g.t === 'string' && g.t.length > 1) return g.t.toUpperCase();
-            return 'ARCADE';
-        };
-
-        // --- ВТОРОЙ КЛИК: Нативное сохранение ---
         if (btn.dataset.readyToDownload === 'true') {
-            const items = window._lastZipBlobs; // Теперь это массив объектов { blob, name }
-            if (!items || items.length === 0) return;
-
-            btn.innerHTML = '⏳ СОХРАНЕНИЕ...';
-            btn.style.pointerEvents = 'none';
-
-            for (let i = 0; i < items.length; i++) {
-                let fileName = items[i].name;
-                let blob = items[i].blob;
-                
-                if (items.length > 1) {
-                    btn.innerHTML = `⏳ ПИШУ ${i + 1} ИЗ ${items.length}...`;
-                }
-
-                if (typeof window.nativeSaveZip === 'function') {
-                    const success = await window.nativeSaveZip(blob, fileName);
-                    if (!success) {
-                        btn.innerHTML = '⚠️ ОШИБКА';
-                        btn.style.background = '#ef4444';
-                    }
-                    // Даем файловой системе 2 секунды на сохранение перед следующим файлом
-                    await new Promise(r => setTimeout(r, 2000));
-                } else {
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    await new Promise(r => setTimeout(r, 1500)); 
-                }
-            }
-
-            btn.innerHTML = '✅ ГОТОВО';
-            setTimeout(() => {
+            const items = window._lastZipBlobs; 
+            if (!items || items.length === 0) {
                 btn.innerHTML = '📦 В ZIP';
                 btn.dataset.readyToDownload = 'false';
                 btn.style.background = 'rgba(16, 185, 129, 0.4)';
-                btn.style.pointerEvents = 'auto';
-            }, 3000);
+                return;
+            }
+
+            const currentItem = items.shift(); 
+            let fileName = currentItem.name;
+            let blob = currentItem.blob;
             
+            btn.innerHTML = '⏳ СОХРАНЕНИЕ...';
+            btn.style.pointerEvents = 'none';
+
+            if (typeof window.nativeSaveZip === 'function') {
+                const success = await window.nativeSaveZip(blob, fileName);
+                if (!success) btn.style.background = '#ef4444';
+            } else {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                await new Promise(r => setTimeout(r, 1000)); 
+            }
+
+            if (items.length > 0) {
+                btn.innerHTML = `📥 СЛЕДУЮЩИЙ (еще ${items.length})`;
+                btn.style.background = '#d97706'; 
+                btn.style.pointerEvents = 'auto';
+            } else {
+                btn.innerHTML = '✅ ВСЕ СКАЧАНО';
+                btn.style.background = 'rgba(16, 185, 129, 0.8)';
+                setTimeout(() => {
+                    btn.innerHTML = '📦 В ZIP';
+                    btn.dataset.readyToDownload = 'false';
+                    btn.style.background = 'rgba(16, 185, 129, 0.4)';
+                    btn.style.pointerEvents = 'auto';
+                }, 3000);
+            }
             return;
         }
 
-        // --- ПЕРВЫЙ КЛИК: Запуск сборки архивов ---
-        const confirmMsg = isSelective 
-            ? `Собрать выбранные игры (${selectedGamesForDelete.size} шт.)? Они будут разбиты по платформам.` 
-            : `Собрать ВСЕ игры в ZIP? Они будут рассортированы по платформам (SEGA, DOS и т.д.) и разбиты на части по ~200 МБ.`;
-
-        if (!confirm(confirmMsg)) return;
+        const mode = await showExportModal();
+        if (!mode) return; 
         
         btn.innerHTML = '⏳ ПОДГОТОВКА...'; 
         btn.style.pointerEvents = 'none';
@@ -4233,28 +4256,31 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     return;
                 }
 
-                // 1. Группируем игры по платформам
-                const groupedGames = {};
-                for (let g of games) {
-                    let platform = getPlatformName(g);
-                    if (!groupedGames[platform]) groupedGames[platform] = [];
-                    groupedGames[platform].push(g);
-                }
+                const getPlatformName = (g) => {
+                    if (g.t === 'd') return 'DOS';
+                    if (g.t === 'h') return 'HTML';
+                    const ext = (g.ext || '').toLowerCase();
+                    if (['nes'].includes(ext)) return 'DENDY';
+                    if (['md', 'gen', 'bin'].includes(ext)) return 'SEGA';
+                    if (['sfc', 'smc'].includes(ext)) return 'SNES';
+                    if (['gba'].includes(ext)) return 'GBA';
+                    if (['ngp', 'ngc'].includes(ext)) return 'NG';
+                    if (typeof g.t === 'string' && g.t.length > 1) return g.t.toUpperCase();
+                    return 'ARCADE';
+                };
 
-                const MAX_PART_SIZE = 200 * 1024 * 1024; // Лимит: 200 МБ
-                let zipItems = []; // Хранилище готовых архивов { blob, name }
+                let zipItems = []; 
                 let totalGamesProcessed = 0;
 
-                // 2. Обрабатываем каждую платформу отдельно
-                for (let platform in groupedGames) {
-                    let platformGames = groupedGames[platform];
+                const processGamesToZip = async (gamesList, archiveNameBase, applySizeLimit) => {
+                    const MAX_PART_SIZE = 200 * 1024 * 1024;
                     let currentZipData = {};
                     let currentSize = 0;
                     let partNumber = 1;
 
-                    for (let g of platformGames) {
+                    for (let g of gamesList) {
                         totalGamesProcessed++;
-                        btn.innerHTML = `⏳ [${platform}] ${totalGamesProcessed}/${games.length}`;
+                        btn.innerHTML = `⏳ ПАКУЮ ${totalGamesProcessed}/${games.length}`;
                         
                         const buffer = await readBlob(g.fileBlob);
                         let itemSize = buffer.byteLength;
@@ -4265,7 +4291,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         if (g.t === 'd') gameFileName = baseName + '.zip';
                         if (g.t === 'h') gameFileName = baseName + '.html';
 
-                        // Конвертация картинки в биты
                         if (g.cover && g.cover.startsWith('data:image')) {
                             try {
                                 const b64Data = g.cover.split(',')[1];
@@ -4277,23 +4302,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             } catch(e) {}
                         }
 
-                        // Если пачка платформы превышает 200 МБ - пакуем её
-                        if (currentSize + itemSize > MAX_PART_SIZE && Object.keys(currentZipData).length > 0) {
-                            btn.innerHTML = `⚡ ПАКУЮ ${platform} (ЧАСТЬ ${partNumber})...`;
+                        if (applySizeLimit && (currentSize + itemSize > MAX_PART_SIZE) && Object.keys(currentZipData).length > 0) {
+                            btn.innerHTML = `⚡ СЖАТИЕ (${archiveNameBase} ЧАСТЬ ${partNumber})...`;
                             await new Promise(r => setTimeout(r, 50));
-                            
-                            const zipped = fflate.zipSync(currentZipData, { level: 0 }); // Без сжатия
-                            zipItems.push({
-                                blob: new Blob([zipped], { type: 'application/zip' }),
-                                name: `${platform}_Part_${partNumber}.zip`
-                            });
-                            
+                            const zipped = fflate.zipSync(currentZipData, { level: 0 });
+                            zipItems.push({ blob: new Blob([zipped], { type: 'application/zip' }), name: `${archiveNameBase}_Part_${partNumber}.zip` });
                             partNumber++;
-                            currentZipData = {}; // Очищаем память
+                            currentZipData = {};
                             currentSize = 0;
                         }
 
-                        // Добавляем игру в текущую пачку
                         currentZipData[gameFileName] = new Uint8Array(buffer);
                         if (coverBytes) {
                             const mime = g.cover.split(';')[0].split(':')[1];
@@ -4302,30 +4320,46 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         }
                         currentSize += itemSize;
 
-                        // Пауза для интерфейса
                         if (totalGamesProcessed % 5 === 0) await new Promise(r => setTimeout(r, 20)); 
                     }
 
-                    // Упаковываем остатки текущей платформы
                     if (Object.keys(currentZipData).length > 0) {
-                        btn.innerHTML = `⚡ ПАКУЮ ${platform} ФИНАЛ...`;
+                        btn.innerHTML = `⚡ СЖАТИЕ (${archiveNameBase})...`;
                         await new Promise(r => setTimeout(r, 50));
                         const zipped = fflate.zipSync(currentZipData, { level: 0 });
-                        
-                        // Если часть всего одна, называем красиво "SEGA_Games.zip"
-                        let finalName = partNumber === 1 ? `${platform}_Games.zip` : `${platform}_Part_${partNumber}.zip`;
-                        
-                        zipItems.push({
-                            blob: new Blob([zipped], { type: 'application/zip' }),
-                            name: finalName
-                        });
+                        let finalName = (applySizeLimit && partNumber > 1) ? `${archiveNameBase}_Part_${partNumber}.zip` : `${archiveNameBase}.zip`;
+                        zipItems.push({ blob: new Blob([zipped], { type: 'application/zip' }), name: finalName });
+                    }
+                };
+
+                if (mode === 'single') {
+                    let baseName = isSelective ? "Selected_Games" : "ArcadeHub_Full_Backup";
+                    await processGamesToZip(games, baseName, false);
+                } 
+                else {
+                    const groupedGames = {};
+                    for (let g of games) {
+                        let platform = getPlatformName(g);
+                        if (!groupedGames[platform]) groupedGames[platform] = [];
+                        groupedGames[platform].push(g);
+                    }
+                    
+                    const applyLimit = (mode === 'chunked');
+                    for (let platform in groupedGames) {
+                        await processGamesToZip(groupedGames[platform], `${platform}_Games`, applyLimit);
                     }
                 }
 
-                window._lastZipBlobs = zipItems; // Сохраняем массив готовых объектов
+                window._lastZipBlobs = zipItems; 
 
                 const totalMb = zipItems.reduce((acc, item) => acc + item.blob.size, 0) / 1024 / 1024;
-                btn.innerHTML = `✅ СКАЧАТЬ (${zipItems.length}шт, ~${Math.round(totalMb)}MB)`; 
+                
+                if (zipItems.length === 1) {
+                    btn.innerHTML = `✅ СКАЧАТЬ (~${Math.round(totalMb)}MB)`; 
+                } else {
+                    btn.innerHTML = `✅ СКАЧАТЬ (Файл 1 из ${zipItems.length})`; 
+                }
+                
                 btn.style.background = '#d97706'; 
                 btn.style.pointerEvents = 'auto'; 
                 btn.dataset.readyToDownload = 'true'; 
@@ -4341,11 +4375,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-
-
-
-
-    // Умная функция отдачи файла
     async function triggerDownloadFallback(url, fileName, blob) {
         if (blob) {
             const file = new File([blob], fileName, { type: "application/zip" });
@@ -4450,234 +4479,864 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     });
 
+    // =========================================================
+    // --- ПЕРЕМЕННЫЕ НАВИГАЦИИ И КЛАВИАТУРЫ ---
+    // =========================================================
+
+    let gpMenuIndex = -1;
+    let lastGpMenuUpdate = 0;
+    
+    // Навигация меню: 0:Сетка, 1:Внутри карты, 2:Шапка, 3:Клава, 4:ТопКнопки, 5:ПанельРедакт, 6:Модалки
+    let cardNavLevel = 0; 
+    let vkIndex = 0;
+    let innerNavIndex = 0;
+    let headerIndex = 8; // Строка поиска
+    let topIndex = 0;
+    let editIndex = 0;
+    let modalIndex = 0;
+
+    let vkLang = 'RU'; 
+    let useSystemKbd = localStorage.getItem('useSystemKbd') === 'true';
+    
+    // Переменные для раздельного масштаба
+    window.vkScaleX = parseFloat(localStorage.getItem('vkScaleX')) || 1;
+    window.vkScaleY = parseFloat(localStorage.getItem('vkScaleY')) || 1;
+
+    // Стили для фокуса ВСЕГО ИНТЕРФЕЙСА
+    const focusStyle = document.createElement('style');
+    focusStyle.textContent = `
+        .vk-btn.gp-focus, .sys-filter-btn.gp-focus, #searchInput.gp-focus, #viewToggleBtn.gp-focus,
+        .top-actions .action-btn.gp-focus, #editPanel .action-btn.gp-focus, #infoModal button.gp-focus, 
+        .modal-box button.gp-focus, #resetModalOverlay button.gp-focus, .vk-control-btn.gp-focus { 
+            outline: none !important; border: 2px solid var(--neon-blue) !important; 
+            box-shadow: 0 0 20px var(--neon-blue), inset 0 0 10px rgba(56,189,248,0.5) !important; 
+            filter: brightness(1.5); transform: scale(1.05); z-index: 100; transition: all 0.1s; 
+        }
+        .tool-btn.gp-focus, #screen-edit-panel.show button.gp-focus, #screen-edit-panel.show select.gp-focus, 
+        #pad-edit-panel.show button.gp-focus, #pad-edit-panel.show select.gp-focus, .f-btn.gp-focus {
+            box-shadow: 0 0 15px var(--neon-blue) !important; border-color: var(--neon-blue) !important;
+            transform: scale(1.1) !important; z-index: 100; transition: all 0.1s;
+        }
+        input[type="range"].gp-focus::-webkit-slider-thumb {
+            box-shadow: 0 0 20px #fff, 0 0 30px var(--neon-blue) !important; transform: scale(1.5);
+        }
+    `;
+    document.head.appendChild(focusStyle);
+
+    // --- УМНАЯ СЕНСОРНАЯ КЛАВИАТУРА С ПРОЗРАЧНОСТЬЮ ---
+    let vkFadeTimeout;
+    function fadeVkForScroll() {
+        const vk = document.getElementById('virtualKeyboard');
+        if (vk && vk.style.display !== 'none') {
+            vk.style.opacity = '0.2';
+            vk.style.pointerEvents = 'none'; // Пропускаем клики сквозь клаву
+            clearTimeout(vkFadeTimeout);
+            vkFadeTimeout = setTimeout(() => {
+                vk.style.opacity = '1';
+                vk.style.pointerEvents = 'auto';
+            }, 600); // Возвращаем клаву через 600мс после остановки скролла
+        }
+    }
+    document.getElementById('menuScreen').addEventListener('scroll', fadeVkForScroll, {passive: true});
+
+    window.scaleVkWidth = function(delta) {
+        window.vkScaleX = Math.max(0.5, Math.min(2.5, window.vkScaleX + delta));
+        localStorage.setItem('vkScaleX', window.vkScaleX);
+        updateVkTransform();
+    };
+
+    window.scaleVkHeight = function(delta) {
+        window.vkScaleY = Math.max(0.5, Math.min(2.5, window.vkScaleY + delta));
+        localStorage.setItem('vkScaleY', window.vkScaleY);
+        updateVkTransform();
+    };
+
+    function updateVkTransform() {
+        const vk = document.getElementById('virtualKeyboard');
+        if (vk) {
+            let cx = parseFloat(vk.dataset.x || 0);
+            let cy = parseFloat(vk.dataset.y || 0);
+            vk.style.transform = `translate(calc(-50% + ${cx}px), ${cy}px) scale(${window.vkScaleX}, ${window.vkScaleY})`;
+        }
+    }
+
+    function initVirtualKeyboard() {
+        let vk = document.getElementById('virtualKeyboard');
+        if (!vk) {
+            vk = document.createElement('div');
+            vk.id = 'virtualKeyboard';
+            // Плавное затухание (transition), убрали эппловские шрифты
+            vk.style.cssText = 'display:none; position:fixed; bottom:5%; left:50%; z-index:25000; background:rgba(15,20,30,0.95); border:2px solid var(--neon-blue); border-radius:12px; padding:clamp(8px, 1.5vw, 12px); width:92%; max-width:580px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); backdrop-filter: blur(15px); flex-direction:column; gap:clamp(6px, 1vw, 10px); pointer-events:auto; transform-origin: bottom center; transition: opacity 0.3s ease;';
+            
+            // КОМПАКТНАЯ РУЧКА И 4 КНОПКИ МАСШТАБА
+            const dragHeader = document.createElement('div');
+            dragHeader.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;';
+            dragHeader.innerHTML = `
+                <div style="display:flex; gap:4px;">
+                    <button onclick="scaleVkWidth(-0.05)" class="action-btn" style="width:32px; height:28px; font-size:14px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; margin:0; display:flex; align-items:center; justify-content:center;">↔-</button>
+                    <button onclick="scaleVkWidth(0.05)" class="action-btn" style="width:32px; height:28px; font-size:14px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; margin:0; display:flex; align-items:center; justify-content:center;">↔+</button>
+                </div>
+                <div class="drag-handle" style="margin:0; width:100%; max-width:120px; height:6px; background:rgba(255,255,255,0.4); border-radius:3px;"></div>
+                <div style="display:flex; gap:4px;">
+                    <button onclick="scaleVkHeight(-0.05)" class="action-btn" style="width:32px; height:28px; font-size:14px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; margin:0; display:flex; align-items:center; justify-content:center;">↕-</button>
+                    <button onclick="scaleVkHeight(0.05)" class="action-btn" style="width:32px; height:28px; font-size:14px; font-weight:bold; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3); border-radius:6px; color:#fff; margin:0; display:flex; align-items:center; justify-content:center;">↕+</button>
+                </div>
+            `;
+            vk.appendChild(dragHeader);
+
+            const output = document.createElement('div');
+            output.id = 'vk-output';
+            output.style.cssText = 'color:var(--neon-blue); font-size:clamp(14px, 2vw, 24px); font-weight:bold; border-bottom:1px dashed #475569; padding-bottom:4px; text-align:center; min-height:clamp(24px, 3vw, 35px); letter-spacing:1px;';
+            vk.appendChild(output);
+
+            const keysContainer = document.createElement('div');
+            keysContainer.id = 'vk-keys-container';
+            keysContainer.style.cssText = 'display:grid; grid-template-columns:repeat(10, 1fr); gap:clamp(4px, 1vw, 8px);';
+            vk.appendChild(keysContainer);
+
+            // КНОПКИ УПРАВЛЕНИЯ КЛАВИАТУРОЙ (Сенсорные, с консольными цветами!)
+            const controls = document.createElement('div');
+            controls.style.cssText = 'display:flex; gap:8px; margin-top:4px;';
+            
+            const btnLang = document.createElement('button');
+            btnLang.className = 'vk-control-btn action-btn';
+            btnLang.style.cssText = 'flex:1; font-size:clamp(9px, 1.2vw, 12px); font-weight:bold; padding:6px 0; border:1px solid rgba(245,158,11,0.5); background:rgba(245,158,11,0.1); color:#fbbf24; border-radius:8px; margin:0; cursor:pointer;';
+            btnLang.innerHTML = '🌐 ЯЗЫК [Y]';
+            const switchLang = (e) => { e.preventDefault(); vkLang = vkLang === 'EN' ? 'RU' : 'EN'; renderVkLayout(); if(typeof doVibrate==='function') doVibrate(15); if(typeof AudioGen!=='undefined') AudioGen.playClick(); };
+            btnLang.addEventListener('touchstart', switchLang, {passive:false}); btnLang.onclick = switchLang;
+
+            const btnClear = document.createElement('button');
+            btnClear.className = 'vk-control-btn action-btn';
+            btnClear.style.cssText = 'flex:1; font-size:clamp(9px, 1.2vw, 12px); font-weight:bold; padding:6px 0; border:1px solid rgba(59,130,246,0.5); background:rgba(59,130,246,0.1); color:#60a5fa; border-radius:8px; margin:0; cursor:pointer;';
+            btnClear.innerHTML = '🧹 СТЕРЕТЬ [X]';
+            const doClear = (e) => { e.preventDefault(); document.getElementById('searchInput').value = ''; document.getElementById('vk-output').textContent = 'Поиск: '; if(typeof renderAllGames === 'function') renderAllGames(); if(typeof doVibrate==='function') doVibrate(15); if(typeof AudioGen!=='undefined') AudioGen.playClick(); };
+            btnClear.addEventListener('touchstart', doClear, {passive:false}); btnClear.onclick = doClear;
+
+            const btnClose = document.createElement('button');
+            btnClose.className = 'vk-control-btn action-btn';
+            btnClose.style.cssText = 'flex:1; font-size:clamp(9px, 1.2vw, 12px); font-weight:bold; padding:6px 0; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.1); color:#f87171; border-radius:8px; margin:0; cursor:pointer;';
+            btnClose.innerHTML = '❌ ЗАКРЫТЬ [B]';
+            const doClose = (e) => { e.preventDefault(); closeVirtualKeyboard(); if(typeof doVibrate==='function') doVibrate(15); if(typeof AudioGen!=='undefined') AudioGen.playClick(); };
+            btnClose.addEventListener('touchstart', doClose, {passive:false}); btnClose.onclick = doClose;
+
+            controls.appendChild(btnLang);
+            controls.appendChild(btnClear);
+            controls.appendChild(btnClose);
+            vk.appendChild(controls);
+
+            document.body.appendChild(vk);
+            // Применяем перетаскивание к только что созданной клаве
+            makePanelDraggable('virtualKeyboard');
+            renderVkLayout();
+        }
+    }
+
+    function renderVkLayout() {
+        const container = document.getElementById('vk-keys-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const layoutEN = ['1','2','3','4','5','6','7','8','9','0','Q','W','E','R','T','Y','U','I','O','P','A','S','D','F','G','H','J','K','L','⌫','Z','X','C','V','B','N','M','_','-','⏎'];
+        const layoutRU = ['1','2','3','4','5','6','7','8','9','0','Й','Ц','У','К','Е','Н','Г','Ш','Щ','З','Х','Ъ','Ф','Ы','В','А','П','Р','О','Л','Д','Ж','Э','Я','Ч','С','М','И','Т','Ь','Б','Ю','_','-','⌫','⏎']; 
+        
+        const currentLayout = vkLang === 'EN' ? layoutEN : layoutRU;
+
+        currentLayout.forEach((key, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'vk-btn action-btn';
+            // Убрали высоту, добавили легкую внутреннюю тень и квадратные углы
+            btn.style.cssText = 'padding:clamp(5px, 1.2vw, 10px) 0; font-family: sans-serif; font-size:clamp(11px, 1.5vw, 16px); font-weight:bold; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.15); border-radius:4px; color:#fff; margin:0; touch-action:manipulation; cursor:pointer; box-shadow: 0 3px 5px rgba(0,0,0,0.4);';
+            if (key === '⌫') btn.style.color = '#ef4444';
+            if (key === '⏎') btn.style.color = '#10b981';
+            btn.textContent = key;
+            
+            const tapHandler = (e) => {
+                e.preventDefault();
+                vkIndex = index;
+                updateVkFocus();
+                if (typeof doVibrate === 'function') doVibrate(15);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                setTimeout(() => handleVkAction(key), 50);
+            };
+            btn.addEventListener('touchstart', tapHandler, {passive: false});
+            btn.onclick = tapHandler;
+
+            container.appendChild(btn);
+        });
+
+        if (cardNavLevel === 3) updateVkFocus();
+    }
+
+    function openVirtualKeyboard() {
+        initVirtualKeyboard();
+        const vk = document.getElementById('virtualKeyboard');
+        vk.style.display = 'flex';
+        cardNavLevel = 3;
+        vkIndex = 0;
+        document.getElementById('vk-output').textContent = 'Поиск: ' + document.getElementById('searchInput').value;
+        updateVkTransform(); // Применяем скейл и позицию
+        updateVkFocus();
+    }
+
+    function closeVirtualKeyboard() {
+        const vk = document.getElementById('virtualKeyboard');
+        if (vk) vk.style.display = 'none';
+        cardNavLevel = 2;
+        headerIndex = 8; 
+        const headerElems = Array.from(document.querySelectorAll('.sys-filter-btn, #searchInput, #viewToggleBtn'));
+        headerElems.forEach(e => e.classList.remove('gp-focus'));
+        if(headerElems[headerIndex]) headerElems[headerIndex].classList.add('gp-focus');
+        document.getElementById('searchInput').blur(); 
+    }
+
+    function updateVkFocus() {
+        const btns = document.querySelectorAll('.vk-btn');
+        btns.forEach(b => b.classList.remove('gp-focus'));
+        if(vkIndex >= btns.length) vkIndex = btns.length - 1;
+        if(btns[vkIndex]) btns[vkIndex].classList.add('gp-focus');
+    }
+
+    function handleVkAction(key) {
+        const input = document.getElementById('searchInput');
+        if (key === '⌫') input.value = input.value.slice(0, -1);
+        else if (key === '⏎') { closeVirtualKeyboard(); return; }
+        else input.value += (key === '_' ? ' ' : key);
+        
+        document.getElementById('vk-output').textContent = 'Поиск: ' + input.value;
+        if (typeof renderAllGames === 'function') renderAllGames();
+    }
+
+    function toggleKbdMode() {
+        useSystemKbd = !useSystemKbd;
+        localStorage.setItem('useSystemKbd', useSystemKbd);
+        updateKbdModeUI();
+        if (typeof doVibrate === 'function') doVibrate(15);
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+    }
+
+    function updateKbdModeUI() {
+        const btn = document.getElementById('btnToggleKbd');
+        if (btn) {
+            btn.innerHTML = useSystemKbd ? '⌨️ СИСТЕМНАЯ КЛАВИАТУРА' : '🎮 ВИРТУАЛЬНАЯ КЛАВИАТУРА';
+            useSystemKbd ? btn.classList.add('neon-on-purple') : btn.classList.remove('neon-on-purple');
+        }
+        const sInput = document.getElementById('searchInput');
+        if (sInput) {
+            if (useSystemKbd) {
+                sInput.removeAttribute('readonly');
+                sInput.style.cursor = 'text';
+            } else {
+                sInput.setAttribute('readonly', 'true');
+                sInput.style.cursor = 'pointer';
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        makePanelDraggable('screen-edit-panel');
+        makePanelDraggable('pad-edit-panel');
+        
+        // Кнопка переключения клавиатуры в панель редактирования (чтобы было скрыто от глаз)
+        const editPanel = document.getElementById('editPanel');
+        if (editPanel) {
+            const kbdToggleBtn = document.createElement('button');
+            kbdToggleBtn.className = 'edit-btn action-btn';
+            kbdToggleBtn.id = 'btnToggleKbd';
+            kbdToggleBtn.style.marginTop = '10px';
+            kbdToggleBtn.style.width = '100%';
+            kbdToggleBtn.onclick = toggleKbdMode;
+            editPanel.appendChild(kbdToggleBtn);
+            updateKbdModeUI();
+        }
+
+        const sInput = document.getElementById('searchInput');
+        if(sInput) {
+            const openKbd = (e) => {
+                if (!useSystemKbd) {
+                    e.preventDefault();
+                    if (cardNavLevel !== 3) openVirtualKeyboard();
+                }
+            };
+            sInput.addEventListener('click', openKbd);
+            sInput.addEventListener('touchstart', openKbd, {passive: false});
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if (window.location.hash !== '#game' && !isShuttingDown) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'NumpadEnter'].includes(e.code)) {
+                if (document.activeElement.id === 'searchInput' && useSystemKbd && cardNavLevel !== 3) return; 
+                e.preventDefault(); 
+            }
+        }
+    }, { passive: false });
+
+
+    // --- УНИВЕРСАЛЬНЫЙ МОЗГ МЕНЮ ЭМУЛЯТОРА ---
     function updateGamepadMenu() {
         if (currentGame || menuScreen.style.display === 'none') {
-            requestAnimationFrame(updateGamepadMenu);
-            return;
+            requestAnimationFrame(updateGamepadMenu); return;
         }
-
         const pads = navigator.getGamepads ? navigator.getGamepads() : [];
         const gp = pads[0]; 
-
-        if (!gp) {
-            requestAnimationFrame(updateGamepadMenu);
-            return;
-        }
+        if (!gp) { requestAnimationFrame(updateGamepadMenu); return; }
 
         const now = Date.now();
-        // УВЕЛИЧИЛИ ЗАДЕРЖКУ (было 150)
         if (now - lastGpMenuUpdate < 250) { 
-            requestAnimationFrame(updateGamepadMenu);
-            return;
+            requestAnimationFrame(updateGamepadMenu); return;
         }
 
         const btns = Array.from(document.querySelectorAll('.game-btn'));
-        if (btns.length === 0) {
-            requestAnimationFrame(updateGamepadMenu);
-            return;
-        }
+        const headerElems = Array.from(document.querySelectorAll('.sys-filter-btn, #searchInput, #viewToggleBtn'));
+        const topElems = Array.from(document.querySelectorAll('.top-actions .action-btn')).filter(el => el.offsetParent !== null);
+        const editElems = Array.from(document.querySelectorAll('#editPanel .action-btn')).filter(el => el.offsetParent !== null);
 
-        let move = 0;
-        // УМНЫЙ ШАГ: проверяем режим отображения
-        let rowStep = (currentViewMode === 'grid') ? 2 : 1;
+        let moveX = 0, moveY = 0;
+        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) moveX = -1; 
+        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) moveX = 1;   
+        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) moveY = -1; 
+        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) moveY = 1;
 
-        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) move = -rowStep; 
-        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) move = rowStep;   
-        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) move = -1; 
-        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) move = 1;   
+        const isAction = (moveX !== 0 || moveY !== 0);
+        const isEditPanelOpen = document.getElementById('editPanel').classList.contains('show');
 
-        if (move !== 0) {
-            lastGpMenuUpdate = now;
-            if (gpMenuIndex >= 0 && btns[gpMenuIndex]) btns[gpMenuIndex].classList.remove('gp-focus');
+        // === УРОВЕНЬ 6: МОДАЛЬНЫЕ ОКНА ===
+        const activeModal = document.querySelector('#exportModalOverlay.show, #infoModalOverlay.show, #resetModalOverlay.show');
+        if (activeModal) {
+            if (cardNavLevel !== 6) { cardNavLevel = 6; modalIndex = 0; }
+            const modalBtns = Array.from(activeModal.querySelectorAll('button:not([style*="display: none"])'));
             
-            gpMenuIndex += move;
-            if (gpMenuIndex < 0) gpMenuIndex = 0;
-            if (gpMenuIndex >= btns.length) gpMenuIndex = btns.length - 1;
+            if (modalBtns.length > 0) {
+                if (moveY !== 0) {
+                    lastGpMenuUpdate = now;
+                    modalBtns.forEach(b => b.classList.remove('gp-focus'));
+                    modalIndex = (modalIndex + moveY + modalBtns.length) % modalBtns.length;
+                    modalBtns[modalIndex].classList.add('gp-focus');
+                    if (typeof doVibrate === 'function') doVibrate(10);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                }
+                if (gp.buttons[0] && gp.buttons[0].pressed) { 
+                    lastGpMenuUpdate = now + 400;
+                    const focused = modalBtns.find(b => b.classList.contains('gp-focus')) || modalBtns[0];
+                    if (focused) {
+                        if (typeof doVibrate === 'function') doVibrate(15);
+                        focused.click();
+                    }
+                }
+                if (gp.buttons[1] && gp.buttons[1].pressed) { 
+                    lastGpMenuUpdate = now + 400;
+                    const cancelBtn = modalBtns.find(b => b.textContent.includes('ОТМЕНА') || b.textContent.includes('ЗАКРЫТЬ'));
+                    if (cancelBtn) {
+                        if (typeof doVibrate === 'function') doVibrate(15);
+                        cancelBtn.click();
+                    }
+                }
+            }
+            requestAnimationFrame(updateGamepadMenu); return;
+        } else if (cardNavLevel === 6) {
+            cardNavLevel = 0; 
+        }
 
-            btns[gpMenuIndex].classList.add('gp-focus');
-            btns[gpMenuIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // === УРОВЕНЬ 3: ВИРТУАЛЬНАЯ КЛАВИАТУРА ===
+        if (cardNavLevel === 3) {
+            // Правый стик скроллит меню или ДВИГАЕТ КЛАВУ (зажав SELECT)
+            if (Math.abs(gp.axes[3]) > 0.2 || Math.abs(gp.axes[2]) > 0.2) {
+                if (gp.buttons[8] && gp.buttons[8].pressed) { // Кнопка Select
+                    const vk = document.getElementById('virtualKeyboard');
+                    if (vk) {
+                        let cx = parseFloat(vk.dataset.x || 0) + (gp.axes[2] || 0) * 15;
+                        let cy = parseFloat(vk.dataset.y || 0) + (gp.axes[3] || 0) * 15;
+                        
+                        const maxRightOffset = window.innerWidth / 2 - 40; 
+                        const maxBottom = 150; // Жесткий барьер снизу
+                        if (cy < -window.innerHeight + 100) cy = -window.innerHeight + 100; 
+                        if (cy > maxBottom) cy = maxBottom; 
+
+                        vk.dataset.x = cx; vk.dataset.y = cy;
+                        updateVkTransform();
+                    }
+                } else {
+                    menuScreen.scrollTop += (gp.axes[3] || 0) * 25; 
+                    if (Math.abs(gp.axes[3]) > 0.2) fadeVkForScroll();
+                }
+            }
             
-            if (typeof doVibrate === 'function') doVibrate(10);
-            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            // Бамперы меняют масштаб по ширине, Курки по высоте
+            if (gp.buttons[4] && gp.buttons[4].pressed) { lastGpMenuUpdate = now + 100; scaleVkWidth(-0.02); }
+            if (gp.buttons[5] && gp.buttons[5].pressed) { lastGpMenuUpdate = now + 100; scaleVkWidth(0.02); }
+            if (gp.buttons[6] && gp.buttons[6].pressed) { lastGpMenuUpdate = now + 100; scaleVkHeight(-0.02); }
+            if (gp.buttons[7] && gp.buttons[7].pressed) { lastGpMenuUpdate = now + 100; scaleVkHeight(0.02); }
+
+            const vkBtns = Array.from(document.querySelectorAll('.vk-btn, .vk-control-btn')); // Добавили системные кнопки!
+            if (vkBtns.length > 0) {
+                if (isAction) {
+                    lastGpMenuUpdate = now;
+                    // Особая навигация для сетки 10х4 + 3 кнопки
+                    if (moveX !== 0) vkIndex = (vkIndex + moveX + vkBtns.length) % vkBtns.length;
+                    if (moveY !== 0) {
+                        if (vkIndex >= 40 && moveY === -1) vkIndex = 35; // Из доп кнопок вверх
+                        else if (vkIndex < 40 && moveY === 1 && vkIndex >= 30) vkIndex = 40 + Math.min(2, Math.floor((vkIndex - 30) / 3)); // Из нижнего ряда вниз
+                        else vkIndex = (vkIndex + (moveY * 10) + vkBtns.length) % vkBtns.length;
+                    }
+                    updateVkFocus();
+                    if (typeof doVibrate === 'function') doVibrate(10);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                }
+                if (gp.buttons[0] && gp.buttons[0].pressed) { 
+                    lastGpMenuUpdate = now + 200;
+                    if (vkIndex < 40) handleVkAction(vkBtns[vkIndex].textContent);
+                    else vkBtns[vkIndex].click(); // Клик по Язык/Стереть/Закрыть
+                    if (typeof doVibrate === 'function') doVibrate(15);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                }
+                if (gp.buttons[1] && gp.buttons[1].pressed) { 
+                    lastGpMenuUpdate = now + 400; closeVirtualKeyboard();
+                    if (typeof doVibrate === 'function') doVibrate(15);
+                }
+                if (gp.buttons[2] && gp.buttons[2].pressed) { 
+                    lastGpMenuUpdate = now + 300;
+                    document.getElementById('searchInput').value = '';
+                    document.getElementById('vk-output').textContent = 'Поиск: ';
+                    if (typeof renderAllGames === 'function') renderAllGames();
+                    if (typeof doVibrate === 'function') doVibrate(20);
+                }
+                if (gp.buttons[3] && gp.buttons[3].pressed) { 
+                    lastGpMenuUpdate = now + 400;
+                    vkLang = vkLang === 'EN' ? 'RU' : 'EN';
+                    renderVkLayout();
+                    if (typeof doVibrate === 'function') doVibrate(20);
+                }
+            }
+            requestAnimationFrame(updateGamepadMenu); return;
         }
 
-        if (gp.buttons[0] && gp.buttons[0].pressed && gpMenuIndex >= 0 && btns[gpMenuIndex]) {
-            lastGpMenuUpdate = now + 500; 
-            btns[gpMenuIndex].click();
+        // Скроллинг экрана Правым Стиком для остальных уровней
+        if (Math.abs(gp.axes[3]) > 0.2) {
+            menuScreen.scrollTop += gp.axes[3] * 25; 
         }
 
-        if (gp.buttons[1] && gp.buttons[1].pressed) {
-            lastGpMenuUpdate = now + 500;
-            if (isLibraryEditMode) toggleLibraryEditMode();
+        // === УРОВЕНЬ 4: САМЫЕ ВЕРХНИЕ КНОПКИ ===
+        if (cardNavLevel === 4) {
+            if (moveY === 1) { 
+                lastGpMenuUpdate = now;
+                cardNavLevel = isEditPanelOpen ? 5 : 2;
+                topElems.forEach(el => el.classList.remove('gp-focus'));
+                if (cardNavLevel === 5 && editElems[0]) { editIndex = 0; editElems[editIndex].classList.add('gp-focus'); }
+                else if (headerElems[8]) { headerIndex = 8; headerElems[headerIndex].classList.add('gp-focus'); headerElems[headerIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+            if (moveX !== 0) {
+                lastGpMenuUpdate = now;
+                topElems.forEach(el => el.classList.remove('gp-focus'));
+                topIndex = (topIndex + moveX + topElems.length) % topElems.length;
+                topElems[topIndex].classList.add('gp-focus');
+                if (typeof doVibrate === 'function') doVibrate(10);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            }
+            if (gp.buttons[0] && gp.buttons[0].pressed) { 
+                lastGpMenuUpdate = now + 400; topElems[topIndex].click();
+            }
+        }
+
+        // === УРОВЕНЬ 5: ПАНЕЛЬ РЕДАКТИРОВАНИЯ ===
+        else if (cardNavLevel === 5) {
+            if (moveY === -1) { 
+                lastGpMenuUpdate = now; cardNavLevel = 4;
+                editElems.forEach(el => el.classList.remove('gp-focus'));
+                topIndex = 0; topElems[topIndex].classList.add('gp-focus');
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+            if (moveY === 1) { 
+                lastGpMenuUpdate = now; cardNavLevel = 2;
+                editElems.forEach(el => el.classList.remove('gp-focus'));
+                headerIndex = 8; headerElems[headerIndex].classList.add('gp-focus');
+                headerElems[headerIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+            if (moveX !== 0) {
+                lastGpMenuUpdate = now;
+                editElems.forEach(el => el.classList.remove('gp-focus'));
+                editIndex = (editIndex + moveX + editElems.length) % editElems.length;
+                editElems[editIndex].classList.add('gp-focus');
+                if (typeof doVibrate === 'function') doVibrate(10);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            }
+            if (gp.buttons[0] && gp.buttons[0].pressed) { 
+                lastGpMenuUpdate = now + 400; editElems[editIndex].click();
+            }
+        }
+
+        // === УРОВЕНЬ 2: ШАПКА ===
+        else if (cardNavLevel === 2) {
+            if (moveY === -1) { 
+                lastGpMenuUpdate = now; cardNavLevel = isEditPanelOpen ? 5 : 4;
+                headerElems.forEach(el => el.classList.remove('gp-focus'));
+                if (cardNavLevel === 5 && editElems[0]) { editIndex = 0; editElems[editIndex].classList.add('gp-focus'); }
+                else if (topElems[0]) { topIndex = 0; topElems[topIndex].classList.add('gp-focus'); }
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+            if (moveY === 1) { 
+                lastGpMenuUpdate = now; cardNavLevel = 0;
+                headerElems.forEach(el => el.classList.remove('gp-focus'));
+                if (btns[0]) { gpMenuIndex = 0; btns[0].classList.add('gp-focus'); btns[0].scrollIntoView({ behavior: 'smooth', block: 'center' }); btns[0].focus(); }
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+            if (moveX !== 0) {
+                lastGpMenuUpdate = now;
+                headerElems.forEach(el => el.classList.remove('gp-focus'));
+                headerIndex = (headerIndex + moveX + headerElems.length) % headerElems.length;
+                headerElems[headerIndex].classList.add('gp-focus');
+                headerElems[headerIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (typeof doVibrate === 'function') doVibrate(10);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            }
+            if (gp.buttons[0] && gp.buttons[0].pressed) { 
+                lastGpMenuUpdate = now + 400;
+                if (headerElems[headerIndex].id === 'searchInput') {
+                    if (useSystemKbd) {
+                        headerElems[headerIndex].focus();
+                    } else {
+                        document.getElementById('searchInput').blur(); 
+                        openVirtualKeyboard(); 
+                    }
+                } else {
+                    headerElems[headerIndex].click();
+                }
+            }
+            if (gp.buttons[3] && gp.buttons[3].pressed) { 
+                lastGpMenuUpdate = now + 400;
+                if (!useSystemKbd) openVirtualKeyboard();
+            }
+        }
+
+        // === УРОВЕНЬ 0: БИБЛИОТЕКА ИГР ===
+        else if (cardNavLevel === 0 && btns.length > 0) {
+            let rowStep = (currentViewMode === 'grid') ? 2 : 1;
+
+            if (moveY === -1 && gpMenuIndex < rowStep && gpMenuIndex >= 0) { 
+                lastGpMenuUpdate = now; cardNavLevel = 2;
+                btns.forEach(el => el.classList.remove('gp-focus'));
+                headerIndex = 8; 
+                if(headerElems[headerIndex]) { headerElems[headerIndex].classList.add('gp-focus'); headerElems[headerIndex].scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+
+            if (gp.buttons[3] && gp.buttons[3].pressed) { 
+                lastGpMenuUpdate = now + 400;
+                if (!useSystemKbd) {
+                    btns.forEach(el => el.classList.remove('gp-focus'));
+                    openVirtualKeyboard(); 
+                }
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+
+            if (moveX !== 0 || moveY !== 0) {
+                lastGpMenuUpdate = now;
+                btns.forEach(el => el.classList.remove('gp-focus'));
+                let combinedMove = moveX + (moveY * rowStep);
+                if (gpMenuIndex === -1) gpMenuIndex = 0; else gpMenuIndex += combinedMove;
+                if (gpMenuIndex < 0) gpMenuIndex = 0; if (gpMenuIndex >= btns.length) gpMenuIndex = btns.length - 1;
+                if (btns[gpMenuIndex]) {
+                    btns[gpMenuIndex].classList.add('gp-focus');
+                    btns[gpMenuIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    btns[gpMenuIndex].focus(); 
+                    if (typeof doVibrate === 'function') doVibrate(10);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                }
+            }
+
+            if (gp.buttons[0] && gp.buttons[0].pressed && gpMenuIndex >= 0 && btns[gpMenuIndex]) { 
+                lastGpMenuUpdate = now + 500; btns[gpMenuIndex].click();
+            }
+            if (gp.buttons[2] && gp.buttons[2].pressed && gpMenuIndex >= 0) { 
+                lastGpMenuUpdate = now + 300; cardNavLevel = 1; innerNavIndex = 0;
+                btns[gpMenuIndex].style.boxShadow = '0 0 30px #fbbf24'; 
+                if (typeof doVibrate === 'function') doVibrate(20);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            }
+            if (gp.buttons[1] && gp.buttons[1].pressed) { 
+                lastGpMenuUpdate = now + 500;
+                if (typeof toggleLibraryEditMode === 'function') toggleLibraryEditMode();
+            }
+        }
+
+        // === УРОВЕНЬ 1: ВНУТРИ КАРТОЧКИ ===
+        else if (cardNavLevel === 1) {
+            const currentCard = btns[gpMenuIndex];
+            const innerElements = Array.from(currentCard.querySelectorAll('[onclick], .sys-badge'));
+            
+            if (moveY !== 0 || (gp.buttons[1] && gp.buttons[1].pressed)) { 
+                lastGpMenuUpdate = now + 300; cardNavLevel = 0;
+                currentCard.style.boxShadow = ''; innerElements.forEach(el => el.style.outline = '');
+                if (typeof doVibrate === 'function') doVibrate(10);
+                requestAnimationFrame(updateGamepadMenu); return;
+            }
+
+            if (moveX !== 0 && innerElements.length > 0) {
+                lastGpMenuUpdate = now;
+                innerElements.forEach(el => el.style.outline = '');
+                innerNavIndex = (innerNavIndex + moveX + innerElements.length) % innerElements.length;
+                innerElements[innerNavIndex].style.outline = '2px solid #fff';
+                innerElements[innerNavIndex].style.borderRadius = '4px';
+                if (typeof doVibrate === 'function') doVibrate(10);
+                if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+            }
+
+            if (gp.buttons[0] && gp.buttons[0].pressed && innerElements[innerNavIndex]) {
+                lastGpMenuUpdate = now + 400; innerElements[innerNavIndex].click();
+            }
         }
 
         requestAnimationFrame(updateGamepadMenu);
     }
+    requestAnimationFrame(updateGamepadMenu);
 
-      // --- ГЛОБАЛЬНЫЙ РАДАР КНОПОК UI (ЗВУК И ВИБРАЦИЯ НА ВСЁ) ---
+    // --- ГЛОБАЛЬНЫЙ РАДАР КНОПОК UI ---
     document.addEventListener('touchstart', (e) => {
-        // Ловим клики вообще по всем возможным кнопкам, карточкам игр и настройкам
         const btn = e.target.closest('button, .action-btn, .sys-filter-btn, .tool-btn, .edit-btn, .f-btn, .game-btn, .del-btn, .sys-badge, select');
-        if (btn) {
-            // Мягкий вибро-импульс (10мс)
-            if (typeof doVibrate === 'function') doVibrate(10);
-            // Воспроизводим системный звук
-            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-        }
+        if (btn) { if (typeof doVibrate === 'function') doVibrate(10); if (typeof AudioGen !== 'undefined') AudioGen.playClick(); }
     }, {passive: true});
-
 
     // --- ВЫЕЗЖАЮЩАЯ ВЕРХНЯЯ ПАНЕЛЬ ---
     function toggleMainToolbar() {
-        const tb = document.getElementById('toolbar');
-        const toggleBtn = document.getElementById('toolbar-toggle');
+        const tb = document.getElementById('toolbar'); const toggleBtn = document.getElementById('toolbar-toggle');
         if (!tb || !toggleBtn) return;
-        
-        if (typeof doVibrate === 'function') doVibrate(10);
-        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-        
-        if (tb.classList.contains('toolbar-hidden')) {
-            tb.classList.remove('toolbar-hidden');
-            toggleBtn.innerHTML = '▲ СКРЫТЬ';
-        } else {
-            tb.classList.add('toolbar-hidden');
-            toggleBtn.innerHTML = '▼ МЕНЮ';
-            
+        if (typeof doVibrate === 'function') doVibrate(10); if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+        if (tb.classList.contains('toolbar-hidden')) { tb.classList.remove('toolbar-hidden'); toggleBtn.innerHTML = '▲ СКРЫТЬ'; } 
+        else {
+            tb.classList.add('toolbar-hidden'); toggleBtn.innerHTML = '▼ МЕНЮ';
             if (typeof isEditMode !== 'undefined' && isEditMode) toggleScreenEdit();
             if (typeof isPadEditMode !== 'undefined' && isPadEditMode) togglePadEdit();
-            const fkeys = document.getElementById('fkeys-panel');
-            if (fkeys && fkeys.style.display === 'flex') toggleKeysPanel();
+            const fkeys = document.getElementById('fkeys-panel'); if (fkeys && fkeys.style.display === 'flex') toggleKeysPanel();
         }
     }
 
-
-
-    // --- ПЛАВАЮЩИЕ ОКНА (DRAG & DROP) ---
+    // --- ПЛАВАЮЩИЕ ОКНА С ГРАНИЦАМИ И МАСШТАБИРОВАНИЕМ ---
     function makePanelDraggable(panelId) {
-        const panel = document.getElementById(panelId);
-        if (!panel) return;
-        const handle = panel.querySelector('.drag-handle');
-        if (!handle) return;
-
-        let isDragging = false;
-        let startX, startY;
-        let currentX = 0;
-        let currentY = 0;
+        const panel = document.getElementById(panelId); if (!panel) return;
+        const handle = panel.querySelector('.drag-handle'); if (!handle) return;
+        let isDragging = false; let startX, startY, currentX = 0, currentY = 0;
+        
+        let baseTransformX = panelId === 'virtualKeyboard' ? '-50%' : '0px';
 
         handle.addEventListener('touchstart', (e) => {
             isDragging = true;
-            
-            if (typeof doVibrate === 'function') doVibrate(10);
-            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-
+            if (typeof doVibrate === 'function') doVibrate(10); if (typeof AudioGen !== 'undefined') AudioGen.playClick();
             panel.style.transition = 'none'; 
-            currentX = parseFloat(panel.dataset.x || 0);
-            currentY = parseFloat(panel.dataset.y || 0);
-            startX = e.touches[0].clientX - currentX;
-            startY = e.touches[0].clientY - currentY;
+            currentX = parseFloat(panel.dataset.x || 0); currentY = parseFloat(panel.dataset.y || 0);
+            startX = e.touches[0].clientX - currentX; startY = e.touches[0].clientY - currentY;
             e.preventDefault(); 
         }, {passive: false});
+        
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return; e.preventDefault();
+            currentX = e.touches[0].clientX - startX; currentY = e.touches[0].clientY - startY;
+            
+            if (panelId === 'virtualKeyboard') {
+                const maxRightOffset = window.innerWidth / 2 - 40; 
+                const maxBottom = 150; // Жесткий барьер: клава уйдет вниз максимум на 150px, оставляя шапку
+                if (currentY < -window.innerHeight + 100) currentY = -window.innerHeight + 100; 
+                if (currentY > maxBottom) currentY = maxBottom; 
+                if (currentX < -maxRightOffset) currentX = -maxRightOffset;
+                if (currentX > maxRightOffset) currentX = maxRightOffset;
 
-                document.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            e.preventDefault();
-            
-                        currentX = e.touches[0].clientX - startX;
-            currentY = e.touches[0].clientY - startY;
-            
-            // ГЛОБАЛЬНАЯ ЗАЩИТА: Бетонные стены по краям экрана (Усовершенствованная)
-            // Мы УВЕЛИЧИЛИ буферы в 2.5 раза, чтобы гарантировать видимость ручки
-            // даже на самых длинных телефонах
-            const maxRight = window.innerWidth - 80;
-            const maxBottom = window.innerHeight - 300; // Жёсткий пол
-            
-            if (currentY < -60) currentY = -60; // Защита ручки от ухода ВВЕРХ
-            if (currentY > maxBottom) currentY = maxBottom; // Жёсткая защита ручки от ухода ВНИЗ
-            
-            if (currentX < -150) currentX = -150; // Защита от ухода ВЛЕВО
-            if (currentX > maxRight) currentX = maxRight; // Защита от ухода ВПРАВО
-
-            
-            // Двигаем окно поверх всех стилей
-            panel.style.transform = `translate(${currentX}px, ${currentY}px)`;
-        }, {passive: false});
-
-
-        const stopDrag = () => {
-            if (isDragging) {
-                isDragging = false;
                 panel.dataset.x = currentX;
                 panel.dataset.y = currentY;
-                panel.style.transition = ''; 
+                updateVkTransform();
+            } else {
+                const maxRight = window.innerWidth - 80; const maxBottom = window.innerHeight - 300; 
+                if (currentY < -60) currentY = -60; if (currentY > maxBottom) currentY = maxBottom; 
+                if (currentX < -150) currentX = -150; if (currentX > maxRight) currentX = maxRight; 
+                panel.style.transform = `translate(${currentX}px, ${currentY}px)`;
             }
-        };
-
-        document.addEventListener('touchend', stopDrag);
-        document.addEventListener('touchcancel', stopDrag);
+        }, {passive: false});
+        
+        const stopDrag = () => { if (isDragging) { isDragging = false; panel.dataset.x = currentX; panel.dataset.y = currentY; panel.style.transition = ''; } };
+        document.addEventListener('touchend', stopDrag); document.addEventListener('touchcancel', stopDrag);
     }
-
-    // Инициализируем перетаскивание для обеих панелей
-    document.addEventListener('DOMContentLoaded', () => {
-        makePanelDraggable('screen-edit-panel');
-        makePanelDraggable('pad-edit-panel');
+    
+    document.addEventListener('DOMContentLoaded', () => { 
+        makePanelDraggable('screen-edit-panel'); 
+        makePanelDraggable('pad-edit-panel'); 
+        makePanelDraggable('virtualKeyboard'); 
     });
 
-
-
-
-
-    // --- ОПРОС ФИЗИЧЕСКОГО ГЕЙМПАДА ВНУТРИ ИГРЫ ---
+    // =========================================================
+    // --- ОПРОС ГЕЙМПАДА ВНУТРИ ИГРЫ (С НАВИГАЦИЕЙ UI И ЭКРАНОМ)
+    // =========================================================
     let gpInGameState = {};
+    let lastInGameUiUpdate = 0;
+    let inGameUiIndex = 0;
     
     function pollGamepadInGame() {
-        // Работаем только если игра запущена, мы на экране игры и не на паузе
         if (currentGame && window.location.hash === '#game' && !isGamePaused && !isShuttingDown) {
-            const pads = navigator.getGamepads ? navigator.getGamepads() : [];
-            const gp = pads[0];
-            
+            const pads = navigator.getGamepads ? navigator.getGamepads() : []; const gp = pads[0];
             if (gp) {
-                // Карта: [индекс кнопки физического геймпада] -> [твой внутренний код клавиши]
-                const map = { 
-                    0: 90,  // A -> Z
-                    1: 88,  // B -> X
-                    2: 65,  // X -> A
-                    3: 83,  // Y -> S
-                    8: 16,  // Select -> Shift
-                    9: 13,  // Start -> Enter
-                    12: 38, // D-pad Up -> ArrowUp
-                    13: 40, // D-pad Down -> ArrowDown
-                    14: 37, // D-pad Left -> ArrowLeft
-                    15: 39, // D-pad Right -> ArrowRight
-                    4: 81,  // L1 -> Q
-                    5: 87   // R1 -> W
-                };
+                const now = Date.now();
                 
+                // ВЫЗОВ МЕНЮ ЭМУЛЯТОРА (Select + Start)
+                if (gp.buttons[8] && gp.buttons[8].pressed && gp.buttons[9] && gp.buttons[9].pressed) {
+                    if (now - lastInGameUiUpdate > 500) {
+                        lastInGameUiUpdate = now; toggleMainToolbar();
+                    }
+                }
+
+                const tb = document.getElementById('toolbar');
+                const isUiOpen = tb && !tb.classList.contains('toolbar-hidden');
+
+                // --- НАВИГАЦИЯ В МЕНЮ ЭМУЛЯТОРА ---
+                if (isUiOpen) {
+                    const activePanel = document.querySelector('#screen-edit-panel.show, #pad-edit-panel.show, #fkeys-panel[style*="display: flex"]');
+                    
+                    if (activePanel) {
+                        const isScreenPanel = activePanel.id === 'screen-edit-panel';
+                        
+                        if (isScreenPanel) {
+                            if (!gp.buttons[3]?.pressed && (Math.abs(gp.axes[2]) > 0.2 || Math.abs(gp.axes[3]) > 0.2)) {
+                                screenX += (gp.axes[2] || 0) * 8;
+                                screenY += (gp.axes[3] || 0) * 8;
+                                updateScreenTransform();
+                            }
+                            if (gp.buttons[4] && gp.buttons[4].pressed) { adjustScaleX(-0.015); }
+                            if (gp.buttons[5] && gp.buttons[5].pressed) { adjustScaleX(0.015); }
+                            if (gp.buttons[6] && gp.buttons[6].pressed) { adjustScaleY(-0.015); }
+                            if (gp.buttons[7] && gp.buttons[7].pressed) { adjustScaleY(0.015); }
+                            
+                            if (gp.buttons[8] && gp.buttons[8].pressed && now - lastInGameUiUpdate > 300) {
+                                lastInGameUiUpdate = now; resetScale();
+                                if (typeof doVibrate === 'function') doVibrate(20);
+                            }
+                        }
+
+                        const shouldMovePanel = isScreenPanel ? (gp.buttons[3] && gp.buttons[3].pressed) : true;
+                        
+                        if (shouldMovePanel && (Math.abs(gp.axes[2]) > 0.2 || Math.abs(gp.axes[3]) > 0.2)) {
+                            let cx = parseFloat(activePanel.dataset.x || 0);
+                            let cy = parseFloat(activePanel.dataset.y || 0);
+                            cx += (gp.axes[2] || 0) * 12; cy += (gp.axes[3] || 0) * 12;
+                            
+                            const maxRight = window.innerWidth - 80; const maxBottom = window.innerHeight - 300; 
+                            if (cy < -60) cy = -60; if (cy > maxBottom) cy = maxBottom; 
+                            if (cx < -150) cx = -150; if (cx > maxRight) cx = maxRight; 
+
+                            activePanel.dataset.x = cx; activePanel.dataset.y = cy;
+                            activePanel.style.transform = `translate(${cx}px, ${cy}px)`;
+                        }
+                    }
+
+                    if (now - lastInGameUiUpdate > 150) {
+                        let uiMoveX = 0, uiMoveY = 0;
+                        if (gp.axes[0] < -0.5 || (gp.buttons[14] && gp.buttons[14].pressed)) uiMoveX = -1;
+                        if (gp.axes[0] > 0.5 || (gp.buttons[15] && gp.buttons[15].pressed)) uiMoveX = 1;
+                        if (gp.axes[1] < -0.5 || (gp.buttons[12] && gp.buttons[12].pressed)) uiMoveY = -1;
+                        if (gp.axes[1] > 0.5 || (gp.buttons[13] && gp.buttons[13].pressed)) uiMoveY = 1;
+
+                        const interactables = Array.from(document.querySelectorAll('#toolbar:not(.toolbar-hidden) .tool-btn, #screen-edit-panel.show button, #screen-edit-panel.show select, #screen-edit-panel.show input[type="range"], #pad-edit-panel.show button, #pad-edit-panel.show input[type="range"], #fkeys-panel[style*="display: flex"] .f-btn'));
+                        
+                        if (interactables.length > 0) {
+                            if (uiMoveX !== 0 || uiMoveY !== 0) {
+                                lastInGameUiUpdate = now;
+                                interactables.forEach(el => el.classList.remove('gp-focus'));
+                                
+                                const activeEl = interactables[inGameUiIndex];
+                                const isSlider = activeEl && activeEl.tagName === 'INPUT' && activeEl.type === 'range';
+                                const isSelect = activeEl && activeEl.tagName === 'SELECT';
+
+                                if ((isSlider || isSelect) && uiMoveX !== 0) {
+                                    if (isSlider) {
+                                        let step = parseFloat(activeEl.max - activeEl.min) / 20;
+                                        activeEl.value = parseFloat(activeEl.value) + (uiMoveX * step);
+                                        activeEl.dispatchEvent(new Event('input')); activeEl.dispatchEvent(new Event('change'));
+                                    } else if (isSelect) {
+                                        let idx = activeEl.selectedIndex + uiMoveX;
+                                        if (idx >= 0 && idx < activeEl.options.length) {
+                                            activeEl.selectedIndex = idx; activeEl.dispatchEvent(new Event('change'));
+                                        }
+                                    }
+                                    if (typeof doVibrate === 'function') doVibrate(10);
+                                } else {
+                                    let step = uiMoveX !== 0 ? uiMoveX : uiMoveY;
+                                    inGameUiIndex = (inGameUiIndex + step + interactables.length) % interactables.length;
+                                    interactables[inGameUiIndex].classList.add('gp-focus');
+                                    interactables[inGameUiIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                                    if (typeof doVibrate === 'function') doVibrate(10);
+                                }
+                            }
+
+                            if (gp.buttons[0] && gp.buttons[0].pressed) { // A
+                                lastInGameUiUpdate = now + 300;
+                                const el = interactables[inGameUiIndex];
+                                if (el && (el.tagName === 'BUTTON' || el.classList.contains('tool-btn'))) {
+                                    el.click();
+                                    if (typeof doVibrate === 'function') doVibrate(15);
+                                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                                }
+                            }
+                        }
+
+                        if (gp.buttons[1] && gp.buttons[1].pressed) { // B 
+                            lastInGameUiUpdate = now + 300;
+                            if (document.querySelector('#screen-edit-panel.show')) toggleScreenEdit();
+                            else if (document.querySelector('#pad-edit-panel.show')) togglePadEdit();
+                            else if (document.getElementById('fkeys-panel').style.display === 'flex') toggleKeysPanel();
+                            else toggleMainToolbar();
+                            if (typeof doVibrate === 'function') doVibrate(15);
+                            if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                        }
+                    }
+                    
+                    for (let b in gpInGameState) {
+                        if (gpInGameState[b]) {
+                            let mappedKey = null;
+                            if (b.startsWith('axis_')) {
+                                const axesMap = {'axis_up':38, 'axis_down':40, 'axis_left':37, 'axis_right':39};
+                                mappedKey = axesMap[b];
+                            } else {
+                                const map = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
+                                mappedKey = map[b];
+                            }
+                            if (mappedKey !== null) sendKey(mappedKey, false);
+                            gpInGameState[b] = false;
+                        }
+                    }
+                    requestAnimationFrame(pollGamepadInGame); return; 
+                }
+
+                // --- ОБЫЧНЫЙ ГЕЙМПЛЕЙ ---
+                const map = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
                 for (let b in map) {
                     let pressed = gp.buttons[b] && gp.buttons[b].pressed;
-                    
-                    if (pressed && !gpInGameState[b]) {
-                        sendKey(map[b], true);
-                        gpInGameState[b] = true;
-                    } else if (!pressed && gpInGameState[b]) {
-                        sendKey(map[b], false);
-                        gpInGameState[b] = false;
-                    }
+                    if (pressed && !gpInGameState[b]) { sendKey(map[b], true); gpInGameState[b] = true; } 
+                    else if (!pressed && gpInGameState[b]) { sendKey(map[b], false); gpInGameState[b] = false; }
+                }
+                const axisDeadzone = 0.4;
+                const axesMap = {
+                    'up': { code: 38, pressed: gp.axes[1] < -axisDeadzone }, 'down': { code: 40, pressed: gp.axes[1] > axisDeadzone },
+                    'left': { code: 37, pressed: gp.axes[0] < -axisDeadzone }, 'right': { code: 39, pressed: gp.axes[0] > axisDeadzone }
+                };
+                for (let dir in axesMap) {
+                    let data = axesMap[dir]; let stateKey = 'axis_' + dir;
+                    if (data.pressed && !gpInGameState[stateKey]) { sendKey(data.code, true); gpInGameState[stateKey] = true; } 
+                    else if (!data.pressed && gpInGameState[stateKey]) { sendKey(data.code, false); gpInGameState[stateKey] = false; }
                 }
             }
         }
         requestAnimationFrame(pollGamepadInGame);
     }
-
-    // Запускаем фоновый цикл опроса геймпада
     requestAnimationFrame(pollGamepadInGame);
-
-
-
-
 </script>
-
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
 </body>
 </html>
-.
+
+       
+       
+       
+       
