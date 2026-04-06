@@ -4185,7 +4185,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         });
     }
 
-    async function exportLibrary() {
+        async function exportLibrary() {
         const btn = document.getElementById('exportLibraryBtn');
         const isSelective = typeof selectedGamesForDelete !== 'undefined' && selectedGamesForDelete.size > 0;
 
@@ -4198,40 +4198,45 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 return;
             }
 
-            const currentItem = items.shift(); 
-            let fileName = currentItem.name;
-            let blob = currentItem.blob;
-            
             btn.innerHTML = '⏳ СОХРАНЕНИЕ...';
             btn.style.pointerEvents = 'none';
 
-            if (typeof window.nativeSaveZip === 'function') {
-                const success = await window.nativeSaveZip(blob, fileName);
-                if (!success) btn.style.background = '#ef4444';
-            } else {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                await new Promise(r => setTimeout(r, 1000)); 
+            // --- ВОССТАНОВЛЕННЫЙ ЦИКЛ (как в index 22) ---
+            for (let i = 0; i < items.length; i++) {
+                let fileName = items[i].name;
+                let blob = items[i].blob;
+                
+                if (items.length > 1) {
+                    btn.innerHTML = `⏳ ПИШУ ${i + 1} ИЗ ${items.length}...`;
+                }
+
+                if (typeof window.nativeSaveZip === 'function') {
+                    const success = await window.nativeSaveZip(blob, fileName);
+                    if (!success) {
+                        btn.style.background = '#ef4444';
+                    }
+                    // Даем файловой системе 2 секунды на сохранение перед следующим файлом
+                    await new Promise(r => setTimeout(r, 2000));
+                } else {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    await new Promise(r => setTimeout(r, 1000)); 
+                }
             }
 
-            if (items.length > 0) {
-                btn.innerHTML = `📥 СЛЕДУЮЩИЙ (еще ${items.length})`;
-                btn.style.background = '#d97706'; 
+            btn.innerHTML = '✅ ВСЕ СКАЧАНО';
+            btn.style.background = 'rgba(16, 185, 129, 0.8)';
+            setTimeout(() => {
+                btn.innerHTML = '📦 В ZIP';
+                btn.dataset.readyToDownload = 'false';
+                btn.style.background = 'rgba(16, 185, 129, 0.4)';
                 btn.style.pointerEvents = 'auto';
-            } else {
-                btn.innerHTML = '✅ ВСЕ СКАЧАНО';
-                btn.style.background = 'rgba(16, 185, 129, 0.8)';
-                setTimeout(() => {
-                    btn.innerHTML = '📦 В ZIP';
-                    btn.dataset.readyToDownload = 'false';
-                    btn.style.background = 'rgba(16, 185, 129, 0.4)';
-                    btn.style.pointerEvents = 'auto';
-                }, 3000);
-            }
+                window._lastZipBlobs = [];
+            }, 3000);
             return;
         }
 
@@ -4332,6 +4337,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     }
                 };
 
+                // --- ВОССТАНОВЛЕННАЯ ЛОГИКА РЕЖИМОВ ---
                 if (mode === 'single') {
                     let baseName = isSelective ? "Selected_Games" : "ArcadeHub_Full_Backup";
                     await processGamesToZip(games, baseName, false);
@@ -4357,7 +4363,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 if (zipItems.length === 1) {
                     btn.innerHTML = `✅ СКАЧАТЬ (~${Math.round(totalMb)}MB)`; 
                 } else {
-                    btn.innerHTML = `✅ СКАЧАТЬ (Файл 1 из ${zipItems.length})`; 
+                    btn.innerHTML = `✅ СКАЧАТЬ (${zipItems.length} ф.)`; 
                 }
                 
                 btn.style.background = '#d97706'; 
