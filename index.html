@@ -1413,10 +1413,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         } 
     });
 
-    document.addEventListener('touchmove', (e) => {
-        if (e.target.closest('#menuScreen') || e.target.closest('#screen-edit-panel') || e.target.closest('#pad-edit-panel') || e.target.closest('#infoModal')) return;
+        document.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#menuScreen') || e.target.closest('#screen-edit-panel') || e.target.closest('#pad-edit-panel') || e.target.closest('#infoModal') || e.target.closest('#langModalOverlay')) return;
         e.preventDefault();
     }, { passive: false });
+
 
     document.addEventListener("visibilitychange", () => {
         if (document.hidden) {
