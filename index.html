@@ -121,12 +121,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     border-bottom: 2px dashed var(--neon-blue); 
     position: relative; 
     overflow: hidden; 
-    z-index: 100; /* <--- ПРОСТО ДОБАВЬ ЭТУ СТРОКУ СЮДА */
+    z-index: 115; /* Пакман теперь выше тумана, но ниже липкого меню */
     border-radius: 0 0 20px 20px; 
     margin-left: -15px; 
     margin-right: -15px; 
     background: rgba(0,0,0,0.4); 
 }
+
 
 
 .pacman-stage {
@@ -559,30 +560,41 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { display: flex !important; background: rgba(239, 68, 68, 0.4); }
 .game-btn:focus, .game-btn.gp-focus { outline: none; border: 3px solid var(--neon-blue) !important; box-shadow: 0 0 25px var(--neon-blue), inset 0 0 10px var(--neon-blue) !important; transform: scale(1.05) translateY(-5px); z-index: 10; }
 
-/* --- НОВЫЕ СТИЛИ: ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
-    position: sticky; top: 0; z-index: 90;
-    background: rgba(8, 8, 12, 0.85); /* Темнее фона, чтобы выделялась */
+    position: sticky; 
+    top: 0; 
+    z-index: 110; /* Меню на самом верху */
+    background: rgba(8, 8, 12, 0.85);
     background-image: radial-gradient(circle at 50% 0%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%);
-    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
     padding-top: env(safe-area-inset-top, 15px);
-    margin: 0 -15px 15px -15px; padding-left: 15px; padding-right: 15px; padding-bottom: 10px;
+    margin: 0 -15px 15px -15px; 
+    padding-left: 15px; 
+    padding-right: 15px; 
+    padding-bottom: 10px;
     border-bottom: 2px solid #fff; 
     box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
     transition: all 0.5s ease;
-    will-change: box-shadow, background-image;  
-    
-    /* Туманчик, закрывающий щель НАД шапкой (возле статусбара) */
+}
+
 .sticky-zone::before {
     content: '';
     position: absolute;
     bottom: 100%; 
     left: 0;
     width: 100%;
-    height: 60px; 
-    background: linear-gradient(to top, rgba(8, 8, 12, 0.95) 0%, rgba(8, 8, 12, 0) 100%);
+    height: 100px; /* Немного уменьшил высоту для естественности */
+    /* Сделал градиент чуть прозрачнее в начале, чтобы не было "черного стекла" */
+    background: linear-gradient(to top, 
+        rgba(8, 8, 12, 1) 0%, 
+        rgba(8, 8, 12, 0.7) 50%, 
+        rgba(8, 8, 12, 0) 100%
+    ) !important;
     pointer-events: none; 
+    z-index: 101; /* Туман выше карточек, но ниже Пакмана */
 }
+
 
       
 }
