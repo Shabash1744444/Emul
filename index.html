@@ -1489,12 +1489,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
         return null;
     }
+    
+    
+    
+    
+    
+    
+    
 
-    async function saveGameState(isAuto = false) {
+         async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         try {
             let success = false;
             const btn = document.getElementById('btnSave');
+            const origIcon = btn ? btn.innerHTML : ''; // Запоминаем SVG иконку
+            
             if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#059669'; }
             
             if (currentGame.t === 'n' && nes) {
@@ -1505,8 +1514,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 success = true;
             } 
             else if (currentGame.t === 'l' && window.Module) {
-                if (window.Module._cmd_save_state) {
-                    window.Module._cmd_save_state(); 
+                // ИСПОЛЬЗУЕМ LRCALL ДЛЯ УНИВЕРСАЛЬНОСТИ!
+                const saveCmd = window.Module._cmd_save_state || window.Module.cmd_save_state || window.Module.ccall;
+                if (saveCmd) {
+                    lrCall('cmd_save_state'); 
                     
                     await new Promise(resolve => setTimeout(resolve, 700));
 
@@ -1520,14 +1531,18 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                                 if (n === '.' || n === '..') continue;
                                 let p = dir === '/' ? '/' + n : dir + '/' + n;
                                 if (fs.isDir(fs.stat(p).mode)) {
-                                    findState(p);
+                                    // Пропускаем тяжелые системные папки
+                                    if (!p.startsWith('/dev') && !p.startsWith('/proc') && !p.startsWith('/sys') && !p.startsWith('/tmp')) {
+                                        findState(p);
+                                    }
                                 } else if ((p.includes('/states/') || p.endsWith('.state') || p.endsWith('.srm')) && fs.stat(p).size > 0) {
                                     statePath = p; 
                                 }
                             }
                         } catch(e) {}
                     }
-                    if (fs) findState('/home/web_user/retroarch/userdata/states');
+                    // ИЩЕМ ОТ КОРНЯ!
+                    if (fs) findState('/');
 
                     if (statePath) {
                         let fileData = fs.readFile(statePath);
@@ -1545,15 +1560,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     function scanFS(path) {
                         try {
                             actualFS.readdir(path).forEach(item => {
-                                if(['.', '..', 'dev', 'proc', 'sys', 'tmp', 'home'].includes(item)) return;
+                                // АНТИ-БАГ: Создаем массив без квадратных скобок
+                                const ignoreDirs = ".,..,dev,proc,sys,tmp,home".split(",");
+                                if (ignoreDirs.includes(item)) return;
+                                
                                 const fullPath = path === '/' ? '/' + item : path + '/' + item;
                                 const st = actualFS.stat(fullPath);
+                                
                                 if (actualFS.isDir(st.mode)) {
                                     scanFS(fullPath);
                                 } else {
                                     const ext = fullPath.split('.').pop().toLowerCase();
-                                    if (!['exe','com','dll','ovl','drv','bat'].includes(ext)) {
-                                        zipData[fullPath.replace(/^\//, '')] = actualFS.readFile(fullPath);
+                                    // АНТИ-БАГ: Создаем массив без квадратных скобок
+                                    const ignoreExts = "exe,com,dll,ovl,drv,bat".split(",");
+                                    
+                                    if (!ignoreExts.includes(ext)) {
+                                        const cleanPath = fullPath.replace(/^\//, '');
+                                        // АНТИ-БАГ: Безопасное присвоение без квадратных скобок
+                                        Reflect.set(zipData, cleanPath, actualFS.readFile(fullPath));
                                     }
                                 }
                             });
@@ -1569,7 +1593,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (btn && !isAuto) {
                 if (success) { btn.innerHTML = '✅'; } 
                 else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { btn.innerHTML = '💾'; btn.style.background = 'rgba(4, 120, 87, 0.4)'; }, 2000);
+                setTimeout(() => { 
+                    btn.innerHTML = origIcon; 
+                    btn.style.background = 'rgba(255, 255, 255, 0.05)'; 
+                }, 2000);
             }
         } catch(e) { console.error("Save error:", e); }
     }
@@ -1580,8 +1607,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (isAuto) {
             const isNeonActive = localStorage.getItem('autoload_' + currentGame.id) === 'true';
             if (!isNeonActive) {
-                if (currentGame.t === 'l' && window.Module && window.Module._cmd_save_state) {
-                    window.Module._cmd_save_state();
+                if (currentGame.t === 'l' && window.Module) {
+                    const saveCmd = window.Module._cmd_save_state || window.Module.cmd_save_state || window.Module.ccall;
+                    if (saveCmd) lrCall('cmd_save_state');
                 }
                 return; 
             }
@@ -1590,6 +1618,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         try {
             let success = false;
             const btn = document.getElementById('btnLoad');
+            const origIcon = btn ? btn.innerHTML : ''; 
+            
             if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#d97706'; }
 
             if (currentGame.t === 'n' && nes) { 
@@ -1605,10 +1635,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             } 
             else if (currentGame.t === 'l' && window.Module) { 
                 const savedData = await SaveStorage.get('savestate_lr_' + currentGame.n);
-                if (savedData && window.Module._cmd_load_state) {
+                const loadCmd = window.Module._cmd_load_state || window.Module.cmd_load_state || window.Module.ccall;
+                
+                if (savedData && loadCmd) {
                     let fs = window.FS || (window.Module && window.Module.FS);
                     
-                    window.Module._cmd_save_state();
+                    lrCall('cmd_save_state');
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
                     let statePath = null;
@@ -1618,17 +1650,21 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             for (let n of nodes) {
                                 if (n === '.' || n === '..') continue;
                                 let p = dir === '/' ? '/' + n : dir + '/' + n;
-                                if (fs.isDir(fs.stat(p).mode)) findState(p);
+                                if (fs.isDir(fs.stat(p).mode)) {
+                                    if (!p.startsWith('/dev') && !p.startsWith('/proc') && !p.startsWith('/sys') && !p.startsWith('/tmp')) {
+                                        findState(p);
+                                    }
+                                }
                                 else if (p.includes('/states/') || p.endsWith('.state')) statePath = p; 
                             }
                         } catch(e) {}
                     }
-                    if (fs) findState('/home/web_user/retroarch/userdata/states');
+                    if (fs) findState('/');
 
                     if (statePath && fs) {
                         const stateCopy = unpackData(savedData);
                         fs.writeFile(statePath, stateCopy);
-                        window.Module._cmd_load_state();
+                        lrCall('cmd_load_state');
                         success = true;
                     }
                 }
@@ -1646,10 +1682,12 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             const parts = fullPath.split('/');
                             let currentPath = '';
                             for (let i = 1; i < parts.length - 1; i++) {
-                                currentPath += '/' + parts[i];
+                                // АНТИ-БАГ: Достаем индекс без квадратных скобок
+                                currentPath += '/' + Reflect.get(parts, i);
                                 try { actualFS.mkdir(currentPath); } catch(e) {}
                             }
-                            actualFS.writeFile(fullPath, unzipped[f]);
+                            // АНТИ-БАГ: Достаем дату файла без квадратных скобок
+                            actualFS.writeFile(fullPath, Reflect.get(unzipped, f));
                         }
                         success = true;
                     } catch(e) {}
@@ -1658,12 +1696,22 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
             
             if (btn && !isAuto) {
-                if (success) { btn.innerHTML = '✅'; } 
+                if (success) { btn.innerHTML = '✅'; btn.style.background = '#059669'; } 
                 else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { btn.innerHTML = '📂'; btn.style.background = 'rgba(180, 83, 9, 0.4)'; }, 2000);
+                setTimeout(() => { 
+                    btn.innerHTML = origIcon; 
+                    btn.style.background = 'rgba(255, 255, 255, 0.05)'; 
+                }, 2000);
             }
         } catch(e) { console.error("Load error:", e); }
     }
+
+
+
+
+
+
+
 
     function toggleColors() { videoConfig.colors = !videoConfig.colors; saveVideoConfig(); }
 
