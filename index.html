@@ -125,7 +125,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     border-radius: 0 0 20px 20px; 
     margin-left: -15px; 
     margin-right: -15px; 
-    background: rgba(0,0,0,0.4); 
+    
 }
 
 
@@ -248,8 +248,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 #editModeBtn.active { background: rgba(16, 185, 129, 0.2) !important; border-color: rgba(16, 185, 129, 0.6) !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
 
 /* --- НОВЫЕ КНОПКИ СОРТИРОВКИ --- */
-.sys-filter-container { display: flex; gap: 8px; flex: 1; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; align-items: center; }
+.sys-filter-container { 
+    display: flex; 
+    gap: 8px; 
+    flex: 1; 
+    overflow-x: auto; 
+    /* Даем 15px пространства сверху и снизу, чтобы тень поместилась и не обрезалась: */
+    padding: 15px 5px; 
+    /* Сдвигаем обратно отрицательным отступом, чтобы меню не разъехалось в высоту: */
+    margin: -15px -5px; 
+    scrollbar-width: none; 
+    align-items: center; 
+}
 .sys-filter-container::-webkit-scrollbar { display: none; }
+
 .sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 13px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
 .sys-filter-btn:active { transform: scale(0.95); filter: brightness(1.2); }
 .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
@@ -561,34 +573,73 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 .game-btn.selected .edit-overlay { display: flex !important; background: rgba(239, 68, 68, 0.4); }
 .game-btn:focus, .game-btn.gp-focus { outline: none; border: 3px solid var(--neon-blue) !important; box-shadow: 0 0 25px var(--neon-blue), inset 0 0 10px var(--neon-blue) !important; transform: scale(1.05) translateY(-5px); z-index: 10; }
 
-/* --- ЛИПКАЯ ШАПКА --- */
+/* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
     top: 0; 
     z-index: 110; 
     background: rgba(8, 8, 12, 0.85);
     background-image: radial-gradient(circle at 50% 0%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%);
-    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
     padding-top: env(safe-area-inset-top, 15px);
     margin: 0 -15px 15px -15px; 
-    padding-left: 15px; padding-right: 15px; padding-bottom: 10px;
+    padding-left: 15px; 
+    padding-right: 15px; 
+    padding-bottom: 10px;
+    
+    /* Только нижняя рамка и тень (чтобы верхняя не пряталась под челкой) */
     border-bottom: 2px solid #fff; 
     box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
     transition: all 0.5s ease;
 } 
 
-/* ТУМАН (Слой 101 — ниже Пакмана 115) */
+/* --- 2. СТЕКЛЯННАЯ ЗАТЫЧКА (Идет вверх под челку) --- */
 .sticky-zone::before {
     content: '';
     position: absolute;
     bottom: 100%; 
     left: 0;
     width: 100%;
-    height: 120px; 
-    background: linear-gradient(to top, rgba(8, 8, 12, 1) 0%, rgba(8, 8, 12, 0.8) 40%, rgba(8, 8, 12, 0) 100%) !important;
-    pointer-events: none;
-    z-index: 101; 
+    height: 150px; 
+    background-color: rgba(8, 8, 12, 0.85) !important; 
+    background-image: radial-gradient(circle at 50% 100%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%) !important;
+    backdrop-filter: blur(15px) !important; 
+    -webkit-backdrop-filter: blur(15px) !important;
+    pointer-events: auto !important; 
+    z-index: -1; 
 }
+
+/* --- 3. ВЕРХНЯЯ БЕЛАЯ ЛИНИЯ (С объемным неоном во все стороны) --- */
+.sticky-zone::after {
+    content: '';
+    position: absolute;
+    
+    top: -10px; /* Твоя настройка высоты, оставляй как подобрал */
+    
+    left: 0;
+    width: 100%;
+    height: 2px; /* Оставляем жирную 2px линию, как ты и хотел */
+    background: #fff;
+    
+    /* Свечение теперь бьет ровно из центра во все стороны (0 по осям X и Y):
+       1 слой: огромное мягкое облако, которое упадет и на меню, и на затычку
+       2 слой: плотный цветной неон прямо у самой белой линии
+       3 слой: слепящий белый пересвет в самом центре */
+    box-shadow: 
+        0 0 30px 2px var(--sys-neon, rgba(56, 189, 248, 0.6)), 
+        0 0 10px 1px var(--sys-neon, rgba(56, 189, 248, 0.8)), 
+        0 0 3px #fff; 
+        
+    pointer-events: none; 
+    z-index: 10;
+}
+
+
+
+
+
+
 
 /* ВЫБОР ЯЗЫКА (ТЕПЕРЬ СЛОЙ 99999 - ВСЕГДА СВЕРХУ) */
 #langModalOverlay {
