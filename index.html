@@ -766,6 +766,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 
 
+.game-btn { 
+    /* Твои старые стили оставляем как есть... */
+    padding: 0; font-size: 13px; font-weight: bold; text-align: center; background-color: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; position: relative; overflow: hidden; background-size: cover; background-position: center; transition: transform 0.1s, box-shadow 0.1s; margin-bottom: 6px; min-height: 120px; will-change: transform; 
+    
+    /* ⛔ НОВЫЕ ПРАВИЛА: Убиваем выделение текста и всплывающие меню на смартфонах */
+    user-select: none; 
+    -webkit-user-select: none; 
+    -webkit-touch-callout: none; 
+}
 
 
 
@@ -3998,26 +4007,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         }
     }
 
-    function selectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        const tx = db.transaction(["games"], "readonly");
-        const req = tx.objectStore("games").getAllKeys();
-        req.onsuccess = () => {
-            const keys = req.result;
-            keys.forEach(k => selectedGamesForDelete.add(k));
-            document.querySelectorAll('.game-btn').forEach(b => b.classList.add('selected'));
-            updateEditCount();
-        };
-    }
-
-    function deselectAllGamesForDelete() {
-        if (!isLibraryEditMode) return;
-        selectedGamesForDelete.clear();
-        document.querySelectorAll('.game-btn').forEach(b => b.classList.remove('selected'));
-        updateEditCount();
-    }
-
-    function deleteSelectedGames() {
+      function deleteSelectedGames() {
         if (selectedGamesForDelete.size === 0) return;
         if (!confirm(window.L.msg_del_x.replace('{n}', selectedGamesForDelete.size))) return;
         
@@ -4030,7 +4020,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         tx.oncomplete = () => {
             selectedGamesForDelete.clear();
-            toggleLibraryEditMode(); 
+            updateEditCount(); 
+            renderAllGames();  
         };
     }
 
@@ -4047,6 +4038,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         };
     }
+
 
     function toggleAutoLoad(id, e) {
         if (e) { e.preventDefault(); e.stopPropagation(); } 
@@ -4087,17 +4079,64 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
         btn.innerHTML = `${favHtml}${overlayHtml}<div class="sys-badge ${sysStyling.badge} ${neonClass}" id="badge-${game.id}" onclick="toggleAutoLoad('${game.id}', event)">${sysStyling.name}</div><div class="game-btn-content">${game.cover ? '' : `<span class="icon">${game.i}</span>`}<div class="game-title">${game.n}</div></div>`;
         
-        btn.addEventListener('mouseenter', () => setSpotifyGlow(game.sys));
-        btn.addEventListener('touchstart', () => setSpotifyGlow(game.sys), {passive: true});
+                btn.addEventListener('mouseenter', () => setSpotifyGlow(game.sys));
+        
+        // --- ЛОГИКА ДОЛГОГО НАЖАТИЯ (1.5 СЕК ДЛЯ ВКЛ/ВЫКЛ КАРАНДАША) ---
+        let pressTimer = null;
+        let isLongPress = false;
 
+        const startPress = () => {
+            setSpotifyGlow(game.sys); 
+            isLongPress = false;
+            
+            // Запускаем таймер на 1.5 секунды (1500 мс)
+            pressTimer = setTimeout(() => {
+                isLongPress = true; // Фиксируем, что это было долгое нажатие
+                if (typeof doVibrate === 'function') doVibrate(50); // Мощная вибрация!
+                
+                if (!isLibraryEditMode) {
+                    // 1. ЕСЛИ БЫЛО ВЫКЛЮЧЕНО: Включаем и выделяем игру
+                    toggleLibraryEditMode(); 
+                    selectedGamesForDelete.add(game.id); 
+                    btn.classList.add('selected');
+                    updateEditCount();
+                } else {
+                    // 2. ЕСЛИ БЫЛО ВКЛЮЧЕНО: Просто выключаем (очистится само)
+                    toggleLibraryEditMode();
+                }
+            }, 1500); 
+        };
+
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+
+        // Слушатели для сенсоров
+        btn.addEventListener('touchstart', startPress, {passive: true});
+        btn.addEventListener('touchend', cancelPress, {passive: true});
+        btn.addEventListener('touchmove', cancelPress, {passive: true}); // Отменяем при скролле
+        btn.addEventListener('touchcancel', cancelPress, {passive: true});
+        
+        // Слушатели для мыши (ПК)
+        btn.addEventListener('mousedown', startPress);
+        btn.addEventListener('mouseup', cancelPress);
+        btn.addEventListener('mouseleave', cancelPress);
+
+        // --- ОБРАБОТКА ОБЫЧНОГО КЛИКА ---
         btn.onclick = (e) => { 
             e.preventDefault(); 
             e.stopPropagation(); 
             
-            // Мягкий вибро-отклик при тапе по карточке
+            // Если только что отпустили палец после 1.5 сек удержания - блокируем клик!
+            if (isLongPress) return;
+
             if (typeof doVibrate === 'function') doVibrate(15);
             
             if (isLibraryEditMode) {
+                // Быстрый тап выделяет/снимает выделение в режиме карандаша
                 if (selectedGamesForDelete.has(game.id)) {
                     selectedGamesForDelete.delete(game.id);
                     btn.classList.remove('selected');
@@ -4107,10 +4146,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 }
                 updateEditCount();
             } else {
+                // Обычный запуск игры
                 setSpotifyGlow(game.sys);
                 startGame(game); 
             }
         };
+
+
+
 
         if (isCustom && !isLibraryEditMode) {
             const delBtn = document.createElement('div'); 
