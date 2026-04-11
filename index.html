@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
+    
+   
+    
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -1693,17 +1696,28 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     
     
-    
-
-         async function saveGameState(isAuto = false) {
+    async function saveGameState(isAuto = false) {
         if (!currentGame) return;
+        
+        let overlay = null;
+        const isHeavy = (currentGame.t === 'l' && (currentGame.sys === 'snes' || currentGame.sys === 'smd'));
+
+        if (isHeavy) {
+            overlay = document.createElement('div');
+            overlay.style = 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.95); color:#fff; padding:25px 40px; border-radius:15px; border:2px solid #059669; z-index:10000; text-align:center; font-family:sans-serif; box-shadow:0 10px 50px #000;';
+            overlay.innerHTML = `<div style="font-weight:bold; font-size:18px; margin-bottom:10px;">💾 СОХРАНЕНИЕ...</div>
+                                 <div style="font-size:13px; color:#aaa; margin-bottom:10px;">Критически важный процесс, подождите</div>
+                                 <div id="save-timer" style="font-size:26px; color:#059669; font-weight:900;">15s</div>`;
+            document.body.appendChild(overlay);
+        }
+
         try {
             let success = false;
             const btn = document.getElementById('btnSave');
-            const origIcon = btn ? btn.innerHTML : ''; // Запоминаем SVG иконку
-            
+            const origIcon = btn ? btn.innerHTML : ''; 
             if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#059669'; }
             
+            // --- NES (Оригинал) ---
             if (currentGame.t === 'n' && nes) {
                 const state = nes.toJSON();
                 const encoder = window.TextEncoder ? new TextEncoder() : { encode: s => Uint8Array.from(s.split(''), c => c.charCodeAt(0)) };
@@ -1711,17 +1725,28 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 await SaveStorage.set('savestate_' + currentGame.n, data);
                 success = true;
             } 
+            // --- LIBRETRO ---
             else if (currentGame.t === 'l' && window.Module) {
-                // ИСПОЛЬЗУЕМ LRCALL ДЛЯ УНИВЕРСАЛЬНОСТИ!
                 const saveCmd = window.Module._cmd_save_state || window.Module.cmd_save_state || window.Module.ccall;
                 if (saveCmd) {
                     lrCall('cmd_save_state'); 
                     
-                    await new Promise(resolve => setTimeout(resolve, 700));
+                    if (isHeavy) {
+                        let timeLeft = 15;
+                        const timerElem = document.getElementById('save-timer');
+                        const countdown = setInterval(() => {
+                            timeLeft--;
+                            if (timerElem) timerElem.innerText = timeLeft + 's';
+                            if (timeLeft <= 0) clearInterval(countdown);
+                        }, 1000);
+                        await new Promise(r => setTimeout(r, 15000));
+                        clearInterval(countdown);
+                    } else {
+                        await new Promise(r => setTimeout(r, 700));
+                    }
 
                     let fs = window.FS || (window.Module && window.Module.FS);
                     let statePath = null;
-                    
                     function findState(dir) {
                         try {
                             let nodes = fs.readdir(dir);
@@ -1729,74 +1754,50 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                                 if (n === '.' || n === '..') continue;
                                 let p = dir === '/' ? '/' + n : dir + '/' + n;
                                 if (fs.isDir(fs.stat(p).mode)) {
-                                    // Пропускаем тяжелые системные папки
-                                    if (!p.startsWith('/dev') && !p.startsWith('/proc') && !p.startsWith('/sys') && !p.startsWith('/tmp')) {
-                                        findState(p);
-                                    }
+                                    if (!p.startsWith('/dev') && !p.startsWith('/proc')) findState(p);
                                 } else if ((p.includes('/states/') || p.endsWith('.state') || p.endsWith('.srm')) && fs.stat(p).size > 0) {
                                     statePath = p; 
                                 }
                             }
                         } catch(e) {}
                     }
-                    // ИЩЕМ ОТ КОРНЯ!
                     if (fs) findState('/');
-
                     if (statePath) {
-                        let fileData = fs.readFile(statePath);
-                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(fileData));
+                        await SaveStorage.set('savestate_lr_' + currentGame.n, packData(fs.readFile(statePath)));
                         success = true;
                     }
                 }
             }
+            // --- DOS (Оригинал) ---
             else if (currentGame.t === 'd') {
                 const dosFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
                 const actualFS = dosFS?.fs || dosFS;
-                
                 if (actualFS && typeof actualFS.readdir === 'function') {
                     let zipData = {};
                     function scanFS(path) {
                         try {
                             actualFS.readdir(path).forEach(item => {
-                                // АНТИ-БАГ: Создаем массив без квадратных скобок
-                                const ignoreDirs = ".,..,dev,proc,sys,tmp,home".split(",");
-                                if (ignoreDirs.includes(item)) return;
-                                
+                                if(['.', '..', 'dev', 'proc', 'sys', 'tmp', 'home'].includes(item)) return;
                                 const fullPath = path === '/' ? '/' + item : path + '/' + item;
-                                const st = actualFS.stat(fullPath);
-                                
-                                if (actualFS.isDir(st.mode)) {
-                                    scanFS(fullPath);
-                                } else {
-                                    const ext = fullPath.split('.').pop().toLowerCase();
-                                    // АНТИ-БАГ: Создаем массив без квадратных скобок
-                                    const ignoreExts = "exe,com,dll,ovl,drv,bat".split(",");
-                                    
-                                    if (!ignoreExts.includes(ext)) {
-                                        const cleanPath = fullPath.replace(/^\//, '');
-                                        // АНТИ-БАГ: Безопасное присвоение без квадратных скобок
-                                        Reflect.set(zipData, cleanPath, actualFS.readFile(fullPath));
-                                    }
+                                if (actualFS.isDir(actualFS.stat(fullPath).mode)) scanFS(fullPath);
+                                else if (!['exe','com','dll','ovl','drv','bat'].includes(fullPath.split('.').pop().toLowerCase())) {
+                                    zipData[fullPath.replace(/^\//, '')] = actualFS.readFile(fullPath);
                                 }
                             });
                         } catch(e) {}
                     }
                     scanFS('/');
-                    const zipped = fflate.zipSync(zipData);
-                    await SaveStorage.set('savestate_dos_' + currentGame.n, packData(zipped));
+                    await SaveStorage.set('savestate_dos_' + currentGame.n, packData(fflate.zipSync(zipData)));
                     success = true;
                 }
             }
             
+            if (overlay) overlay.remove();
             if (btn && !isAuto) {
-                if (success) { btn.innerHTML = '✅'; } 
-                else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { 
-                    btn.innerHTML = origIcon; 
-                    btn.style.background = 'rgba(255, 255, 255, 0.05)'; 
-                }, 2000);
+                btn.innerHTML = success ? '✅' : '⚠️';
+                setTimeout(() => { btn.innerHTML = origIcon; btn.style.background = 'rgba(255, 255, 255, 0.05)'; }, 2000);
             }
-        } catch(e) { console.error("Save error:", e); }
+        } catch(e) { if(overlay) overlay.remove(); }
     }
 
     async function loadGameState(isAuto = false) {
@@ -1805,7 +1806,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (isAuto) {
             const isNeonActive = localStorage.getItem('autoload_' + currentGame.id) === 'true';
             if (!isNeonActive) {
-                if (currentGame.t === 'l' && window.Module) {
+                // ДЛЯ ТЯЖЕЛЫХ СИСТЕМ (SNES/SEGA) ВЫРЕЗАНО СОХРАНЕНИЕ ПРИ СТАРТЕ
+                if (currentGame.t === 'l' && window.Module && !['snes', 'smd'].includes(currentGame.sys)) {
                     const saveCmd = window.Module._cmd_save_state || window.Module.cmd_save_state || window.Module.ccall;
                     if (saveCmd) lrCall('cmd_save_state');
                 }
@@ -1817,9 +1819,9 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             let success = false;
             const btn = document.getElementById('btnLoad');
             const origIcon = btn ? btn.innerHTML : ''; 
-            
             if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#d97706'; }
 
+            // --- NES (Оригинал) ---
             if (currentGame.t === 'n' && nes) { 
                 const savedData = await SaveStorage.get('savestate_' + currentGame.n);
                 if (savedData) {
@@ -1831,15 +1833,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     } catch(e) {}
                 }
             } 
+            // --- LIBRETRO ---
             else if (currentGame.t === 'l' && window.Module) { 
                 const savedData = await SaveStorage.get('savestate_lr_' + currentGame.n);
                 const loadCmd = window.Module._cmd_load_state || window.Module.cmd_load_state || window.Module.ccall;
                 
                 if (savedData && loadCmd) {
                     let fs = window.FS || (window.Module && window.Module.FS);
-                    
-                    lrCall('cmd_save_state');
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const isHeavy = (currentGame.sys === 'snes' || currentGame.sys === 'smd');
+
+                    // Для легких систем (GBA и др.) оставляем фейковый сейв для инициализации папок
+                    if (!isHeavy) {
+                        lrCall('cmd_save_state');
+                        await new Promise(r => setTimeout(r, 500));
+                    }
                     
                     let statePath = null;
                     function findState(dir) {
@@ -1848,61 +1855,71 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                             for (let n of nodes) {
                                 if (n === '.' || n === '..') continue;
                                 let p = dir === '/' ? '/' + n : dir + '/' + n;
-                                if (fs.isDir(fs.stat(p).mode)) {
-                                    if (!p.startsWith('/dev') && !p.startsWith('/proc') && !p.startsWith('/sys') && !p.startsWith('/tmp')) {
-                                        findState(p);
-                                    }
-                                }
+                                if (fs.isDir(fs.stat(p).mode)) { if (!p.startsWith('/dev')) findState(p); }
                                 else if (p.includes('/states/') || p.endsWith('.state')) statePath = p; 
                             }
                         } catch(e) {}
                     }
                     if (fs) findState('/');
 
+                    // Если для SNES/Сеги файл еще не создан в FS, строим путь сами
+                    if (!statePath && isHeavy && currentGame._romName) {
+                        let base = currentGame._romName.replace(/\.[^/.]+$/, "");
+                        statePath = '/home/web_user/retroarch/userdata/states/' + base + '.state';
+                    }
+
                     if (statePath && fs) {
-                        const stateCopy = unpackData(savedData);
-                        fs.writeFile(statePath, stateCopy);
+                        let parts = statePath.split('/'), cur = '';
+                        for (let i = 1; i < parts.length - 1; i++) {
+                            cur += '/' + parts[i];
+                            try { fs.mkdir(cur); } catch(e) {}
+                        }
+                        fs.writeFile(statePath, unpackData(savedData));
+                        await new Promise(r => setTimeout(r, 100));
                         lrCall('cmd_load_state');
                         success = true;
                     }
                 }
             }
+            // --- DOS (Оригинал) ---
             else if (currentGame.t === 'd') {
-                const dosFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
-                const actualFS = dosFS?.fs || dosFS;
                 const b64 = await SaveStorage.get('savestate_dos_' + currentGame.n);
-                
-                if (b64 && actualFS && typeof actualFS.writeFile === 'function') {
+                const actualFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
+                if (b64 && actualFS) {
                     try {
                         const unzipped = fflate.unzipSync(unpackData(b64));
                         for (const f in unzipped) {
-                            const fullPath = '/' + f;
-                            const parts = fullPath.split('/');
-                            let currentPath = '';
+                            const fullPath = '/' + f, parts = fullPath.split('/');
+                            let cur = '';
                             for (let i = 1; i < parts.length - 1; i++) {
-                                // АНТИ-БАГ: Достаем индекс без квадратных скобок
-                                currentPath += '/' + Reflect.get(parts, i);
-                                try { actualFS.mkdir(currentPath); } catch(e) {}
+                                cur += '/' + parts[i];
+                                try { actualFS.mkdir(cur); } catch(e) {}
                             }
-                            // АНТИ-БАГ: Достаем дату файла без квадратных скобок
-                            actualFS.writeFile(fullPath, Reflect.get(unzipped, f));
+                            actualFS.writeFile(fullPath, unzipped[f]);
                         }
                         success = true;
                     } catch(e) {}
                 }
                 if (isAuto && !b64) success = true; 
             }
-            
             if (btn && !isAuto) {
-                if (success) { btn.innerHTML = '✅'; btn.style.background = '#059669'; } 
-                else { btn.innerHTML = '⚠️'; btn.style.background = '#ef4444'; }
-                setTimeout(() => { 
-                    btn.innerHTML = origIcon; 
-                    btn.style.background = 'rgba(255, 255, 255, 0.05)'; 
-                }, 2000);
+                btn.innerHTML = success ? '✅' : '⚠️';
+                setTimeout(() => { btn.innerHTML = origIcon; btn.style.background = 'rgba(255, 255, 255, 0.05)'; }, 2000);
             }
         } catch(e) { console.error("Load error:", e); }
     }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
