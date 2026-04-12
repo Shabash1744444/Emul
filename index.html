@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-   
+   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
+
     
 <head>
 <meta charset="UTF-8">
@@ -10,24 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Arcade Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-    
-    
-    <script>
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Проверка на Телеграм
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform !== "unknown") {
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Развернуть на весь экран
-        tg.setHeaderColor('#060608'); // Цвет шапки под дизайн
-        tg.setBackgroundColor('#060608'); // Цвет фона
-        tg.ready(); 
-    }
-});
-
-        
+<script>
     if (!navigator.getGamepads) {
         navigator.getGamepads = function() { return [null, null, null, null]; };
     } else {
@@ -7601,75 +7586,11 @@ trySet('vk_btn_close', d.vk_close);
     requestAnimationFrame(pollGamepadInGame);
 
 
-    /* ФИКС НА СЛОЕНИЯ ШАПКИ И АДАПТАЦИЯ ПОД ПОЛОСЫ */
-.meme-header {
-    margin-bottom: 0 !important; /* Убираем отрицательный отступ, который вызывал наслоение */
-    padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
-    position: relative !important;
-    z-index: 10 !important;
-}
-
-.sticky-zone {
-    top: 0 !important; /* Теперь шапка липнет четко к верхней границе, учитывая полосы */
-    margin-top: 0 !important;
-    background: rgba(8, 8, 12, 0.95) !important; /* Плотный фон, чтобы текст под ней не просвечивал */
-    backdrop-filter: blur(20px) !important;
-    z-index: 100 !important;
-}
-
-#menuScreen {
-    /* Автоматический расчет высоты с учетом полосок Telegram */
-    height: 100% !important;
-    padding-top: 0 !important; 
-    display: block !important; /* Исправляет баги скролла при наличии полос */
-}
-
-/* Фикс Пакмана, чтобы он не улетал за границы */
-.pacman-stage {
-    padding: 20px 0 !important;
-}
-
+    
     
     
 </script>
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script>
-    // 1. ПОЛНАЯ РАЗВЕРТКА
-    (function() {
-        const tg = window.Telegram.WebApp;
-        if (tg) {
-            tg.ready();
-            tg.expand(); // Раскрыть
-            // Режим Fullscreen (если поддерживается устройством в 2026)
-            if (tg.requestFullscreen) tg.requestFullscreen();
-        }
-    })();
-</script>
-
-<style>
-    /* 2. ИСПРАВЛЕНИЕ ШАПКИ (чтобы не наслаивались) */
-    .meme-header {
-        margin-bottom: 0 !important; /* Убираем наезд Пакмана на кнопки */
-        padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
-        position: relative !important;
-    }
-
-    .sticky-zone {
-        top: 0 !important; /* Липнем ровно к верху, без зазоров */
-        margin-top: 0 !important;
-        background: rgba(8, 8, 12, 0.98) !important; /* Делаем фон кнопок плотнее */
-        z-index: 200 !important; /* Кнопки всегда поверх Пакмана при скролле */
-    }
-
-    /* Адаптация под полосы Telegram */
-    #menuScreen {
-        padding-top: 0 !important;
-    }
-</style>
-
-    
 </body>
 </html>
