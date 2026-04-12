@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-   
+
+
     
 <head>
 <meta charset="UTF-8">
@@ -599,42 +600,50 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     position: sticky; 
     top: 0; 
     z-index: 110; 
-    background: rgba(8, 8, 12, 0.85);
-    background-image: radial-gradient(circle at 50% 0%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%);
-    backdrop-filter: blur(15px); 
-    -webkit-backdrop-filter: blur(15px);
     
-    /* ВОТ ФИКС ДЛЯ ГОРИЗОНТАЛИ: Добавили + 10px к челке, чтобы кнопки не липли к краю */
-    padding-top: calc(env(safe-area-inset-top, 15px) + 10px);
+    /* 1. ДЕЛАЕМ ОСНОВУ ПРОЗРАЧНОЙ (чтобы не было двойного стекла) */
+    background: transparent !important;
+    backdrop-filter: none !important; 
+    -webkit-backdrop-filter: none !important;
     
+    /* ОТСТУПЫ НЕ ТРОГАЕМ! Кнопки и линия остаются на своих местах */
+    padding-top: env(safe-area-inset-top, 15px);
     margin: 0 -15px 15px -15px; 
     padding-left: 15px; 
     padding-right: 15px; 
     padding-bottom: 10px;
-    border-bottom: 2px solid #fff; 
-    box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
+    
+    /* Убираем границу и тень отсюда, переносим их на общее стекло */
+    border-bottom: none; 
+    box-shadow: none;
     transition: all 0.5s ease;
 } 
 
-/* --- 2. СТЕКЛЯННАЯ ЗАТЫЧКА (Идет вверх под челку) --- */
+/* --- 2. СТЕКЛЯННАЯ ЗАТЫЧКА (Теперь это ЕДИНОЕ МАТОВОЕ СТЕКЛО) --- */
 .sticky-zone::before {
     content: '';
     position: absolute;
-    bottom: 100%; 
+    
+    /* 2. РАСТЯГИВАЕМ СТЕКЛО ОТ ЧЕЛКИ ДО САМОГО НИЗА МЕНЮ */
+    top: -150px; 
+    bottom: 0; 
     left: 0;
     width: 100%;
-    height: 150px; 
+    
+    /* 3. ВЕШАЕМ ЕДИНЫЙ ФОН И МАТОВОСТЬ СЮДА */
     background-color: rgba(8, 8, 12, 0.85) !important; 
-    background-image: radial-gradient(circle at 50% 100%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%) !important;
+    background-image: radial-gradient(circle at 50% 150px, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%) !important;
     backdrop-filter: blur(15px) !important; 
     -webkit-backdrop-filter: blur(15px) !important;
     
-    /* ФИКС ДЛЯ WEBVIEW: Принудительно заставляем видеокарту отрендерить матовость */
-    transform: translateZ(0);
+    /* 4. ВЕРНУЛИ НИЖНЮЮ БЕЛУЮ ГРАНИЦУ И ТЕНЬ */
+    border-bottom: 2px solid #fff; 
+    box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
     
-    pointer-events: auto !important; 
-    z-index: -1; 
+    pointer-events: none; 
+    z-index: -1; /* Стекло лежит строго под кнопками */
 }
+
 
 
 /* --- 3. ВЕРХНЯЯ БЕЛАЯ ЛИНИЯ (Привязана строго к кнопкам!) --- */
