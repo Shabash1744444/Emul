@@ -599,7 +599,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
-    top: 10px; /* Уезжает на 15px вверх при скролле */
+    top: 5px; /* Уезжает на 15px вверх при скролле */
     z-index: 110; 
     
     background: transparent !important;
@@ -649,7 +649,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         
         /* Опускаем меню вниз, чтобы убрать наплыв на Пакмана. */
         /* При скролле меню уедет вверх, и линия останется ровно на экране! */
-        padding-top: 45px !important; 
+        padding-top: 35px !important; 
     }
 }
 
@@ -999,7 +999,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             </button>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px; height: 38px; align-items: center;">
+        <div style="display: flex; gap: 15px; margin-bottom: 10px; height: 38px; align-items: center;">
             <div class="sys-filter-container" style="width: 100%; display: flex;">
                                 <select id="sortSelect" onchange="renderAllGames()" style="display:none;">
                     <option value="newest" id="opt_sort_newest">Новые</option>
