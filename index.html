@@ -7601,7 +7601,34 @@ trySet('vk_btn_close', d.vk_close);
     requestAnimationFrame(pollGamepadInGame);
 
 
-    
+    /* ФИКС НА СЛОЕНИЯ ШАПКИ И АДАПТАЦИЯ ПОД ПОЛОСЫ */
+.meme-header {
+    margin-bottom: 0 !important; /* Убираем отрицательный отступ, который вызывал наслоение */
+    padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+    position: relative !important;
+    z-index: 10 !important;
+}
+
+.sticky-zone {
+    top: 0 !important; /* Теперь шапка липнет четко к верхней границе, учитывая полосы */
+    margin-top: 0 !important;
+    background: rgba(8, 8, 12, 0.95) !important; /* Плотный фон, чтобы текст под ней не просвечивал */
+    backdrop-filter: blur(20px) !important;
+    z-index: 100 !important;
+}
+
+#menuScreen {
+    /* Автоматический расчет высоты с учетом полосок Telegram */
+    height: 100% !important;
+    padding-top: 0 !important; 
+    display: block !important; /* Исправляет баги скролла при наличии полос */
+}
+
+/* Фикс Пакмана, чтобы он не улетал за границы */
+.pacman-stage {
+    padding: 20px 0 !important;
+}
+
     
     
 </script>
