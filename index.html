@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
     
- 
-
+   
     
 <head>
 <meta charset="UTF-8">
@@ -4070,6 +4069,45 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             coverBtn.style.display = selectedGamesForDelete.size === 1 ? 'block' : 'none';
         }
     }
+
+
+
+
+// --- ФУНКЦИЯ ВЫДЕЛИТЬ ВСЁ ---
+function selectAllGamesForDelete() {
+    if (!isLibraryEditMode) return; // Защита: работает только в режиме редактирования
+    
+    // Перебираем все кнопки игр на экране
+    document.querySelectorAll('.game-btn').forEach(btn => {
+        const id = btn.dataset.gameId;
+        if (id) {
+            selectedGamesForDelete.add(id); // Добавляем в Set для удаления
+            btn.classList.add('selected');  // Вешаем визуальное выделение
+        }
+    });
+    
+    updateEditCount(); // Обновляем счетчик
+    if (typeof doVibrate === 'function') doVibrate(15);
+}
+
+// --- ФУНКЦИЯ СНЯТЬ ВЫДЕЛЕНИЕ ---
+function deselectAllGamesForDelete() {
+    if (!isLibraryEditMode) return;
+    
+    selectedGamesForDelete.clear(); // Очищаем Set
+    
+    // Снимаем класс выделения со всех кнопок
+    document.querySelectorAll('.game-btn').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    
+    updateEditCount(); // Обновляем счетчик
+    if (typeof doVibrate === 'function') doVibrate(15);
+}
+
+
+
+
 
       function deleteSelectedGames() {
         if (selectedGamesForDelete.size === 0) return;
