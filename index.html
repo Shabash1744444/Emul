@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-
-
+   
     
 <head>
 <meta charset="UTF-8">
@@ -598,57 +597,35 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
-    top: -10px; /* <--- ДОБАВИЛ px, чтобы шапка уезжала вверх при скролле */
-    z-index: 110; 
     
-    /* 1. ДЕЛАЕМ ОСНОВУ ПРОЗРАЧНОЙ (чтобы не было двойного стекла) */
+    /* Уезжает на 15px вверх при скролле в вертикали */
+    top: -15px; 
+    
+    z-index: 110; 
     background: transparent !important;
     backdrop-filter: none !important; 
     -webkit-backdrop-filter: none !important;
     
-    /* ОТСТУПЫ НЕ ТРОГАЕМ! Кнопки и линия остаются на своих местах */
+    /* Базовый отступ (в основном для вертикали с челкой) */
     padding-top: env(safe-area-inset-top, 15px);
+    
     margin: 0 -15px 15px -15px; 
     padding-left: 15px; 
     padding-right: 15px; 
     padding-bottom: 10px;
-    
-    /* Убираем границу и тень отсюда, переносим их на общее стекло */
     border-bottom: none; 
     box-shadow: none;
     transition: all 0.5s ease;
 } 
 
-/* --- 2. СТЕКЛЯННАЯ ЗАТЫЧКА (Теперь это ЕДИНОЕ МАТОВОЕ СТЕКЛО) --- */
-.sticky-zone::before {
-    content: '';
-    position: absolute;
-    
-    /* 2. РАСТЯГИВАЕМ СТЕКЛО ОТ ЧЕЛКИ ДО САМОГО НИЗА МЕНЮ */
-    top: -150px; 
-    bottom: 0; 
-    left: 0;
-    width: 100%;
-    
-    /* 3. ВЕШАЕМ ЕДИНЫЙ ФОН И МАТОВОСТЬ СЮДА */
-    background-color: rgba(8, 8, 12, 0.85) !important; 
-    background-image: radial-gradient(circle at 50% 150px, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%) !important;
-    backdrop-filter: blur(15px) !important; 
-    -webkit-backdrop-filter: blur(15px) !important;
-    
-    /* 4. ВЕРНУЛИ НИЖНЮЮ БЕЛУЮ ГРАНИЦУ И ТЕНЬ */
-    border-bottom: 2px solid #fff; 
-    box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
-    
-    pointer-events: none; 
-    z-index: -1; /* Стекло лежит строго под кнопками */
-}
-
-/* ---  ФИКС ДЛЯ ГОРИЗОНТАЛЬНОГО РЕЖИМА (ДОБАВЛЕН НОВЫЙ БЛОК) --- */
+/* --- ФИКС 2: ГОРИЗОНТАЛЬНЫЙ РЕЖИМ (Смартфоны и Планшеты) --- */
 @media (orientation: landscape) {
     .sticky-zone {
-        /* В горизонталке опускаем шапку на 5px, чтобы спасти верхнюю белую линию от обрезки смартфоном */
+        /* Прилипает не к краю, а на 5px ниже (чтобы видеть красную линию сверху при скролле) */
         top: 5px; 
+        
+        /* Возвращаем отступ, чтобы меню не взлетало под самый верх на Андроиде */
+        padding-top: 15px !important;
     }
 }
 
