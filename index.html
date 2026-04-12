@@ -10,7 +10,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Arcade Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
-<script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    
+    
+    <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Проверка на Телеграм
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform !== "unknown") {
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
+        tg.setHeaderColor('#060608'); // Цвет шапки под дизайн
+        tg.setBackgroundColor('#060608'); // Цвет фона
+        tg.ready(); 
+    }
+});
+
+        
     if (!navigator.getGamepads) {
         navigator.getGamepads = function() { return [null, null, null, null]; };
     } else {
