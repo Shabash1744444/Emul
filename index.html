@@ -598,7 +598,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
-    top: 0; 
+    top: -10px; /* <--- ДОБАВИЛ px, чтобы шапка уезжала вверх при скролле */
     z-index: 110; 
     
     /* 1. ДЕЛАЕМ ОСНОВУ ПРОЗРАЧНОЙ (чтобы не было двойного стекла) */
@@ -643,6 +643,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     pointer-events: none; 
     z-index: -1; /* Стекло лежит строго под кнопками */
 }
+
+/* ---  ФИКС ДЛЯ ГОРИЗОНТАЛЬНОГО РЕЖИМА (ДОБАВЛЕН НОВЫЙ БЛОК) --- */
+@media (orientation: landscape) {
+    .sticky-zone {
+        /* В горизонталке опускаем шапку на 5px, чтобы спасти верхнюю белую линию от обрезки смартфоном */
+        top: 5px; 
+    }
+}
+
 
 
 
