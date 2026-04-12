@@ -599,7 +599,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
-    top: 5px; /* Уезжает на 15px вверх при скролле */
+    top: 10px; /* Уезжает на 15px вверх при скролле */
     z-index: 110; 
     
     background: transparent !important;
@@ -645,11 +645,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 @media (orientation: landscape) {
     .sticky-zone {
         /* Откатывается при пролистывании ТОЧНО ТАК ЖЕ, как в вертикали */
-        top: -15px; 
+        top: -10px; 
         
         /* Опускаем меню вниз, чтобы убрать наплыв на Пакмана. */
         /* При скролле меню уедет вверх, и линия останется ровно на экране! */
-        padding-top: 35px !important; 
+        padding-top: 15px !important; 
     }
 }
 
