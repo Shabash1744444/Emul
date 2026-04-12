@@ -1,9 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
+   
     
 <head>
 <meta charset="UTF-8">
@@ -121,8 +119,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     flex-direction: column; 
     align-items: center; 
     justify-content: center; 
-    padding: 40px 0 5px 0; 
-    margin-bottom: 0px; 
+    padding: 40px 0 20px 0; 
+    margin-bottom: -20px; 
     border-bottom: 2px dashed var(--neon-blue); 
     position: relative; 
     overflow: hidden; 
@@ -130,7 +128,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     border-radius: 0 0 20px 20px; 
     margin-left: -15px; 
     margin-right: -15px; 
-
+    
 }
 
 
@@ -599,14 +597,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 /* --- 1. САМА ЛИПКАЯ ШАПКА --- */
 .sticky-zone {
     position: sticky; 
-    top: 15px; /* Уезжает на 15px вверх при скролле */
+    top: -15px; /* Уезжает на 15px вверх при скролле */
     z-index: 110; 
     
     background: transparent !important;
     backdrop-filter: none !important; 
     -webkit-backdrop-filter: none !important;
     
-    padding-top: 25px;
+    padding-top: env(safe-area-inset-top, 15px);
     margin: 0 -15px 15px -15px; 
     padding-left: 15px; 
     padding-right: 15px; 
@@ -645,11 +643,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 @media (orientation: landscape) {
     .sticky-zone {
         /* Откатывается при пролистывании ТОЧНО ТАК ЖЕ, как в вертикали */
-        top: -10px; 
+        top: -15px; 
         
         /* Опускаем меню вниз, чтобы убрать наплыв на Пакмана. */
         /* При скролле меню уедет вверх, и линия останется ровно на экране! */
-        padding-top: 0px !important; 
+        padding-top: 35px !important; 
     }
 }
 
@@ -662,7 +660,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     content: '';
     position: absolute;
     
-    top: 0px; /* Строго на 5 пикселей выше самих кнопок */
+    top: -10px; /* Строго на 5 пикселей выше самих кнопок */
     
     /* Растягиваем на всю ширину экрана, компенсируя боковые отступы (padding) шапки в 15px */
     left: -15px;
@@ -999,7 +997,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             </button>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-bottom: 10px; height: 38px; align-items: center;">
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; height: 38px; align-items: center;">
             <div class="sys-filter-container" style="width: 100%; display: flex;">
                                 <select id="sortSelect" onchange="renderAllGames()" style="display:none;">
                     <option value="newest" id="opt_sort_newest">Новые</option>
@@ -7592,17 +7590,5 @@ trySet('vk_btn_close', d.vk_close);
 </script>
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
-    <style>
-    /* 1. Поднимаем пунктир вплотную к Пакману */
-    .meme-header { 
-        padding-bottom: 5px !important; 
-    }
-    
-    /* 2. Отрываем белую линию и кнопки от пунктира вниз на 25 пикселей */
-    .sticky-zone { 
-        margin-top: 25px !important; 
-    }
-</style>
-
 </body>
 </html>
