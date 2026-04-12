@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-
+   <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 
     
 <head>
@@ -604,13 +605,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     background-image: radial-gradient(circle at 50% 0%, var(--sys-neon-alpha, rgba(56, 189, 248, 0.15)) 0%, transparent 100%);
     backdrop-filter: blur(15px); 
     -webkit-backdrop-filter: blur(15px);
-    padding-top: env(safe-area-inset-top, 15px);
+    
+    /* ВОТ ФИКС ДЛЯ ГОРИЗОНТАЛИ: Добавили + 10px к челке, чтобы кнопки не липли к краю */
+    padding-top: calc(env(safe-area-inset-top, 15px) + 10px);
+    
     margin: 0 -15px 15px -15px; 
     padding-left: 15px; 
     padding-right: 15px; 
     padding-bottom: 10px;
-    
-    /* Только нижняя рамка и тень (чтобы верхняя не пряталась под челкой) */
     border-bottom: 2px solid #fff; 
     box-shadow: 0 8px 25px -5px var(--sys-neon, rgba(56, 189, 248, 0.6)), 0 2px 5px #fff;
     transition: all 0.5s ease;
@@ -5308,10 +5310,17 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const isAction = (moveX !== 0 || moveY !== 0);
         const isEditPanelOpen = document.getElementById('editPanel').classList.contains('show');
 
-           // === УРОВЕНЬ 6: МОДАЛЬНЫЕ ОКНА ===
-        // Ищем любое открытое модальное окно (по классу show или display: flex)
-        const activeModal = Array.from(document.querySelectorAll('#exportModalOverlay, #infoModalOverlay, #resetModalOverlay, #langModalOverlay'))
-            .find(m => m && (m.classList.contains('show') || m.style.display === 'flex'));
+              // === УРОВЕНЬ 6: МОДАЛЬНЫЕ ОКНА ===
+        const eModal = document.getElementById('exportModalOverlay');
+        const iModal = document.getElementById('infoModalOverlay');
+        const rModal = document.getElementById('resetModalOverlay');
+        const lModal = document.getElementById('langModalOverlay');
+        
+        let activeModal = null;
+        if (eModal && eModal.style.opacity === '1') activeModal = eModal;
+        else if (iModal && iModal.classList.contains('show')) activeModal = iModal;
+        else if (rModal && rModal.classList.contains('show')) activeModal = rModal;
+        else if (lModal && lModal.style.display === 'flex') activeModal = lModal;
 
         if (activeModal) {
             const modalBtns = Array.from(activeModal.querySelectorAll('button:not([style*="display: none"])'));
@@ -5319,7 +5328,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             if (cardNavLevel !== 6) { 
                 cardNavLevel = 6; 
                 modalIndex = 0; 
-                // Сразу подсвечиваем первую кнопку, чтобы было видно, что геймпад работает
+                // Подсвечиваем первую кнопку автоматически
                 if (modalBtns.length > 0) modalBtns[0].classList.add('gp-focus');
             }
             
