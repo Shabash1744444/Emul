@@ -1696,7 +1696,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
     
     
-    async function saveGameState(isAuto = false) {
+            async function saveGameState(isAuto = false) {
         if (!currentGame) return;
         
         let overlay = null;
@@ -1706,7 +1706,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             overlay = document.createElement('div');
             overlay.style = 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.95); color:#fff; padding:25px 40px; border-radius:15px; border:2px solid #059669; z-index:10000; text-align:center; font-family:sans-serif; box-shadow:0 10px 50px #000;';
             overlay.innerHTML = `<div style="font-weight:bold; font-size:18px; margin-bottom:10px;">💾 СОХРАНЕНИЕ...</div>
-                                 <div style="font-size:13px; color:#aaa; margin-bottom:10px;">Критически важный процесс, подождите</div>
+                                 <div style="font-size:13px; color:#aaa; margin-bottom:10px;">Не сворачивайте приложение</div>
                                  <div id="save-timer" style="font-size:26px; color:#059669; font-weight:900;">15s</div>`;
             document.body.appendChild(overlay);
         }
@@ -1717,7 +1717,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             const origIcon = btn ? btn.innerHTML : ''; 
             if (btn && !isAuto) { btn.innerHTML = '⏳'; btn.style.background = '#059669'; }
             
-            // --- NES (Оригинал) ---
+            // --- NES ---
             if (currentGame.t === 'n' && nes) {
                 const state = nes.toJSON();
                 const encoder = window.TextEncoder ? new TextEncoder() : { encode: s => Uint8Array.from(s.split(''), c => c.charCodeAt(0)) };
@@ -1768,7 +1768,7 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     }
                 }
             }
-            // --- DOS (Оригинал) ---
+            // --- DOS ---
             else if (currentGame.t === 'd') {
                 const dosFS = window.WDOSBOX ? (window.WDOSBOX.fs || window.WDOSBOX.FS) : window.FS;
                 const actualFS = dosFS?.fs || dosFS;
@@ -1797,8 +1797,16 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                 btn.innerHTML = success ? '✅' : '⚠️';
                 setTimeout(() => { btn.innerHTML = origIcon; btn.style.background = 'rgba(255, 255, 255, 0.05)'; }, 2000);
             }
+
+            // === ТОТ САМЫЙ АВТОВЫХОД ДЛЯ СНЕС И СЕГИ ПОСЛЕ СОХРАНЕНИЯ ===
+            if (isAuto && isHeavy) {
+                executeCleanup(true);
+            }
+
         } catch(e) { if(overlay) overlay.remove(); }
     }
+
+
 
     async function loadGameState(isAuto = false) {
         if (!currentGame) return;
