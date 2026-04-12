@@ -7590,5 +7590,50 @@ trySet('vk_btn_close', d.vk_close);
 </script>
 <script src="libarchive.js"></script>
 <script src="arcade-extensions.bundle.js"></script>
+
+
+
+<style id="debug-layout-fix">
+    :root {
+        /* 1. Расстояние от Пакмана вниз до пунктирной линии */
+        /* Чем меньше цифра, тем ближе пунктир к Пакману (было 20px) */
+        --fix-pacman-bottom: 5px; 
+        
+        /* 2. Расстояние от пунктира вниз до кнопок (стеклянной панели) */
+        /* Убирает наслоение. Было -20px, ставь плюсовое значение, чтобы оторвать их друг от друга */
+        --fix-menu-gap: 15px;
+        
+        /* 3. Позиция белой светящейся линии над кнопками */
+        /* Чем больше минус, тем выше линия задирается к пунктиру (было -10px) */
+        --fix-white-line: -15px;
+    }
+
+    /* --- 1. ЗАПРЕТ НА СПЛЮЩИВАНИЕ (ФИКС ТВОЕГО СКРИНА В ГОРИЗОНТАЛКЕ) --- */
+    /* Эти два блока больше никогда не сожмутся в кашу при нехватке высоты экрана */
+    .meme-header, .sticky-zone {
+        flex-shrink: 0 !important;
+    }
+
+    /* --- 2. ПРИМЕНЕНИЕ ТВОИХ НАСТРОЕК ОТСТУПОВ --- */
+    .meme-header {
+        padding-bottom: var(--fix-pacman-bottom) !important; 
+        margin-bottom: var(--fix-menu-gap) !important; 
+    }
+    
+    .top-actions::before {
+        top: var(--fix-white-line) !important;
+    }
+
+    /* --- 3. ФИКС СТРОКИ ПОИСКА ПРИ ПОВОРОТЕ --- */
+    /* Перебиваем твой инлайновый style="width: 100%", который заставлял строку поиска бить по кнопке */
+    #searchInput {
+        width: auto !important;
+        min-width: 0 !important;
+    }
+</style>
+
+
+
+    
 </body>
 </html>
