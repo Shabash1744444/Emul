@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
     
-   
+
+
     
 <head>
 <meta charset="UTF-8">
@@ -236,7 +237,25 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 
 /* --- КНОПКИ ДЕЙСТВИЙ (Стекло + Неон) --- */
-.top-actions { display: flex; gap: 10px; margin-bottom: 15px; }
+.top-actions { display: flex; gap: 10px; margin-bottom: 15px; position: relative; }
+
+/* --- НОВАЯ ВЕРХНЯЯ БЕЛАЯ ЛИНИЯ (Привязана строго к кнопкам) --- */
+.top-actions::before {
+    content: '';
+    position: absolute;
+    top: -5px; 
+    left: -15px;
+    width: calc(100% + 30px);
+    height: 2px;
+    background: #fff;
+    box-shadow: 
+        0 0 30px 2px var(--sys-neon, rgba(56, 189, 248, 0.6)), 
+        0 0 10px 1px var(--sys-neon, rgba(56, 189, 248, 0.8)), 
+        0 0 3px #fff; 
+    pointer-events: none; 
+    z-index: 10;
+}
+
 .action-btn { 
     flex: 1; text-align: center; color: rgba(255,255,255,0.9); border-radius: 10px; font-weight: 700; font-size: 13px; 
     cursor: pointer; touch-action: manipulation; transition: all 0.2s ease-out; position: relative; overflow: hidden; 
@@ -613,27 +632,23 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     z-index: -1; 
 }
 
-/* --- 3. ВЕРХНЯЯ БЕЛАЯ ЛИНИЯ (С объемным неоном во все стороны) --- */
-.sticky-zone::after {
+/* --- 3. ВЕРХНЯЯ БЕЛАЯ ЛИНИЯ (Привязана строго к кнопкам!) --- */
+.top-actions::before {
     content: '';
     position: absolute;
     
-    top: -10px; /* Твоя настройка высоты, оставляй как подобрал */
+    top: -10px; /* Строго на 5 пикселей выше самих кнопок */
     
-    left: 0;
-    width: 100%;
-    height: 2px; /* Оставляем жирную 2px линию, как ты и хотел */
+    /* Растягиваем на всю ширину экрана, компенсируя боковые отступы (padding) шапки в 15px */
+    left: -15px;
+    width: calc(100% + 30px);
+    
+    height: 2px;
     background: #fff;
-    
-    /* Свечение теперь бьет ровно из центра во все стороны (0 по осям X и Y):
-       1 слой: огромное мягкое облако, которое упадет и на меню, и на затычку
-       2 слой: плотный цветной неон прямо у самой белой линии
-       3 слой: слепящий белый пересвет в самом центре */
     box-shadow: 
         0 0 30px 2px var(--sys-neon, rgba(56, 189, 248, 0.6)), 
         0 0 10px 1px var(--sys-neon, rgba(56, 189, 248, 0.8)), 
         0 0 3px #fff; 
-        
     pointer-events: none; 
     z-index: 10;
 }
@@ -5293,17 +5308,27 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         const isAction = (moveX !== 0 || moveY !== 0);
         const isEditPanelOpen = document.getElementById('editPanel').classList.contains('show');
 
-        // === УРОВЕНЬ 6: МОДАЛЬНЫЕ ОКНА ===
-        const activeModal = document.querySelector('#exportModalOverlay.show, #infoModalOverlay.show, #resetModalOverlay.show');
+           // === УРОВЕНЬ 6: МОДАЛЬНЫЕ ОКНА ===
+        // Ищем любое открытое модальное окно (по классу show или display: flex)
+        const activeModal = Array.from(document.querySelectorAll('#exportModalOverlay, #infoModalOverlay, #resetModalOverlay, #langModalOverlay'))
+            .find(m => m && (m.classList.contains('show') || m.style.display === 'flex'));
+
         if (activeModal) {
-            if (cardNavLevel !== 6) { cardNavLevel = 6; modalIndex = 0; }
             const modalBtns = Array.from(activeModal.querySelectorAll('button:not([style*="display: none"])'));
             
+            if (cardNavLevel !== 6) { 
+                cardNavLevel = 6; 
+                modalIndex = 0; 
+                // Сразу подсвечиваем первую кнопку, чтобы было видно, что геймпад работает
+                if (modalBtns.length > 0) modalBtns[0].classList.add('gp-focus');
+            }
+            
             if (modalBtns.length > 0) {
-                if (moveY !== 0) {
+                if (moveY !== 0 || moveX !== 0) {
+                    let move = moveY !== 0 ? moveY : moveX;
                     lastGpMenuUpdate = now;
                     modalBtns.forEach(b => b.classList.remove('gp-focus'));
-                    modalIndex = (modalIndex + moveY + modalBtns.length) % modalBtns.length;
+                    modalIndex = (modalIndex + move + modalBtns.length) % modalBtns.length;
                     modalBtns[modalIndex].classList.add('gp-focus');
                     if (typeof doVibrate === 'function') doVibrate(10);
                     if (typeof AudioGen !== 'undefined') AudioGen.playClick();
@@ -5316,20 +5341,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         focused.click();
                     }
                 }
-                                if (gp.buttons[1] && gp.buttons[1].pressed) { 
+                if (gp.buttons[1] && gp.buttons[1].pressed) { 
                     lastGpMenuUpdate = now + 400;
-                    const cancelBtn = modalBtns.find(b => b.textContent.includes(window.L.cancel) || b.textContent.includes(window.L.close));
+                    const cancelBtn = modalBtns.find(b => b.textContent.includes(window.L.cancel) || b.textContent.includes(window.L.close) || b.id.includes('Cancel') || b.id.includes('Close'));
                     if (cancelBtn) {
                         if (typeof doVibrate === 'function') doVibrate(15);
                         cancelBtn.click();
                     }
                 }
-
             }
             requestAnimationFrame(updateGamepadMenu); return;
         } else if (cardNavLevel === 6) {
             cardNavLevel = 0; 
         }
+
 
         // === УРОВЕНЬ 3: ВИРТУАЛЬНАЯ КЛАВИАТУРА ===
         if (cardNavLevel === 3) {
