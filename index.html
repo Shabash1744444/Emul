@@ -7594,6 +7594,74 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+<script>
+// --- ПРИЕМНИК ИГР ИЗ МАГАЗИНА (hab.html) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sysParam = urlParams.get('sys');
+    const romUrl = urlParams.get('rom');
+
+    if (sysParam && romUrl) {
+        // Ждем 1 секунду, чтобы основная база данных (db) успела открыться
+        setTimeout(async () => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                splash.classList.remove('hidden');
+                document.getElementById('lbl_init').textContent = "СКАЧИВАНИЕ СО СКЛАДА...";
+            }
+
+            try {
+                console.log("Качаем файл со склада:", romUrl);
+                const response = await fetch(romUrl);
+                if (!response.ok) throw new Error("Не удалось скачать архив со склада");
+                
+                const blob = await response.blob();
+                const fileName = decodeURIComponent(romUrl.split('/').pop());
+                
+                // Создаем виртуальный "Файл", будто ты выбрал его через кнопку "Добавить"
+                const file = new File([blob], fileName);
+                
+                // Прогоняем через твою систему установки (она сохранит игру и обложку в IndexedDB)
+                await window.processSingleFile(file);
+                
+                // Ищем только что установленную игру в базе и запускаем её
+                const cleanGameName = fileName.replace(/\.[^/.]+$/, "");
+                const tx = db.transaction(["games"], "readonly");
+                const store = tx.objectStore("games");
+                const req = store.getAll();
+                
+                req.onsuccess = () => {
+                    const games = req.result;
+                    // Ищем игру по имени
+                    const downloadedGame = games.find(g => g.n === cleanGameName);
+                    if (downloadedGame) {
+                        startGame(downloadedGame); // Запуск!
+                    } else {
+                        alert("Игра установлена, найди её в меню.");
+                        if (splash) splash.classList.add('hidden');
+                    }
+                };
+            } catch(e) {
+                console.error(e);
+                alert("Ошибка скачивания: " + e.message);
+                if (splash) splash.classList.add('hidden');
+            }
+            
+            // Очищаем адресную строку, чтобы при обновлении страницы игра не качалась заново
+            window.history.replaceState(null, '', window.location.pathname + '#menu');
+        }, 1500); 
+    }
+});
+</script>
+
+
+
+
+
+
+    
+
+
 <style id="mega-layout-fix">
     :root {
         /* =========================================
