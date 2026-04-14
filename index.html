@@ -7594,70 +7594,88 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+
+
+
+
+
+
 <script>
-// --- ПРИЕМНИК ИГР ИЗ МАГАЗИНА (hab.html) ---
-document.addEventListener('DOMContentLoaded', () => {
+// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА ---
+window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
 
     if (sysParam && romUrl) {
-        // Ждем 1 секунду, чтобы основная база данных (db) успела открыться
-        setTimeout(async () => {
+        console.log("📥 Получена команда из магазина! Качаем:", romUrl);
+        
+        // 1. Умная функция: ждет, пока база данных (db) будет готова
+        const checkDbAndLoad = () => {
+            if (typeof db !== 'undefined' && db) {
+                startDownload(); // База готова, погнали!
+            } else {
+                setTimeout(checkDbAndLoad, 200); // Ждем 200 мс и проверяем снова
+            }
+        };
+
+        const startDownload = () => {
+            // Включаем экран загрузки
             const splash = document.getElementById('splashScreen');
             if (splash) {
                 splash.classList.remove('hidden');
-                document.getElementById('lbl_init').textContent = "СКАЧИВАНИЕ СО СКЛАДА...";
+                const lbl = document.getElementById('lbl_init');
+                if (lbl) lbl.textContent = "СКАЧИВАНИЕ ИГРЫ СО СКЛАДА...";
             }
 
-            try {
-                console.log("Качаем файл со склада:", romUrl);
-                const response = await fetch(romUrl);
-                if (!response.ok) throw new Error("Не удалось скачать архив со склада");
-                
-                const blob = await response.blob();
-                const fileName = decodeURIComponent(romUrl.split('/').pop());
-                
-                // Создаем виртуальный "Файл", будто ты выбрал его через кнопку "Добавить"
-                const file = new File([blob], fileName);
-                
-                // Прогоняем через твою систему установки (она сохранит игру и обложку в IndexedDB)
-                await window.processSingleFile(file);
-                
-                // Ищем только что установленную игру в базе и запускаем её
-                const cleanGameName = fileName.replace(/\.[^/.]+$/, "");
-                const tx = db.transaction(["games"], "readonly");
-                const store = tx.objectStore("games");
-                const req = store.getAll();
-                
-                req.onsuccess = () => {
-                    const games = req.result;
-                    // Ищем игру по имени
-                    const downloadedGame = games.find(g => g.n === cleanGameName);
-                    if (downloadedGame) {
-                        startGame(downloadedGame); // Запуск!
-                    } else {
-                        alert("Игра установлена, найди её в меню.");
-                        if (splash) splash.classList.add('hidden');
-                    }
-                };
-            } catch(e) {
-                console.error(e);
-                alert("Ошибка скачивания: " + e.message);
-                if (splash) splash.classList.add('hidden');
-            }
-            
-            // Очищаем адресную строку, чтобы при обновлении страницы игра не качалась заново
-            window.history.replaceState(null, '', window.location.pathname + '#menu');
-        }, 1500); 
+            fetch(romUrl)
+                .then(res => {
+                    // Если на Гитхабе нет файла или путь кривой
+                    if (!res.ok) throw new Error(`Файл не найден (Ошибка ${res.status}). Проверь пути на Гитхабе!`);
+                    return res.blob();
+                })
+                .then(blob => {
+                    // Имитируем ручной выбор файла
+                    const fileName = decodeURIComponent(romUrl.split('/').pop());
+                    const file = new File([blob], fileName);
+                    
+                    // Отправляем в ядро эмулятора для распаковки и установки
+                    return window.processSingleFile(file);
+                })
+                .then(() => {
+                    // Ищем установленную игру и запускаем
+                    const cleanGameName = decodeURIComponent(romUrl.split('/').pop()).replace(/\.[^/.]+$/, "");
+                    const tx = db.transaction(["games"], "readonly");
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
+                    
+                    req.onsuccess = () => {
+                        const games = req.result;
+                        const downloadedGame = games.find(g => g.n === cleanGameName);
+                        
+                        if (downloadedGame) {
+                            // Убираем параметры из ссылки
+                            window.history.replaceState(null, '', window.location.pathname + '#menu');
+                            startGame(downloadedGame); // ЗАПУСК!
+                        } else {
+                            alert("❌ Игра скачалась, но не появилась в базе.");
+                            if (splash) splash.classList.add('hidden');
+                        }
+                    };
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("❌ Ошибка загрузки: " + err.message);
+                    if (splash) splash.classList.add('hidden');
+                    window.history.replaceState(null, '', window.location.pathname + '#menu');
+                });
+        };
+
+        // Запускаем проверку базы
+        checkDbAndLoad();
     }
 });
 </script>
-
-
-
-
-
 
     
 
