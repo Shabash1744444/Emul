@@ -7597,107 +7597,97 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
-<script>
-// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА (ИСПРАВЛЕННЫЙ) ---
+// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА (PRO ВЕРСИЯ) ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
+    const isPreview = urlParams.get('preview') === 'true';
+
+    // Глобальный флаг для песочницы
+    window.ouroborosSandbox = isPreview;
 
     if (sysParam && romUrl) {
-        console.log("📥 Получена команда из магазина! Качаем:", romUrl);
+        console.log("📥 Прием со склада Ouroboros. Режим:", isPreview ? "ПЕСОЧНИЦА" : "ПРЯМОЙ ЗАПУСК");
         
-        // ВАЖНО: Устанавливаем систему глобально, чтобы эмулятор точно знал, что это за консоль
+        // Жестко фиксируем систему
         window.currentSystem = sysParam; 
-        
-        // 1. Умная функция: ждет, пока база данных (db) будет готова
+
+        // 1. ЕСЛИ ЭТО ПРЕВЬЮ - ПРЯЧЕМ КНОПКУ МЕНЮ
+        if (isPreview) {
+            const menuBtn = document.getElementById('menuBtn');
+            if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
+            // Флаг, чтобы случайно не вызвалось свайпом
+            window.blockAppMenu = true; 
+        }
+
         const checkDbAndLoad = () => {
-            if (typeof db !== 'undefined' && db) {
-                startDownload();
-            } else {
-                setTimeout(checkDbAndLoad, 200);
-            }
+            if (typeof db !== 'undefined' && db) startDownload();
+            else setTimeout(checkDbAndLoad, 200);
         };
 
         const startDownload = () => {
             const splash = document.getElementById('splashScreen');
-            if (splash) {
-                splash.classList.remove('hidden');
-                const lbl = document.getElementById('lbl_init');
-                if (lbl) lbl.textContent = "СКАЧИВАНИЕ ИГРЫ СО СКЛАДА...";
-            }
+            const lbl = document.getElementById('lbl_init');
+            if (splash) splash.classList.remove('hidden');
+            if (lbl) lbl.textContent = isPreview ? "ПОДГОТОВКА ПРОСМОТРА..." : "СКАЧИВАНИЕ ИГРЫ...";
 
-            // Защита от пробелов в URL (иначе fetch может упасть на ПК)
-            const fetchUrl = new URL(romUrl).href; 
-
-            fetch(fetchUrl)
+            fetch(romUrl)
                 .then(res => {
-                    if (!res.ok) throw new Error(`Файл не найден (Ошибка ${res.status}).`);
+                    // Железобетонная защита от 404
+                    if (!res.ok) throw new Error("404: Файл не найден на складе");
                     return res.blob();
                 })
                 .then(blob => {
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    
-                    // 💡 ГЛАВНЫЙ ФИКС 1: Указываем { type: "application/zip" }. 
-                    // Теперь эмулятор перед запуском сам честно распакует Dendy-архив!
+                    // Фикс для Денди: принудительный тип архива
                     const file = new File([blob], fileName, { type: "application/zip" });
                     
-                    console.log("📦 Файл передан в ядро:", file.name, file.type);
+                    // Передаем в ядро эмулятора для распаковки
+                    return window.processSingleFile(file);
+                })
+                .then(() => {
+                    // Ищем игру в базе для запуска
+                    const tx = db.transaction(["games"], "readonly");
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
                     
-                    // Отправляем в ядро эмулятора для распаковки и установки
-                    window.processSingleFile(file);
-                    
-                    // 💡 ГЛАВНЫЙ ФИКС 2: Ждем, пока игра распакуется и запишется в базу
-                    waitForGameToAppear(fileName.replace(/\.[^/.]+$/, ""));
+                    req.onsuccess = () => {
+                        const games = req.result;
+                        if (games.length > 0) {
+                            // Берем самую последнюю добавленную игру
+                            const latestGame = games.sort((a, b) => b.id - a.id)[0];
+                            
+                            // Очищаем URL, оставляя чистый эмулятор
+                            window.history.replaceState(null, '', window.location.pathname + '#menu');
+                            
+                            // ЗАПУСК ИГРЫ
+                            startGame(latestGame);
+
+                            // 2. ЕСЛИ ЭТО ПРЕВЬЮ - ТИХО УДАЛЯЕМ ИЗ БАЗЫ ЧЕРЕЗ 10 СЕК
+                            // Это нужно, чтобы игра не засоряла каталог после просмотра
+                            if (isPreview) {
+                                setTimeout(() => {
+                                    const delTx = db.transaction(["games"], "readwrite");
+                                    delTx.objectStore("games").delete(latestGame.id);
+                                    console.log("🧹 Песочница: временный файл просмотра удален из памяти");
+                                }, 10000);
+                            }
+                        }
+                    };
                 })
                 .catch(err => {
-                    console.error(err);
-                    alert("❌ Ошибка загрузки: " + err.message);
+                    console.error("Ошибка склада:", err);
+                    alert("❌ Ошибка склада: " + err.message);
                     if (splash) splash.classList.add('hidden');
                     window.history.replaceState(null, '', window.location.pathname + '#menu');
                 });
         };
 
-        const waitForGameToAppear = (cleanGameName) => {
-            let attempts = 0;
-            
-            const check = () => {
-                const tx = db.transaction(["games"], "readonly");
-                const store = tx.objectStore("games");
-                const req = store.getAll();
-                
-                req.onsuccess = () => {
-                    const games = req.result;
-                    // Ищем игру в базе по имени
-                    const downloadedGame = games.find(g => g.n === cleanGameName);
-                    
-                    if (downloadedGame) {
-                        console.log("✅ Игра успешно распакована и найдена в базе! ЗАПУСК!");
-                        // Убираем параметры из ссылки, чтобы при обновлении не качать заново
-                        window.history.replaceState(null, '', window.location.pathname + '#menu');
-                        startGame(downloadedGame);
-                    } else if (attempts < 30) { 
-                        // Если игра еще не появилась (идет распаковка), ждем полсекунды и проверяем снова (максимум 15 секунд)
-                        attempts++;
-                        setTimeout(check, 500);
-                    } else {
-                        alert("❌ Ошибка: Игра скачалась, но не распаковалась. Возможно, имя файла внутри архива отличается.");
-                        const splash = document.getElementById('splashScreen');
-                        if (splash) splash.classList.add('hidden');
-                        window.history.replaceState(null, '', window.location.pathname + '#menu');
-                    }
-                };
-            };
-            
-            // Запускаем первую проверку через 1 секунду, давая время JS-распаковщику
-            setTimeout(check, 1000); 
-        };
-
         checkDbAndLoad();
     }
 });
-</script>
+
 
 
 
