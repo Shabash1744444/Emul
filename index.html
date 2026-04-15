@@ -7771,6 +7771,113 @@ window.addEventListener('load', () => {
 
 
 
+<!-- ===== ДИАГНОСТИКА БД (удалить после проверки) ===== -->
+<div id="db-diag" style="position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.9);border:2px solid #ef4444;color:#fff;padding:15px;max-width:400px;max-height:300px;overflow:auto;z-index:99999;font-family:monospace;font-size:12px;border-radius:8px;">
+    <div style="color:#ef4444;font-weight:bold;margin-bottom:10px;">🔍 DB DIAGNOSTICS</div>
+    <div id="db-diag-log">Инициализация...</div>
+    <button onclick="forceCreateStores()" style="margin-top:10px;background:#ef4444;color:#fff;border:none;padding:5px 10px;cursor:pointer;display:none;" id="fix-btn">Создать stores</button>
+    <button onclick="document.getElementById('db-diag').remove()" style="margin-top:10px;background:#333;color:#fff;border:none;padding:5px 10px;cursor:pointer;float:right;">Закрыть</button>
+</div>
+
+<script>
+(function diagnoseDB() {
+    const log = (msg, color='#fff') => {
+        const div = document.getElementById('db-diag-log');
+        div.innerHTML += `<div style="margin:3px 0;color:${color}">${msg}</div>`;
+        console.log('[DIAG]', msg);
+    };
+    
+    // Проверяем IndexedDB
+    if (!window.indexedDB) {
+        log('❌ IndexedDB не поддерживается!', '#ef4444');
+        return;
+    }
+    
+    log('Проверка БД ArcadeDB...', '#fbbf24');
+    
+    const req = indexedDB.open('ArcadeDB');
+    
+    req.onsuccess = (e) => {
+        const db = e.target.result;
+        const stores = Array.from(db.objectStoreNames);
+        
+        log(`✅ БД открыта (версия ${db.version})`, '#10b981');
+        log(`Найдено хранилищ: ${stores.length}`, stores.length ? '#10b981' : '#ef4444');
+        
+        if (stores.length === 0) {
+            log('⚠️ ХРАНИЛИЩА ОТСУТСТВУЮТ!', '#ef4444');
+            log('Причина: onupgradeneeded не сработал при создании', '#fbbf24');
+            document.getElementById('fix-btn').style.display = 'inline-block';
+        } else {
+            stores.forEach(s => log(`  📁 ${s}`, '#38bdf8'));
+        }
+        
+        db.close();
+    };
+    
+    req.onerror = () => {
+        log('❌ Ошибка открытия БД', '#ef4444');
+    };
+    
+    // Проверим другие возможные имена БД
+    setTimeout(() => {
+        log('Поиск других БД...', '#64748b');
+        indexedDB.databases().then(dbs => {
+            if (dbs.length === 0) {
+                log('Других БД не найдено', '#64748b');
+            } else {
+                dbs.forEach(db => {
+                    log(`  🔍 ${db.name} (v${db.version})`, '#a855f7');
+                });
+            }
+        }).catch(() => {
+            log('(браузер не поддерживает indexedDB.databases())', '#64748b');
+        });
+    }, 100);
+})();
+
+function forceCreateStores() {
+    const log = (msg, color) => {
+        document.getElementById('db-diag-log').innerHTML += `<div style="color:${color}">⚡ ${msg}</div>`;
+    };
+    
+    log('Принудительное создание...', '#fbbf24');
+    
+    // Удаляем старую пустую БД или повышаем версию
+    const deleteReq = indexedDB.deleteDatabase('ArcadeDB');
+    
+    deleteReq.onsuccess = () => {
+        log('Старая БД удалена', '#fbbf24');
+        
+        // Создаем заново с нужной структурой
+        const createReq = indexedDB.open('ArcadeDB', 1);
+        
+        createReq.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('games')) {
+                db.createObjectStore('games', { keyPath: 'id', autoIncrement: true });
+                log('✅ Store "games" создан!', '#10b981');
+            }
+        };
+        
+        createReq.onsuccess = (e) => {
+            log('✅ БД инициализирована успешно!', '#10b981');
+            document.getElementById('fix-btn').style.display = 'none';
+            e.target.result.close();
+        };
+    };
+    
+    deleteReq.onerror = () => {
+        log('❌ Не удалось удалить старую БД', '#ef4444');
+    };
+}
+</script>
+<!-- ===== КОНЕЦ ДИАГНОСТИКИ ===== -->
+
+
+
+    
+
     
 </body>
 </html>
