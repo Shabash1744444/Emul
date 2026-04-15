@@ -7598,10 +7598,8 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
-
 <script>
-// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА ---
+// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА (ИСПРАВЛЕННЫЙ) ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
@@ -7610,17 +7608,19 @@ window.addEventListener('load', () => {
     if (sysParam && romUrl) {
         console.log("📥 Получена команда из магазина! Качаем:", romUrl);
         
+        // ВАЖНО: Устанавливаем систему глобально, чтобы эмулятор точно знал, что это за консоль
+        window.currentSystem = sysParam; 
+        
         // 1. Умная функция: ждет, пока база данных (db) будет готова
         const checkDbAndLoad = () => {
             if (typeof db !== 'undefined' && db) {
-                startDownload(); // База готова, погнали!
+                startDownload();
             } else {
-                setTimeout(checkDbAndLoad, 200); // Ждем 200 мс и проверяем снова
+                setTimeout(checkDbAndLoad, 200);
             }
         };
 
         const startDownload = () => {
-            // Включаем экран загрузки
             const splash = document.getElementById('splashScreen');
             if (splash) {
                 splash.classList.remove('hidden');
@@ -7628,40 +7628,28 @@ window.addEventListener('load', () => {
                 if (lbl) lbl.textContent = "СКАЧИВАНИЕ ИГРЫ СО СКЛАДА...";
             }
 
-            fetch(romUrl)
+            // Защита от пробелов в URL (иначе fetch может упасть на ПК)
+            const fetchUrl = new URL(romUrl).href; 
+
+            fetch(fetchUrl)
                 .then(res => {
-                    // Если на Гитхабе нет файла или путь кривой
-                    if (!res.ok) throw new Error(`Файл не найден (Ошибка ${res.status}). Проверь пути на Гитхабе!`);
+                    if (!res.ok) throw new Error(`Файл не найден (Ошибка ${res.status}).`);
                     return res.blob();
                 })
                 .then(blob => {
-                    // Имитируем ручной выбор файла
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    const file = new File([blob], fileName);
+                    
+                    // 💡 ГЛАВНЫЙ ФИКС 1: Указываем { type: "application/zip" }. 
+                    // Теперь эмулятор перед запуском сам честно распакует Dendy-архив!
+                    const file = new File([blob], fileName, { type: "application/zip" });
+                    
+                    console.log("📦 Файл передан в ядро:", file.name, file.type);
                     
                     // Отправляем в ядро эмулятора для распаковки и установки
-                    return window.processSingleFile(file);
-                })
-                .then(() => {
-                    // Ищем установленную игру и запускаем
-                    const cleanGameName = decodeURIComponent(romUrl.split('/').pop()).replace(/\.[^/.]+$/, "");
-                    const tx = db.transaction(["games"], "readonly");
-                    const store = tx.objectStore("games");
-                    const req = store.getAll();
+                    window.processSingleFile(file);
                     
-                    req.onsuccess = () => {
-                        const games = req.result;
-                        const downloadedGame = games.find(g => g.n === cleanGameName);
-                        
-                        if (downloadedGame) {
-                            // Убираем параметры из ссылки
-                            window.history.replaceState(null, '', window.location.pathname + '#menu');
-                            startGame(downloadedGame); // ЗАПУСК!
-                        } else {
-                            alert("❌ Игра скачалась, но не появилась в базе.");
-                            if (splash) splash.classList.add('hidden');
-                        }
-                    };
+                    // 💡 ГЛАВНЫЙ ФИКС 2: Ждем, пока игра распакуется и запишется в базу
+                    waitForGameToAppear(fileName.replace(/\.[^/.]+$/, ""));
                 })
                 .catch(err => {
                     console.error(err);
@@ -7671,11 +7659,48 @@ window.addEventListener('load', () => {
                 });
         };
 
-        // Запускаем проверку базы
+        const waitForGameToAppear = (cleanGameName) => {
+            let attempts = 0;
+            
+            const check = () => {
+                const tx = db.transaction(["games"], "readonly");
+                const store = tx.objectStore("games");
+                const req = store.getAll();
+                
+                req.onsuccess = () => {
+                    const games = req.result;
+                    // Ищем игру в базе по имени
+                    const downloadedGame = games.find(g => g.n === cleanGameName);
+                    
+                    if (downloadedGame) {
+                        console.log("✅ Игра успешно распакована и найдена в базе! ЗАПУСК!");
+                        // Убираем параметры из ссылки, чтобы при обновлении не качать заново
+                        window.history.replaceState(null, '', window.location.pathname + '#menu');
+                        startGame(downloadedGame);
+                    } else if (attempts < 30) { 
+                        // Если игра еще не появилась (идет распаковка), ждем полсекунды и проверяем снова (максимум 15 секунд)
+                        attempts++;
+                        setTimeout(check, 500);
+                    } else {
+                        alert("❌ Ошибка: Игра скачалась, но не распаковалась. Возможно, имя файла внутри архива отличается.");
+                        const splash = document.getElementById('splashScreen');
+                        if (splash) splash.classList.add('hidden');
+                        window.history.replaceState(null, '', window.location.pathname + '#menu');
+                    }
+                };
+            };
+            
+            // Запускаем первую проверку через 1 секунду, давая время JS-распаковщику
+            setTimeout(check, 1000); 
+        };
+
         checkDbAndLoad();
     }
 });
 </script>
+
+
+
 
     
 
