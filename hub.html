@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Ouroboros Arcade Hub</title>
+    <title>Arcade Hub</title>
     <style>
-        /* ВОЗВРАЩАЕМ ТВОИ ОРИГИНАЛЬНЫЕ ЦВЕТА И ПЕРЕМЕННЫЕ */
         :root {
             --bg-color-base: #060608;
             --glass-bg: rgba(15, 15, 25, 0.75);
@@ -13,7 +12,6 @@
             --neon-blue: #38bdf8;
             --neon-purple: #a855f7;
             --neon-red: #ef4444;
-            --neon-green: #10b981;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -22,178 +20,348 @@
             margin: 0; padding: 0; 
             background-color: var(--bg-color-base);
             background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.9) 100%);
-            color: #eee; font-family: sans-serif; min-height: 100vh; overflow-x: hidden;
+            color: #eee; 
+            font-family: sans-serif; 
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 50px;
         }
 
-        /* ТВОЯ ОРИГИНАЛЬНАЯ ШАПКА */
-        .header {
-            position: sticky; top: 0; z-index: 100;
-            background: var(--glass-bg); backdrop-filter: blur(15px);
-            padding: 15px; border-bottom: 1px solid var(--glass-border);
+        /* --- ШАПКА --- */
+        .meme-header { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            padding: 40px 15px 20px 15px; border-bottom: 2px dashed var(--neon-blue); 
+            background: rgba(8, 8, 12, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 0 0 20px 20px; margin-bottom: 20px;
+            box-shadow: 0 8px 25px -5px rgba(56, 189, 248, 0.4);
         }
+        .splash-title {
+            color: #fff; font-family: monospace; font-size: 32px; font-weight: 900; letter-spacing: 5px; 
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); text-align: center;
+        }
+        .splash-sub { color: #94a3b8; font-size: 12px; letter-spacing: 2px; margin-top: 5px; text-align: center;}
 
-        .nav-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .back-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; text-shadow: 0 0 10px var(--neon-blue); }
-
-        /* ПОИСК В ТВОЕМ СТИЛЕ */
-        .search-container { position: relative; margin-bottom: 15px; }
+        /* ПОИСК */
+        .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
         .search-input {
-            width: 100%; padding: 12px 15px; border-radius: 10px;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--glass-border);
-            color: #fff; outline: none; transition: 0.3s;
+            width: 100%; padding: 10px 15px; border-radius: 12px;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue);
+            color: #fff; font-weight: bold; outline: none; text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s;
         }
-        .search-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 15px rgba(56,189,248,0.2); }
+        .search-input:focus { box-shadow: 0 0 10px rgba(56, 189, 248, 0.4), inset 0 2px 5px rgba(0,0,0,0.5); }
 
-        /* ТВОЯ СЕТКА КАРТОЧЕК */
-        .grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 20px; padding: 20px;
+        /* --- ФИЛЬТРЫ ПРИСТАВОК --- */
+        .sys-filter-container { 
+            display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap;
+        }
+        .sys-filter-container::-webkit-scrollbar { display: none; }
+        
+        .sys-filter-btn { 
+            flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 13px; 
+            cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); 
+            text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sys-filter-btn:active { transform: scale(0.95); }
+        .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
+
+        /* --- СЕТКА ИГР --- */
+        .grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; 
+            padding: 0 15px; max-width: 1200px; margin: 0 auto;
         }
 
-        .game-card {
-            background: var(--glass-bg); border-radius: 15px; overflow: hidden;
-            border: 1px solid var(--glass-border); backdrop-filter: blur(5px);
-            position: relative; transition: 0.3s; display: flex; flex-direction: column;
+        /* --- КАРТОЧКИ ИГР --- */
+        .game-card { 
+            position: relative; overflow: hidden;
+            background-color: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 12px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            min-height: 180px; 
+            background-size: cover; background-position: center;
+            user-select: none; -webkit-user-select: none;
         }
-        .game-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); }
-
-        .cover {
-            width: 100%; aspect-ratio: 1/1; background-size: cover; background-position: center;
-            position: relative; border-bottom: 1px solid var(--glass-border);
+        
+        /* Затемнение для читаемости текста */
+        .game-card::before { 
+            content: ''; position: absolute; inset: 0; 
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); 
+            z-index: 1; pointer-events: none; 
         }
 
-        /* СИНХРОНИЗИРОВАННОЕ СЕРДЦЕ */
-        .heart-icon {
-            position: absolute; top: 10px; right: 10px; font-size: 20px;
-            filter: drop-shadow(0 0 5px red); display: none;
+        .game-title { 
+            position: relative; z-index: 3; width: 100%; padding: 5px 8px; 
+            font-size: 12px; font-weight: bold; text-align: center; color: #fff;
+            text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .installed .heart-icon { display: block; }
 
-        .info { padding: 12px; flex-grow: 1; }
-        .game-title { font-size: 13px; font-weight: bold; margin-bottom: 10px; height: 32px; overflow: hidden; }
-
-        /* КНОПКИ ДЕЙСТВИЯ */
-        .actions { display: flex; gap: 8px; }
-        .btn {
-            flex: 1; padding: 8px 0; border-radius: 6px; border: 1px solid;
-            background: transparent; color: #fff; cursor: pointer; font-size: 10px;
-            font-weight: bold; transition: 0.2s; text-align: center;
+        .sys-badge { 
+            position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 6px; 
+            font-size: 10px; font-weight: 900; z-index: 10; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); 
         }
-        .btn-view { border-color: var(--neon-blue); color: var(--neon-blue); }
-        .btn-install { border-color: var(--neon-green); color: var(--neon-green); }
-        .btn:active { transform: scale(0.95); background: rgba(255,255,255,0.05); }
-        .btn:disabled { opacity: 0.3; cursor: default; }
 
-        .loading-text { font-size: 10px; color: var(--neon-green); display: none; margin-top: 5px; text-align: center; }
+        /* --- СЕРДЕЧКО (Только если игра установлена) --- */
+        .install-btn {
+            position: absolute; top: 8px; left: 8px; z-index: 10;
+            background: rgba(239, 68, 68, 0.8); border: 1px solid #ef4444; 
+            border-radius: 50%; width: 30px; height: 30px; 
+            display: none; align-items: center; justify-content: center;
+            font-size: 14px; color: #fff;
+            backdrop-filter: blur(5px); box-shadow: 0 0 10px #ef4444;
+        }
+        .game-card.installed .install-btn { display: flex; animation: pulse 2s infinite; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- КНОПКИ ДЕЙСТВИЙ (ПРОСМОТР / УСТАНОВИТЬ) --- */
+        .action-row {
+            position: relative; z-index: 3; width: 100%; padding: 0 8px 10px 8px;
+            display: flex; gap: 5px;
+        }
+        .action-btn {
+            flex: 1; padding: 8px 0; border: 1px solid; border-radius: 6px;
+            background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; font-weight: 900;
+            cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); text-align: center;
+        }
+        .action-btn:active { transform: scale(0.9); }
+        
+        .btn-view { border-color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+        .btn-inst { border-color: #10b981; text-shadow: 0 0 5px #10b981; }
+        
+        /* Состояние "В БАЗЕ" */
+        .btn-inst:disabled { 
+            border-color: #555; color: #888; text-shadow: none; cursor: default; background: transparent; 
+        }
+        .loading-text {
+            position: absolute; z-index: 4; bottom: 12px; left: 0; width: 100%;
+            text-align: center; font-size: 10px; font-weight: bold; color: #10b981;
+            text-shadow: 0 0 5px #10b981; display: none;
+        }
+
+        /* --- СВЕЧЕНИЕ СИСТЕМ --- */
+        .sys-nes { box-shadow: 0 0 15px rgba(239,68,68,0.3) !important; border-color: #ef4444; }
+        .badge-nes { background: linear-gradient(135deg, #f87171, #ef4444); color: white; }
+        .sys-smd { box-shadow: 0 0 15px rgba(59,130,246,0.3) !important; border-color: #3b82f6; }
+        .badge-smd { background: linear-gradient(135deg, #60a5fa, #2563eb); color: white; }
+        .sys-snes { box-shadow: 0 0 15px rgba(168,85,247,0.3) !important; border-color: #a855f7; }
+        .badge-snes { background: linear-gradient(135deg, #c084fc, #9333ea); color: white; }
+        .sys-ngp { box-shadow: 0 0 15px rgba(6,182,212,0.3) !important; border-color: #06b6d4; }
+        .badge-ngp { background: linear-gradient(135deg, #22d3ee, #0891b2); color: white; }
+        .sys-dos { box-shadow: 0 0 15px rgba(16,185,129,0.3) !important; border-color: #10b981; }
+        .badge-dos { background: linear-gradient(135deg, #34d399, #059669); color: white; }
+        .sys-gba { box-shadow: 0 0 15px rgba(217,70,239,0.3) !important; border-color: #d946ef; }
+        .badge-gba { background: linear-gradient(135deg, #e879f9, #c026d3); color: white; }
+        .sys-html { box-shadow: 0 0 15px rgba(245,158,11,0.3) !important; border-color: #f59e0b; }
+        .badge-html { background: linear-gradient(135deg, #fbbf24, #d97706); color: white; }
+        .sys-unk { box-shadow: 0 0 15px rgba(100,116,139,0.3) !important; border-color: #64748b; }
+        .badge-unk { background: linear-gradient(135deg, #94a3b8, #475569); color: white; }
+
+        .no-cover-icon { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="nav-row">
-        <a href="index.html" class="back-link">◀ НАЗАД В МЕНЮ</a>
-        <div style="font-size: 10px; opacity: 0.5;">OUROBOROS STORE</div>
+    <div class="meme-header">
+        <a href="index.html" style="color: var(--neon-blue); text-decoration: none; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue);">◀ НАЗАД В ЭМУЛЯТОР</a>
+        <div class="splash-title">ARCADE STORE</div>
+        <div class="splash-sub">ВЫБЕРИ ИГРУ ДЛЯ УСТАНОВКИ</div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Поиск по названию..." oninput="triggerSearch()">
+        </div>
     </div>
-    
-    <div class="search-container">
-        <input type="text" id="search" class="search-input" placeholder="Поиск игры по названию..." oninput="render()">
+
+    <div class="sys-filter-container" id="filter-bar">
+        <button class="sys-filter-btn active" style="border-color:#fff; color:#fff;" onclick="filterGames('all', this)">ВCЕ ИГРЫ</button>
     </div>
-</div>
 
-<div class="grid" id="grid"></div>
+    <div class="grid" id="game-grid"></div>
 
-<script>
-    // ИСПОЛЬЗУЕМ RAW ДЛЯ СТАБИЛЬНОСТИ
-    const WAREHOUSE = "https://raw.githubusercontent.com/crottorc91-oss/Baza/main/";
-    let allGames = [];
-    let installedNames = [];
-    let db;
+    <script>
+        // ЖЕЛЕЗОБЕТОННАЯ ССЫЛКА (Без 404 ошибки)
+        const WAREHOUSE_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
+        let allGames = [];
+        let installedNames = [];
+        let db;
 
-    // Подключение к базе эмулятора
-    const request = indexedDB.open("ArcadeDB", 1);
-    request.onsuccess = (e) => { 
-        db = e.target.result; 
-        syncAndLoad(); 
-    };
+        const sysInfo = {
+            'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'DENDY', hex: '#ef4444' },
+            'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA', hex: '#3b82f6' },
+            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', hex: '#8b5cf6' },
+            'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', hex: '#06b6d4' },
+            'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS', hex: '#10b981' },
+            'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA', hex: '#d946ef' },
+            'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML', hex: '#f59e0b' },
+            'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' }
+        };
 
-    async function syncAndLoad() {
-        try {
-            // 1. Узнаем, что уже в базе
-            installedNames = await getInstalled();
-            // 2. Качаем реестр
-            const res = await fetch(WAREHOUSE + "master_registry.json");
-            allGames = await res.json();
-            render();
-        } catch (e) {
-            document.getElementById('grid').innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Ошибка связи со складом.</p>";
+        // 1. Инициализация БД
+        const request = indexedDB.open("ArcadeDB", 1);
+        request.onsuccess = (e) => { 
+            db = e.target.result; 
+            initCatalog(); 
+        };
+        request.onerror = () => { initCatalog(); }; // Если БД заблокирована, все равно грузим каталог
+
+        async function initCatalog() {
+            try {
+                if (db) installedNames = await getInstalledList();
+                
+                const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
+                allGames = await response.json();
+                
+                buildFilters();
+                renderGames(allGames);
+            } catch (e) {
+                document.getElementById('game-grid').innerHTML = "<p style='color:red; text-align:center;'>Ошибка связи со складом.</p>";
+            }
         }
-    }
 
-    async function render() {
-        const grid = document.getElementById('grid');
-        const query = document.getElementById('search').value.toLowerCase();
-        grid.innerHTML = '';
+        // 2. Получение списка установленных
+        function getInstalledList() {
+            return new Promise((resolve) => {
+                const tx = db.transaction("games", "readonly");
+                const req = tx.objectStore("games").getAll();
+                req.onsuccess = () => resolve(req.result.map(g => g.n));
+                req.onerror = () => resolve([]);
+            });
+        }
 
-        allGames.forEach(game => {
-            if (query && !game.title.toLowerCase().includes(query)) return;
-
-            const isInstalled = installedNames.includes(game.title);
-            const card = document.createElement('div');
-            card.className = `game-card ${isInstalled ? 'installed' : ''}`;
+        function buildFilters() {
+            const systems = [...new Set(allGames.map(g => g.sys))];
+            const filterBar = document.getElementById('filter-bar');
             
-            card.innerHTML = `
-                <div class="cover" style="background-image: url('${WAREHOUSE}${game.image}')">
-                    <div class="heart-icon">❤️</div>
-                </div>
-                <div class="info">
-                    <div class="game-title">${game.title}</div>
-                    <div class="actions">
-                        <button class="btn btn-view" onclick="run('${game.sys}', '${game.url}')">ПРОСМОТР</button>
-                        <button class="btn btn-install" 
-                            onclick="install(this, '${game.sys}', '${game.url}', '${game.title}', '${game.image}')"
-                            ${isInstalled ? 'disabled' : ''}>
-                            ${isInstalled ? 'В БАЗЕ' : 'СКАЧАТЬ'}
+            systems.forEach(sys => {
+                const info = sysInfo[sys] || sysInfo['unk'];
+                const btn = document.createElement('button');
+                btn.className = 'sys-filter-btn';
+                btn.style.borderColor = info.hex;
+                btn.style.color = info.hex;
+                btn.textContent = info.name;
+                
+                btn.onclick = (e) => {
+                    document.getElementById('searchInput').value = ''; // Сброс поиска
+                    filterGames(sys, e.target);
+                };
+                filterBar.appendChild(btn);
+            });
+        }
+
+        // Фильтр по кнопкам
+        function filterGames(sys, btnElement) {
+            document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            if (sys === 'all') renderGames(allGames);
+            else renderGames(allGames.filter(g => g.sys === sys));
+        }
+
+        // Поиск текстом
+        function triggerSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
+            
+            if (!query) {
+                renderGames(allGames);
+            } else {
+                renderGames(allGames.filter(g => g.title.toLowerCase().includes(query)));
+            }
+        }
+
+        function renderGames(gamesList) {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = '';
+
+            gamesList.forEach(game => {
+                const info = sysInfo[game.sys] || sysInfo['unk'];
+                const isInstalled = installedNames.includes(game.title);
+                
+                let coverUrl = game.url.replace(/\.[^/.]+$/, ".png"); 
+                coverUrl = WAREHOUSE_URL + coverUrl;
+
+                const card = document.createElement('div');
+                card.className = `game-card ${info.css} ${isInstalled ? 'installed' : ''}`;
+                card.style.backgroundImage = `url('${coverUrl}')`;
+                
+                card.innerHTML = `
+                    <div class="install-btn">❤️</div>
+                    <div class="no-cover-icon">🎮</div>
+                    <div class="sys-badge ${info.badge}">${info.name}</div>
+                    
+                    <div class="game-title" title="${game.title}">${game.title}</div>
+                    
+                    <div class="action-row">
+                        <button class="action-btn btn-view" onclick="runPreview('${game.sys}', '${game.url}')">ПРОСМОТР</button>
+                        <button class="action-btn btn-inst" onclick="installSilent(this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')" ${isInstalled ? 'disabled' : ''}>
+                            ${isInstalled ? 'В БАЗЕ' : 'УСТАНОВИТЬ'}
                         </button>
                     </div>
                     <div class="loading-text">ЗАГРУЗКА...</div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    }
+                `;
 
-    // ТИХАЯ УСТАНОВКА
-    async function install(btn, sys, url, title, img) {
-        const loader = btn.parentElement.nextElementSibling;
-        btn.style.display = 'none';
-        loader.style.display = 'block';
+                // Обработка обложки
+                const img = new Image();
+                img.onload = () => { card.querySelector('.no-cover-icon').style.display = 'none'; };
+                img.onerror = () => { card.style.backgroundImage = 'none'; }; 
+                img.src = coverUrl;
 
-        try {
-            const rom = await fetch(WAREHOUSE + url).then(r => r.blob());
-            const tx = db.transaction("games", "readwrite");
-            await tx.objectStore("games").put({
-                n: title, s: sys, d: rom, i: null, t: Date.now()
+                grid.appendChild(card);
             });
-            loader.innerText = "ГОТОВО!";
-            btn.closest('.game-card').classList.add('installed');
-            installedNames.push(title);
-        } catch (e) {
-            loader.innerText = "ОШИБКА";
-            btn.style.display = 'block';
         }
-    }
 
-    function run(sys, url) {
-        window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(WAREHOUSE + url)}&preview=true`;
-    }
+        // 3. ТИХАЯ УСТАНОВКА
+        async function installSilent(btn, sys, url, title) {
+            if (!db) return alert("База данных недоступна");
+            
+            const actionRow = btn.parentElement;
+            const loader = actionRow.nextElementSibling;
+            
+            actionRow.style.display = 'none';
+            loader.style.display = 'block';
 
-    function getInstalled() {
-        return new Promise((res) => {
-            const tx = db.transaction("games", "readonly");
-            const req = tx.objectStore("games").getAll();
-            req.onsuccess = () => res(req.result.map(g => g.n));
-        });
-    }
-</script>
+            try {
+                const romBlob = await fetch(WAREHOUSE_URL + url).then(r => {
+                    if (!r.ok) throw new Error("404");
+                    return r.blob();
+                });
+                
+                const tx = db.transaction("games", "readwrite");
+                await tx.objectStore("games").put({
+                    n: title, s: sys, d: romBlob, i: null, t: Date.now()
+                });
+
+                loader.style.display = 'none';
+                actionRow.style.display = 'flex';
+                
+                btn.disabled = true;
+                btn.textContent = 'В БАЗЕ';
+                btn.closest('.game-card').classList.add('installed');
+                installedNames.push(title);
+
+            } catch (e) {
+                loader.textContent = "ОШИБКА СКАЧИВАНИЯ";
+                loader.style.color = "#ef4444";
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    actionRow.style.display = 'flex';
+                }, 2000);
+            }
+        }
+
+        // 4. ЗАПУСК В ПЕСОЧНИЦЕ
+        function runPreview(sys, url) {
+            const fullUrl = WAREHOUSE_URL + url;
+            window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(fullUrl)}&preview=true`;
+        }
+
+    </script>
 </body>
 </html>
