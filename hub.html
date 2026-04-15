@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Ouroboros Arcade Hub</title>
+    <title>Arcade Store</title>
     <style>
         :root {
             --bg-color-base: #060608;
@@ -12,6 +12,7 @@
             --neon-blue: #38bdf8;
             --neon-purple: #a855f7;
             --neon-red: #ef4444;
+            --neon-green: #10b981;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -20,161 +21,119 @@
             margin: 0; padding: 0; 
             background-color: var(--bg-color-base);
             background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.9) 100%);
-            color: #eee; 
-            font-family: sans-serif; 
-            min-height: 100vh;
-            overflow-x: hidden;
-            padding-bottom: 50px;
+            color: #eee; font-family: sans-serif; min-height: 100vh; overflow-x: hidden; padding-bottom: 50px;
         }
 
-        /* ОРИГИНАЛЬНАЯ ШАПКА */
+        /* --- ШАПКА --- */
         .meme-header { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            padding: 40px 0 20px 0; border-bottom: 2px dashed var(--neon-blue); 
+            padding: 40px 15px 20px 15px; border-bottom: 2px dashed var(--neon-blue); 
             background: rgba(8, 8, 12, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 0 0 20px 20px; margin-bottom: 20px;
             box-shadow: 0 8px 25px -5px rgba(56, 189, 248, 0.4);
-            position: relative;
         }
         .splash-title {
             color: #fff; font-family: monospace; font-size: 32px; font-weight: 900; letter-spacing: 5px; 
-            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); text-align: center;
         }
-        .splash-sub { color: #94a3b8; font-size: 12px; letter-spacing: 2px; margin-top: 5px;}
+        .splash-sub { color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 5px; text-align: center; text-transform: uppercase;}
 
-        /* ОРИГИНАЛЬНЫЕ ФИЛЬТРЫ */
-        .sys-filter-container { 
-            display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; 
-            align-items: center; justify-content: center; flex-wrap: wrap;
+        /* ПОИСК */
+        .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
+        .search-input {
+            width: 100%; padding: 10px 15px; border-radius: 12px; background: rgba(0,0,0,0.5); 
+            border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; outline: none; text-align: center;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
         }
-        .sys-filter-container::-webkit-scrollbar { display: none; }
-        
+
+        /* ФИЛЬТРЫ */
+        .sys-filter-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap; }
         .sys-filter-btn { 
-            flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 13px; 
+            flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 11px; 
             cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); 
-            text-transform: uppercase; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
-            display: flex; align-items: center; justify-content: center;
+            text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center;
         }
-        .sys-filter-btn:active { transform: scale(0.95); }
         .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
 
-        /* ОРИГИНАЛЬНАЯ СЕТКА */
-        .grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; 
-            padding: 0 15px; max-width: 1200px; margin: 0 auto;
-        }
+        /* СЕТКА */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 0 15px; max-width: 1200px; margin: 0 auto; }
 
-        /* ОРИГИНАЛЬНЫЕ КАРТОЧКИ */
+        /* КАРТОЧКИ */
         .game-card { 
-            position: relative; overflow: hidden;
-            background-color: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--glass-border); border-radius: 12px; 
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-end; 
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; 
-            min-height: 180px; 
+            position: relative; overflow: hidden; background-color: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; 
+            align-items: center; justify-content: flex-end; transition: 0.2s; min-height: 180px; 
             background-size: cover; background-position: center;
-            user-select: none; -webkit-user-select: none;
         }
-        .game-card:active { transform: translateY(2px) scale(0.96); filter: brightness(1.2); }
-        
-        .game-card::before { 
-            content: ''; position: absolute; inset: 0; 
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); 
-            z-index: 1; pointer-events: none; 
-        }
+        .game-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); z-index: 1; pointer-events: none;}
 
-        .game-title { 
-            position: relative; z-index: 3; width: 100%; padding: 10px 8px; 
-            font-size: 12px; font-weight: bold; text-align: center; color: #fff;
-            text-shadow: 1px 1px 2px #000; letter-spacing: 0.5px;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
+        .game-title { position: relative; z-index: 3; width: 100%; padding: 5px 8px; font-size: 11px; font-weight: bold; text-align: center; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* ОРИГИНАЛЬНОЕ СЕРДЕЧКО */
-        .install-btn {
+        /* СЕРДЕЧКО */
+        .install-heart {
             position: absolute; top: 8px; left: 8px; z-index: 10;
-            background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); 
-            border-radius: 50%; width: 30px; height: 30px; 
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; color: #fca5a5;
-            backdrop-filter: blur(5px); transition: 0.2s;
+            font-size: 18px; filter: drop-shadow(0 0 5px red); display: none;
         }
-        .game-card:hover .install-btn { background: rgba(239, 68, 68, 0.8); color: #fff; box-shadow: 0 0 10px #ef4444; transform: scale(1.1); }
+        .installed .install-heart { display: block; animation: heartbeat 1.5s infinite; }
+        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-        /* НЕОНОВОЕ СЕРДЕЧКО КОГДА УСТАНОВЛЕНО */
-        .install-btn.installed {
-            background: rgba(239, 68, 68, 0.9) !important;
-            border-color: #ef4444 !important;
-            box-shadow: 0 0 15px #ef4444, 0 0 30px rgba(239, 68, 68, 0.6) !important;
-            animation: heartbeat 2s infinite;
+        .sys-badge { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; z-index: 10; }
+
+        /* КНОПКИ */
+        .action-row { position: relative; z-index: 3; width: 100%; padding: 0 8px 10px 8px; display: flex; gap: 5px; }
+        .action-btn { flex: 1; padding: 8px 0; border: 1px solid; border-radius: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; font-weight: 900; cursor: pointer; text-align: center; transition: 0.2s;}
+        .action-btn:active { transform: scale(0.9); }
+        .btn-view { border-color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); color: var(--neon-blue); }
+        .btn-inst { border-color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); color: var(--neon-green); }
+        .btn-inst:disabled { border-color: #444; color: #666; text-shadow: none; cursor: default; }
+
+        /* КОНСОЛЬ */
+        #hub-console {
+            position: fixed; bottom: -300px; left: 0; width: 100%; height: 250px;
+            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px);
+            border-top: 2px solid var(--neon-blue); z-index: 1000; transition: 0.4s;
+            display: flex; flex-direction: column; font-family: monospace;
         }
-        @keyframes heartbeat {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); filter: brightness(1.3); }
-        }
+        #hub-console.open { bottom: 0; }
+        .console-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 10px; line-height: 1.4; color: #aaa; }
+        .log-success { color: var(--neon-green); }
+        .log-error { color: var(--neon-red); }
+        .log-info { color: var(--neon-blue); }
+        .console-trigger { position: fixed; top: 10px; right: 10px; z-index: 1001; opacity: 0.5; cursor: pointer; font-size: 20px; }
 
-        .install-btn.downloading {
-            background: rgba(245, 158, 11, 0.8) !important;
-            border-color: #f59e0b !important;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        .sys-badge { 
-            position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 6px; 
-            font-size: 10px; font-weight: 900; z-index: 10; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); 
-        }
-
-        /* ЦВЕТА СИСТЕМ (ТВОИ ОРИГИНАЛЬНЫЕ) */
-        .sys-nes { box-shadow: 0 0 15px rgba(239,68,68,0.3) !important; border-color: #ef4444; }
-        .badge-nes { background: linear-gradient(135deg, #f87171, #ef4444); color: white; }
-        
-        .sys-smd { box-shadow: 0 0 15px rgba(59,130,246,0.3) !important; border-color: #3b82f6; }
-        .badge-smd { background: linear-gradient(135deg, #60a5fa, #2563eb); color: white; }
-        
-        .sys-snes { box-shadow: 0 0 15px rgba(168,85,247,0.3) !important; border-color: #a855f7; }
-        .badge-snes { background: linear-gradient(135deg, #c084fc, #9333ea); color: white; }
-        
-        .sys-ngp { box-shadow: 0 0 15px rgba(6,182,212,0.3) !important; border-color: #06b6d4; }
-        .badge-ngp { background: linear-gradient(135deg, #22d3ee, #0891b2); color: white; }
-        
-        .sys-dos { box-shadow: 0 0 15px rgba(16,185,129,0.3) !important; border-color: #10b981; }
-        .badge-dos { background: linear-gradient(135deg, #34d399, #059669); color: white; }
-        
-        .sys-gba { box-shadow: 0 0 15px rgba(217,70,239,0.3) !important; border-color: #d946ef; }
-        .badge-gba { background: linear-gradient(135deg, #e879f9, #c026d3); color: white; }
-        
-        .sys-html { box-shadow: 0 0 15px rgba(245,158,11,0.3) !important; border-color: #f59e0b; }
-        .badge-html { background: linear-gradient(135deg, #fbbf24, #d97706); color: white; }
-
-        .sys-unk { box-shadow: 0 0 15px rgba(100,116,139,0.3) !important; border-color: #64748b; }
-        .badge-unk { background: linear-gradient(135deg, #94a3b8, #475569); color: white; }
+        /* ЦВЕТА СИСТЕМ */
+        .sys-nes { box-shadow: 0 0 15px rgba(239,68,68,0.3); border-color: #ef4444; }
+        .badge-nes { background: #ef4444; color: white; }
+        .sys-smd { box-shadow: 0 0 15px rgba(59,130,246,0.3); border-color: #3b82f6; }
+        .badge-smd { background: #3b82f6; color: white; }
+        .sys-gba { box-shadow: 0 0 15px rgba(217,70,239,0.3); border-color: #d946ef; }
+        .badge-gba { background: #d946ef; color: white; }
+        .sys-snes { box-shadow: 0 0 15px rgba(168,85,247,0.3); border-color: #a855f7; }
+        .badge-snes { background: #a855f7; color: white; }
+        .sys-unk { box-shadow: 0 0 15px rgba(255,255,255,0.1); border-color: #fff; }
+        .badge-unk { background: #666; color: white; }
 
         .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
-
-        /* ЛОГ-ПАНЕЛЬ (только добавлено, сворачивается) */
-        #debug-panel {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 200px;
-            background: rgba(0,0,0,0.95); border-top: 2px solid var(--neon-purple);
-            font-family: 'Courier New', monospace; font-size: 11px; z-index: 9999;
-            display: flex; flex-direction: column;
-        }
-        #debug-panel.collapsed { transform: translateY(calc(100% - 30px)); }
-        #debug-header { padding: 5px 15px; background: rgba(15,15,25,0.9); cursor: pointer; display: flex; justify-content: space-between; color: var(--neon-purple); font-weight: bold; }
-        #debug-logs { flex: 1; overflow-y: auto; padding: 10px; }
-        .log-entry { margin: 2px 0; padding-left: 10px; border-left: 2px solid #444; color: #aaa; }
-        .log-hub { border-left-color: #38bdf8; color: #7dd3fc; }
-        .log-emu { border-left-color: #a855f7; color: #c084fc; }
-        .log-err { border-left-color: #ef4444; color: #fca5a5; }
-        .log-ok { border-left-color: #10b981; color: #34d399; }
     </style>
 </head>
 <body>
 
+    <div class="console-trigger" onclick="toggleConsole()">⌨️</div>
+    <div id="hub-console">
+        <div style="padding: 5px 15px; background: #111; font-size: 10px; color: var(--neon-blue); display: flex; justify-content: space-between; border-bottom: 1px solid #333;">
+            <span>ARCADE DEBUGGER</span>
+            <span onclick="toggleConsole()" style="cursor:pointer">✖</span>
+        </div>
+        <div id="console-body" class="console-body"></div>
+    </div>
+
     <div class="meme-header">
+        <a href="index.html" class="back-link">◀ НАЗАД В ЭМУЛЯТОР</a>
         <div class="splash-title">ARCADE STORE</div>
-        <div class="splash-sub">ВЫБЕРИ ИГРУ ДЛЯ УСТАНОВКИ</div>
+        <div class="splash-sub">SECURE CLOUD WAREHOUSE</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="Поиск игры..." oninput="triggerSearch()">
+        </div>
     </div>
 
     <div class="sys-filter-container" id="filter-bar">
@@ -183,116 +142,100 @@
 
     <div class="grid" id="game-grid"></div>
 
-    <!-- ЛОГИ (можно свернуть кликом на заголовок) -->
-    <div id="debug-panel">
-        <div id="debug-header" onclick="document.getElementById('debug-panel').classList.toggle('collapsed')">
-            <span>🖥️ SYSTEM LOGS</span>
-            <span id="log-count">0</span>
-        </div>
-        <div id="debug-logs"></div>
-    </div>
-
     <script>
-        // === ТВОЙ ОРИГИНАЛЬНЫЙ КОНФИГ ===
-        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
-        let allGames = [];
-        let installedGames = new Set(); // ID установленных игр
+        function hubLog(msg, type = 'info') {
+            const body = document.getElementById('console-body');
+            const entry = document.createElement('div');
+            entry.className = type === 'success' ? 'log-success' : (type === 'error' ? 'log-error' : (type === 'info' ? 'log-info' : ''));
+            entry.innerHTML = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            body.appendChild(entry);
+            body.scrollTop = body.scrollHeight;
+        }
 
-        // === СИСТЕМЫ (ТВОЙ ОРИГИНАЛ) ===
+        function toggleConsole() { document.getElementById('hub-console').classList.toggle('open'); }
+
+        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
+        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
+        
+        let allGames = [];
+        let installedNames = [];
+        let db;
+
         const sysInfo = {
             'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'DENDY', hex: '#ef4444' },
             'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SEGA', hex: '#3b82f6' },
-            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', hex: '#8b5cf6' },
-            'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', hex: '#06b6d4' },
-            'dos': { css: 'sys-dos', badge: 'badge-dos', name: 'DOS', hex: '#10b981' },
             'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA', hex: '#d946ef' },
-            'html': { css: 'sys-html', badge: 'badge-html', name: 'HTML', hex: '#f59e0b' },
-            'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' }
+            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', hex: '#a855f7' }
         };
 
-        // === ЛОГГЕР ===
-        function log(msg, type='hub', details='') {
-            const time = new Date().toLocaleTimeString();
-            const div = document.createElement('div');
-            div.className = `log-entry log-${type}`;
-            div.innerHTML = `[${time}] ${msg} ${details ? `<span style="color:#666">${details}</span>` : ''}`;
-            document.getElementById('debug-logs').appendChild(div);
-            document.getElementById('debug-logs').scrollTop = 99999;
-            document.getElementById('log-count').innerText = document.querySelectorAll('.log-entry').length;
-            console.log(`[${type.toUpperCase()}] ${msg}`, details);
-        }
+        // --- ГЛУБОКАЯ ИНИЦИАЛИЗАЦИЯ ЕДИНОЙ БАЗЫ ArcadeDB ---
+        const request = indexedDB.open("ArcadeDB", 1);
 
-        // === ИНИЦИАЛИЗАЦИЯ (твой оригинальный код + логи) ===
-        async function init() {
-            log('Инициализация...');
-            
-            try {
-                const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
-                allGames = await response.json();
-                log('Каталог загружен', 'ok', `${allGames.length} игр`);
-                
-                buildFilters();
-                renderGames(allGames);
-                checkInstalledGames(); // Проверяем что уже установлено
-                
-            } catch (e) {
-                log('Ошибка загрузки каталога!', 'err', e.message);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            hubLog("DB: Требуется обновление/создание таблиц...", "info");
+            if (!db.objectStoreNames.contains("games")) {
+                db.createObjectStore("games", { keyPath: "id", autoIncrement: true });
+                hubLog("DB: Таблица 'games' успешно создана.", "success");
             }
-        }
+        };
 
-        // === СИНХРОНИЗАЦИЯ С ЭМУЛЯТОРОМ (для сердечек) ===
-        async function checkInstalledGames() {
-            log('Проверка установленных игр...');
+        request.onsuccess = async (e) => { 
+            db = e.target.result; 
+            hubLog("DB: Подключение к ArcadeDB успешно.", "success");
             
-            try {
-                const req = indexedDB.open('ArcadeDB');
-                req.onsuccess = (e) => {
-                    const db = e.target.result;
-                    log('Подключен к ArcadeDB', 'ok', `v${db.version}`);
-                    
-                    if (!db.objectStoreNames.contains('games')) {
-                        log('Store games не найден!', 'err');
-                        return;
-                    }
-                    
-                    const tx = db.transaction(['games'], 'readonly');
-                    const store = tx.objectStore('games');
-                    store.getAll().onsuccess = (ev) => {
-                        const games = ev.target.result;
-                        games.forEach(g => {
-                            if (g.fileName) installedGames.add(g.fileName);
-                            if (g.title) installedGames.add(g.title);
-                        });
-                        log(`Найдено установленных: ${installedGames.size}`, 'ok');
-                        updateHearts();
+            // Если таблица существует, проверяем установленные игры
+            if (db.objectStoreNames.contains("games")) {
+                installedNames = await getInstalledList();
+            } else {
+                hubLog("DB: Таблица 'games' не найдена. Она будет создана при первой установке.", "error");
+            }
+            loadCatalog(); 
+        };
+
+        request.onerror = (e) => hubLog("DB: Ошибка подключения! " + e.target.errorCode, "error");
+
+        function getInstalledList() {
+            return new Promise((resolve) => {
+                try {
+                    const tx = db.transaction("games", "readonly");
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const names = req.result.map(g => g.n);
+                        hubLog(`Sync: В базе найдено игр: ${names.length}`, "success");
+                        resolve(names);
                     };
-                };
-                req.onerror = () => log('Нет доступа к ArcadeDB', 'err');
-            } catch (e) {
-                log('Ошибка синхронизации', 'err', e.message);
-            }
-        }
-
-        function updateHearts() {
-            document.querySelectorAll('.game-card').forEach(card => {
-                const url = card.dataset.url;
-                if (!url) return;
-                const fileName = url.split('/').pop();
-                if (installedGames.has(fileName)) {
-                    const heart = card.querySelector('.install-btn');
-                    heart.classList.add('installed');
-                    heart.innerHTML = '❤️';
+                    req.onerror = () => {
+                        hubLog("Sync: Не удалось прочитать таблицу 'games'.", "error");
+                        resolve([]);
+                    };
+                } catch(e) {
+                    hubLog("Sync: База пуста или не инициализирована.", "info");
+                    resolve([]);
                 }
             });
         }
 
-        // === ФИЛЬТРЫ (твой оригинальный код) ===
+        async function loadCatalog() {
+            hubLog("Catalog: Загрузка master_registry.json...");
+            try {
+                const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                allGames = await response.json();
+                hubLog(`Catalog: Загружено игр: ${allGames.length}`, "success");
+                buildFilters();
+                renderGames(allGames);
+            } catch (e) {
+                hubLog("Catalog Error: Ошибка связи со складом: " + e.message, "error");
+            }
+        }
+
         function buildFilters() {
             const systems = [...new Set(allGames.map(g => g.sys))];
             const filterBar = document.getElementById('filter-bar');
-            
             systems.forEach(sys => {
-                const info = sysInfo[sys] || sysInfo['unk'];
+                const info = sysInfo[sys] || { name: sys.toUpperCase(), hex: '#fff' };
                 const btn = document.createElement('button');
                 btn.className = 'sys-filter-btn';
                 btn.style.borderColor = info.hex;
@@ -303,120 +246,98 @@
             });
         }
 
-        function filterGames(sys, btnElement) {
+        function filterGames(sys, btn) {
             document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-            
-            const filtered = sys === 'all' ? allGames : allGames.filter(g => g.sys === sys);
-            renderGames(filtered);
-            log(`Фильтр: ${sys}`, 'hub', `${filtered.length} игр`);
+            btn.classList.add('active');
+            hubLog(`UI: Фильтр сменен на ${sys.toUpperCase()}`);
+            renderGames(sys === 'all' ? allGames : allGames.filter(g => g.sys === sys));
         }
 
-        // === РЕНДЕР (твой оригинальный код + скачивание) ===
-        function renderGames(gamesList) {
+        function triggerSearch() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            renderGames(allGames.filter(g => g.title.toLowerCase().includes(q)));
+        }
+
+        function renderGames(list) {
             const grid = document.getElementById('game-grid');
             grid.innerHTML = '';
-
-            gamesList.forEach(game => {
-                const info = sysInfo[game.sys] || sysInfo['unk'];
-                const coverUrl = WAREHOUSE_URL + game.url.replace(/\.[^/.]+$/, ".png");
-                const isInstalled = installedGames.has(game.url.split('/').pop());
+            list.forEach(game => {
+                const info = sysInfo[game.sys] || { css: 'sys-unk', badge: 'badge-unk', name: game.sys };
+                const isInstalled = installedNames.includes(game.title);
                 
+                let coverUrl = WAREHOUSE_URL + game.url.replace('.zip', '.png');
+
                 const card = document.createElement('div');
-                card.className = `game-card ${info.css}`;
+                card.className = `game-card ${info.css} ${isInstalled ? 'installed' : ''}`;
                 card.style.backgroundImage = `url('${coverUrl}')`;
-                card.dataset.url = game.url;
-                card.dataset.title = game.title;
                 
                 card.innerHTML = `
-                    <div class="install-btn ${isInstalled ? 'installed' : ''}" title="${isInstalled ? 'Установлено' : 'Скачать'}">
-                        ${isInstalled ? '❤️' : '⬇'}
-                    </div>
+                    <div class="install-heart">❤️</div>
                     <div class="no-cover-icon">🎮</div>
                     <div class="sys-badge ${info.badge}">${info.name}</div>
                     <div class="game-title" title="${game.title}">${game.title}</div>
+                    <div class="action-row">
+                        <button class="action-btn btn-view" onclick="runPreview('${game.sys}', '${game.url}')">ОБЗОР</button>
+                        <button class="action-btn btn-inst" onclick="installSilent(this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')" ${isInstalled ? 'disabled' : ''}>
+                            ${isInstalled ? 'В БАЗЕ' : 'СКАЧАТЬ'}
+                        </button>
+                    </div>
                 `;
-
-                // Скачивание по клику на сердечко
-                const heart = card.querySelector('.install-btn');
-                heart.onclick = (e) => {
-                    e.stopPropagation();
-                    if (!heart.classList.contains('installed')) {
-                        downloadGame(game, heart);
-                    }
-                };
-
-                // Запуск игры по клику на карточку
-                card.onclick = () => {
-                    const fullUrl = WAREHOUSE_URL + game.url;
-                    // hub=1 чтобы эмулятор не выкидывал автоматом
-                    window.location.href = `index.html?sys=${game.sys}&rom=${encodeURIComponent(fullUrl)}&hub=1`;
-                };
-
-                // Проверка обложки
+                
                 const img = new Image();
-                img.onload = () => { card.querySelector('.no-cover-icon').style.display = 'none'; };
-                img.onerror = () => { card.style.backgroundImage = 'none'; };
+                img.onload = () => { if(card.querySelector('.no-cover-icon')) card.querySelector('.no-cover-icon').style.display = 'none'; };
                 img.src = coverUrl;
 
                 grid.appendChild(card);
             });
         }
 
-        // === СКАЧИВАНИЕ (без window.open!) ===
-        async function downloadGame(game, heartBtn) {
-            log(`Скачивание: ${game.title}`);
-            heartBtn.classList.add('downloading');
-            heartBtn.innerHTML = '⏳';
+        // --- ТИХАЯ УСТАНОВКА (ОСТАЕМСЯ В ХАБЕ) ---
+        async function installSilent(btn, sys, url, title) {
+            hubLog(`Installer: Начинаю скачивание "${title}"...`);
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = "...";
             
             try {
-                const response = await fetch(WAREHOUSE_URL + game.url);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const res = await fetch(RAW_URL + url);
+                if(!res.ok) throw new Error("404 Файл не найден");
+                const blob = await res.blob();
+                hubLog(`Installer: Скачано ${(blob.size/1024/1024).toFixed(2)} MB. Записываю в БД...`, "info");
                 
-                const blob = await response.blob();
-                log('Файл получен', 'ok', `${(blob.size/1024).toFixed(1)}KB`);
+                // Проверяем наличие таблицы прямо перед записью
+                if (!db.objectStoreNames.contains("games")) {
+                    throw new Error("Таблица 'games' отсутствует в ArcadeDB!");
+                }
+
+                const tx = db.transaction("games", "readwrite");
+                const store = tx.objectStore("games");
                 
-                // Сохраняем в HubCache (опционально)
-                const buffer = await blob.arrayBuffer();
-                await saveToHubCache(game, buffer);
+                // Добавляем игру (n - имя, s - система, d - данные)
+                const gameData = { n: title, s: sys, d: blob, i: null, t: Date.now() };
+                const req = store.put(gameData);
+
+                req.onsuccess = () => {
+                    hubLog(`Installer: "${title}" успешно осела в оффлайн.`, "success");
+                    btn.textContent = "ГОТОВО";
+                    btn.closest('.game-card').classList.add('installed');
+                    installedNames.push(title);
+                };
                 
-                // Обновляем UI
-                heartBtn.classList.remove('downloading');
-                heartBtn.classList.add('installed');
-                heartBtn.innerHTML = '❤️';
-                installedGames.add(game.url.split('/').pop());
-                log('Установлено!', 'ok', game.title);
-                
-            } catch (err) {
-                log('Ошибка скачивания', 'err', err.message);
-                heartBtn.classList.remove('downloading');
-                heartBtn.innerHTML = '⬇';
+                req.onerror = (e) => { throw new Error("Ошибка транзакции: " + e.target.error); };
+
+            } catch (e) {
+                hubLog(`Installer Error: ${e.message}`, "error");
+                btn.disabled = false;
+                btn.textContent = "ОШИБКА";
+                setTimeout(() => { btn.textContent = originalText; }, 2000);
             }
         }
 
-        async function saveToHubCache(game, buffer) {
-            return new Promise((resolve) => {
-                const req = indexedDB.open('HubCache', 1);
-                req.onupgradeneeded = (e) => e.target.result.createObjectStore('games', {keyPath: 'id'});
-                req.onsuccess = (e) => {
-                    const db = e.target.result;
-                    const tx = db.transaction(['games'], 'readwrite');
-                    tx.objectStore('games').put({
-                        id: game.url,
-                        title: game.title,
-                        sys: game.sys,
-                        data: buffer,
-                        size: buffer.byteLength,
-                        timestamp: Date.now()
-                    });
-                    resolve();
-                };
-                req.onerror = () => resolve(); // Игнорируем ошибки
-            });
+        function runPreview(sys, url) {
+            hubLog(`System: Запуск песочницы для ${url}...`);
+            window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(RAW_URL + url)}&preview=true`;
         }
-
-        // Старт
-        window.onload = init;
     </script>
 </body>
 </html>
