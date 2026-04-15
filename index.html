@@ -7598,74 +7598,234 @@ trySet('vk_btn_close', d.vk_close);
 
 
         
-                                
-<script>
-// === ПРИЁМНИК ИЗ HUB (вставь в index.html перед закрывающим </body> или в существующий <script>) ===
-window.addEventListener('load', () => {
+                        // ==========================================
+// ПРИЁМНИК ИЗ HUB (вставить в начало <script>)
+// ==========================================
+
+// Защита от цикла: если уже загружали - не повторять
+if (window.__HUB_INIT__) {
+    console.log('[HUB] Уже инициализировано, пропускаю');
+} else {
+    window.__HUB_INIT__ = true;
+    
+    // Отправка логов в хаб (если запущены во фрейме)
+    const sendToHub = (msg, type='info') => {
+        if (window.parent !== window) {
+            window.parent.postMessage({log: true, msg, type}, '*');
+        }
+        console.log(`[${type.toUpperCase()}] ${msg}`);
+    };
+    
+    sendToHub('Эмулятор запущен, проверяю параметры...', 'info');
+    
     const params = new URLSearchParams(window.location.search);
-    const localId = params.get('localGame');
-    const sys = params.get('sys');
+    const gameId = params.get('gameId');    // ID из БД хаба (оффлайн)
+    const romUrl = params.get('rom');       // URL для скачивания (онлайн)
+    const sys = params.get('sys');          // Система (nes, smd и т.д.)
+    const fromHub = params.get('hub') === '1'; // Не автозапускать, ждать кнопку
     
-    if (!localId || !sys) return; // Не из хаба - стандартный запуск
-    
-    console.log('[HUB] Запрос на загрузку из хаба:', localId);
-    
-    // Открываем БД хаба
-    const req = indexedDB.open('ArcadeHub_Local', 1);
-    
-    req.onsuccess = (e) => {
-        const db = e.target.result;
-        const tx = db.transaction(['games'], 'readonly');
-        const store = tx.objectStore('games');
-        const getReq = store.get(localId);
+    // Режим 1: Оффлайн (игра скачана в хабе)
+    if (gameId && sys) {
+        sendToHub(`Режим ОФФЛАЙН: ищу ${gameId} в HubCache`, 'info');
+        loadFromHubDB(gameId, sys, fromHub);
+    }
+    // Режим 2: Онлайн (скачать с сервера)
+    else if (romUrl && sys) {
+        sendToHub(`Режим ОНЛАЙН: скачиваю с сервера`, 'info');
+        loadFromNetwork(romUrl, sys, fromHub);
+    }
+    else {
+        sendToHub('Стандартный запуск (без параметров хаба)', 'info');
+    }
+}
+
+// --- Функции загрузки ---
+
+async function loadFromHubDB(id, sys, waitForClick) {
+    try {
+        const request = indexedDB.open('HubCache', 1);
         
-        getReq.onsuccess = () => {
-            const game = getReq.result;
-            if (!game) {
-                console.error('[HUB] Игра не найдена в хабе:', localId);
-                alert('Игра не найдена в локальном хранилище');
-                return;
-            }
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction('games', 'readonly');
+            const store = tx.objectStore('games');
+            const getReq = store.get(id);
             
-            console.log('[HUB] Получена игра из хаба:', game.title, game.sys, (game.size/1024).toFixed(1) + 'KB');
-            
-            // Конвертируем ArrayBuffer обратно в File для твоего эмулятора
-            const file = new File([game.data], game.title + '.zip', { 
-                type: 'application/x-zip-compressed' 
-            });
-            
-            // Вызываем твою существующую функцию (если есть)
-            if (window.processSingleFile) {
-                window.processSingleFile(file).then(() => {
-                    console.log('[HUB] Файл обработан, запускаем...');
-                    // Здесь вызови свою функцию старта игры
-                    if (window.startGame) {
-                        // Ищем игру в своей БД (эмулятора) после processSingleFile
-                        setTimeout(() => {
-                            const tx2 = db.transaction(['games'], 'readonly');
-                            const store2 = tx2.objectStore('games');
-                            store2.getAll().onsuccess = (e) => {
-                                const games = e.target.result;
-                                if (games.length > 0) {
-                                    const latest = games.sort((a,b) => b.timestamp - a.timestamp)[0];
-                                    window.startGame(latest);
-                                }
-                            };
-                        }, 100);
-                    }
+            getReq.onsuccess = () => {
+                const game = getReq.result;
+                
+                if (!game) {
+                    sendToHub(`Игра не найдена в базе: ${id}`, 'err');
+                    alert('Ошибка: игра не найдена в хранилище хаба');
+                    return;
+                }
+                
+                sendToHub(`Найдена: ${game.title} (${(game.size/1024).toFixed(1)}KB)`, 'ok');
+                
+                // Создаём File как ожидает твой эмулятор
+                const file = new File([game.data], game.title + '.zip', {
+                    type: 'application/x-zip-compressed'
                 });
-            } else {
-                // Если нет processSingleFile - прямая загрузка
-                console.log('[HUB] processSingleFile не найден, нужна ручная интеграция');
-            }
+                
+                if (waitForClick) {
+                    // Показываем кнопку "ИГРАТЬ" вместо автозапуска
+                    showPlayButton(file, game.title);
+                } else {
+                    // Автозапуск
+                    processGameFile(file, sys);
+                }
+            };
+            
+            getReq.onerror = () => {
+                sendToHub('Ошибка чтения из БД', 'err');
+            };
         };
-    };
+        
+        request.onerror = () => {
+            sendToHub('Не могу открыть HubCache', 'err');
+        };
+        
+    } catch (err) {
+        sendToHub(`Критическая ошибка: ${err.message}`, 'err');
+    }
+}
+
+async function loadFromNetwork(url, sys, waitForClick) {
+    try {
+        sendToHub(`Начинаю скачивание...`, 'info');
+        const response = await fetch(url);
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        const blob = await response.blob();
+        const fileName = decodeURIComponent(url.split('/').pop());
+        
+        sendToHub(`Скачано: ${(blob.size/1024).toFixed(1)}KB`, 'ok');
+        
+        const file = new File([blob], fileName, {type: 'application/x-zip-compressed'});
+        
+        if (waitForClick) {
+            showPlayButton(file, fileName);
+        } else {
+            processGameFile(file, sys);
+        }
+        
+    } catch (err) {
+        sendToHub(`Ошибка сети: ${err.message}`, 'err');
+        alert('Не удалось загрузить игру: ' + err.message);
+    }
+}
+
+// Показать кнопку "ИГРАТЬ" (не выкидывает в меню автоматом)
+function showPlayButton(file, title) {
+    // Удаляем старое окно если есть
+    const old = document.getElementById('hub-play-modal');
+    if (old) old.remove();
     
-    req.onerror = () => {
-        console.error('[HUB] Не удалось открыть БД хаба');
-    };
-});
-</script>
+    const div = document.createElement('div');
+    div.id = 'hub-play-modal';
+    div.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        ">
+            <div style="
+                background: linear-gradient(135deg, #111, #1a1a2e);
+                border: 2px solid #38bdf8;
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                box-shadow: 0 0 50px rgba(56,189,248,0.3);
+                max-width: 90%;
+            ">
+                <div style="color: #38bdf8; font-size: 14px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;">
+                    Arcade Hub
+                </div>
+                <div style="color: #fff; font-size: 24px; font-weight: bold; margin-bottom: 30px; word-break: break-word;">
+                    ${title}
+                </div>
+                <div style="color: #64748b; font-size: 14px; margin-bottom: 30px;">
+                    Готово к запуску
+                </div>
+                <button onclick="window.startGameFromHub()" style="
+                    background: linear-gradient(135deg, #38bdf8, #2563eb);
+                    color: #fff;
+                    border: none;
+                    padding: 20px 60px;
+                    font-size: 20px;
+                    font-weight: 900;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    box-shadow: 0 4px 20px rgba(56,189,248,0.4);
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    ▶ ИГРАТЬ
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(div);
+    
+    // Сохраняем файл глобально для кнопки
+    window.__HUB_PENDING_FILE__ = file;
+    window.__HUB_PENDING_SYS__ = new URLSearchParams(window.location.search).get('sys');
+    
+    sendToHub('Показана кнопка ИГРАТЬ (автозапуск отключен)', 'info');
+}
+
+// Функция для кнопки "ИГРАТЬ"
+window.startGameFromHub = function() {
+    const file = window.__HUB_PENDING_FILE__;
+    const sys = window.__HUB_PENDING_SYS__;
+    
+    if (file) {
+        document.getElementById('hub-play-modal').remove();
+        sendToHub('Пользователь нажал ИГРАТЬ', 'ok');
+        processGameFile(file, sys);
+    }
+};
+
+// Обёртка для твоей существующей функции
+function processGameFile(file, sys) {
+    sendToHub(`Передаю файл в эмулятор: ${file.name}`, 'info');
+    
+    // Здесь вызывается ТВОЯ функция обработки
+    // Если у тебя она называется processSingleFile, processFile, loadRom или по-другому -
+    // замени на правильное имя ниже:
+    
+    if (typeof window.processSingleFile === 'function') {
+        // Вариант 1: Твоя функция возвращает Promise
+        window.processSingleFile(file).then(() => {
+            sendToHub('Файл обработан успешно!', 'ok');
+        }).catch(err => {
+            sendToHub(`Ошибка обработки: ${err.message}`, 'err');
+        });
+    } 
+    else if (typeof window.loadRom === 'function') {
+        // Вариант 2: Другая функция
+        window.loadRom(file, sys);
+        sendToHub('Файл отправлен в loadRom', 'ok');
+    }
+    else {
+        // Вариант 3: Ручная обработка (если нет готовой функции)
+        sendToHub('processSingleFile не найден! Создай её или замени имя в коде выше.', 'err');
+        console.error('Доступные функции:', Object.keys(window).filter(k => k.toLowerCase().includes('process') || k.toLowerCase().includes('load')));
+    }
+}
+
+// ==========================================
+// КОНЕЦ БЛОКА HUB (ниже идёт твой обычный код эмулятора)
+// ==========================================
+        
 
 
 
