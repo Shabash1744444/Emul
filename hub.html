@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Ouroboros Arcade Hub</title>
+    <title>Arcade Store</title>
     <style>
         :root {
             --bg-color-base: #060608;
@@ -81,7 +81,6 @@
             user-select: none; -webkit-user-select: none;
         }
         
-        /* Затемнение для читаемости текста */
         .game-card::before { 
             content: ''; position: absolute; inset: 0; 
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); 
@@ -106,10 +105,8 @@
             position: absolute; top: 8px; left: 8px; z-index: 10;
             background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); 
             border-radius: 50%; width: 30px; height: 30px; 
-            display: none; /* Скрыто по умолчанию, показываем только если установлено */
-            align-items: center; justify-content: center;
-            font-size: 14px; color: #fff;
-            backdrop-filter: blur(5px); transition: 0.2s;
+            display: none; align-items: center; justify-content: center;
+            font-size: 14px; color: #fff; backdrop-filter: blur(5px); transition: 0.2s;
         }
         .game-card.installed .install-btn { display: flex; background: rgba(239, 68, 68, 0.8); box-shadow: 0 0 10px #ef4444; animation: pulse 2s infinite; }
         
@@ -234,13 +231,28 @@
             'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' }
         };
 
+        // 💡 ФИКС БАЗЫ ДАННЫХ: Создаем таблицу 'games', если ее нет (onupgradeneeded)
         const request = indexedDB.open("ArcadeDB", 1);
+        
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("games")) {
+                db.createObjectStore("games", { keyPath: "id", autoIncrement: true });
+                hubLog("Database: Table 'games' created successfully.", "success");
+            }
+        };
+
         request.onsuccess = async (e) => { 
             db = e.target.result; 
             hubLog("IndexedDB: Connection successful.", "success");
-            installedNames = await getInstalledList();
+            if (db.objectStoreNames.contains("games")) {
+                installedNames = await getInstalledList();
+            } else {
+                hubLog("Sync: Table 'games' missing, will be created on next sync.", "info");
+            }
             loadCatalog(); 
         };
+
         request.onerror = (e) => { 
             hubLog("IndexedDB: Error connecting to base.", "error");
             loadCatalog(); 
@@ -259,7 +271,7 @@
                     };
                     req.onerror = () => resolve([]);
                 } catch(err) { 
-                    hubLog("Sync: Table 'games' not found yet.", "info");
+                    hubLog("Sync: Waiting for database initialization.", "info");
                     resolve([]); 
                 }
             });
