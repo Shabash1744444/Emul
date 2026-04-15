@@ -7597,159 +7597,114 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-  <script>
-// === HUB INTEGRATION (вставить в конец index.html) ===
+<script>
+// --- ПРИЕМНИК ИГР ИЗ МАГАЗИНА (СИНХРОНИЗАЦИЯ С ХАБОМ) ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
-    const localGame = urlParams.get('localGame'); // Оффлайн ID из хаба
-    const fromHub = urlParams.get('hub') === '1';
-    const isPreview = urlParams.get('preview') === 'true';
-    
-    // Логгер в хаб
-    const hubLog = (msg) => {
-        if (window.parent !== window) {
-            window.parent.postMessage({log: true, msg: `[EMU] ${msg}`, type: 'info'}, '*');
-        }
-        console.log('[EMU]', msg);
-    };
-    
-    hubLog('Старт приемника...');
-    
-    // РЕЖИМ 1: Оффлайн (игра в кеше хаба)
-    if (localGame && sysParam) {
-        hubLog(`Оффлайн: ищу ${localGame}`);
-        const req = indexedDB.open('HubCache', 1);
-        req.onsuccess = (e) => {
-            const db = e.target.result;
-            const tx = db.transaction('games', 'readonly');
-            const store = tx.objectStore('games');
-            store.get(localGame).onsuccess = (ev) => {
-                const game = ev.target.result;
-                if (!game) {
-                    hubLog('Игра не найдена в кеше!', 'err');
-                    return;
-                }
-                hubLog(`Найдена: ${game.title} (${(game.size/1024).toFixed(1)}KB)`);
-                
-                // Создаем File и передаем в твою функцию
-                const file = new File([game.data], game.title + '.zip', {type: 'application/x-zip-compressed'});
-                window.processSingleFile(file).then(() => {
-                    // После обработки ищем в своей БД
-                    setTimeout(() => {
-                        const tx2 = db.transaction(['games'], 'readonly');
-                        tx2.objectStore('games').getAll().onsuccess = (e2) => {
-                            const games = e2.target.result;
-                            if (games.length > 0) {
-                                const latest = games.sort((a,b) => b.timestamp - a.timestamp)[0];
-                                showHubPlayButton(latest);
-                            }
-                        };
-                    }, 100);
-                });
-            };
-        };
-        return;
-    }
-    
-    // РЕЖИМ 2: Онлайн (стандартный твой код с модификацией)
+    const isPreview = urlParams.get('preview') === 'true'; 
+    const fromHub = urlParams.get('from_hub') === 'true'; // 💡 Проверяем, пришли ли мы из Хаба
+
     if (sysParam && romUrl) {
-        window.currentSystem = sysParam;
-        if (isPreview) {
+        console.log("📥 Arcade Sync: Запуск игры. Из хаба:", fromHub);
+        window.currentSystem = sysParam; 
+
+        // 1. АДАПТАЦИЯ ИНТЕРФЕЙСА ДЛЯ ХАБА
+        if (fromHub) {
+            // Скрываем стандартную шестеренку
             const menuBtn = document.getElementById('menuBtn');
-            if (menuBtn) menuBtn.style.display = 'none';
+            if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
+            
+            // Блокируем свайпы в меню
+            window.blockAppMenu = true; 
+
+            // СОЗДАЕМ КНОПКУ "◀ В ХАБ"
+            const exitHubBtn = document.createElement('div');
+            exitHubBtn.innerHTML = '◀ В ХАБ';
+            exitHubBtn.style.cssText = `
+                position: fixed; top: 15px; left: 15px; z-index: 999999;
+                background: rgba(8, 8, 12, 0.85); color: #38bdf8;
+                border: 1px solid #38bdf8; padding: 8px 15px;
+                border-radius: 8px; font-weight: bold; font-family: sans-serif;
+                font-size: 12px; cursor: pointer; backdrop-filter: blur(10px);
+                box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+                transition: 0.2s;
+            `;
+            // Анимация нажатия
+            exitHubBtn.onmousedown = () => exitHubBtn.style.transform = 'scale(0.9)';
+            exitHubBtn.onmouseup = () => exitHubBtn.style.transform = 'scale(1)';
+            
+            // Клик возвращает в Хаб
+            exitHubBtn.onclick = () => window.location.href = 'hub.html';
+            document.body.appendChild(exitHubBtn);
+
+            // ПЕРЕХВАТ СИСТЕМНОЙ КНОПКИ "НАЗАД" (Android свайп)
+            window.history.pushState({hub: true}, '', window.location.href);
+            window.addEventListener('popstate', (e) => {
+                window.location.href = 'hub.html'; // Вместо меню эмулятора кидаем в хаб
+            });
         }
-        
-        hubLog(`Онлайн: ${decodeURIComponent(romUrl.split('/').pop())}`);
-        
+
         const checkDbAndLoad = () => {
             if (typeof db !== 'undefined' && db) startDownload();
-            else setTimeout(checkDbAndLoad, 200);
+            else setTimeout(checkDbAndLoad, 200); 
         };
-        
+
         const startDownload = () => {
+            const splash = document.getElementById('splashScreen');
+            if (splash) splash.classList.remove('hidden');
+
             fetch(romUrl)
                 .then(res => res.blob())
                 .then(blob => {
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    const file = new File([blob], fileName, {type: "application/x-zip-compressed"});
+                    
+                    // 💡 ФИКС ДЕНДИ: x-zip-compressed
+                    const file = new File([blob], fileName, { 
+                        type: "application/x-zip-compressed",
+                        lastModified: Date.now() 
+                    });
+                    
                     return window.processSingleFile(file);
                 })
                 .then(() => {
                     const tx = db.transaction(["games"], "readonly");
                     const store = tx.objectStore("games");
                     const req = store.getAll();
+                    
                     req.onsuccess = () => {
                         const games = req.result;
                         if (games.length > 0) {
                             const latestGame = games.sort((a, b) => b.id - a.id)[0];
                             
-                            // [HUB] Если из хаба - показываем кнопку вместо автостарта
-                            if (fromHub) {
-                                hubLog(`Готово: ${latestGame.title}`);
-                                showHubPlayButton(latestGame);
-                                
-                                // Сообщаем хабу что скачали
-                                if (window.parent !== window) {
-                                    window.parent.postMessage({
-                                        type: 'GAME_CACHED',
-                                        title: latestGame.title,
-                                        id: latestGame.id
-                                    }, '*');
-                                }
-                            } else {
-                                // Стандартное поведение (без хаба)
-                                window.history.replaceState(null, '', window.location.pathname + '#menu');
-                                startGame(latestGame);
-                                
-                                if (isPreview) {
-                                    setTimeout(() => {
-                                        const delTx = db.transaction(["games"], "readwrite");
-                                        delTx.objectStore("games").delete(latestGame.id);
-                                    }, 15000);
-                                }
+                            // Очищаем адрес от мусора (чтобы не перекачивать)
+                            window.history.replaceState({hub: fromHub}, '', window.location.pathname);
+                            
+                            startGame(latestGame);
+
+                            // АВТО-ОЧИСТКА ВРЕМЕННОЙ ИГРЫ
+                            if (isPreview) {
+                                setTimeout(() => {
+                                    const delTx = db.transaction(["games"], "readwrite");
+                                    delTx.objectStore("games").delete(latestGame.id);
+                                    console.log("🧹 Песочница: Игра удалена из БД.");
+                                }, 15000); 
                             }
                         }
                     };
                 })
                 .catch(err => {
-                    hubLog(`Ошибка: ${err.message}`, 'err');
+                    console.error("Sync Error:", err);
+                    if (splash) splash.classList.add('hidden');
                 });
         };
-        
+
         checkDbAndLoad();
-    }
-    
-    // Показать кнопку "ИГРАТЬ" (не автозапуск)
-    function showHubPlayButton(game) {
-        const old = document.getElementById('hub-modal');
-        if (old) old.remove();
-        
-        const div = document.createElement('div');
-        div.id = 'hub-modal';
-        div.innerHTML = `
-            <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);z-index:99998;"></div>
-            <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999;
-                        background:#111;border:2px solid #38bdf8;padding:30px;border-radius:15px;text-align:center;
-                        box-shadow:0 0 40px rgba(56,189,248,0.3);">
-                <div style="color:#38bdf8;font-size:12px;margin-bottom:10px;">ARCADE HUB</div>
-                <div style="color:#fff;font-size:20px;font-weight:bold;margin-bottom:20px;">${game.title}</div>
-                <button onclick="startHubGame()" style="background:#38bdf8;color:#000;border:none;padding:15px 40px;
-                        font-size:16px;font-weight:bold;border-radius:8px;cursor:pointer;">▶ ИГРАТЬ</button>
-            </div>
-        `;
-        document.body.appendChild(div);
-        
-        // Глобальная функция для кнопки
-        window.startHubGame = () => {
-            document.getElementById('hub-modal').remove();
-            window.history.replaceState(null, '', window.location.pathname + '#menu');
-            startGame(game);
-        };
     }
 });
 </script>
+
                             
         
 
@@ -7855,108 +7810,6 @@ window.addEventListener('load', () => {
 
 
 
-<!-- ===== ДИАГНОСТИКА БД (удалить после проверки) ===== -->
-<div id="db-diag" style="position:fixed;bottom:10px;right:10px;background:rgba(0,0,0,0.9);border:2px solid #ef4444;color:#fff;padding:15px;max-width:400px;max-height:300px;overflow:auto;z-index:99999;font-family:monospace;font-size:12px;border-radius:8px;">
-    <div style="color:#ef4444;font-weight:bold;margin-bottom:10px;">🔍 DB DIAGNOSTICS</div>
-    <div id="db-diag-log">Инициализация...</div>
-    <button onclick="forceCreateStores()" style="margin-top:10px;background:#ef4444;color:#fff;border:none;padding:5px 10px;cursor:pointer;display:none;" id="fix-btn">Создать stores</button>
-    <button onclick="document.getElementById('db-diag').remove()" style="margin-top:10px;background:#333;color:#fff;border:none;padding:5px 10px;cursor:pointer;float:right;">Закрыть</button>
-</div>
-
-<script>
-(function diagnoseDB() {
-    const log = (msg, color='#fff') => {
-        const div = document.getElementById('db-diag-log');
-        div.innerHTML += `<div style="margin:3px 0;color:${color}">${msg}</div>`;
-        console.log('[DIAG]', msg);
-    };
-    
-    // Проверяем IndexedDB
-    if (!window.indexedDB) {
-        log('❌ IndexedDB не поддерживается!', '#ef4444');
-        return;
-    }
-    
-    log('Проверка БД ArcadeDB...', '#fbbf24');
-    
-    const req = indexedDB.open('ArcadeDB');
-    
-    req.onsuccess = (e) => {
-        const db = e.target.result;
-        const stores = Array.from(db.objectStoreNames);
-        
-        log(`✅ БД открыта (версия ${db.version})`, '#10b981');
-        log(`Найдено хранилищ: ${stores.length}`, stores.length ? '#10b981' : '#ef4444');
-        
-        if (stores.length === 0) {
-            log('⚠️ ХРАНИЛИЩА ОТСУТСТВУЮТ!', '#ef4444');
-            log('Причина: onupgradeneeded не сработал при создании', '#fbbf24');
-            document.getElementById('fix-btn').style.display = 'inline-block';
-        } else {
-            stores.forEach(s => log(`  📁 ${s}`, '#38bdf8'));
-        }
-        
-        db.close();
-    };
-    
-    req.onerror = () => {
-        log('❌ Ошибка открытия БД', '#ef4444');
-    };
-    
-    // Проверим другие возможные имена БД
-    setTimeout(() => {
-        log('Поиск других БД...', '#64748b');
-        indexedDB.databases().then(dbs => {
-            if (dbs.length === 0) {
-                log('Других БД не найдено', '#64748b');
-            } else {
-                dbs.forEach(db => {
-                    log(`  🔍 ${db.name} (v${db.version})`, '#a855f7');
-                });
-            }
-        }).catch(() => {
-            log('(браузер не поддерживает indexedDB.databases())', '#64748b');
-        });
-    }, 100);
-})();
-
-function forceCreateStores() {
-    const log = (msg, color) => {
-        document.getElementById('db-diag-log').innerHTML += `<div style="color:${color}">⚡ ${msg}</div>`;
-    };
-    
-    log('Принудительное создание...', '#fbbf24');
-    
-    // Удаляем старую пустую БД или повышаем версию
-    const deleteReq = indexedDB.deleteDatabase('ArcadeDB');
-    
-    deleteReq.onsuccess = () => {
-        log('Старая БД удалена', '#fbbf24');
-        
-        // Создаем заново с нужной структурой
-        const createReq = indexedDB.open('ArcadeDB', 1);
-        
-        createReq.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains('games')) {
-                db.createObjectStore('games', { keyPath: 'id', autoIncrement: true });
-                log('✅ Store "games" создан!', '#10b981');
-            }
-        };
-        
-        createReq.onsuccess = (e) => {
-            log('✅ БД инициализирована успешно!', '#10b981');
-            document.getElementById('fix-btn').style.display = 'none';
-            e.target.result.close();
-        };
-    };
-    
-    deleteReq.onerror = () => {
-        log('❌ Не удалось удалить старую БД', '#ef4444');
-    };
-}
-</script>
-<!-- ===== КОНЕЦ ДИАГНОСТИКИ ===== -->
 
 
 
