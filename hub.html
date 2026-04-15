@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Arcade Store</title>
+    <title>Ouroboros Arcade Hub</title>
     <style>
-        /* ОРИГИНАЛЬНЫЕ ПЕРЕМЕННЫЕ И ФОН */
         :root {
             --bg-color-base: #060608;
             --glass-bg: rgba(15, 15, 25, 0.75);
@@ -28,7 +27,7 @@
             padding-bottom: 50px;
         }
 
-        /* ОРИГИНАЛЬНАЯ ШАПКА С ДОБАВЛЕННЫМ ПОИСКОМ */
+        /* --- ШАПКА --- */
         .meme-header { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             padding: 40px 15px 20px 15px; border-bottom: 2px dashed var(--neon-blue); 
@@ -42,20 +41,15 @@
         }
         .splash-sub { color: #94a3b8; font-size: 12px; letter-spacing: 2px; margin-top: 5px; text-align: center;}
 
-        /* СТИЛИ ПОИСКА */
+        /* --- СТИЛИ ДЛЯ ПОИСКА И КНОПКИ НАЗАД --- */
+        .back-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue); }
         .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
-        .search-input {
-            width: 100%; padding: 10px 15px; border-radius: 12px;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue);
-            color: #fff; font-weight: bold; outline: none; text-align: center;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s;
-        }
+        .search-input { width: 100%; padding: 10px 15px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; outline: none; text-align: center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s; }
         .search-input:focus { box-shadow: 0 0 10px rgba(56, 189, 248, 0.4), inset 0 2px 5px rgba(0,0,0,0.5); }
 
-        /* ОРИГИНАЛЬНЫЕ ФИЛЬТРЫ */
+        /* --- ФИЛЬТРЫ ПРИСТАВОК --- */
         .sys-filter-container { 
-            display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; 
-            align-items: center; justify-content: center; flex-wrap: wrap;
+            display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap;
         }
         .sys-filter-container::-webkit-scrollbar { display: none; }
         
@@ -68,12 +62,13 @@
         .sys-filter-btn:active { transform: scale(0.95); }
         .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
 
-        /* ОРИГИНАЛЬНАЯ СЕТКА И КАРТОЧКИ */
+        /* --- СЕТКА ИГР --- */
         .grid { 
             display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; 
             padding: 0 15px; max-width: 1200px; margin: 0 auto;
         }
 
+        /* --- КАРТОЧКИ ИГР --- */
         .game-card { 
             position: relative; overflow: hidden;
             background-color: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
@@ -85,6 +80,7 @@
             user-select: none; -webkit-user-select: none;
         }
         
+        /* Затемнение для читаемости текста */
         .game-card::before { 
             content: ''; position: absolute; inset: 0; 
             background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); 
@@ -104,39 +100,29 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.5); letter-spacing: 0.5px; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); 
         }
 
+        /* --- КНОПКА ЗАГРУЗКИ (СЕРДЕЧКО) --- */
         .install-btn {
             position: absolute; top: 8px; left: 8px; z-index: 10;
-            background: rgba(239, 68, 68, 0.8); border: 1px solid #ef4444; 
+            background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); 
             border-radius: 50%; width: 30px; height: 30px; 
-            display: none; align-items: center; justify-content: center;
+            display: none; /* Скрыто по умолчанию, показываем только если установлено */
+            align-items: center; justify-content: center;
             font-size: 14px; color: #fff;
-            backdrop-filter: blur(5px); box-shadow: 0 0 10px #ef4444;
+            backdrop-filter: blur(5px); transition: 0.2s;
         }
-        .game-card.installed .install-btn { display: flex; animation: pulse 2s infinite; }
+        .game-card.installed .install-btn { display: flex; background: rgba(239, 68, 68, 0.8); box-shadow: 0 0 10px #ef4444; animation: pulse 2s infinite; }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-        /* НОВЫЕ КНОПКИ ДЕЙСТВИЙ (ОБЗОР / СКАЧАТЬ) */
-        .action-row {
-            position: relative; z-index: 3; width: 100%; padding: 0 8px 10px 8px;
-            display: flex; gap: 5px;
-        }
-        .action-btn {
-            flex: 1; padding: 8px 0; border: 1px solid; border-radius: 6px;
-            background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; font-weight: 900;
-            cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); text-align: center;
-        }
+        /* --- КНОПКИ ДЕЙСТВИЙ (ОБЗОР / СКАЧАТЬ) --- */
+        .action-row { position: relative; z-index: 3; width: 100%; padding: 0 8px 10px 8px; display: flex; gap: 5px; }
+        .action-btn { flex: 1; padding: 8px 0; border: 1px solid; border-radius: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; font-weight: 900; cursor: pointer; transition: 0.2s; backdrop-filter: blur(5px); text-align: center; }
         .action-btn:active { transform: scale(0.9); }
-        
         .btn-view { border-color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); color: var(--neon-blue); }
         .btn-inst { border-color: #10b981; text-shadow: 0 0 5px #10b981; color: #10b981; }
         .btn-inst:disabled { border-color: #555; color: #888; text-shadow: none; cursor: default; background: transparent; }
 
-        /* ОРИГИНАЛЬНЫЕ ЦВЕТА СИСТЕМ */
+        /* --- СВЕЧЕНИЕ СИСТЕМ --- */
         .sys-nes { box-shadow: 0 0 15px rgba(239,68,68,0.3) !important; border-color: #ef4444; }
         .badge-nes { background: linear-gradient(135deg, #f87171, #ef4444); color: white; }
         .sys-smd { box-shadow: 0 0 15px rgba(59,130,246,0.3) !important; border-color: #3b82f6; }
@@ -154,13 +140,13 @@
         .sys-unk { box-shadow: 0 0 15px rgba(100,116,139,0.3) !important; border-color: #64748b; }
         .badge-unk { background: linear-gradient(135deg, #94a3b8, #475569); color: white; }
 
-        .no-cover-icon { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
+        .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
     </style>
 </head>
 <body>
 
     <div class="meme-header">
-        <a href="index.html" style="color: var(--neon-blue); text-decoration: none; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue);">◀ НАЗАД В ЭМУЛЯТОР</a>
+        <a href="index.html" class="back-link">◀ НАЗАД В ЭМУЛЯТОР</a>
         <div class="splash-title">ARCADE STORE</div>
         <div class="splash-sub">ВЫБЕРИ ИГРУ ДЛЯ УСТАНОВКИ</div>
         
@@ -176,9 +162,13 @@
     <div class="grid" id="game-grid"></div>
 
     <script>
-        // ИСПОЛЬЗУЕМ 2 ССЫЛКИ: JSON ЧЕРЕЗ GITHUB.IO, АРХИВЫ ЧЕРЕЗ RAW (ФИКС ОШИБОК СВЯЗИ И 404)
-        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
-        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
+        // ИСПОЛЬЗУЕМ 2 ССЫЛКИ ДЛЯ ИСКЛЮЧЕНИЯ ВСЕХ ОШИБОК
+        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/'; // Для JSON и картинок (нет CORS)
+        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/'; // Для ZIP файлов (нет 404)
+        
+        let allGames = [];
+        let installedNames = [];
+        let db;
 
         const sysInfo = {
             'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'DENDY', hex: '#ef4444' },
@@ -191,11 +181,7 @@
             'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' }
         };
 
-        let allGames = [];
-        let installedNames = [];
-        let db;
-
-        // Инициализация базы ArcadeDB
+        // 1. Инициализация базы ArcadeDB
         const request = indexedDB.open("ArcadeDB", 1);
         request.onsuccess = async (e) => { 
             db = e.target.result; 
@@ -206,24 +192,29 @@
 
         function getInstalledList() {
             return new Promise((resolve) => {
-                const tx = db.transaction("games", "readonly");
-                const req = tx.objectStore("games").getAll();
-                req.onsuccess = () => resolve(req.result.map(g => g.n));
-                req.onerror = () => resolve([]);
+                try {
+                    const tx = db.transaction("games", "readonly");
+                    const req = tx.objectStore("games").getAll();
+                    req.onsuccess = () => resolve(req.result.map(g => g.n));
+                    req.onerror = () => resolve([]);
+                } catch(err) { resolve([]); }
             });
         }
 
+        // 2. Загрузка JSON со склада
         async function loadCatalog() {
             try {
                 const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
                 allGames = await response.json();
+                
                 buildFilters();
                 renderGames(allGames);
             } catch (e) {
-                document.getElementById('game-grid').innerHTML = "<p style='color:red; text-align:center;'>Ошибка связи со складом.</p>";
+                document.getElementById('game-grid').innerHTML = "<p style='color:red; text-align:center;'>Ошибка связи со складом: " + e.message + "</p>";
             }
         }
 
+        // 3. Динамическое создание кнопок фильтра
         function buildFilters() {
             const systems = [...new Set(allGames.map(g => g.sys))];
             const filterBar = document.getElementById('filter-bar');
@@ -236,33 +227,34 @@
                 btn.style.color = info.hex;
                 btn.textContent = info.name;
                 
-                btn.onclick = (e) => {
-                    document.getElementById('searchInput').value = '';
-                    filterGames(sys, e.target);
-                };
+                btn.onclick = (e) => filterGames(sys, e.target);
                 filterBar.appendChild(btn);
             });
         }
 
+        // Фильтрация по системам
         function filterGames(sys, btnElement) {
             document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
+            document.getElementById('searchInput').value = ''; // Сброс поиска
 
-            if (sys === 'all') renderGames(allGames);
-            else renderGames(allGames.filter(g => g.sys === sys));
-        }
-
-        function triggerSearch() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
-            
-            if (!query) {
+            if (sys === 'all') {
                 renderGames(allGames);
             } else {
-                renderGames(allGames.filter(g => g.title.toLowerCase().includes(query)));
+                renderGames(allGames.filter(g => g.sys === sys));
             }
         }
 
+        // Поиск по названию
+        window.triggerSearch = function() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
+            
+            if (!query) renderGames(allGames);
+            else renderGames(allGames.filter(g => g.title.toLowerCase().includes(query)));
+        }
+
+        // 4. Отрисовка сетки
         function renderGames(gamesList) {
             const grid = document.getElementById('game-grid');
             grid.innerHTML = '';
@@ -296,20 +288,20 @@
                 img.onload = () => { card.querySelector('.no-cover-icon').style.display = 'none'; };
                 img.onerror = () => { card.style.backgroundImage = 'none'; }; 
                 img.src = coverUrl;
-
+                
                 grid.appendChild(card);
             });
         }
 
-        async function installSilent(btn, sys, url, title) {
+        // 5. ТИХАЯ УСТАНОВКА (Скачиваем через RAW_URL)
+        window.installSilent = async function(btn, sys, url, title) {
             if (!db) return alert("База данных недоступна");
             
             const originalText = btn.textContent;
-            btn.textContent = 'ЗАГРУЗКА...';
+            btn.textContent = 'ЗАГР...';
             btn.style.color = '#fff';
 
             try {
-                // Качаем архив через RAW
                 const romBlob = await fetch(RAW_URL + url).then(r => {
                     if (!r.ok) throw new Error("404");
                     return r.blob();
@@ -323,7 +315,9 @@
                 btn.disabled = true;
                 btn.textContent = 'В БАЗЕ';
                 btn.style.color = '#10b981';
-                btn.closest('.game-card').classList.add('installed');
+                
+                const card = btn.closest('.game-card');
+                if (card) card.classList.add('installed');
                 installedNames.push(title);
 
             } catch (e) {
@@ -336,7 +330,8 @@
             }
         }
 
-        function runPreview(sys, url) {
+        // 6. ЗАПУСК ПЕСОЧНИЦЫ (Передаем RAW_URL эмулятору)
+        window.runPreview = function(sys, url) {
             const fullUrl = RAW_URL + url;
             window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(fullUrl)}&preview=true`;
         }
