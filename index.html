@@ -7596,114 +7596,252 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
 <script>
-
-
-
-
-// --- УМНЫЙ ПРИЕМНИК ИГР (СИНХРОНИЗАЦИЯ С HUB) ---
+// === АРХИТЕКТУРА ПРИЁМНИКА ИГР (СИНХРОНИЗАЦИЯ С HUB v2.0) ===
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
+    const localGameId = urlParams.get('localGame'); // ID из БД хаба (ArcadeHub_Storage)
+    const fromHub = urlParams.get('hub') === '1';   // Флаг "не выкидывать в меню"
     const isPreview = urlParams.get('preview') === 'true';
-    const fromHub = urlParams.get('hub') === '1'; // ← КЛЮЧЕВОЙ ФЛАГ
 
-    if (sysParam && romUrl) {
-        window.currentSystem = sysParam; 
+    // Если нет системы - обычный запуск, выходим
+    if (!sysParam) return;
 
-        if (isPreview) {
-            const menuBtn = document.getElementById('menuBtn');
-            if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
-        }
+    console.log('[HUB] Mode:', fromHub ? 'HUB' : 'DIRECT', 'System:', sysParam);
 
-        const checkDbAndLoad = () => {
-            if (typeof db !== 'undefined' && db) startDownload();
-            else setTimeout(checkDbAndLoad, 200);
-        };
-
-        const startDownload = () => {
-            fetch(romUrl)
-                .then(res => res.blob())
-                .then(blob => {
-                    const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    const file = new File([blob], fileName, { type: "application/x-zip-compressed" });
-                    return window.processSingleFile(file);
-                })
-                .then(() => {
-                    const tx = db.transaction(["games"], "readonly");
-                    const store = tx.objectStore("games");
-                    const req = store.getAll();
-                    req.onsuccess = () => {
-                        const games = req.result;
-                        if (games.length > 0) {
-                            const latestGame = games.sort((a, b) => b.id - a.id)[0];
-                            
-                            // 🔴 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Если запрос от хаба — не стартуем автоматом
-                            if (fromHub) {
-                                console.log('[HUB] Game loaded:', latestGame.title);
-                                
-                                // Отправляем сообщение обратно в хаб
-                                if (window.opener && !window.opener.closed) {
-                                    window.opener.postMessage({
-                                        type: 'GAME_CACHED',
-                                        game: latestGame,
-                                        system: sysParam
-                                    }, '*');
-                                }
-                                
-                                // Показываем UI "Готово к игре" вместо автостарта
-                                showHubLoadedUI(latestGame);
-                                return; // ← НЕ делаем replaceState и startGame!
-                            }
-                            
-                            // Стандартное поведение (прямой заход)
-                            window.history.replaceState(null, '', window.location.pathname + '#menu');
-                            startGame(latestGame);
-
-                            if (isPreview) {
-                                setTimeout(() => {
-                                    const delTx = db.transaction(["games"], "readwrite");
-                                    delTx.objectStore("games").delete(latestGame.id);
-                                }, 15000);
-                            }
-                        }
-                    };
-                })
-                .catch(err => {
-                    console.error('[HUB] Load error:', err);
-                    if (fromHub && window.opener) {
-                        window.opener.postMessage({ type: 'GAME_ERROR', error: err.message }, '*');
-                    }
-                });
-        };
-        checkDbAndLoad();
+    // Устанавливаем глобальную систему (если есть такая переменная в твоём эмуляторе)
+    if (typeof window.currentSystem !== 'undefined') {
+        window.currentSystem = sysParam;
     }
-    
-    // Функция показа UI для хаба (вместо автостарта)
-    function showHubLoadedUI(game) {
-        // Можно добавить красивую кнопку "ИГРАТЬ" поверх всего
-        const btn = document.createElement('div');
-        btn.innerHTML = `
-            <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(0,0,0,0.9);border:2px solid #38bdf8;padding:30px;border-radius:15px;text-align:center;">
-                <div style="color:#38bdf8;font-size:24px;margin-bottom:15px;">✓ ${game.title}</div>
-                <div style="color:#94a3b8;font-size:14px;margin-bottom:20px;">Установлено и готово к игре</div>
-                <button onclick="startGame(window.loadedGame || game); window.history.replaceState(null,'',location.pathname+'#menu'); this.parentElement.remove();" 
-                        style="background:#38bdf8;color:#000;border:none;padding:12px 30px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:16px;">
+
+    // Скрываем кнопку меню для preview/hub режимов
+    if (isPreview || fromHub) {
+        const menuBtn = document.getElementById('menuBtn');
+        if (menuBtn) menuBtn.style.display = 'none';
+    }
+
+    // РЕЖИМ 1: Оффлайн (игра скачана в хабе)
+    if (localGameId) {
+        console.log('[HUB] Offline mode, ID:', localGameId);
+        loadFromHubDatabase(localGameId, sysParam);
+        return;
+    }
+
+    // РЕЖИМ 2: Онлайн (загрузка по URL)
+    if (romUrl) {
+        console.log('[HUB] Online mode, URL:', romUrl);
+        loadFromWarehouse(romUrl, sysParam, fromHub);
+    }
+
+    // === ФУНКЦИИ ЗАГРУЗКИ ===
+
+    function loadFromHubDatabase(gameId, system) {
+        const request = indexedDB.open('ArcadeHub_Storage', 1);
+        
+        request.onerror = (e) => {
+            console.error('[HUB] DB Error:', e);
+            alert('❌ Нет доступа к хранилищу хаба');
+        };
+        
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            
+            if (!db.objectStoreNames.contains('games')) {
+                console.error('[HUB] Store not found');
+                return;
+            }
+            
+            const tx = db.transaction(['games'], 'readonly');
+            const store = tx.objectStore('games');
+            const getReq = store.get(gameId);
+            
+            getReq.onsuccess = () => {
+                const game = getReq.result;
+                if (!game) {
+                    console.error('[HUB] Game not found:', gameId);
+                    alert('❌ Игра не найдена в хранилище');
+                    return;
+                }
+                
+                console.log('[HUB] Loaded:', game.title, `(${(game.size/1024).toFixed(1)}KB)`);
+                
+                // Конвертируем ArrayBuffer обратно в File (как ожидает твой эмулятор)
+                const file = new File([game.data], game.title, { 
+                    type: 'application/x-zip-compressed' 
+                });
+                
+                // Передаём в твою функцию processSingleFile (если есть)
+                if (window.processSingleFile) {
+                    window.processSingleFile(file).then(() => {
+                        console.log('[HUB] Processing complete');
+                        // Не делаем replaceState! Просто показываем UI
+                        showHubUI(game.title, system, false);
+                    }).catch(err => {
+                        console.error('[HUB] Process error:', err);
+                    });
+                } else {
+                    // Если нет processSingleFile - пытаемся прямую загрузку
+                    loadRomDirectly(game.data, system);
+                    showHubUI(game.title, system, true);
+                }
+            };
+        };
+    }
+
+    function loadFromWarehouse(url, system, waitForUser) {
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.blob();
+            })
+            .then(blob => {
+                const fileName = decodeURIComponent(url.split('/').pop());
+                const file = new File([blob], fileName, { type: 'application/x-zip-compressed' });
+                
+                if (window.processSingleFile) {
+                    return window.processSingleFile(file);
+                } else {
+                    throw new Error('processSingleFile not found');
+                }
+            })
+            .then(() => {
+                console.log('[HUB] Download complete');
+                
+                if (waitForUser) {
+                    // Важно: НЕ делаем history.replaceState и НЕ вызываем startGame!
+                    showHubUI(fileName || 'Игра', system, false);
+                } else {
+                    // Стандартный режим (прямой заход по ссылке)
+                    autoStartGame();
+                }
+            })
+            .catch(err => {
+                console.error('[HUB] Download failed:', err);
+                alert('❌ Ошибка загрузки: ' + err.message);
+            });
+    }
+
+    function showHubUI(title, system, isReady) {
+        // Удаляем старое окно если есть
+        const old = document.getElementById('hub-modal');
+        if (old) old.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'hub-modal';
+        modal.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.85);
+                z-index: 9998;
+                backdrop-filter: blur(5px);
+            "></div>
+            <div style="
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 9999;
+                background: linear-gradient(135deg, rgba(15,15,25,0.98), rgba(10,10,15,0.98));
+                border: 2px solid #38bdf8;
+                border-radius: 20px;
+                padding: 40px;
+                text-align: center;
+                box-shadow: 0 0 40px rgba(56,189,248,0.3), inset 0 0 20px rgba(56,189,248,0.1);
+                min-width: 300px;
+                max-width: 90%;
+            ">
+                <div style="color: #38bdf8; font-size: 12px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; font-weight: bold;">
+                    Arcade Hub Connected
+                </div>
+                <div style="color: #fff; font-size: 22px; font-weight: bold; margin-bottom: 10px; word-break: break-word; line-height: 1.3;">
+                    ${title}
+                </div>
+                <div style="color: #64748b; font-size: 13px; margin-bottom: 30px; text-transform: uppercase;">
+                    ${system.toUpperCase()}
+                </div>
+                
+                <button onclick="document.getElementById('hub-modal').remove(); window.HubStartGame();" 
+                        style="
+                            background: linear-gradient(135deg, #38bdf8, #2563eb);
+                            color: #fff;
+                            border: none;
+                            padding: 16px 50px;
+                            border-radius: 12px;
+                            font-size: 18px;
+                            font-weight: 900;
+                            cursor: pointer;
+                            box-shadow: 0 4px 20px rgba(56,189,248,0.4);
+                            transition: all 0.3s;
+                            text-transform: uppercase;
+                            letter-spacing: 2px;
+                        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 30px rgba(56,189,248,0.6)'" 
+                        onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 20px rgba(56,189,248,0.4)'">
                     ▶ ИГРАТЬ
+                </button>
+                
+                <button onclick="window.close();" 
+                        style="
+                            display: block;
+                            margin-top: 15px;
+                            background: none;
+                            border: none;
+                            color: #64748b;
+                            font-size: 12px;
+                            cursor: pointer;
+                            width: 100%;
+                        " onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+                    Закрыть
                 </button>
             </div>
         `;
-        document.body.appendChild(btn);
-        window.loadedGame = game; // Сохраняем для глобального доступа
+        document.body.appendChild(modal);
+        
+        // Глобальная функция для кнопки (чтобы избежать проблем с onclick в строке)
+        window.HubStartGame = function() {
+            document.getElementById('hub-modal').remove();
+            // Теперь можно делать replaceState и запускать
+            window.history.replaceState(null, '', window.location.pathname + '#game');
+            autoStartGame();
+        };
+    }
+
+    function autoStartGame() {
+        // Стандартная логика из твоего оригинального кода
+        setTimeout(() => {
+            if (typeof db !== 'undefined' && db) {
+                const tx = db.transaction(["games"], "readonly");
+                const store = tx.objectStore("games");
+                const req = store.getAll();
+                
+                req.onsuccess = () => {
+                    const games = req.result;
+                    if (games.length > 0) {
+                        // Берём последнюю добавленную
+                        const latest = games.sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+                        console.log('[HUB] Auto-starting:', latest.title);
+                        
+                        if (typeof startGame === 'function') {
+                            startGame(latest);
+                        } else if (typeof loadGame === 'function') {
+                            loadGame(latest);
+                        } else {
+                            console.error('[HUB] No startGame function found');
+                        }
+                    }
+                };
+            }
+        }, 300);
+    }
+
+    function loadRomDirectly(buffer, system) {
+        // Запасной вариант если нет processSingleFile
+        console.log('[HUB] Direct load:', buffer.byteLength, 'bytes');
+        // Здесь твоя логика загрузки ROM в эмулятор
     }
 });
-
-
-
-
-    
 </script>
 
 
