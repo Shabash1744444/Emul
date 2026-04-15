@@ -7598,93 +7598,112 @@ trySet('vk_btn_close', d.vk_close);
 
 
 <script>
-// --- ПРИЕМНИК ИГР ИЗ КАТАЛОГА (СИНХРОНИЗАЦИЯ) ---
+
+
+
+
+// --- УМНЫЙ ПРИЕМНИК ИГР (СИНХРОНИЗАЦИЯ С HUB) ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
-    const isPreview = urlParams.get('preview') === 'true'; 
+    const isPreview = urlParams.get('preview') === 'true';
+    const fromHub = urlParams.get('hub') === '1'; // ← КЛЮЧЕВОЙ ФЛАГ
 
     if (sysParam && romUrl) {
-        console.log("📥 Arcade Sync: Запрос на запуск. Режим:", isPreview ? "ПРОСМОТР" : "ОСНОВНОЙ");
         window.currentSystem = sysParam; 
 
-        // 1. ЛОГИКА ПРЕДПРОСМОТРА
         if (isPreview) {
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
-            window.blockAppMenu = true; 
         }
 
-        // Проверка инициализации БД
         const checkDbAndLoad = () => {
-            if (typeof db !== 'undefined' && db) {
-                startDownload(); 
-            } else {
-                setTimeout(checkDbAndLoad, 200); 
-            }
+            if (typeof db !== 'undefined' && db) startDownload();
+            else setTimeout(checkDbAndLoad, 200);
         };
 
         const startDownload = () => {
-            const splash = document.getElementById('splashScreen');
-            if (splash) splash.classList.remove('hidden');
-
             fetch(romUrl)
-                .then(res => {
-                    if (!res.ok) throw new Error("HTTP Error " + res.status);
-                    return res.blob();
-                })
+                .then(res => res.blob())
                 .then(blob => {
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    
-                    // 💡 ЖЕЛЕЗОБЕТОННЫЙ ФИКС ДЛЯ NES (DENDY)
-                    // Указываем тип "application/x-zip-compressed", чтобы ядро эмулятора не падало
-                    const file = new File([blob], fileName, { 
-                        type: "application/x-zip-compressed",
-                        lastModified: Date.now() 
-                    });
-                    
+                    const file = new File([blob], fileName, { type: "application/x-zip-compressed" });
                     return window.processSingleFile(file);
                 })
                 .then(() => {
-                    // Ищем игру в базе для мгновенного старта
                     const tx = db.transaction(["games"], "readonly");
                     const store = tx.objectStore("games");
                     const req = store.getAll();
-                    
                     req.onsuccess = () => {
                         const games = req.result;
                         if (games.length > 0) {
-                            // Вытаскиваем последнюю скачанную игру
                             const latestGame = games.sort((a, b) => b.id - a.id)[0];
                             
-                            // Очищаем URL, чтобы не качать заново
-                            window.history.replaceState(null, '', window.location.pathname + '#menu');
+                            // 🔴 КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Если запрос от хаба — не стартуем автоматом
+                            if (fromHub) {
+                                console.log('[HUB] Game loaded:', latestGame.title);
+                                
+                                // Отправляем сообщение обратно в хаб
+                                if (window.opener && !window.opener.closed) {
+                                    window.opener.postMessage({
+                                        type: 'GAME_CACHED',
+                                        game: latestGame,
+                                        system: sysParam
+                                    }, '*');
+                                }
+                                
+                                // Показываем UI "Готово к игре" вместо автостарта
+                                showHubLoadedUI(latestGame);
+                                return; // ← НЕ делаем replaceState и startGame!
+                            }
                             
-                            // Стартуем игру
+                            // Стандартное поведение (прямой заход)
+                            window.history.replaceState(null, '', window.location.pathname + '#menu');
                             startGame(latestGame);
 
-                            // 2. АВТО-УДАЛЕНИЕ ДЛЯ РЕЖИМА "ПРОСМОТР"
                             if (isPreview) {
                                 setTimeout(() => {
                                     const delTx = db.transaction(["games"], "readwrite");
                                     delTx.objectStore("games").delete(latestGame.id);
-                                    console.log("🧹 Песочница: Временная игра удалена из базы.");
-                                }, 15000); 
+                                }, 15000);
                             }
                         }
                     };
                 })
                 .catch(err => {
-                    console.error("Ошибка загрузки склада:", err);
-                    if (splash) splash.classList.add('hidden');
-                    window.history.replaceState(null, '', window.location.pathname + '#menu');
+                    console.error('[HUB] Load error:', err);
+                    if (fromHub && window.opener) {
+                        window.opener.postMessage({ type: 'GAME_ERROR', error: err.message }, '*');
+                    }
                 });
         };
-
         checkDbAndLoad();
     }
+    
+    // Функция показа UI для хаба (вместо автостарта)
+    function showHubLoadedUI(game) {
+        // Можно добавить красивую кнопку "ИГРАТЬ" поверх всего
+        const btn = document.createElement('div');
+        btn.innerHTML = `
+            <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:rgba(0,0,0,0.9);border:2px solid #38bdf8;padding:30px;border-radius:15px;text-align:center;">
+                <div style="color:#38bdf8;font-size:24px;margin-bottom:15px;">✓ ${game.title}</div>
+                <div style="color:#94a3b8;font-size:14px;margin-bottom:20px;">Установлено и готово к игре</div>
+                <button onclick="startGame(window.loadedGame || game); window.history.replaceState(null,'',location.pathname+'#menu'); this.parentElement.remove();" 
+                        style="background:#38bdf8;color:#000;border:none;padding:12px 30px;border-radius:8px;font-weight:bold;cursor:pointer;font-size:16px;">
+                    ▶ ИГРАТЬ
+                </button>
+            </div>
+        `;
+        document.body.appendChild(btn);
+        window.loadedGame = game; // Сохраняем для глобального доступа
+    }
 });
+
+
+
+
+    
 </script>
 
 
