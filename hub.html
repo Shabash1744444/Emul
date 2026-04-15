@@ -12,6 +12,7 @@
             --neon-blue: #38bdf8;
             --neon-purple: #a855f7;
             --neon-red: #ef4444;
+            --neon-green: #10b981;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -141,9 +142,42 @@
         .badge-unk { background: linear-gradient(135deg, #94a3b8, #475569); color: white; }
 
         .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
+
+        /* --- ОТЛАДОЧНАЯ КОНСОЛЬ (UI) --- */
+        #hub-console {
+            position: fixed; bottom: -300px; left: 0; width: 100%; height: 250px;
+            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px);
+            border-top: 2px solid var(--neon-blue); z-index: 1000;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column; font-family: monospace;
+            box-shadow: 0 -10px 30px rgba(56, 189, 248, 0.2);
+        }
+        #hub-console.open { bottom: 0; }
+        .console-header { padding: 8px 15px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.05); }
+        .console-title { color: var(--neon-blue); font-size: 10px; font-weight: bold; letter-spacing: 2px; }
+        .console-close { color: #666; cursor: pointer; font-size: 16px; }
+        .console-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; line-height: 1.4; scrollbar-width: thin; scrollbar-color: var(--neon-blue) transparent; }
+        .console-body::-webkit-scrollbar { width: 4px; }
+        .console-body::-webkit-scrollbar-thumb { background: var(--neon-blue); }
+        .log-entry { margin-bottom: 4px; border-left: 2px solid #333; padding-left: 8px; color: #aaa; }
+        .log-info { border-color: var(--neon-blue); color: #87ceeb; }
+        .log-success { border-color: var(--neon-green); color: var(--neon-green); }
+        .log-error { border-color: var(--neon-red); color: var(--neon-red); }
+        .console-trigger { position: fixed; top: 10px; right: 10px; width: 30px; height: 30px; z-index: 101; opacity: 0.3; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
+
+    <div class="console-trigger" onclick="toggleConsole()">⌨️</div>
+    <div id="hub-console">
+        <div class="console-header">
+            <div class="console-title">DEBUG CONSOLE</div>
+            <div class="console-close" onclick="toggleConsole()">✖</div>
+        </div>
+        <div id="console-body" class="console-body">
+            <div class="log-entry">Console initialized... Ready.</div>
+        </div>
+    </div>
 
     <div class="meme-header">
         <a href="index.html" class="back-link">◀ НАЗАД В ЭМУЛЯТОР</a>
@@ -162,9 +196,28 @@
     <div class="grid" id="game-grid"></div>
 
     <script>
-        // ИСПОЛЬЗУЕМ 2 ССЫЛКИ ДЛЯ ИСКЛЮЧЕНИЯ ВСЕХ ОШИБОК
-        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/'; // Для JSON и картинок (нет CORS)
-        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/'; // Для ZIP файлов (нет 404)
+        // --- ЛОГИКА КОНСОЛИ ---
+        function hubLog(msg, type = 'info') {
+            const body = document.getElementById('console-body');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            entry.className = `log-entry log-${type}`;
+            entry.innerHTML = `<span style="opacity:0.4">[${time}]</span> ${msg}`;
+            body.appendChild(entry);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function toggleConsole() {
+            document.getElementById('hub-console').classList.toggle('open');
+        }
+
+        window.onerror = function(msg, url, line) {
+            hubLog(`Runtime Error: ${msg} (Line: ${line})`, 'error');
+        };
+
+        // --- ОСНОВНАЯ ЛОГИКА ХАБА ---
+        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/'; 
+        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/'; 
         
         let allGames = [];
         let installedNames = [];
@@ -181,44 +234,55 @@
             'unk': { css: 'sys-unk', badge: 'badge-unk', name: 'ARCADE', hex: '#64748b' }
         };
 
-        // 1. Инициализация базы ArcadeDB
         const request = indexedDB.open("ArcadeDB", 1);
         request.onsuccess = async (e) => { 
             db = e.target.result; 
+            hubLog("IndexedDB: Connection successful.", "success");
             installedNames = await getInstalledList();
             loadCatalog(); 
         };
-        request.onerror = () => { loadCatalog(); };
+        request.onerror = (e) => { 
+            hubLog("IndexedDB: Error connecting to base.", "error");
+            loadCatalog(); 
+        };
 
         function getInstalledList() {
             return new Promise((resolve) => {
                 try {
                     const tx = db.transaction("games", "readonly");
-                    const req = tx.objectStore("games").getAll();
-                    req.onsuccess = () => resolve(req.result.map(g => g.n));
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
+                    req.onsuccess = () => {
+                        const names = req.result.map(g => g.n);
+                        hubLog(`Sync: Found ${names.length} installed games locally.`, "info");
+                        resolve(names);
+                    };
                     req.onerror = () => resolve([]);
-                } catch(err) { resolve([]); }
+                } catch(err) { 
+                    hubLog("Sync: Table 'games' not found yet.", "info");
+                    resolve([]); 
+                }
             });
         }
 
-        // 2. Загрузка JSON со склада
         async function loadCatalog() {
+            hubLog(`Fetching catalog from ${WAREHOUSE_URL}...`);
             try {
                 const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
+                if (!response.ok) throw new Error("HTTP " + response.status);
                 allGames = await response.json();
-                
+                hubLog(`Catalog: Loaded ${allGames.length} games.`, "success");
                 buildFilters();
                 renderGames(allGames);
             } catch (e) {
+                hubLog(`Catalog Error: ${e.message}`, "error");
                 document.getElementById('game-grid').innerHTML = "<p style='color:red; text-align:center;'>Ошибка связи со складом: " + e.message + "</p>";
             }
         }
 
-        // 3. Динамическое создание кнопок фильтра
         function buildFilters() {
             const systems = [...new Set(allGames.map(g => g.sys))];
             const filterBar = document.getElementById('filter-bar');
-            
             systems.forEach(sys => {
                 const info = sysInfo[sys] || sysInfo['unk'];
                 const btn = document.createElement('button');
@@ -226,56 +290,43 @@
                 btn.style.borderColor = info.hex;
                 btn.style.color = info.hex;
                 btn.textContent = info.name;
-                
                 btn.onclick = (e) => filterGames(sys, e.target);
                 filterBar.appendChild(btn);
             });
         }
 
-        // Фильтрация по системам
         function filterGames(sys, btnElement) {
             document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
-            document.getElementById('searchInput').value = ''; // Сброс поиска
-
-            if (sys === 'all') {
-                renderGames(allGames);
-            } else {
-                renderGames(allGames.filter(g => g.sys === sys));
-            }
+            document.getElementById('searchInput').value = ''; 
+            hubLog(`Filter: Switched to ${sys.toUpperCase()}`);
+            if (sys === 'all') renderGames(allGames);
+            else renderGames(allGames.filter(g => g.sys === sys));
         }
 
-        // Поиск по названию
         window.triggerSearch = function() {
             const query = document.getElementById('searchInput').value.toLowerCase();
             document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
-            
             if (!query) renderGames(allGames);
             else renderGames(allGames.filter(g => g.title.toLowerCase().includes(query)));
         }
 
-        // 4. Отрисовка сетки
         function renderGames(gamesList) {
             const grid = document.getElementById('game-grid');
             grid.innerHTML = '';
-
             gamesList.forEach(game => {
                 const info = sysInfo[game.sys] || sysInfo['unk'];
                 const isInstalled = installedNames.includes(game.title);
-                
-                let coverUrl = game.url.replace(/\.[^/.]+$/, ".png"); 
-                coverUrl = WAREHOUSE_URL + coverUrl;
+                let coverUrl = WAREHOUSE_URL + game.url.replace(/\.[^/.]+$/, ".png"); 
 
                 const card = document.createElement('div');
                 card.className = `game-card ${info.css} ${isInstalled ? 'installed' : ''}`;
                 card.style.backgroundImage = `url('${coverUrl}')`;
-                
                 card.innerHTML = `
                     <div class="install-btn">❤️</div>
                     <div class="no-cover-icon">🎮</div>
                     <div class="sys-badge ${info.badge}">${info.name}</div>
                     <div class="game-title" title="${game.title}">${game.title}</div>
-                    
                     <div class="action-row">
                         <button class="action-btn btn-view" onclick="runPreview('${game.sys}', '${game.url}')">ПРОСМОТР</button>
                         <button class="action-btn btn-inst" onclick="installSilent(this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')" ${isInstalled ? 'disabled' : ''}>
@@ -283,56 +334,44 @@
                         </button>
                     </div>
                 `;
-
                 const img = new Image();
                 img.onload = () => { card.querySelector('.no-cover-icon').style.display = 'none'; };
                 img.onerror = () => { card.style.backgroundImage = 'none'; }; 
                 img.src = coverUrl;
-                
                 grid.appendChild(card);
             });
         }
 
-        // 5. ТИХАЯ УСТАНОВКА (Скачиваем через RAW_URL)
         window.installSilent = async function(btn, sys, url, title) {
             if (!db) return alert("База данных недоступна");
-            
+            hubLog(`Installer: Starting download for "${title}"...`);
             const originalText = btn.textContent;
             btn.textContent = 'ЗАГР...';
-            btn.style.color = '#fff';
-
             try {
-                const romBlob = await fetch(RAW_URL + url).then(r => {
-                    if (!r.ok) throw new Error("404");
-                    return r.blob();
-                });
+                const romRes = await fetch(RAW_URL + url);
+                if (!romRes.ok) throw new Error("File not found (404)");
+                const romBlob = await romRes.blob();
+                hubLog(`Installer: Download complete (${(romBlob.size/1024/1024).toFixed(2)} MB). Saving to DB...`, "info");
                 
                 const tx = db.transaction("games", "readwrite");
                 await tx.objectStore("games").put({
                     n: title, s: sys, d: romBlob, i: null, t: Date.now()
                 });
-
+                hubLog(`Installer: "${title}" successfully saved!`, "success");
                 btn.disabled = true;
                 btn.textContent = 'В БАЗЕ';
-                btn.style.color = '#10b981';
-                
-                const card = btn.closest('.game-card');
-                if (card) card.classList.add('installed');
+                btn.closest('.game-card').classList.add('installed');
                 installedNames.push(title);
-
             } catch (e) {
+                hubLog(`Installer Error: ${e.message}`, "error");
                 btn.textContent = "ОШИБКА";
-                btn.style.color = "#ef4444";
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.color = '#10b981';
-                }, 2000);
+                setTimeout(() => { btn.textContent = originalText; }, 2000);
             }
         }
 
-        // 6. ЗАПУСК ПЕСОЧНИЦЫ (Передаем RAW_URL эмулятору)
         window.runPreview = function(sys, url) {
             const fullUrl = RAW_URL + url;
+            hubLog(`Sandbox: Launching preview for ${url}...`);
             window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(fullUrl)}&preview=true`;
         }
     </script>
