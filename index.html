@@ -7595,30 +7595,34 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+
+
 <script>
-// --- УМНЫЙ ПРИЕМНИК ИГР ИЗ МАГАЗИНА ---
+// --- ПРИЕМНИК ИГР ИЗ КАТАЛОГА (СИНХРОНИЗАЦИЯ) ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
-    const isPreview = urlParams.get('preview') === 'true'; // Ловим флаг песочницы
+    const isPreview = urlParams.get('preview') === 'true'; 
 
     if (sysParam && romUrl) {
-        // Фиксируем систему для ядра эмулятора
+        console.log("📥 Arcade Sync: Запрос на запуск. Режим:", isPreview ? "ПРОСМОТР" : "ОСНОВНОЙ");
         window.currentSystem = sysParam; 
 
-        // 1. РЕЖИМ ПРОСМОТРА: прячем интерфейс эмулятора, оставляя только игру
+        // 1. ЛОГИКА ПРЕДПРОСМОТРА
         if (isPreview) {
             const menuBtn = document.getElementById('menuBtn');
             if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
-            // Флаг, чтобы заблокировать вызов меню свайпами или кнопками
             window.blockAppMenu = true; 
         }
 
-        // Ждем инициализацию базы данных
+        // Проверка инициализации БД
         const checkDbAndLoad = () => {
-            if (typeof db !== 'undefined' && db) startDownload();
-            else setTimeout(checkDbAndLoad, 200);
+            if (typeof db !== 'undefined' && db) {
+                startDownload(); 
+            } else {
+                setTimeout(checkDbAndLoad, 200); 
+            }
         };
 
         const startDownload = () => {
@@ -7627,48 +7631,52 @@ window.addEventListener('load', () => {
 
             fetch(romUrl)
                 .then(res => {
-                    if (!res.ok) throw new Error("Файл не найден на складе");
+                    if (!res.ok) throw new Error("HTTP Error " + res.status);
                     return res.blob();
                 })
                 .then(blob => {
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
                     
-                    // 💡 ГЛАВНЫЙ ФИКС ДЕНДИ: Явно указываем тип файла как ZIP-архив!
-                    const file = new File([blob], fileName, { type: "application/zip" });
+                    // 💡 ЖЕЛЕЗОБЕТОННЫЙ ФИКС ДЛЯ NES (DENDY)
+                    // Указываем тип "application/x-zip-compressed", чтобы ядро эмулятора не падало
+                    const file = new File([blob], fileName, { 
+                        type: "application/x-zip-compressed",
+                        lastModified: Date.now() 
+                    });
                     
-                    // Передаем в ядро эмулятора для распаковки и записи в базу
                     return window.processSingleFile(file);
                 })
                 .then(() => {
-                    // Ищем игру в базе для мгновенного запуска
+                    // Ищем игру в базе для мгновенного старта
                     const tx = db.transaction(["games"], "readonly");
-                    const req = tx.objectStore("games").getAll();
+                    const store = tx.objectStore("games");
+                    const req = store.getAll();
                     
                     req.onsuccess = () => {
                         const games = req.result;
                         if (games.length > 0) {
-                            // Берем самую последнюю добавленную игру
+                            // Вытаскиваем последнюю скачанную игру
                             const latestGame = games.sort((a, b) => b.id - a.id)[0];
                             
-                            // Очищаем адресную строку
+                            // Очищаем URL, чтобы не качать заново
                             window.history.replaceState(null, '', window.location.pathname + '#menu');
                             
-                            // Запускаем игру
+                            // Стартуем игру
                             startGame(latestGame);
 
-                            // 2. ОЧИСТКА ПЕСОЧНИЦЫ: удаляем временную демку через 10 секунд
+                            // 2. АВТО-УДАЛЕНИЕ ДЛЯ РЕЖИМА "ПРОСМОТР"
                             if (isPreview) {
                                 setTimeout(() => {
                                     const delTx = db.transaction(["games"], "readwrite");
                                     delTx.objectStore("games").delete(latestGame.id);
-                                }, 10000);
+                                    console.log("🧹 Песочница: Временная игра удалена из базы.");
+                                }, 15000); 
                             }
                         }
                     };
                 })
                 .catch(err => {
-                    console.error("Ошибка склада:", err);
-                    alert("❌ Ошибка загрузки: " + err.message);
+                    console.error("Ошибка загрузки склада:", err);
                     if (splash) splash.classList.add('hidden');
                     window.history.replaceState(null, '', window.location.pathname + '#menu');
                 });
@@ -7678,7 +7686,6 @@ window.addEventListener('load', () => {
     }
 });
 </script>
-
 
 
 
