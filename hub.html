@@ -31,6 +31,7 @@
             background: rgba(8, 8, 12, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border-radius: 0 0 20px 20px; margin-bottom: 20px;
             box-shadow: 0 8px 25px -5px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
         }
         .splash-title {
             color: #fff; font-family: monospace; font-size: 32px; font-weight: 900; letter-spacing: 5px; 
@@ -38,62 +39,69 @@
         }
         .splash-sub { color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 5px; text-align: center; text-transform: uppercase;}
 
-        /* ПОИСК */
+        .back-link { color: var(--neon-blue); text-decoration: none; font-weight: bold; margin-bottom: 10px; font-size: 14px; text-shadow: 0 0 10px var(--neon-blue); transition: 0.2s; }
+        .back-link:active { transform: scale(0.95); }
+
         .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
         .search-input {
             width: 100%; padding: 10px 15px; border-radius: 12px; background: rgba(0,0,0,0.5); 
             border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; outline: none; text-align: center;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s;
         }
+        .search-input:focus { box-shadow: 0 0 15px rgba(56, 189, 248, 0.4), inset 0 2px 5px rgba(0,0,0,0.5); }
 
         /* ФИЛЬТРЫ */
         .sys-filter-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap; }
         .sys-filter-btn { 
             flex-shrink: 0; padding: 0 15px; height: 44px; border-radius: 12px; font-weight: 900; font-size: 11px; 
             cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); 
-            text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+            text-transform: uppercase; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center;
         }
-        .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; }
+        .sys-filter-btn.active { filter: brightness(1.5); box-shadow: inset 0 0 10px currentColor, 0 0 15px currentColor !important; border-width: 2px; transform: scale(1.05); }
 
-        /* СЕТКА */
+        /* СЕТКА И КАРТОЧКИ */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 0 15px; max-width: 1200px; margin: 0 auto; }
 
-        /* КАРТОЧКИ */
         .game-card { 
             position: relative; overflow: hidden; background-color: var(--glass-bg); backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border); border-radius: 12px; display: flex; flex-direction: column; 
-            align-items: center; justify-content: flex-end; transition: 0.2s; min-height: 180px; 
-            background-size: cover; background-position: center;
+            align-items: center; justify-content: flex-end; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; 
+            min-height: 180px; background-size: cover; background-position: center; cursor: pointer;
         }
+        
+        /* Эффект приподнятия карточки */
+        .game-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: var(--neon-blue); }
+        .game-card:active { transform: scale(0.97); }
+
         .game-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); z-index: 1; pointer-events: none;}
 
-        .game-title { position: relative; z-index: 3; width: 100%; padding: 5px 8px; font-size: 11px; font-weight: bold; text-align: center; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .game-title { position: relative; z-index: 3; width: 100%; padding: 5px 8px; font-size: 11px; font-weight: bold; text-align: center; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
         /* СЕРДЕЧКО */
         .install-heart {
             position: absolute; top: 8px; left: 8px; z-index: 10;
-            font-size: 18px; filter: drop-shadow(0 0 5px red); display: none;
+            font-size: 18px; filter: drop-shadow(0 0 5px red); display: none; opacity: 0; transition: opacity 0.4s ease;
         }
-        .installed .install-heart { display: block; animation: heartbeat 1.5s infinite; }
+        .installed .install-heart { display: block; opacity: 1; animation: heartbeat 1.5s infinite; }
         @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
 
-        .sys-badge { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; z-index: 10; }
+        .sys-badge { position: absolute; top: 8px; right: 8px; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 900; z-index: 10; pointer-events: none; }
 
-        /* КНОПКИ */
-        .action-row { position: relative; z-index: 3; width: 100%; padding: 0 8px 10px 8px; display: flex; gap: 5px; }
-        .action-btn { flex: 1; padding: 8px 0; border: 1px solid; border-radius: 6px; background: rgba(0,0,0,0.6); color: #fff; font-size: 9px; font-weight: 900; cursor: pointer; text-align: center; transition: 0.2s;}
+        /* КНОПКИ (ИЗОЛИРОВАННАЯ ЗОНА) */
+        .action-row { position: relative; z-index: 15; width: 100%; padding: 0 8px 10px 8px; display: flex; gap: 5px; }
+        
+        .action-btn { flex: 1; padding: 10px 0; border: 1px solid; border-radius: 6px; background: rgba(0,0,0,0.7); color: #fff; font-size: 9px; font-weight: 900; cursor: pointer; text-align: center; transition: all 0.2s ease; backdrop-filter: blur(5px); }
         .action-btn:active { transform: scale(0.9); }
-        .btn-view { border-color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); color: var(--neon-blue); }
+        
         .btn-inst { border-color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); color: var(--neon-green); }
-        .btn-inst:disabled { border-color: #444; color: #666; text-shadow: none; cursor: default; }
+        .btn-inst:disabled { border-color: #333; color: #555; text-shadow: none; cursor: default; background: transparent; transform: none; }
+        
+        /* Анимация загрузки (часики) */
+        .downloading { border-color: var(--neon-blue) !important; color: var(--neon-blue) !important; text-shadow: 0 0 10px var(--neon-blue) !important; animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border { 0% { box-shadow: inset 0 0 0px var(--neon-blue); } 50% { box-shadow: inset 0 0 15px var(--neon-blue); } 100% { box-shadow: inset 0 0 0px var(--neon-blue); } }
 
         /* КОНСОЛЬ */
-        #hub-console {
-            position: fixed; bottom: -300px; left: 0; width: 100%; height: 250px;
-            background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px);
-            border-top: 2px solid var(--neon-blue); z-index: 1000; transition: 0.4s;
-            display: flex; flex-direction: column; font-family: monospace;
-        }
+        #hub-console { position: fixed; bottom: -300px; left: 0; width: 100%; height: 250px; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px); border-top: 2px solid var(--neon-blue); z-index: 1000; transition: 0.4s; display: flex; flex-direction: column; font-family: monospace; }
         #hub-console.open { bottom: 0; }
         .console-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 10px; line-height: 1.4; color: #aaa; }
         .log-success { color: var(--neon-green); }
@@ -110,10 +118,7 @@
         .badge-gba { background: #d946ef; color: white; }
         .sys-snes { box-shadow: 0 0 15px rgba(168,85,247,0.3); border-color: #a855f7; }
         .badge-snes { background: #a855f7; color: white; }
-        .sys-unk { box-shadow: 0 0 15px rgba(255,255,255,0.1); border-color: #fff; }
-        .badge-unk { background: #666; color: white; }
-
-        .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; }
+        .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -168,66 +173,37 @@
             'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', hex: '#a855f7' }
         };
 
-        // --- ГЛУБОКАЯ ИНИЦИАЛИЗАЦИЯ ЕДИНОЙ БАЗЫ ArcadeDB ---
         const request = indexedDB.open("ArcadeDB", 1);
-
         request.onupgradeneeded = (e) => {
             db = e.target.result;
-            hubLog("DB: Требуется обновление/создание таблиц...", "info");
-            if (!db.objectStoreNames.contains("games")) {
-                db.createObjectStore("games", { keyPath: "id", autoIncrement: true });
-                hubLog("DB: Таблица 'games' успешно создана.", "success");
-            }
+            if (!db.objectStoreNames.contains("games")) db.createObjectStore("games", { keyPath: "id", autoIncrement: true });
         };
-
         request.onsuccess = async (e) => { 
             db = e.target.result; 
-            hubLog("DB: Подключение к ArcadeDB успешно.", "success");
-            
-            // Если таблица существует, проверяем установленные игры
-            if (db.objectStoreNames.contains("games")) {
-                installedNames = await getInstalledList();
-            } else {
-                hubLog("DB: Таблица 'games' не найдена. Она будет создана при первой установке.", "error");
-            }
+            if (db.objectStoreNames.contains("games")) installedNames = await getInstalledList();
             loadCatalog(); 
         };
-
-        request.onerror = (e) => hubLog("DB: Ошибка подключения! " + e.target.errorCode, "error");
+        request.onerror = (e) => hubLog("DB: Ошибка! " + e.target.errorCode, "error");
 
         function getInstalledList() {
             return new Promise((resolve) => {
                 try {
                     const tx = db.transaction("games", "readonly");
-                    const store = tx.objectStore("games");
-                    const req = store.getAll();
-                    req.onsuccess = () => {
-                        const names = req.result.map(g => g.n);
-                        hubLog(`Sync: В базе найдено игр: ${names.length}`, "success");
-                        resolve(names);
-                    };
-                    req.onerror = () => {
-                        hubLog("Sync: Не удалось прочитать таблицу 'games'.", "error");
-                        resolve([]);
-                    };
-                } catch(e) {
-                    hubLog("Sync: База пуста или не инициализирована.", "info");
-                    resolve([]);
-                }
+                    const req = tx.objectStore("games").getAll();
+                    req.onsuccess = () => resolve(req.result.map(g => g.n));
+                    req.onerror = () => resolve([]);
+                } catch(e) { resolve([]); }
             });
         }
 
         async function loadCatalog() {
-            hubLog("Catalog: Загрузка master_registry.json...");
             try {
                 const response = await fetch(WAREHOUSE_URL + 'master_registry.json');
-                if (!response.ok) throw new Error("HTTP " + response.status);
                 allGames = await response.json();
-                hubLog(`Catalog: Загружено игр: ${allGames.length}`, "success");
                 buildFilters();
                 renderGames(allGames);
             } catch (e) {
-                hubLog("Catalog Error: Ошибка связи со складом: " + e.message, "error");
+                hubLog("Catalog Error: " + e.message, "error");
             }
         }
 
@@ -249,11 +225,10 @@
         function filterGames(sys, btn) {
             document.querySelectorAll('.sys-filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            hubLog(`UI: Фильтр сменен на ${sys.toUpperCase()}`);
             renderGames(sys === 'all' ? allGames : allGames.filter(g => g.sys === sys));
         }
 
-        function triggerSearch() {
+        window.triggerSearch = function() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             renderGames(allGames.filter(g => g.title.toLowerCase().includes(q)));
         }
@@ -264,21 +239,23 @@
             list.forEach(game => {
                 const info = sysInfo[game.sys] || { css: 'sys-unk', badge: 'badge-unk', name: game.sys };
                 const isInstalled = installedNames.includes(game.title);
-                
                 let coverUrl = WAREHOUSE_URL + game.url.replace('.zip', '.png');
 
                 const card = document.createElement('div');
                 card.className = `game-card ${info.css} ${isInstalled ? 'installed' : ''}`;
                 card.style.backgroundImage = `url('${coverUrl}')`;
                 
+                // 💡 Клик по самой карточке запускает игру
+                card.onclick = () => runPreview(game.sys, game.url);
+                
                 card.innerHTML = `
                     <div class="install-heart">❤️</div>
                     <div class="no-cover-icon">🎮</div>
                     <div class="sys-badge ${info.badge}">${info.name}</div>
                     <div class="game-title" title="${game.title}">${game.title}</div>
-                    <div class="action-row">
-                        <button class="action-btn btn-view" onclick="runPreview('${game.sys}', '${game.url}')">ОБЗОР</button>
-                        <button class="action-btn btn-inst" onclick="installSilent(this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')" ${isInstalled ? 'disabled' : ''}>
+                    
+                    <div class="action-row" onclick="event.stopPropagation()">
+                        <button class="action-btn btn-inst" onclick="installSilent(event, this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')" ${isInstalled ? 'disabled' : ''}>
                             ${isInstalled ? 'В БАЗЕ' : 'СКАЧАТЬ'}
                         </button>
                     </div>
@@ -292,42 +269,47 @@
             });
         }
 
-        // --- ТИХАЯ УСТАНОВКА (ОСТАЕМСЯ В ХАБЕ) ---
-        async function installSilent(btn, sys, url, title) {
-            hubLog(`Installer: Начинаю скачивание "${title}"...`);
+        // --- ИДЕАЛЬНАЯ ТИХАЯ УСТАНОВКА ---
+        async function installSilent(event, btn, sys, url, title) {
+            event.stopPropagation(); // Блокирует запуск игры при клике на "Скачать"
+            
+            if (!db) return alert("База данных недоступна");
+            
+            hubLog(`Installer: Качаю "${title}"...`);
             const originalText = btn.textContent;
+            
+            // Включаем "часики"
             btn.disabled = true;
-            btn.textContent = "...";
+            btn.innerHTML = '⏳ СКАЧИВАЮ...';
+            btn.classList.add('downloading');
             
             try {
                 const res = await fetch(RAW_URL + url);
                 if(!res.ok) throw new Error("404 Файл не найден");
                 const blob = await res.blob();
-                hubLog(`Installer: Скачано ${(blob.size/1024/1024).toFixed(2)} MB. Записываю в БД...`, "info");
                 
-                // Проверяем наличие таблицы прямо перед записью
-                if (!db.objectStoreNames.contains("games")) {
-                    throw new Error("Таблица 'games' отсутствует в ArcadeDB!");
-                }
+                if (!db.objectStoreNames.contains("games")) throw new Error("Таблица 'games' отсутствует!");
 
                 const tx = db.transaction("games", "readwrite");
                 const store = tx.objectStore("games");
-                
-                // Добавляем игру (n - имя, s - система, d - данные)
-                const gameData = { n: title, s: sys, d: blob, i: null, t: Date.now() };
-                const req = store.put(gameData);
+                const req = store.put({ n: title, s: sys, d: blob, i: null, t: Date.now() });
 
                 req.onsuccess = () => {
-                    hubLog(`Installer: "${title}" успешно осела в оффлайн.`, "success");
-                    btn.textContent = "ГОТОВО";
+                    hubLog(`Installer: "${title}" установлена!`, "success");
+                    
+                    // Выключаем "часики", зажигаем сердце
+                    btn.classList.remove('downloading');
+                    btn.textContent = "В БАЗЕ";
                     btn.closest('.game-card').classList.add('installed');
                     installedNames.push(title);
                 };
                 
-                req.onerror = (e) => { throw new Error("Ошибка транзакции: " + e.target.error); };
+                req.onerror = (e) => { throw new Error(e.target.error); };
 
             } catch (e) {
                 hubLog(`Installer Error: ${e.message}`, "error");
+                // Откат кнопки при ошибке
+                btn.classList.remove('downloading');
                 btn.disabled = false;
                 btn.textContent = "ОШИБКА";
                 setTimeout(() => { btn.textContent = originalText; }, 2000);
@@ -335,8 +317,9 @@
         }
 
         function runPreview(sys, url) {
-            hubLog(`System: Запуск песочницы для ${url}...`);
-            window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(RAW_URL + url)}&preview=true`;
+            hubLog(`System: Запуск ${url}...`);
+            // 💡 Добавляем флаг from_hub=true
+            window.location.href = `index.html?sys=${sys}&rom=${encodeURIComponent(RAW_URL + url)}&preview=true&from_hub=true`;
         }
     </script>
 </body>
