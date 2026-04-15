@@ -7597,53 +7597,43 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+
+                            
+
 <script>
-// --- ПРИЕМНИК ИГР ИЗ МАГАЗИНА (СИНХРОНИЗАЦИЯ С ХАБОМ) ---
+// --- ПРИЕМНИК ИГР ИЗ ХАБА ---
 window.addEventListener('load', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const sysParam = urlParams.get('sys');
     const romUrl = urlParams.get('rom');
     const isPreview = urlParams.get('preview') === 'true'; 
-    const fromHub = urlParams.get('from_hub') === 'true'; // 💡 Проверяем, пришли ли мы из Хаба
+    const fromHub = urlParams.get('from_hub') === 'true'; 
 
     if (sysParam && romUrl) {
-        console.log("📥 Arcade Sync: Запуск игры. Из хаба:", fromHub);
         window.currentSystem = sysParam; 
 
-        // 1. АДАПТАЦИЯ ИНТЕРФЕЙСА ДЛЯ ХАБА
+        // ЕСЛИ ПРИШЛИ ИЗ ХАБА
         if (fromHub) {
-            // Скрываем стандартную шестеренку
-            const menuBtn = document.getElementById('menuBtn');
-            if (menuBtn) menuBtn.style.setProperty('display', 'none', 'important');
-            
-            // Блокируем свайпы в меню
-            window.blockAppMenu = true; 
-
-            // СОЗДАЕМ КНОПКУ "◀ В ХАБ"
-            const exitHubBtn = document.createElement('div');
-            exitHubBtn.innerHTML = '◀ В ХАБ';
-            exitHubBtn.style.cssText = `
-                position: fixed; top: 15px; left: 15px; z-index: 999999;
-                background: rgba(8, 8, 12, 0.85); color: #38bdf8;
-                border: 1px solid #38bdf8; padding: 8px 15px;
-                border-radius: 8px; font-weight: bold; font-family: sans-serif;
-                font-size: 12px; cursor: pointer; backdrop-filter: blur(10px);
-                box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
-                transition: 0.2s;
-            `;
-            // Анимация нажатия
-            exitHubBtn.onmousedown = () => exitHubBtn.style.transform = 'scale(0.9)';
-            exitHubBtn.onmouseup = () => exitHubBtn.style.transform = 'scale(1)';
-            
-            // Клик возвращает в Хаб
-            exitHubBtn.onclick = () => window.location.href = 'hub.html';
-            document.body.appendChild(exitHubBtn);
-
-            // ПЕРЕХВАТ СИСТЕМНОЙ КНОПКИ "НАЗАД" (Android свайп)
+            // 1. Перехват системной кнопки телефона "Назад"
             window.history.pushState({hub: true}, '', window.location.href);
-            window.addEventListener('popstate', (e) => {
-                window.location.href = 'hub.html'; // Вместо меню эмулятора кидаем в хаб
-            });
+            window.addEventListener('popstate', () => { window.location.href = 'hub.html'; });
+
+            // 2. Скрываем лишние кнопки в твоем родном меню эмулятора
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .menu-item:not(.controls):not(.back) { display: none !important; }
+                #menuBtn { display: none !important; }
+            `;
+            document.head.appendChild(style);
+
+            // 3. Жесткий перехват твоей кнопки "Назад ◀️" внутри эмулятора
+            setTimeout(() => {
+                document.querySelectorAll('div, button, li').forEach(el => {
+                    if (el.textContent.includes('Назад') || el.textContent.includes('В МЕНЮ')) {
+                        el.onclick = (e) => { e.preventDefault(); window.location.href = 'hub.html'; };
+                    }
+                });
+            }, 1000);
         }
 
         const checkDbAndLoad = () => {
@@ -7660,7 +7650,7 @@ window.addEventListener('load', () => {
                 .then(blob => {
                     const fileName = decodeURIComponent(romUrl.split('/').pop());
                     
-                    // 💡 ФИКС ДЕНДИ: x-zip-compressed
+                    // 💡 ФИКС ДЛЯ ДЕНДИ
                     const file = new File([blob], fileName, { 
                         type: "application/x-zip-compressed",
                         lastModified: Date.now() 
@@ -7671,31 +7661,26 @@ window.addEventListener('load', () => {
                 .then(() => {
                     const tx = db.transaction(["games"], "readonly");
                     const store = tx.objectStore("games");
-                    const req = store.getAll();
                     
-                    req.onsuccess = () => {
-                        const games = req.result;
+                    store.getAll().onsuccess = (e) => {
+                        const games = e.target.result;
                         if (games.length > 0) {
                             const latestGame = games.sort((a, b) => b.id - a.id)[0];
                             
-                            // Очищаем адрес от мусора (чтобы не перекачивать)
                             window.history.replaceState({hub: fromHub}, '', window.location.pathname);
-                            
                             startGame(latestGame);
 
-                            // АВТО-ОЧИСТКА ВРЕМЕННОЙ ИГРЫ
+                            // Самоочистка для демо-режима
                             if (isPreview) {
                                 setTimeout(() => {
                                     const delTx = db.transaction(["games"], "readwrite");
                                     delTx.objectStore("games").delete(latestGame.id);
-                                    console.log("🧹 Песочница: Игра удалена из БД.");
                                 }, 15000); 
                             }
                         }
                     };
                 })
                 .catch(err => {
-                    console.error("Sync Error:", err);
                     if (splash) splash.classList.add('hidden');
                 });
         };
@@ -7704,7 +7689,6 @@ window.addEventListener('load', () => {
     }
 });
 </script>
-
                             
         
 
