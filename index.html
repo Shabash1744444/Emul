@@ -7596,9 +7596,8 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
 <script>
-// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА (С АНТИ-БУТЛУПОМ) ===
+// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА (С АНТИ-БУТЛУПОМ И ФИКСАМИ ЯДЕР) ===
 window.addEventListener('load', () => {
     const params = new URLSearchParams(window.location.search);
     const sys = params.get('sys');
@@ -7624,12 +7623,47 @@ window.addEventListener('load', () => {
     // Функция для запуска игры из объекта в БД (ТВОЯ ЛОГИКА)
     const launchFromData = (gameObj) => {
         if (!gameObj || !gameObj.data) return;
-        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {type: "application/x-zip-compressed"});
         
+        // --- ТОЧЕЧНЫЙ ФИКС 1: Подделка File (Лечит краш Libretro и черный экран Dendy) ---
+        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {
+            type: "application/zip", 
+            lastModified: Date.now() 
+        });
+        
+        // --- ТОЧЕЧНЫЙ ФИКС 2: Режим Предпросмотра (Smart Exit) ---
+        if (isPreview) {
+            // Мягко возвращаем в Хаб по кнопке "Назад" на телефоне
+            window.history.pushState({hub: true}, '', window.location.href);
+            window.addEventListener('popstate', () => { 
+                // Поменяй 'hub.html' на имя твоего файла магазина, если нужно
+                window.location.href = 'hub.html'; 
+            });
+        }
+
         // Вызываем твою основную функцию обработки
         if (typeof window.processSingleFile === 'function') {
             window.processSingleFile(file).then(() => {
                 console.log("Игра загружена через мост");
+                
+                // --- ТОЧЕЧНЫЙ ФИКС 3: Автоочистка песочницы ---
+                if (isPreview) {
+                    setTimeout(() => {
+                        const req = indexedDB.open("ArcadeDB", 1);
+                        req.onsuccess = (e) => {
+                            const db = e.target.result;
+                            const tx = db.transaction("games", "readwrite");
+                            const store = tx.objectStore("games");
+                            // Находим и удаляем игру-времянку, чтобы не засорять БД эмулятора
+                            store.openCursor().onsuccess = (ev) => {
+                                const cursor = ev.target.result;
+                                if (cursor) {
+                                    if (cursor.value.title === gameObj.title) cursor.delete();
+                                    else cursor.continue();
+                                }
+                            };
+                        };
+                    }, 15000); // 15 секунд хватит для загрузки в оперативку ядра
+                }
             });
         }
     };
@@ -7664,6 +7698,8 @@ window.addEventListener('load', () => {
     }
 });
 </script>
+
+
 
 
                             
