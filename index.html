@@ -2668,14 +2668,14 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btnKeyboard.classList.toggle('active-tool', !isVisible); 
     }
 
-            function sendKey(defaultCode, down) {
+                function sendKey(defaultCode, down, player = 1) {
         let finalCode = defaultCode;
-        if (currentGame?.keys) { 
+        if (player === 1 && currentGame?.keys) { 
             if (defaultCode === 90 && currentGame.keys.a) finalCode = currentGame.keys.a; 
             if (defaultCode === 88 && currentGame.keys.b) finalCode = currentGame.keys.b; 
         }
         
-        if (currentGame?.m === 'touch_hover' && defaultCode === 90) {
+        if (player === 1 && currentGame?.m === 'touch_hover' && defaultCode === 90) {
             const dc = document.getElementById('dos-canvas');
             if (dc?.getHoverCoords) { 
                 const coords = dc.getHoverCoords(); 
@@ -2687,46 +2687,65 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         if (typeof currentDos !== 'undefined' && currentDos || (currentGame?.t === 'l')) {
             let keyMap = {}; 
             let targetKeyCode = finalCode; 
-            if (typeof currentDos !== 'undefined' && currentDos) {
-                keyMap = { 
-                    38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
-                    40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
-                    37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
-                    39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
-                    90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                    88: { keyCode: 32, code: 'Space', key: ' ' }, 
-                    65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 
-                    83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
-                    81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 
-                    87: { keyCode: 89, code: 'KeyY', key: 'y' }, 
-                    13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                    16: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
-                    27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
-                };
-            } else {
-                keyMap = { 
-                    38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
-                    40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
-                    37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
-                    39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
-                    90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 
-                    88: { keyCode: 88, code: 'KeyX', key: 'x' }, 
-                    65: { keyCode: 65, code: 'KeyA', key: 'a' }, 
-                    83: { keyCode: 83, code: 'KeyS', key: 's' }, 
-                    81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 
-                    87: { keyCode: 87, code: 'KeyW', key: 'w' }, 
-                    13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                    16: { keyCode: 16, code: 'ShiftRight', key: 'Shift', location: 2 }, // ВАЖНО: Указываем, что это ПРАВЫЙ Shift (SELECT)
-                    27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
+            
+            if (player === 1) {
+                if (typeof currentDos !== 'undefined' && currentDos) {
+                    keyMap = { 
+                        38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
+                        40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
+                        37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
+                        39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
+                        90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
+                        88: { keyCode: 32, code: 'Space', key: ' ' }, 
+                        65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 
+                        83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
+                        81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 
+                        87: { keyCode: 89, code: 'KeyY', key: 'y' }, 
+                        13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
+                        16: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
+                        27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
+                    };
+                } else {
+                    keyMap = { 
+                        38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
+                        40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
+                        37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
+                        39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
+                        90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 
+                        88: { keyCode: 88, code: 'KeyX', key: 'x' }, 
+                        65: { keyCode: 65, code: 'KeyA', key: 'a' }, 
+                        83: { keyCode: 83, code: 'KeyS', key: 's' }, 
+                        81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 
+                        87: { keyCode: 87, code: 'KeyW', key: 'w' }, 
+                        13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
+                        16: { keyCode: 16, code: 'ShiftRight', key: 'Shift', location: 2 },
+                        27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
+                    };
+                }
+            } else if (player === 2) {
+                // Теневая раскладка для Игрока 2 (Геймпад 2)
+                keyMap = {
+                    38: { keyCode: 73, code: 'KeyI', key: 'i' }, // Up -> I
+                    40: { keyCode: 75, code: 'KeyK', key: 'k' }, // Down -> K
+                    37: { keyCode: 74, code: 'KeyJ', key: 'j' }, // Left -> J
+                    39: { keyCode: 76, code: 'KeyL', key: 'l' }, // Right -> L
+                    90: { keyCode: 66, code: 'KeyB', key: 'b' }, // B -> B
+                    88: { keyCode: 78, code: 'KeyN', key: 'n' }, // A -> N
+                    65: { keyCode: 71, code: 'KeyG', key: 'g' }, // Y -> G
+                    83: { keyCode: 72, code: 'KeyH', key: 'h' }, // X -> H
+                    16: { keyCode: 57, code: 'Digit9', key: '9' }, // Select -> 9
+                    13: { keyCode: 48, code: 'Digit0', key: '0' }, // Start -> 0
+                    81: { keyCode: 84, code: 'KeyT', key: 't' }, // L -> T
+                    87: { keyCode: 89, code: 'KeyY', key: 'y' }  // R -> Y
                 };
             }
+
             if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
             
             let evData = { keyCode: targetKeyCode, which: targetKeyCode, bubbles: true, cancelable: true, composed: true };
             if (keyMap[finalCode]) { 
                 evData.code = keyMap[finalCode].code; 
                 evData.key = keyMap[finalCode].key; 
-                // Передаем location в ядро эмулятора, если он есть
                 if (keyMap[finalCode].location) evData.location = keyMap[finalCode].location;
             }
             
@@ -2739,14 +2758,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             }
         }
         
-        // Dendy обрабатывается отдельно
+        // Dendy (jsnes) обрабатывается напрямую через порты
         if (typeof nes !== 'undefined' && nes) {
             const nesMap = {38:4, 40:5, 37:6, 39:7, 90:0, 88:1, 16:2, 13:3, 27:3}; 
             if (nesMap[defaultCode] !== undefined) {
-                down ? nes.buttonDown(1, nesMap[defaultCode]) : nes.buttonUp(1, nesMap[defaultCode]);
+                down ? nes.buttonDown(player, nesMap[defaultCode]) : nes.buttonUp(player, nesMap[defaultCode]);
             }
         }
-  }
+    }
+
 
 
 
@@ -5782,12 +5802,16 @@ function deselectAllGamesForDelete() {
     // --- ОПРОС ГЕЙМПАДА ВНУТРИ ИГРЫ (С НАВИГАЦИЕЙ UI И ЭКРАНОМ)
     // =========================================================
     let gpInGameState = {};
-    let lastInGameUiUpdate = 0;
-    let inGameUiIndex = 0;
+let gp2InGameState = {}; // <-- ПАМЯТЬ ДЛЯ ВТОРОГО ГЕЙМПАДА
+let lastInGameUiUpdate = 0;
+let inGameUiIndex = 0;
+
     
     function pollGamepadInGame() {
         if (currentGame && window.location.hash === '#game' && !isGamePaused && !isShuttingDown) {
-            const pads = navigator.getGamepads ? navigator.getGamepads() : []; const gp = pads[0];
+            const pads = navigator.getGamepads ? navigator.getGamepads() : []; 
+            const gp = pads[0];
+            
             if (gp) {
                 const now = Date.now();
                 
@@ -5912,19 +5936,19 @@ function deselectAllGamesForDelete() {
                                 const map = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
                                 mappedKey = map[b];
                             }
-                            if (mappedKey !== null) sendKey(mappedKey, false);
+                            if (mappedKey !== null) sendKey(mappedKey, false, 1);
                             gpInGameState[b] = false;
                         }
                     }
                     requestAnimationFrame(pollGamepadInGame); return; 
                 }
 
-                // --- ОБЫЧНЫЙ ГЕЙМПЛЕЙ ---
+                // --- ОБЫЧНЫЙ ГЕЙМПЛЕЙ ИГРОК 1 ---
                 const map = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
                 for (let b in map) {
                     let pressed = gp.buttons[b] && gp.buttons[b].pressed;
-                    if (pressed && !gpInGameState[b]) { sendKey(map[b], true); gpInGameState[b] = true; } 
-                    else if (!pressed && gpInGameState[b]) { sendKey(map[b], false); gpInGameState[b] = false; }
+                    if (pressed && !gpInGameState[b]) { sendKey(map[b], true, 1); gpInGameState[b] = true; } 
+                    else if (!pressed && gpInGameState[b]) { sendKey(map[b], false, 1); gpInGameState[b] = false; }
                 }
                 const axisDeadzone = 0.4;
                 const axesMap = {
@@ -5933,14 +5957,39 @@ function deselectAllGamesForDelete() {
                 };
                 for (let dir in axesMap) {
                     let data = axesMap[dir]; let stateKey = 'axis_' + dir;
-                    if (data.pressed && !gpInGameState[stateKey]) { sendKey(data.code, true); gpInGameState[stateKey] = true; } 
-                    else if (!data.pressed && gpInGameState[stateKey]) { sendKey(data.code, false); gpInGameState[stateKey] = false; }
+                    if (data.pressed && !gpInGameState[stateKey]) { sendKey(data.code, true, 1); gpInGameState[stateKey] = true; } 
+                    else if (!data.pressed && gpInGameState[stateKey]) { sendKey(data.code, false, 1); gpInGameState[stateKey] = false; }
+                }
+            } // Конец проверки первого геймпада
+
+            // ==========================================
+            // --- ДОБАВЛЕННЫЙ БЛОК: ИГРОК 2 ---
+            // ==========================================
+            const gp2 = pads[1];
+            if (gp2) {
+                const map2 = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
+                for (let b in map2) {
+                    let pressed = gp2.buttons[b] && gp2.buttons[b].pressed;
+                    if (pressed && !gp2InGameState[b]) { sendKey(map2[b], true, 2); gp2InGameState[b] = true; } 
+                    else if (!pressed && gp2InGameState[b]) { sendKey(map2[b], false, 2); gp2InGameState[b] = false; }
+                }
+                const axisDeadzone2 = 0.4;
+                const axesMap2 = {
+                    'up': { code: 38, pressed: gp2.axes[1] < -axisDeadzone2 }, 'down': { code: 40, pressed: gp2.axes[1] > axisDeadzone2 },
+                    'left': { code: 37, pressed: gp2.axes[0] < -axisDeadzone2 }, 'right': { code: 39, pressed: gp2.axes[0] > axisDeadzone2 }
+                };
+                for (let dir in axesMap2) {
+                    let data = axesMap2[dir]; let stateKey = 'axis_' + dir;
+                    if (data.pressed && !gp2InGameState[stateKey]) { sendKey(data.code, true, 2); gp2InGameState[stateKey] = true; } 
+                    else if (!data.pressed && gp2InGameState[stateKey]) { sendKey(data.code, false, 2); gp2InGameState[stateKey] = false; }
                 }
             }
+            // ==========================================
+
         }
         requestAnimationFrame(pollGamepadInGame);
     }
-    requestAnimationFrame(pollGamepadInGame);
+
     
     
     
@@ -7510,7 +7559,8 @@ function deselectAllGamesForDelete() {
         trySet('mainImportBtn', d.add); trySet('radarBtn', d.scan);
         trySet('lbl_legal', d.legal);
         
-        trySet('btn_sel_all', d.all); trySet('btn_sel_clear', d.clear); trySet('btn_del', d.del);
+        trySet('btn_sel_all', d.all); trySet('btn_sel_clear', d.clear); trySet('deleteSelectedBtn', d.del);
+
         trySet('exportLibraryBtn', d.zip); trySet('btnFetchMissingLogos', d.logo); 
         trySet('changeCoverBtn', d.photo); trySet('resetStarsBtn', d.rstars);
         
@@ -7609,7 +7659,6 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
 <div id="arcade-store-overlay" style="display: none; position: fixed; inset: 0; z-index: 99999; overflow-y: auto; background-color: var(--bg-color-base, #060608); background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.9) 100%); color: #eee; font-family: sans-serif; padding-bottom: 50px;">
 
     <style>
@@ -7651,8 +7700,6 @@ trySet('vk_btn_close', d.vk_close);
         #arcade-store-overlay .sys-snes { border-color: #8b5cf6; box-shadow: none; } #arcade-store-overlay .badge-snes { background: #8b5cf6; box-shadow: none;}
         #arcade-store-overlay .sys-ngp { border-color: var(--neon-cyan); box-shadow: none; } #arcade-store-overlay .badge-ngp { background: var(--neon-cyan); box-shadow: none;}
         #arcade-store-overlay .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: bold; color: rgba(255,255,255,0.2); letter-spacing: 2px; z-index: 2; opacity: 0.8; text-shadow: none; margin: 0; }
-        
-        /* Стили фокуса для геймпада Хаба */
         .hub-focus { outline: 3px solid var(--neon-blue) !important; transform: scale(1.05); filter: brightness(1.2); box-shadow: 0 0 20px var(--neon-blue); z-index: 10; transition: all 0.1s; }
     </style>
 
@@ -7676,6 +7723,60 @@ trySet('vk_btn_close', d.vk_close);
         let storeInstalledMap = new Map(); 
         let dbStore;
         let isHubOpen = false;
+        
+        // --- ГЛОБАЛЬНЫЕ ФЛАГИ ДЛЯ ДЕМО-РЕЖИМА ---
+        window.isPreviewMode = false;
+        window.previewGameId = null;
+
+        // === ПЕРЕХВАТ ИЗОЛЯЦИИ ЭМУЛЯТОРА (Monkey Patching) ===
+        if (!window.isDemoPatched) {
+            // 1. Блокируем авто-сохранение в демо-режиме
+            const origSave = window.saveGameState;
+            window.saveGameState = async function(isAuto) {
+                if (window.isPreviewMode) {
+                    console.log("Демо-режим: Сохранения отключены");
+                    return; // Блокируем запись
+                }
+                if (origSave) return origSave.apply(this, arguments);
+            };
+
+            // 2. Перехватываем кнопку "Назад" для правильного возврата в Хаб
+            const origBack = window.handleBackBtn;
+            window.handleBackBtn = async function() {
+                if (window.isPreviewMode) {
+                    console.log("Выход из Демо-режима. Возврат в Магазин...");
+                    
+                    // Удаляем временную игру из базы, чтобы не засорять библиотеку
+                    if (window.previewGameId && dbStore) {
+                        const tx = dbStore.transaction(["games"], "readwrite");
+                        tx.objectStore("games").delete(window.previewGameId);
+                    }
+                    
+                    // Ставим метку, что после рестарта ядра нужно открыть Хаб
+                    sessionStorage.setItem('returnToHub', 'true');
+                    window.isPreviewMode = false; 
+                    
+                    // Форсируем очистку ядра БЕЗ сохранения (true)
+                    if (typeof window.executeCleanup === 'function') {
+                        await window.executeCleanup(true);
+                    }
+                    return;
+                }
+                if (origBack) return origBack.apply(this, arguments);
+            };
+
+            // 3. Автоматическое открытие Хаба после рестарта ядра
+            window.addEventListener('load', () => {
+                if (sessionStorage.getItem('returnToHub') === 'true') {
+                    sessionStorage.removeItem('returnToHub');
+                    // Ждем пока пройдет заставка эмулятора, затем открываем магазин
+                    setTimeout(() => toggleArcadeStore(true), 600);
+                }
+            });
+
+            window.isDemoPatched = true;
+        }
+        // ==============================================================
 
         const storeSysInfo = {
             'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'NES', color: '#ef4444' },
@@ -7685,12 +7786,10 @@ trySet('vk_btn_close', d.vk_close);
             'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', color: '#06b6d4' } 
         };
 
-        // --- ФИКС СКРОЛЛА (Пробиваем блокировку touchmove из эмулятора) ---
         document.getElementById('arcade-store-overlay').addEventListener('touchmove', function(e) {
-            e.stopPropagation(); // Не даем глобальному preventDefault заблокировать экран
+            e.stopPropagation(); 
         }, { passive: true });
 
-        // --- ЛОГИКА ОТКРЫТИЯ/ЗАКРЫТИЯ И ИЗОЛЯЦИИ ---
         function toggleArcadeStore(show) {
             const overlay = document.getElementById('arcade-store-overlay');
             const menuScreen = document.getElementById('menuScreen');
@@ -7698,18 +7797,17 @@ trySet('vk_btn_close', d.vk_close);
             
             if (show) {
                 overlay.style.display = 'block';
-                if (menuScreen) menuScreen.style.display = 'none'; // Прячем меню эмулятора (отключает задний скролл и геймпад)
+                if (menuScreen) menuScreen.style.display = 'none'; 
                 initStoreDB(); 
                 history.pushState({store:true}, '', '#store');
                 requestAnimationFrame(pollHubGamepad);
             } else {
                 overlay.style.display = 'none';
-                if (menuScreen) menuScreen.style.display = 'flex'; // Возвращаем меню эмулятора
+                if (menuScreen) menuScreen.style.display = 'flex'; 
                 if (window.location.hash === '#store') history.back();
             }
         }
 
-        // Фикс системной кнопки "Назад" (Android Back)
         window.addEventListener('popstate', () => {
             if (isHubOpen && window.location.hash !== '#store') toggleArcadeStore(false);
         });
@@ -7807,17 +7905,15 @@ trySet('vk_btn_close', d.vk_close);
                 img.src = cover;
                 grid.appendChild(card);
             });
-            hubNavIndex = 0; // Сбрасываем индекс курсора геймпада при рендеринге
+            hubNavIndex = 0; 
         }
 
-        // === УМНАЯ РАСПАКОВКА АРХИВОВ ДЛЯ ДЕНДИ И SNES ===
         async function extractRomForCore(blob, title, sys) {
             if (sys === 'dos' || sys === 'html') {
                 const ext = sys === 'html' ? '.html' : '.zip';
                 const type = sys === 'html' ? 'text/html' : 'application/zip';
                 return new File([blob], title + ext, {type, lastModified: Date.now()});
             }
-            // Распаковываем ZIP прямо в оперативной памяти (решает краш Денди)
             const buffer = await blob.arrayBuffer();
             const arr = new Uint8Array(buffer);
             if (typeof fflate !== 'undefined') {
@@ -7832,7 +7928,6 @@ trySet('vk_btn_close', d.vk_close);
             return new File([blob], title + ".zip", {type: "application/zip", lastModified: Date.now()});
         }
 
-        // === СКАЧИВАНИЕ ===
         async function installGameFromStore(event, btn, sys, url, title) {
             event.stopPropagation();
             if (btn.parentElement.classList.contains('installed')) return;
@@ -7842,53 +7937,76 @@ trySet('vk_btn_close', d.vk_close);
                 const blob = await fetch(RAW_URL + url).then(r => r.blob());
                 const file = await extractRomForCore(blob, title, sys);
                 
-                // Подтягиваем обложку, чтобы эмулятору не пришлось делать это дважды
                 try {
                     const coverBlob = await fetch(WAREHOUSE_URL + url.replace('.zip', '.png')).then(r => r.blob());
                     const reader = new FileReader();
                     file._customCover = await new Promise(res => { reader.onloadend = () => res(reader.result); reader.readAsDataURL(coverBlob); });
                 } catch(e) {}
 
-                // Пропускаем через родной парсер эмулятора
                 await window.processSingleFile(file);
                 
-                storeInstalledMap.set(title, "installed"); 
-                btn.classList.remove('loading');
-                btn.parentElement.classList.add('installed');
-                
-                if(typeof renderAllGames === 'function') renderAllGames();
-                
+                // Вытаскиваем реальный ID добавленной игры, чтобы запуск сразу работал
+                const req = dbStore.transaction("games", "readonly").objectStore("games").getAll();
+                req.onsuccess = (ev) => {
+                    const gamesList = ev.target.result;
+                    const targetGame = gamesList.slice().reverse().find(g => g.n === title);
+                    if (targetGame) {
+                        storeInstalledMap.set(title, targetGame.id);
+                    } else {
+                        storeInstalledMap.set(title, "installed"); 
+                    }
+                    
+                    btn.classList.remove('loading');
+                    btn.parentElement.classList.add('installed');
+                    if(typeof renderAllGames === 'function') renderAllGames();
+                };
             } catch (e) {
                 btn.classList.remove('loading');
                 console.error(e);
             }
         }
 
-        // === ПРЯМОЙ ЗАПУСК / ПРОСМОТР (ФИКС ВОЗВРАТА В МЕНЮ) ===
+        // === ПРЯМОЙ ЗАПУСК / ДЕМО-РЕЖИМ ===
         function launchGameDirectly(game, isInst, localId) {
             toggleArcadeStore(false); 
 
             const startAndFind = async (blob, title, sys) => {
                 const file = await extractRomForCore(blob, title, sys);
                 
-                // 1. Скармливаем парсеру
                 await window.processSingleFile(file);
                 if(typeof renderAllGames === 'function') renderAllGames();
                 
-                // 2. СРАЗУ ЖЕ запускаем добавленную игру (лечит вылет в меню при просмотре)
                 const req = dbStore.transaction("games", "readonly").objectStore("games").getAll();
                 req.onsuccess = (ev) => {
                     const gamesList = ev.target.result;
-                    // Ищем игру с конца, так как она только что добавлена
                     const targetGame = gamesList.slice().reverse().find(g => g.n === title);
-                    if(targetGame && typeof startGame === 'function') startGame(targetGame);
+                    
+                    if(targetGame && typeof startGame === 'function') {
+                        // АКТИВИРУЕМ ДЕМО-РЕЖИМ ПЕРЕД СТАРТОМ
+                        window.isPreviewMode = true;
+                        window.previewGameId = targetGame.id;
+                        
+                        startGame(targetGame);
+
+                        // Прячем меню настроек и сохранений, оставляем только спартанский геймплей
+                        setTimeout(() => {
+                            const hideBtns = ['btnSave', 'btnLoad', 'btnScreen', 'btnPadEdit', 'btnKeyboard'];
+                            hideBtns.forEach(id => {
+                                const b = document.getElementById(id);
+                                if (b) b.style.setProperty('display', 'none', 'important');
+                            });
+                        }, 800);
+                    }
                 };
             };
 
             if (isInst && localId) {
                 dbStore.transaction("games", "readonly").objectStore("games").get(localId).onsuccess = (ev) => {
                     const g = ev.target.result;
-                    if(g && typeof startGame === 'function') startGame(g);
+                    if(g && typeof startGame === 'function') {
+                        window.isPreviewMode = false; // Снимаем флаг демо-режима, это полная игра
+                        startGame(g);
+                    }
                 };
             } else {
                 fetch(RAW_URL + game.url).then(r => r.blob()).then(blob => {
@@ -7899,9 +8017,6 @@ trySet('vk_btn_close', d.vk_close);
             }
         }
 
-        // ==========================================
-        // РАДАР УПРАВЛЕНИЯ ХАБОМ (Геймпад + Клава)
-        // ==========================================
         let hubNavIndex = 0;
         let lastHubGpTime = 0;
 
@@ -7920,7 +8035,7 @@ trySet('vk_btn_close', d.vk_close);
                     lastHubGpTime = Date.now();
                     btns.forEach(b => b.classList.remove('hub-focus'));
                     
-                    if (dy !== 0) hubNavIndex += dy * 4; // Прыжок по сетке
+                    if (dy !== 0) hubNavIndex += dy * 4; 
                     else hubNavIndex += dx;
                     
                     if (hubNavIndex < 0) hubNavIndex = 0;
@@ -7942,7 +8057,6 @@ trySet('vk_btn_close', d.vk_close);
             requestAnimationFrame(pollHubGamepad);
         }
 
-        // Поддержка Клавиатуры в Хабе
         document.addEventListener('keydown', (e) => {
             if (!isHubOpen) return;
             const btns = Array.from(document.querySelectorAll('#arcade-store-overlay .hub-nav-item'));
@@ -7974,8 +8088,35 @@ trySet('vk_btn_close', d.vk_close);
             if (e.key === 'Escape') toggleArcadeStore(false);
         });
 
+
+
+
+
+
+
+
+
+
+
     </script>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
