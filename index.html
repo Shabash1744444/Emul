@@ -7599,15 +7599,21 @@ trySet('vk_btn_close', d.vk_close);
 
 <script>
 window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    const sys = params.get('sys');
-    const romUrl = params.get('rom');
-    const localId = params.get('localGame');
+    const urlParams = new URLSearchParams(window.location.search);
+    const sys = urlParams.get('sys');
+    const romUrl = urlParams.get('rom');
+    const localId = urlParams.get('localGame');
 
-    // Если нет параметра системы - значит мы зашли не из Хаба, ничего не делаем
+    // Если нет системы — мы не из Хаба, просто игнорируем
     if (!sys) return;
 
-    // Вспомогательная функция
+    // 1. АНТИ-БУТЛУП: Мгновенно стираем параметры из URL без перезагрузки страницы!
+    // Теперь эмулятор не будет циклично перезапускаться.
+    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
+    window.history.replaceState(null, '', cleanUrl);
+
+    console.log("🚀 Arcade Bridge: Параметры перехвачены и очищены. Запуск:", sys);
+
     function getCoreTypeBridge(s) {
         if (s === 'nes') return 'n';
         if (s === 'dos') return 'd';
@@ -7615,22 +7621,43 @@ window.addEventListener('load', () => {
         return 'l';
     }
 
-    // РЕЖИМ 1: ИГРАТЬ (Установлено)
+    // 2. УМНЫЙ ЗАПУСК: Ждем, пока твой огромный скрипт эмулятора полностью прогрузится
+    function safeStart(gameObj) {
+        let attempts = 0;
+        const checkReady = setInterval(() => {
+            if (typeof window.startGame === 'function') {
+                clearInterval(checkReady);
+                console.log("🎮 Запуск игры:", gameObj.n);
+                window.startGame(gameObj);
+            } else {
+                attempts++;
+                if (attempts > 20) { // Если за 10 секунд эмулятор не очнулся
+                    clearInterval(checkReady);
+                    console.error("❌ Ошибка моста: функция startGame не найдена в эмуляторе!");
+                }
+            }
+        }, 500);
+    }
+
+    // РЕЖИМ 1: ИГРАТЬ (Установленная оффлайн игра)
     if (localId) {
         const req = indexedDB.open("ArcadeDB", 1);
         req.onsuccess = (e) => {
             const db = e.target.result;
             const tx = db.transaction("games", "readonly");
-            tx.objectStore("games").get(parseInt(localId)).onsuccess = (ev) => {
+            
+            // ВАЖНО: Конвертируем localId в строгое число (Number), иначе база его не найдет!
+            tx.objectStore("games").get(Number(localId)).onsuccess = (ev) => {
                 const gameObj = ev.target.result;
-                if (gameObj && typeof window.startGame === 'function') {
-                    // Задержка чтобы UI успел прогрузиться
-                    setTimeout(() => window.startGame(gameObj), 500);
+                if (gameObj) {
+                    safeStart(gameObj);
+                } else {
+                    console.error("❌ Игра с ID", localId, "не найдена в локальной базе. Возможно, кэш был очищен.");
                 }
             };
         };
     } 
-    // РЕЖИМ 2: ОБЗОР (Скачивание на лету)
+    // РЕЖИМ 2: ОБЗОР (Онлайн-кэширование)
     else if (romUrl) {
         fetch(decodeURIComponent(romUrl))
             .then(res => res.blob())
@@ -7639,7 +7666,7 @@ window.addEventListener('load', () => {
                 const title = urlObj.split('/').pop().replace('.zip', '');
                 const ext = urlObj.split('.').pop();
                 
-                // Создаем ИДЕАЛЬНЫЙ объект, который требует startGame
+                // Собираем объект 1-в-1 как этого требует твой эмулятор
                 const gameObj = {
                     n: title,
                     sys: sys,
@@ -7648,15 +7675,12 @@ window.addEventListener('load', () => {
                     fileBlob: blob
                 };
                 
-                if (typeof window.startGame === 'function') {
-                    setTimeout(() => window.startGame(gameObj), 500);
-                }
+                safeStart(gameObj);
             })
-            .catch(err => console.error("Ошибка загрузки в режиме Обзора:", err));
+            .catch(err => console.error("❌ Ошибка скачивания в режиме Обзора:", err));
     }
 });
 </script>
-                            
 
 
                             
