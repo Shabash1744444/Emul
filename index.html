@@ -992,9 +992,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <button id="infoBtn" class="action-btn" style="width: 44px; padding: 0; margin: 0; flex: none;">
                 ℹ️
             </button>
-            <button id="portalBtn" class="action-btn" onclick="goToHub()" style="width: 44px; padding: 0; margin: 0; flex: none; background: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.4) !important;">
-                ❤️
-            </button>
+            <button id="portalBtn" class="action-btn" onclick="toggleArcadeStore(true)" style="width: 44px; padding: 0; margin: 0; flex: none; background: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.4) !important;">
+    ❤️
+</button>
+
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px; height: 38px; align-items: center;">
@@ -7596,108 +7597,387 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-<script>
-// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА (С АНТИ-БУТЛУПОМ И ФИКСАМИ ЯДЕР) ===
-window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    const sys = params.get('sys');
-    const romUrl = params.get('rom');
-    const localId = params.get('localGame');
-    const isPreview = params.get('preview') === 'true';
 
-    if (!sys) return; // Если зашли просто так — ничего не делаем
 
-    // === ФИКС БУТЛУПА: Защита от двойного запуска и циклической перезагрузки ===
-    const sessionKey = `launched_${sys}_${localId || romUrl}`;
-    if (sessionStorage.getItem(sessionKey)) {
-        // Мы уже запускали эту игру в этой вкладке. Очищаем хвост URL и выходим!
-        window.history.replaceState(null, '', window.location.pathname + window.location.hash);
-        return;
-    }
-    // Ставим метку, что игра запущена
-    sessionStorage.setItem(sessionKey, 'true');
-    // Стираем хвост URL, чтобы при обновлении страницы ничего не повторялось
-    window.history.replaceState(null, '', window.location.pathname + window.location.hash);
-    // =======================================================================
 
-    // Функция для запуска игры из объекта в БД (ТВОЯ ЛОГИКА)
-    const launchFromData = (gameObj) => {
-        if (!gameObj || !gameObj.data) return;
-        
-        // --- ТОЧЕЧНЫЙ ФИКС 1: Подделка File (Лечит краш Libretro и черный экран Dendy) ---
-        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {
-            type: "application/zip", 
-            lastModified: Date.now() 
-        });
-        
-        // --- ТОЧЕЧНЫЙ ФИКС 2: Режим Предпросмотра (Smart Exit) ---
-        if (isPreview) {
-            // Мягко возвращаем в Хаб по кнопке "Назад" на телефоне
-            window.history.pushState({hub: true}, '', window.location.href);
-            window.addEventListener('popstate', () => { 
-                // Поменяй 'hub.html' на имя твоего файла магазина, если нужно
-                window.location.href = 'hub.html'; 
-            });
+
+
+
+
+
+
+
+
+
+
+<div id="arcade-store-overlay" style="display: none; position: fixed; inset: 0; z-index: 99999; overflow-y: auto; background-color: var(--bg-color-base, #060608); background-image: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, rgba(0,0,0,0.9) 100%); color: #eee; font-family: sans-serif; padding-bottom: 50px;">
+
+    <style>
+        #arcade-store-overlay * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        #arcade-store-overlay {
+            --glass-bg: rgba(15, 15, 25, 0.75); --glass-border: rgba(255, 255, 255, 0.1);
+            --neon-blue: #38bdf8; --neon-purple: #a855f7; --neon-red: #ef4444;
+            --neon-green: #10b981; --neon-cyan: #06b6d4;
         }
+        #arcade-store-overlay .meme-header { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 15px 20px 15px; border-bottom: 2px dashed var(--neon-blue); background: rgba(8, 8, 12, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 0 0 20px 20px; margin-bottom: 10px; box-shadow: 0 8px 25px -5px rgba(56, 189, 248, 0.4); position: relative; }
+        #arcade-store-overlay .back-link { position: absolute; top: 15px; left: 15px; color: var(--neon-blue); font-size: 10px; font-weight: 900; letter-spacing: 1px; cursor: pointer; text-decoration: none; padding: 5px; }
+        #arcade-store-overlay .splash-title { color: #fff; font-family: monospace; font-size: 32px; font-weight: 900; letter-spacing: 5px; text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); text-align: center; }
+        #arcade-store-overlay .splash-sub { color: #94a3b8; font-size: 10px; letter-spacing: 2px; margin-top: 5px; text-align: center; text-transform: uppercase;}
+        #arcade-store-overlay .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
+        #arcade-store-overlay .search-input { width: 100%; padding: 12px 15px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; outline: none; text-align: center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s; }
+        #arcade-store-overlay .search-input:focus { box-shadow: 0 0 15px var(--neon-blue); }
+        #arcade-store-overlay .sys-filter-container { display: flex; gap: 8px; overflow-x: auto; padding: 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap; margin: 0; }
+        #arcade-store-overlay .sys-filter-container::-webkit-scrollbar { display: none; }
+        #arcade-store-overlay .sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 38px; border-radius: 10px; font-weight: 900; font-size: 10px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: none; }
+        #arcade-store-overlay .sys-filter-btn.active { filter: brightness(1.2); box-shadow: inset 0 0 10px currentColor; border-width: 2px; }
+        #arcade-store-overlay .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 0 15px; max-width: 1200px; margin: 0 auto; background: none; border: none;}
+        #arcade-store-overlay .game-card { position: relative; overflow: hidden; background-color: var(--glass-bg); backdrop-filter: blur(15px); border: 1px solid var(--glass-border); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; transition: 0.2s; min-height: 190px; background-size: cover; background-position: center; cursor: pointer; margin: 0; }
+        #arcade-store-overlay .game-card:active { transform: scale(0.96); }
+        #arcade-store-overlay .game-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, rgba(0,0,0,0.4) 100%); z-index: 1; pointer-events: none; transition: none; }
+        #arcade-store-overlay .game-title { position: relative; z-index: 3; width: 100%; padding: 10px 8px; font-size: 11px; font-weight: bold; text-align: center; color: #fff; text-shadow: 1px 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: none; border-radius: 0; }
+        #arcade-store-overlay .heart-btn { position: absolute; top: 10px; right: 10px; z-index: 10; width: 36px; height: 36px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.3s; cursor: pointer; backdrop-filter: blur(5px); }
+        #arcade-store-overlay .heart-btn svg { width: 16px; height: 16px; fill: none; stroke: rgba(255,255,255,0.6); stroke-width: 2; transition: 0.3s; }
+        #arcade-store-overlay .heart-btn:active { transform: scale(0.8); }
+        #arcade-store-overlay .heart-btn.loading svg { animation: spin 1s linear infinite; stroke: var(--neon-red); }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #arcade-store-overlay .installed .heart-btn { border-color: var(--neon-red); background: rgba(239, 68, 68, 0.15); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 10px rgba(239, 68, 68, 0.4); filter: drop-shadow(0 0 5px var(--neon-red)); }
+        #arcade-store-overlay .installed .heart-btn::after { content: '❤️'; position: absolute; font-size: 18px; filter: drop-shadow(0 0 8px red); animation: heartbeat 1.5s infinite; }
+        #arcade-store-overlay .installed .heart-btn svg { display: none; }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        #arcade-store-overlay .sys-badge { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; z-index: 5; color: #fff; text-transform: uppercase; box-shadow: none; transform: none; text-shadow: none;}
+        #arcade-store-overlay .sys-nes { border-color: var(--neon-red); box-shadow: none; } #arcade-store-overlay .badge-nes { background: var(--neon-red); box-shadow: none;}
+        #arcade-store-overlay .sys-smd { border-color: #2563eb; box-shadow: none; } #arcade-store-overlay .badge-smd { background: #2563eb; box-shadow: none;} 
+        #arcade-store-overlay .sys-gba { border-color: var(--neon-purple); box-shadow: none; } #arcade-store-overlay .badge-gba { background: var(--neon-purple); box-shadow: none;}
+        #arcade-store-overlay .sys-snes { border-color: #8b5cf6; box-shadow: none; } #arcade-store-overlay .badge-snes { background: #8b5cf6; box-shadow: none;}
+        #arcade-store-overlay .sys-ngp { border-color: var(--neon-cyan); box-shadow: none; } #arcade-store-overlay .badge-ngp { background: var(--neon-cyan); box-shadow: none;}
+        #arcade-store-overlay .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: bold; color: rgba(255,255,255,0.2); letter-spacing: 2px; z-index: 2; opacity: 0.8; text-shadow: none; margin: 0; }
+        
+        /* Стили фокуса для геймпада Хаба */
+        .hub-focus { outline: 3px solid var(--neon-blue) !important; transform: scale(1.05); filter: brightness(1.2); box-shadow: 0 0 20px var(--neon-blue); z-index: 10; transition: all 0.1s; }
+    </style>
 
-        // Вызываем твою основную функцию обработки
-        if (typeof window.processSingleFile === 'function') {
-            window.processSingleFile(file).then(() => {
-                console.log("Игра загружена через мост");
-                
-                // --- ТОЧЕЧНЫЙ ФИКС 3: Автоочистка песочницы ---
-                if (isPreview) {
-                    setTimeout(() => {
-                        const req = indexedDB.open("ArcadeDB", 1);
-                        req.onsuccess = (e) => {
-                            const db = e.target.result;
-                            const tx = db.transaction("games", "readwrite");
-                            const store = tx.objectStore("games");
-                            // Находим и удаляем игру-времянку, чтобы не засорять БД эмулятора
-                            store.openCursor().onsuccess = (ev) => {
-                                const cursor = ev.target.result;
-                                if (cursor) {
-                                    if (cursor.value.title === gameObj.title) cursor.delete();
-                                    else cursor.continue();
-                                }
-                            };
-                        };
-                    }, 15000); // 15 секунд хватит для загрузки в оперативку ядра
-                }
-            });
-        }
-    };
+    <div class="meme-header">
+        <div class="back-link hub-nav-item" onclick="toggleArcadeStore(false)">◀ ЗАКРЫТЬ МАГАЗИН</div>
+        <div class="splash-title">ARCADE STORE</div>
+        <div class="splash-sub">QUANTUM ROM STORAGE</div>
+        <div class="search-box">
+            <input type="text" id="storeSearchInput" class="search-input hub-nav-item" placeholder="ПОИСК ПО БАЗЕ..." oninput="triggerStoreSearch()">
+        </div>
+    </div>
 
-    // РЕЖИМ 1: ОФФЛАЙН (Запуск по ID из ArcadeDB)
-    if (localId) {
-        const request = indexedDB.open("ArcadeDB", 1);
-        request.onsuccess = (e) => {
-            const db = e.target.result;
-            const tx = db.transaction("games", "readonly");
-            
-            // Обязательно преобразуем ID в число, чтобы база его нашла!
-            tx.objectStore("games").get(parseInt(localId)).onsuccess = (ev) => {
-                launchFromData(ev.target.result);
-            };
+    <div class="sys-filter-container" id="store-filter-bar"></div>
+    <div class="grid" id="store-game-grid"></div>
+
+    <script>
+        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
+        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
+        
+        let storeAllGames = [];
+        let storeInstalledMap = new Map(); 
+        let dbStore;
+        let isHubOpen = false;
+
+        const storeSysInfo = {
+            'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'NES', color: '#ef4444' },
+            'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SMD', color: '#2563eb' },
+            'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA', color: '#a855f7' },
+            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', color: '#8b5cf6' },
+            'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', color: '#06b6d4' } 
         };
-    } 
-    
-    // РЕЖИМ 2: ОНЛАЙН (Загрузка по прямой ссылке для "Обзора")
-    else if (romUrl) {
-        fetch(decodeURIComponent(romUrl))
-            .then(res => res.blob())
-            .then(blob => {
-                const gameData = {
-                    title: decodeURIComponent(romUrl).split('/').pop().replace('.zip', ''),
-                    data: blob
+
+        // --- ФИКС СКРОЛЛА (Пробиваем блокировку touchmove из эмулятора) ---
+        document.getElementById('arcade-store-overlay').addEventListener('touchmove', function(e) {
+            e.stopPropagation(); // Не даем глобальному preventDefault заблокировать экран
+        }, { passive: true });
+
+        // --- ЛОГИКА ОТКРЫТИЯ/ЗАКРЫТИЯ И ИЗОЛЯЦИИ ---
+        function toggleArcadeStore(show) {
+            const overlay = document.getElementById('arcade-store-overlay');
+            const menuScreen = document.getElementById('menuScreen');
+            isHubOpen = show;
+            
+            if (show) {
+                overlay.style.display = 'block';
+                if (menuScreen) menuScreen.style.display = 'none'; // Прячем меню эмулятора (отключает задний скролл и геймпад)
+                initStoreDB(); 
+                history.pushState({store:true}, '', '#store');
+                requestAnimationFrame(pollHubGamepad);
+            } else {
+                overlay.style.display = 'none';
+                if (menuScreen) menuScreen.style.display = 'flex'; // Возвращаем меню эмулятора
+                if (window.location.hash === '#store') history.back();
+            }
+        }
+
+        // Фикс системной кнопки "Назад" (Android Back)
+        window.addEventListener('popstate', () => {
+            if (isHubOpen && window.location.hash !== '#store') toggleArcadeStore(false);
+        });
+
+        function initStoreDB() {
+            const request = indexedDB.open("ArcadeHubDB", 2);
+            request.onsuccess = (e) => { 
+                dbStore = e.target.result; 
+                syncStoreWithLocal().then(() => {
+                    if(storeAllGames.length === 0) loadStoreCatalog();
+                    else renderStoreGames(storeAllGames);
+                });
+            };
+        }
+
+        async function syncStoreWithLocal() {
+            return new Promise((resolve) => {
+                const tx = dbStore.transaction("games", "readonly");
+                const store = tx.objectStore("games");
+                store.getAll().onsuccess = (ev) => {
+                    storeInstalledMap.clear();
+                    ev.target.result.forEach(g => {
+                        if (g.n) storeInstalledMap.set(g.n, g.id); 
+                        else if (g.title) storeInstalledMap.set(g.title, g.id); 
+                    });
+                    resolve();
                 };
-                launchFromData(gameData);
+            });
+        }
+
+        async function loadStoreCatalog() {
+            try {
+                const res = await fetch(WAREHOUSE_URL + 'master_registry.json');
+                storeAllGames = await res.json();
+                buildStoreFilters();
+                renderStoreGames(storeAllGames);
+            } catch (e) { console.error("Cloud error", e); }
+        }
+
+        function buildStoreFilters() {
+            const bar = document.getElementById('store-filter-bar');
+            bar.innerHTML = '<button class="sys-filter-btn hub-nav-item active" style="color:#fff; border-color:#fff;" onclick="filterStoreGames(\'all\', this)">ВСЕ</button>';
+            const systems = [...new Set(storeAllGames.map(g => g.sys))];
+            systems.forEach(sys => {
+                const info = storeSysInfo[sys] || { name: sys.toUpperCase(), color: '#fff' };
+                const btn = document.createElement('button');
+                btn.className = 'sys-filter-btn hub-nav-item';
+                btn.style.color = info.color;
+                btn.style.borderColor = info.color + '44';
+                btn.textContent = info.name;
+                btn.onclick = (e) => filterStoreGames(sys, e.target);
+                bar.appendChild(btn);
+            });
+        }
+
+        function filterStoreGames(sys, btn) {
+            document.querySelectorAll('#store-filter-bar .sys-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderStoreGames(sys === 'all' ? storeAllGames : storeAllGames.filter(g => g.sys === sys));
+        }
+
+        function triggerStoreSearch() {
+            const q = document.getElementById('storeSearchInput').value.toLowerCase();
+            renderStoreGames(storeAllGames.filter(g => g.title.toLowerCase().includes(q)));
+        }
+
+        function renderStoreGames(list) {
+            const grid = document.getElementById('store-game-grid');
+            grid.innerHTML = '';
+            const heartSvg = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+
+            list.forEach(game => {
+                const info = storeSysInfo[game.sys] || { css: '', badge: '', name: game.sys };
+                const isInst = storeInstalledMap.has(game.title);
+                const localId = isInst ? storeInstalledMap.get(game.title) : null;
+                const cover = WAREHOUSE_URL + game.url.replace('.zip', '.png');
+
+                const card = document.createElement('div');
+                card.className = `game-card hub-nav-item ${info.css} ${isInst ? 'installed' : ''}`;
+                card.style.backgroundImage = `url('${cover}')`;
                 
-            })
-            .catch(err => console.error("Ошибка моста:", err));
-    }
-});
-</script>
+                card.onclick = (e) => {
+                    if (e.target.closest('.heart-btn')) return; 
+                    launchGameDirectly(game, isInst, localId);
+                };
+
+                card.innerHTML = `
+                    <div class="heart-btn" onclick="installGameFromStore(event, this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')">${heartSvg}</div>
+                    <div class="no-cover-icon">NO COVER</div>
+                    <div class="sys-badge ${info.badge}">${info.name}</div>
+                    <div class="game-title">${game.title}</div>
+                `;
+                const img = new Image();
+                img.onload = () => { if(card.querySelector('.no-cover-icon')) card.querySelector('.no-cover-icon').style.display='none'; };
+                img.src = cover;
+                grid.appendChild(card);
+            });
+            hubNavIndex = 0; // Сбрасываем индекс курсора геймпада при рендеринге
+        }
+
+        // === УМНАЯ РАСПАКОВКА АРХИВОВ ДЛЯ ДЕНДИ И SNES ===
+        async function extractRomForCore(blob, title, sys) {
+            if (sys === 'dos' || sys === 'html') {
+                const ext = sys === 'html' ? '.html' : '.zip';
+                const type = sys === 'html' ? 'text/html' : 'application/zip';
+                return new File([blob], title + ext, {type, lastModified: Date.now()});
+            }
+            // Распаковываем ZIP прямо в оперативной памяти (решает краш Денди)
+            const buffer = await blob.arrayBuffer();
+            const arr = new Uint8Array(buffer);
+            if (typeof fflate !== 'undefined') {
+                const unzipped = fflate.unzipSync(arr);
+                for (const path in unzipped) {
+                    const ext = path.split('.').pop().toLowerCase();
+                    if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'txt') {
+                        return new File([unzipped[path]], path.split('/').pop(), {type: "application/octet-stream", lastModified: Date.now()});
+                    }
+                }
+            }
+            return new File([blob], title + ".zip", {type: "application/zip", lastModified: Date.now()});
+        }
+
+        // === СКАЧИВАНИЕ ===
+        async function installGameFromStore(event, btn, sys, url, title) {
+            event.stopPropagation();
+            if (btn.parentElement.classList.contains('installed')) return;
+            btn.classList.add('loading');
+
+            try {
+                const blob = await fetch(RAW_URL + url).then(r => r.blob());
+                const file = await extractRomForCore(blob, title, sys);
+                
+                // Подтягиваем обложку, чтобы эмулятору не пришлось делать это дважды
+                try {
+                    const coverBlob = await fetch(WAREHOUSE_URL + url.replace('.zip', '.png')).then(r => r.blob());
+                    const reader = new FileReader();
+                    file._customCover = await new Promise(res => { reader.onloadend = () => res(reader.result); reader.readAsDataURL(coverBlob); });
+                } catch(e) {}
+
+                // Пропускаем через родной парсер эмулятора
+                await window.processSingleFile(file);
+                
+                storeInstalledMap.set(title, "installed"); 
+                btn.classList.remove('loading');
+                btn.parentElement.classList.add('installed');
+                
+                if(typeof renderAllGames === 'function') renderAllGames();
+                
+            } catch (e) {
+                btn.classList.remove('loading');
+                console.error(e);
+            }
+        }
+
+        // === ПРЯМОЙ ЗАПУСК / ПРОСМОТР (ФИКС ВОЗВРАТА В МЕНЮ) ===
+        function launchGameDirectly(game, isInst, localId) {
+            toggleArcadeStore(false); 
+
+            const startAndFind = async (blob, title, sys) => {
+                const file = await extractRomForCore(blob, title, sys);
+                
+                // 1. Скармливаем парсеру
+                await window.processSingleFile(file);
+                if(typeof renderAllGames === 'function') renderAllGames();
+                
+                // 2. СРАЗУ ЖЕ запускаем добавленную игру (лечит вылет в меню при просмотре)
+                const req = dbStore.transaction("games", "readonly").objectStore("games").getAll();
+                req.onsuccess = (ev) => {
+                    const gamesList = ev.target.result;
+                    // Ищем игру с конца, так как она только что добавлена
+                    const targetGame = gamesList.slice().reverse().find(g => g.n === title);
+                    if(targetGame && typeof startGame === 'function') startGame(targetGame);
+                };
+            };
+
+            if (isInst && localId) {
+                dbStore.transaction("games", "readonly").objectStore("games").get(localId).onsuccess = (ev) => {
+                    const g = ev.target.result;
+                    if(g && typeof startGame === 'function') startGame(g);
+                };
+            } else {
+                fetch(RAW_URL + game.url).then(r => r.blob()).then(blob => {
+                    startAndFind(blob, game.title, game.sys);
+                }).catch(err => {
+                    toggleArcadeStore(true);
+                });
+            }
+        }
+
+        // ==========================================
+        // РАДАР УПРАВЛЕНИЯ ХАБОМ (Геймпад + Клава)
+        // ==========================================
+        let hubNavIndex = 0;
+        let lastHubGpTime = 0;
+
+        function pollHubGamepad() {
+            if (!isHubOpen) return;
+            const gp = navigator.getGamepads ? navigator.getGamepads()[0] : null;
+            if (gp && Date.now() - lastHubGpTime > 150) {
+                let dx = 0, dy = 0;
+                if (gp.axes[0] < -0.5 || gp.buttons[14]?.pressed) dx = -1;
+                if (gp.axes[0] > 0.5 || gp.buttons[15]?.pressed) dx = 1;
+                if (gp.axes[1] < -0.5 || gp.buttons[12]?.pressed) dy = -1;
+                if (gp.axes[1] > 0.5 || gp.buttons[13]?.pressed) dy = 1;
+
+                const btns = Array.from(document.querySelectorAll('#arcade-store-overlay .hub-nav-item'));
+                if (btns.length > 0 && (dx !== 0 || dy !== 0)) {
+                    lastHubGpTime = Date.now();
+                    btns.forEach(b => b.classList.remove('hub-focus'));
+                    
+                    if (dy !== 0) hubNavIndex += dy * 4; // Прыжок по сетке
+                    else hubNavIndex += dx;
+                    
+                    if (hubNavIndex < 0) hubNavIndex = 0;
+                    if (hubNavIndex >= btns.length) hubNavIndex = btns.length - 1;
+                    
+                    btns[hubNavIndex].classList.add('hub-focus');
+                    btns[hubNavIndex].scrollIntoView({block: 'center', behavior: 'smooth'});
+                }
+                
+                if (gp.buttons[0]?.pressed && btns[hubNavIndex]) {
+                    lastHubGpTime = Date.now() + 300;
+                    btns[hubNavIndex].click();
+                }
+                if (gp.buttons[1]?.pressed) {
+                    lastHubGpTime = Date.now() + 300;
+                    toggleArcadeStore(false);
+                }
+            }
+            requestAnimationFrame(pollHubGamepad);
+        }
+
+        // Поддержка Клавиатуры в Хабе
+        document.addEventListener('keydown', (e) => {
+            if (!isHubOpen) return;
+            const btns = Array.from(document.querySelectorAll('#arcade-store-overlay .hub-nav-item'));
+            if (btns.length === 0) return;
+            
+            let dx = 0, dy = 0;
+            if (e.key === 'ArrowLeft') dx = -1;
+            if (e.key === 'ArrowRight') dx = 1;
+            if (e.key === 'ArrowUp') dy = -1;
+            if (e.key === 'ArrowDown') dy = 1;
+            
+            if (dx !== 0 || dy !== 0) {
+                e.preventDefault();
+                btns.forEach(b => b.classList.remove('hub-focus'));
+                if (dy !== 0) hubNavIndex += dy * 4;
+                else hubNavIndex += dx;
+                
+                if (hubNavIndex < 0) hubNavIndex = 0;
+                if (hubNavIndex >= btns.length) hubNavIndex = btns.length - 1;
+                
+                btns[hubNavIndex].classList.add('hub-focus');
+                btns[hubNavIndex].scrollIntoView({block: 'center', behavior: 'smooth'});
+            }
+            
+            if (e.key === 'Enter' || e.key === 'z' || e.key === 'x') {
+                e.preventDefault();
+                btns[hubNavIndex].click();
+            }
+            if (e.key === 'Escape') toggleArcadeStore(false);
+        });
+
+    </script>
+</div>
+
+
 
 
 
