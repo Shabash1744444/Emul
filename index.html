@@ -7599,96 +7599,63 @@ trySet('vk_btn_close', d.vk_close);
 
 
                             
-
 <script>
-// --- ПРИЕМНИК ИГР ИЗ ХАБА ---
+// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА ===
 window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sysParam = urlParams.get('sys');
-    const romUrl = urlParams.get('rom');
-    const isPreview = urlParams.get('preview') === 'true'; 
-    const fromHub = urlParams.get('from_hub') === 'true'; 
+    const params = new URLSearchParams(window.location.search);
+    const sys = params.get('sys');
+    const romUrl = params.get('rom');
+    const localId = params.get('localGame');
+    const isPreview = params.get('preview') === 'true';
 
-    if (sysParam && romUrl) {
-        window.currentSystem = sysParam; 
+    if (!sys) return; // Если зашли просто так — ничего не делаем
 
-        // ЕСЛИ ПРИШЛИ ИЗ ХАБА
-        if (fromHub) {
-            // 1. Перехват системной кнопки телефона "Назад"
-            window.history.pushState({hub: true}, '', window.location.href);
-            window.addEventListener('popstate', () => { window.location.href = 'hub.html'; });
-
-            // 2. Скрываем лишние кнопки в твоем родном меню эмулятора
-            const style = document.createElement('style');
-            style.innerHTML = `
-                .menu-item:not(.controls):not(.back) { display: none !important; }
-                #menuBtn { display: none !important; }
-            `;
-            document.head.appendChild(style);
-
-            // 3. Жесткий перехват твоей кнопки "Назад ◀️" внутри эмулятора
-            setTimeout(() => {
-                document.querySelectorAll('div, button, li').forEach(el => {
-                    if (el.textContent.includes('Назад') || el.textContent.includes('В МЕНЮ')) {
-                        el.onclick = (e) => { e.preventDefault(); window.location.href = 'hub.html'; };
-                    }
-                });
-            }, 1000);
+    // Функция для запуска игры из объекта в БД
+    const launchFromData = (gameObj) => {
+        if (!gameObj || !gameObj.data) return;
+        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {type: "application/x-zip-compressed"});
+        
+        // Вызываем твою основную функцию обработки (она есть в твоих 7000 строках)
+        if (typeof window.processSingleFile === 'function') {
+            window.processSingleFile(file).then(() => {
+                // Если нужно автоматическое нажатие кнопки "Старт" — добавь вызов здесь
+                console.log("Игра загружена через мост");
+            });
         }
+    };
 
-        const checkDbAndLoad = () => {
-            if (typeof db !== 'undefined' && db) startDownload();
-            else setTimeout(checkDbAndLoad, 200); 
+    // РЕЖИМ 1: ОФФЛАЙН (Запуск по ID из ArcadeDB)
+    if (localId) {
+        const request = indexedDB.open("ArcadeDB", 1);
+        request.onsuccess = (e) => {
+            const db = e.target.result;
+            const tx = db.transaction("games", "readonly");
+            tx.objectStore("games").get(parseInt(localId)).onsuccess = (ev) => {
+                launchFromData(ev.target.result);
+            };
         };
-
-        const startDownload = () => {
-            const splash = document.getElementById('splashScreen');
-            if (splash) splash.classList.remove('hidden');
-
-            fetch(romUrl)
-                .then(res => res.blob())
-                .then(blob => {
-                    const fileName = decodeURIComponent(romUrl.split('/').pop());
-                    
-                    // 💡 ФИКС ДЛЯ ДЕНДИ
-                    const file = new File([blob], fileName, { 
-                        type: "application/x-zip-compressed",
-                        lastModified: Date.now() 
-                    });
-                    
-                    return window.processSingleFile(file);
-                })
-                .then(() => {
-                    const tx = db.transaction(["games"], "readonly");
-                    const store = tx.objectStore("games");
-                    
-                    store.getAll().onsuccess = (e) => {
-                        const games = e.target.result;
-                        if (games.length > 0) {
-                            const latestGame = games.sort((a, b) => b.id - a.id)[0];
-                            
-                            window.history.replaceState({hub: fromHub}, '', window.location.pathname);
-                            startGame(latestGame);
-
-                            // Самоочистка для демо-режима
-                            if (isPreview) {
-                                setTimeout(() => {
-                                    const delTx = db.transaction(["games"], "readwrite");
-                                    delTx.objectStore("games").delete(latestGame.id);
-                                }, 15000); 
-                            }
-                        }
-                    };
-                })
-                .catch(err => {
-                    if (splash) splash.classList.add('hidden');
-                });
-        };
-
-        checkDbAndLoad();
+    } 
+    
+    // РЕЖИМ 2: ОНЛАЙН (Загрузка по прямой ссылке для "Обзора")
+    else if (romUrl) {
+        fetch(decodeURIComponent(romUrl))
+            .then(res => res.blob())
+            .then(blob => {
+                const gameData = {
+                    title: decodeURIComponent(romUrl).split('/').pop().replace('.zip', ''),
+                    data: blob
+                };
+                launchFromData(gameData);
+                
+                // Если это превью — можно добавить логику удаления через 15 минут, 
+                // но для стабильности пока просто запускаем.
+            })
+            .catch(err => console.error("Ошибка моста:", err));
     }
 });
 </script>
+
+
                             
         
 
