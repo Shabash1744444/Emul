@@ -7597,63 +7597,66 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
-                            
 <script>
-// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА ===
 window.addEventListener('load', () => {
     const params = new URLSearchParams(window.location.search);
     const sys = params.get('sys');
     const romUrl = params.get('rom');
     const localId = params.get('localGame');
-    const isPreview = params.get('preview') === 'true';
 
-    if (!sys) return; // Если зашли просто так — ничего не делаем
+    // Если нет параметра системы - значит мы зашли не из Хаба, ничего не делаем
+    if (!sys) return;
 
-    // Функция для запуска игры из объекта в БД
-    const launchFromData = (gameObj) => {
-        if (!gameObj || !gameObj.data) return;
-        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {type: "application/x-zip-compressed"});
-        
-        // Вызываем твою основную функцию обработки (она есть в твоих 7000 строках)
-        if (typeof window.processSingleFile === 'function') {
-            window.processSingleFile(file).then(() => {
-                // Если нужно автоматическое нажатие кнопки "Старт" — добавь вызов здесь
-                console.log("Игра загружена через мост");
-            });
-        }
-    };
+    // Вспомогательная функция
+    function getCoreTypeBridge(s) {
+        if (s === 'nes') return 'n';
+        if (s === 'dos') return 'd';
+        if (s === 'html') return 'h';
+        return 'l';
+    }
 
-    // РЕЖИМ 1: ОФФЛАЙН (Запуск по ID из ArcadeDB)
+    // РЕЖИМ 1: ИГРАТЬ (Установлено)
     if (localId) {
-        const request = indexedDB.open("ArcadeDB", 1);
-        request.onsuccess = (e) => {
+        const req = indexedDB.open("ArcadeDB", 1);
+        req.onsuccess = (e) => {
             const db = e.target.result;
             const tx = db.transaction("games", "readonly");
             tx.objectStore("games").get(parseInt(localId)).onsuccess = (ev) => {
-                launchFromData(ev.target.result);
+                const gameObj = ev.target.result;
+                if (gameObj && typeof window.startGame === 'function') {
+                    // Задержка чтобы UI успел прогрузиться
+                    setTimeout(() => window.startGame(gameObj), 500);
+                }
             };
         };
     } 
-    
-    // РЕЖИМ 2: ОНЛАЙН (Загрузка по прямой ссылке для "Обзора")
+    // РЕЖИМ 2: ОБЗОР (Скачивание на лету)
     else if (romUrl) {
         fetch(decodeURIComponent(romUrl))
             .then(res => res.blob())
             .then(blob => {
-                const gameData = {
-                    title: decodeURIComponent(romUrl).split('/').pop().replace('.zip', ''),
-                    data: blob
-                };
-                launchFromData(gameData);
+                const urlObj = decodeURIComponent(romUrl);
+                const title = urlObj.split('/').pop().replace('.zip', '');
+                const ext = urlObj.split('.').pop();
                 
-                // Если это превью — можно добавить логику удаления через 15 минут, 
-                // но для стабильности пока просто запускаем.
+                // Создаем ИДЕАЛЬНЫЙ объект, который требует startGame
+                const gameObj = {
+                    n: title,
+                    sys: sys,
+                    ext: ext,
+                    t: getCoreTypeBridge(sys),
+                    fileBlob: blob
+                };
+                
+                if (typeof window.startGame === 'function') {
+                    setTimeout(() => window.startGame(gameObj), 500);
+                }
             })
-            .catch(err => console.error("Ошибка моста:", err));
+            .catch(err => console.error("Ошибка загрузки в режиме Обзора:", err));
     }
 });
 </script>
+                            
 
 
                             
