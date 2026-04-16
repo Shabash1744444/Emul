@@ -13,6 +13,7 @@
             --neon-purple: #a855f7;
             --neon-red: #ef4444;
             --neon-green: #10b981;
+            --neon-cyan: #06b6d4;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -91,36 +92,48 @@
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         }
 
-        /* КНОПКА СКАЧИВАНИЯ (СЕРДЦЕ) */
+        /* --- КНОПКА СКАЧИВАНИЯ (СЕРДЦЕ) --- */
         .heart-btn {
             position: absolute; top: 10px; right: 10px; z-index: 10;
             width: 36px; height: 36px; background: rgba(0,0,0,0.6); 
             border: 1px solid rgba(255,255,255,0.2); border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; transition: 0.3s; cursor: pointer;
-            backdrop-filter: blur(5px);
+            transition: 0.3s; cursor: pointer; backdrop-filter: blur(5px);
         }
+        .heart-btn svg { width: 16px; height: 16px; fill: none; stroke: rgba(255,255,255,0.6); stroke-width: 2; transition: 0.3s; }
         .heart-btn:active { transform: scale(0.8); }
         
         /* Анимация загрузки */
-        .heart-btn.loading { animation: spin 1s linear infinite; font-size: 14px; color: var(--neon-blue); border-color: var(--neon-blue); }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .heart-btn.loading svg { animation: heartbeat 1s linear infinite; stroke: var(--neon-red); }
+        
+        /* Состояние "Установлено" (СИЯНИЕ И ЭМОДЗИ) */
+        .installed .heart-btn { 
+            border-color: var(--neon-red); 
+            background: rgba(239, 68, 68, 0.15); 
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 10px rgba(239, 68, 68, 0.4); 
+        }
+        .installed .heart-btn::after { 
+            content: '❤️'; 
+            position: absolute;
+            font-size: 18px; 
+            filter: drop-shadow(0 0 8px red); 
+            animation: heartbeat 1.5s infinite; 
+        }
+        .installed .heart-btn svg { display: none; } /* Прячем контур, когда игра установлена */
 
-        /* Состояние "Установлено" */
-        .installed .heart-btn { border-color: var(--neon-red); background: rgba(239, 68, 68, 0.15); }
-        .installed .heart-btn::after { content: '❤️'; filter: drop-shadow(0 0 5px red); animation: heartbeat 1.5s infinite; }
-        @keyframes heartbeat { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes heartbeat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 
         /* БЕЙДЖИ */
         .sys-badge { position: absolute; top: 10px; left: 10px; padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; z-index: 5; color: #fff; text-transform: uppercase; }
 
-        /* СИСТЕМНЫЕ СТИЛИ */
+        /* СИСТЕМНЫЕ СТИЛИ (NGP теперь бирюзовый) */
         .sys-nes { border-color: var(--neon-red); } .badge-nes { background: var(--neon-red); }
         .sys-smd { border-color: var(--neon-blue); } .badge-smd { background: var(--neon-blue); }
         .sys-gba { border-color: var(--neon-purple); } .badge-gba { background: var(--neon-purple); }
-        .sys-snes { border-color: #a855f7; } .badge-snes { background: #a855f7; }
+        .sys-snes { border-color: #8b5cf6; } .badge-snes { background: #8b5cf6; }
+        .sys-ngp { border-color: var(--neon-cyan); } .badge-ngp { background: var(--neon-cyan); }
 
-        .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; z-index: 2; opacity: 0.3; }
+        .no-cover-icon { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 10px; font-weight: bold; color: rgba(255,255,255,0.2); letter-spacing: 2px; z-index: 2; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -145,15 +158,24 @@
         const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
         
         let allGames = [];
-        let installedMap = new Map(); // Хранит { title: id }
+        let installedMap = new Map(); 
         let db;
 
         const sysInfo = {
             'nes': { css: 'sys-nes', badge: 'badge-nes', name: 'NES', color: '#ef4444' },
             'smd': { css: 'sys-smd', badge: 'badge-smd', name: 'SMD', color: '#38bdf8' },
             'gba': { css: 'sys-gba', badge: 'badge-gba', name: 'GBA', color: '#a855f7' },
-            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', color: '#8b5cf6' }
+            'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', color: '#8b5cf6' },
+            'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', color: '#06b6d4' } // Бирюзовый цвет!
         };
+
+        // Помощник для эмулятора
+        function getCoreType(sys) {
+            if (sys === 'nes') return 'n';
+            if (sys === 'dos') return 'd';
+            if (sys === 'html') return 'h';
+            return 'l'; // libretro
+        }
 
         // --- ИНИЦИАЛИЗАЦИЯ ARCADE DB ---
         const request = indexedDB.open("ArcadeDB", 1);
@@ -169,7 +191,6 @@
             syncWithLocal().then(() => loadCatalog());
         };
 
-        // Синхронизация: проверяем, что уже скачано в эмулятор
         async function syncWithLocal() {
             return new Promise((resolve) => {
                 const tx = db.transaction("games", "readonly");
@@ -177,7 +198,7 @@
                 store.getAll().onsuccess = (ev) => {
                     installedMap.clear();
                     ev.target.result.forEach(g => {
-                        if (g.title) installedMap.set(g.title, g.id);
+                        if (g.n) installedMap.set(g.n, g.id); // Синхрон строго по имени (n)
                     });
                     resolve();
                 };
@@ -223,6 +244,9 @@
         function renderGames(list) {
             const grid = document.getElementById('game-grid');
             grid.innerHTML = '';
+            
+            const heartSvg = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+
             list.forEach(game => {
                 const info = sysInfo[game.sys] || { css: '', badge: '', name: game.sys };
                 const isInst = installedMap.has(game.title);
@@ -233,7 +257,6 @@
                 card.className = `game-card ${info.css} ${isInst ? 'installed' : ''}`;
                 card.style.backgroundImage = `url('${cover}')`;
                 
-                // КЛИК ПО ВСЕЙ КАРТОЧКЕ = ЗАПУСК
                 card.onclick = (e) => {
                     if (e.target.closest('.heart-btn')) return; 
                     launchGame(game, isInst, localId);
@@ -241,9 +264,9 @@
 
                 card.innerHTML = `
                     <div class="heart-btn" onclick="installGame(event, this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')">
-                        ${isInst ? '' : '⬇️'}
+                        ${heartSvg}
                     </div>
-                    <div class="no-cover-icon">🎮</div>
+                    <div class="no-cover-icon">NO COVER</div>
                     <div class="sys-badge ${info.badge}">${info.name}</div>
                     <div class="game-title">${game.title}</div>
                 `;
@@ -256,13 +279,12 @@
             });
         }
 
-        // --- ЛОГИКА СКАЧИВАНИЯ (СЕРДЦЕ) ---
+        // --- ЛОГИКА СКАЧИВАНИЯ С ИДЕАЛЬНОЙ БД ---
         async function installGame(event, btn, sys, url, title) {
             event.stopPropagation();
             if (btn.parentElement.classList.contains('installed')) return;
 
             btn.classList.add('loading');
-            btn.innerHTML = '⌛';
 
             try {
                 const res = await fetch(RAW_URL + url);
@@ -271,34 +293,35 @@
                 const tx = db.transaction("games", "readwrite");
                 const store = tx.objectStore("games");
                 
-                // Используем полные поля title, system, data для 100% синхрона с эмулятором
+                // ВАЖНО: сохраняем 1-в-1 как в твоем основном эмуляторе
+                const ext = url.split('.').pop();
                 const req = store.put({
-                    title: title,
-                    system: sys,
-                    data: blob,
+                    n: title,
+                    sys: sys,
+                    ext: ext,
+                    t: getCoreType(sys),
+                    fileBlob: blob,
                     timestamp: Date.now()
                 });
 
                 req.onsuccess = (e) => {
                     installedMap.set(title, e.target.result);
                     btn.classList.remove('loading');
-                    btn.innerHTML = '';
                     btn.parentElement.classList.add('installed');
                 };
             } catch (e) {
                 btn.classList.remove('loading');
-                btn.innerHTML = '❌';
+                console.error(e);
             }
         }
 
-        // --- ЗАПУСК (ПЕРЕХОД В INDEX.HTML) ---
+        // --- ЗАПУСК ---
         function launchGame(game, isInst, localId) {
+            // Если твой основной файл называется иначе, поменяй 'index.html' здесь
             const base = `index.html?sys=${game.sys}&hub=1`;
             if (isInst) {
-                // Если игра в базе — запускаем через оффлайн ID
                 window.location.href = `${base}&localGame=${localId}`;
             } else {
-                // Если нет — запускаем через онлайн URL с флагом временного просмотра
                 const fullUrl = RAW_URL + game.url;
                 window.location.href = `${base}&rom=${encodeURIComponent(fullUrl)}&preview=true`;
             }
