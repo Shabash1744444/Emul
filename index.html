@@ -7598,86 +7598,69 @@ trySet('vk_btn_close', d.vk_close);
 
 
 <script>
+// === ARCADE BRIDGE: ПРИЕМНИК ИЗ ХАБА (С АНТИ-БУТЛУПОМ) ===
 window.addEventListener('load', () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sys = urlParams.get('sys');
-    const romUrl = urlParams.get('rom');
-    const localId = urlParams.get('localGame');
+    const params = new URLSearchParams(window.location.search);
+    const sys = params.get('sys');
+    const romUrl = params.get('rom');
+    const localId = params.get('localGame');
+    const isPreview = params.get('preview') === 'true';
 
-    // Если нет системы — мы не из Хаба, просто игнорируем
-    if (!sys) return;
+    if (!sys) return; // Если зашли просто так — ничего не делаем
 
-    // 1. АНТИ-БУТЛУП: Мгновенно стираем параметры из URL без перезагрузки страницы!
-    // Теперь эмулятор не будет циклично перезапускаться.
-    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
-    window.history.replaceState(null, '', cleanUrl);
-
-    console.log("🚀 Arcade Bridge: Параметры перехвачены и очищены. Запуск:", sys);
-
-    function getCoreTypeBridge(s) {
-        if (s === 'nes') return 'n';
-        if (s === 'dos') return 'd';
-        if (s === 'html') return 'h';
-        return 'l';
+    // === ФИКС БУТЛУПА: Защита от двойного запуска и циклической перезагрузки ===
+    const sessionKey = `launched_${sys}_${localId || romUrl}`;
+    if (sessionStorage.getItem(sessionKey)) {
+        // Мы уже запускали эту игру в этой вкладке. Очищаем хвост URL и выходим!
+        window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+        return;
     }
+    // Ставим метку, что игра запущена
+    sessionStorage.setItem(sessionKey, 'true');
+    // Стираем хвост URL, чтобы при обновлении страницы ничего не повторялось
+    window.history.replaceState(null, '', window.location.pathname + window.location.hash);
+    // =======================================================================
 
-    // 2. УМНЫЙ ЗАПУСК: Ждем, пока твой огромный скрипт эмулятора полностью прогрузится
-    function safeStart(gameObj) {
-        let attempts = 0;
-        const checkReady = setInterval(() => {
-            if (typeof window.startGame === 'function') {
-                clearInterval(checkReady);
-                console.log("🎮 Запуск игры:", gameObj.n);
-                window.startGame(gameObj);
-            } else {
-                attempts++;
-                if (attempts > 20) { // Если за 10 секунд эмулятор не очнулся
-                    clearInterval(checkReady);
-                    console.error("❌ Ошибка моста: функция startGame не найдена в эмуляторе!");
-                }
-            }
-        }, 500);
-    }
+    // Функция для запуска игры из объекта в БД (ТВОЯ ЛОГИКА)
+    const launchFromData = (gameObj) => {
+        if (!gameObj || !gameObj.data) return;
+        const file = new File([gameObj.data], (gameObj.title || "game") + ".zip", {type: "application/x-zip-compressed"});
+        
+        // Вызываем твою основную функцию обработки
+        if (typeof window.processSingleFile === 'function') {
+            window.processSingleFile(file).then(() => {
+                console.log("Игра загружена через мост");
+            });
+        }
+    };
 
-    // РЕЖИМ 1: ИГРАТЬ (Установленная оффлайн игра)
+    // РЕЖИМ 1: ОФФЛАЙН (Запуск по ID из ArcadeDB)
     if (localId) {
-        const req = indexedDB.open("ArcadeDB", 1);
-        req.onsuccess = (e) => {
+        const request = indexedDB.open("ArcadeDB", 1);
+        request.onsuccess = (e) => {
             const db = e.target.result;
             const tx = db.transaction("games", "readonly");
             
-            // ВАЖНО: Конвертируем localId в строгое число (Number), иначе база его не найдет!
-            tx.objectStore("games").get(Number(localId)).onsuccess = (ev) => {
-                const gameObj = ev.target.result;
-                if (gameObj) {
-                    safeStart(gameObj);
-                } else {
-                    console.error("❌ Игра с ID", localId, "не найдена в локальной базе. Возможно, кэш был очищен.");
-                }
+            // Обязательно преобразуем ID в число, чтобы база его нашла!
+            tx.objectStore("games").get(parseInt(localId)).onsuccess = (ev) => {
+                launchFromData(ev.target.result);
             };
         };
     } 
-    // РЕЖИМ 2: ОБЗОР (Онлайн-кэширование)
+    
+    // РЕЖИМ 2: ОНЛАЙН (Загрузка по прямой ссылке для "Обзора")
     else if (romUrl) {
         fetch(decodeURIComponent(romUrl))
             .then(res => res.blob())
             .then(blob => {
-                const urlObj = decodeURIComponent(romUrl);
-                const title = urlObj.split('/').pop().replace('.zip', '');
-                const ext = urlObj.split('.').pop();
-                
-                // Собираем объект 1-в-1 как этого требует твой эмулятор
-                const gameObj = {
-                    n: title,
-                    sys: sys,
-                    ext: ext,
-                    t: getCoreTypeBridge(sys),
-                    fileBlob: blob
+                const gameData = {
+                    title: decodeURIComponent(romUrl).split('/').pop().replace('.zip', ''),
+                    data: blob
                 };
+                launchFromData(gameData);
                 
-                safeStart(gameObj);
             })
-            .catch(err => console.error("❌ Ошибка скачивания в режиме Обзора:", err));
+            .catch(err => console.error("Ошибка моста:", err));
     }
 });
 </script>
