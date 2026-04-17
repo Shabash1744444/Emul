@@ -10,6 +10,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Arcade Hub</title>
 <script src="https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js"></script>
+
+
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+
+
+
+
 <script>
     if (!navigator.getGamepads) {
         navigator.getGamepads = function() { return [null, null, null, null]; };
@@ -989,6 +999,20 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
             <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
+            
+            
+            
+            <button id="p2pBtn" class="action-btn" onclick="openP2P()" style="width: 44px; padding: 0; margin: 0; flex: none; border-color: var(--neon-blue) !important; background: rgba(56, 189, 248, 0.1) !important;">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--neon-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 5px var(--neon-blue));">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </svg>
+</button>
+
+            
+            
+            
             <button id="infoBtn" class="action-btn" style="width: 44px; padding: 0; margin: 0; flex: none;">
                 ℹ️
             </button>
@@ -1121,6 +1145,11 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     <iframe id="html-iframe"></iframe>
     <div id="canvasContainer">
         <div id="dos-overlay"></div>
+        
+        
+        
+        <video id="remoteVideo" autoplay playsinline style="position:absolute; inset:0; width:100%; height:100%; display:none; object-fit:contain; z-index:20; pointer-events:none;"></video>
+        
         
         <!-- --- БЛОКИ АНИМАЦИИ ПЕРЕНЕСЕНЫ СЮДА ДЛЯ РАЗМЕРА ИГРЫ --- -->
         <div id="crt-shutdown-overlay">
@@ -1592,12 +1621,24 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
 
 
 
+    // ==========================================
+    // --- БЛОК 5: ПЕРЕХВАТ ЗВУКА ДЛЯ СЕТИ ---
+    // ==========================================
+    AudioGen.masterGain = null;
+    AudioGen.streamDest = null;
 
     function initAudio() {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         if (!AudioContext) return 44100;
         if (!audioCtx || audioCtx.state === 'closed') {
             audioCtx = new AudioContext();
+            
+            // --- СОЗДАЕМ АУДИО-РАЗВЕТВИТЕЛЬ ---
+            AudioGen.masterGain = audioCtx.createGain(); 
+            AudioGen.masterGain.connect(audioCtx.destination); 
+            
+            AudioGen.streamDest = audioCtx.createMediaStreamDestination(); 
+            
             audioScriptNode = audioCtx.createScriptProcessor(4096, 0, 2);
             audioScriptNode.onaudioprocess = (e) => {
                 const outL = e.outputBuffer.getChannelData(0); 
@@ -1616,7 +1657,10 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     audioBufferR.splice(0, audioBufferR.length - 8192);
                 }
             };
-            audioScriptNode.connect(audioCtx.destination);
+            
+            // ПОДКЛЮЧАЕМ ИГРУ СРАЗУ В ОБА КАНАЛА
+            audioScriptNode.connect(AudioGen.masterGain);
+            audioScriptNode.connect(AudioGen.streamDest);
         }
         if (audioCtx.state === 'suspended') { 
             try { audioCtx.resume(); } catch(e) {} 
@@ -1624,13 +1668,13 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         return audioCtx.sampleRate;
     }
 
-    function stopAudio() {
-        audioBufferL = []; 
-        audioBufferR = [];
-        if (audioCtx?.state === 'running') { 
-            try { audioCtx.suspend(); } catch(e) {} 
-        }
-    }
+
+
+
+
+
+    
+   
 
     document.getElementById('infoBtn').addEventListener('click', (e) => { 
         e.preventDefault(); 
@@ -7639,6 +7683,234 @@ trySet('vk_btn_close', d.vk_close);
     });
 
     requestAnimationFrame(pollGamepadInGame);
+
+
+
+
+
+// ==========================================
+// --- БЛОК 4: P2P MULTIPLAYER CORE ---
+// ==========================================
+let p2pPeer = null;
+let p2pConn = null;
+let isGuestMode = false;
+
+// Проверяем, мы в APK (Capacitor) или браузере
+const isNativeApp = !!window.Capacitor || window.location.protocol === 'file:';
+
+// Проверка поддержки стриминга (нужен HTTPS или APK)
+function checkStreamingSupport() {
+    if (isNativeApp) return true;
+    if (window.location.protocol === 'https:' || window.location.hostname === 'localhost') return true;
+    return false;
+}
+
+// 1. ОТКРЫТИЕ МЕНЮ СЕТИ (По клику на иконку 🌐)
+function openP2P() {
+    if (!checkStreamingSupport()) {
+        // Браузер без HTTPS - просим скачать APK
+        const apkModal = document.getElementById('apkSuggestModal');
+        if(apkModal) apkModal.style.display = 'flex';
+    } else {
+        // Всё ок - открываем меню коннекта
+        const p2pModal = document.getElementById('p2pModalOverlay');
+        if(p2pModal) p2pModal.style.display = 'flex';
+        initP2P();
+    }
+}
+
+// Закрыть просьбу скачать APK и продолжить как "слепой" джойстик
+function closeApkSuggest() {
+    document.getElementById('apkSuggestModal').style.display = 'none';
+    document.getElementById('p2pModalOverlay').style.display = 'flex';
+    initP2P();
+    if (typeof showToast === 'function') showToast("Режим: ТОЛЬКО ГЕЙМПАД", "warning");
+}
+
+// 2. ИНИЦИАЛИЗАЦИЯ PEERJS (Создание узла связи)
+function initP2P(targetId = null) {
+    if (p2pPeer) return; // Защита от двойного запуска
+    
+    const statusEl = document.getElementById('p2p-status');
+    if (statusEl) statusEl.innerText = "Создание узла связи...";
+    
+    p2pPeer = new Peer(); 
+    
+    p2pPeer.on('open', id => {
+        if (targetId) {
+            // --- МЫ ГОСТЬ (Друг) ---
+            isGuestMode = true;
+            if (statusEl) statusEl.innerText = "Подключение к Хосту...";
+            p2pConn = p2pPeer.connect(targetId);
+            setupConnection(p2pConn);
+        } else {
+            // --- МЫ ХОСТ (Создатель комнаты) ---
+            const joinUrl = `${window.location.origin}${window.location.pathname}#join=${id}`;
+            
+            document.getElementById('qrcode-container').style.display = 'flex';
+            document.getElementById('p2p-settings').style.display = 'block';
+            if (statusEl) statusEl.innerText = "Отсканируй код или отправь ссылку:";
+            
+            // Генерируем QR код
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), { 
+                text: joinUrl, width: 140, height: 140, colorDark: "#060608", colorLight: "#ffffff" 
+            });
+            
+            // Кнопка "Отправить ссылку"
+            document.getElementById('btnShareInvite').onclick = async () => {
+                if (navigator.share) {
+                    try { await navigator.share({ title: 'Arcade Hub Co-op', text: 'Залетай ко мне в игру!', url: joinUrl }); } catch (e) {}
+                } else {
+                    navigator.clipboard.writeText(joinUrl);
+                    if (typeof showToast === 'function') showToast("Ссылка скопирована!", "success");
+                }
+            };
+        }
+    });
+
+    p2pPeer.on('connection', c => {
+        // Хост принимает входящее подключение
+        p2pConn = c;
+        setupConnection(c);
+    });
+
+    // Прием ВИДЕО ПОТОКА (Только для гостя)
+    p2pPeer.on('call', call => {
+        call.answer(); // Отвечаем
+        call.on('stream', remoteStream => {
+            window.remoteStreamCache = remoteStream;
+            const vid = document.getElementById('remoteVideo');
+            if (vid) {
+                vid.srcObject = remoteStream;
+                vid.style.display = 'block'; // Показываем видео на экране гостя
+            }
+            document.getElementById('p2p-settings').style.display = 'block';
+        });
+    });
+}
+
+// 3. НАСТРОЙКА СОЕДИНЕНИЯ ПОСЛЕ КОННЕКТА
+function setupConnection(c) {
+    const statusEl = document.getElementById('p2p-status');
+    c.on('open', () => {
+        if (statusEl) {
+            statusEl.innerText = isGuestMode ? "СВЯЗЬ УСТАНОВЛЕНА! Ждем запуск..." : "ИГРОК 2 ПОДКЛЮЧЕН!";
+            statusEl.style.color = "#10b981";
+        }
+        if (typeof doVibrate === 'function') doVibrate(50);
+        
+        // Прячем модалку через 2 секунды
+        setTimeout(() => { 
+            const p2pModal = document.getElementById('p2pModalOverlay');
+            if (p2pModal) p2pModal.style.display = 'none'; 
+        }, 2000);
+
+        // ХОСТ начинает стримить видео и звук другу
+        if (!isGuestMode) {
+            startHostStreaming(c.peer);
+        }
+    });
+
+    c.on('data', data => {
+        // ХОСТ принимает кнопки от гостя и жмет их за Игрока 2
+        if (data.type === 'KEY' && typeof originalSendKey === 'function') {
+            originalSendKey(data.code, data.down, 2); 
+        }
+    });
+}
+
+// 4. ЗАХВАТ ЭКРАНА И ЗВУКА У ХОСТА
+function startHostStreaming(remotePeerId) {
+    if (!checkStreamingSupport()) return;
+    
+    const canvas = document.getElementById('universal-gl-canvas');
+    if (!canvas) return;
+    
+    // Захватываем видео 30fps
+    const videoStream = canvas.captureStream(30);
+    
+    // Добавляем аудио (если AudioGen.streamDest был создан в initAudio)
+    if (typeof AudioGen !== 'undefined' && AudioGen.streamDest) {
+        const audioTracks = AudioGen.streamDest.stream.getAudioTracks();
+        if (audioTracks.length > 0) {
+            videoStream.addTrack(audioTracks[0]);
+        }
+    }
+    
+    // Звоним другу (кидаем поток)
+    p2pPeer.call(remotePeerId, videoStream); 
+}
+
+// 5. ПЕРЕХВАТЧИК КНОПОК ДЛЯ ГОСТЯ
+const originalSendKey = window.sendKey;
+window.sendKey = function(code, down, player = 1) {
+    // Если мы Гость и коннект жив — шлем кнопки по сети
+    if (isGuestMode && p2pConn && p2pConn.open) {
+        p2pConn.send({ type: 'KEY', code: code, down: down });
+    } 
+    // В любом случае отрабатываем оригинал (чтобы у Гостя подсвечивались кнопки на его экране)
+    originalSendKey(code, down, player);
+};
+
+// 6. УПРАВЛЕНИЕ АУДИО И ВИДЕО (Тумблеры в модалке)
+window.toggleHostAudio = function(isMuted) {
+    if (typeof AudioGen !== 'undefined' && AudioGen.masterGain) {
+        AudioGen.masterGain.gain.value = isMuted ? 0 : 1;
+    }
+};
+
+window.toggleRemoteStream = function(type, isEnabled) {
+    if (!window.remoteStreamCache) return;
+    if (type === 'video') {
+        const vid = document.getElementById('remoteVideo');
+        if (vid) vid.style.display = isEnabled ? 'block' : 'none';
+    }
+    if (type === 'audio') {
+        const audioTrack = window.remoteStreamCache.getAudioTracks()[0];
+        if (audioTrack) audioTrack.enabled = isEnabled;
+    }
+};
+
+// 7. ПОДХВАТ ССЫЛОК (Авто-вход)
+// Для APK (Capacitor)
+if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.App) {
+    Capacitor.Plugins.App.addListener('appUrlOpen', data => {
+        const slug = data.url.split('#')[1];
+        if (slug && slug.startsWith('join=')) {
+            const p2pModal = document.getElementById('p2pModalOverlay');
+            if(p2pModal) p2pModal.style.display = 'flex';
+            initP2P(slug.split('=')[1]);
+        }
+    });
+}
+
+// Для Браузера
+window.addEventListener('DOMContentLoaded', () => {
+    if (window.location.hash.startsWith('#join=')) {
+        const p2pModal = document.getElementById('p2pModalOverlay');
+        if(p2pModal) p2pModal.style.display = 'flex';
+        initP2P(window.location.hash.split('=')[1]);
+    }
+});
+
+// 8. ПРЯЧЕМ МОДАЛКУ СЕТИ ПРИ СТАРТЕ ИГРЫ
+const originalStartGameP2P = window.startGame;
+window.startGame = function(game) {
+    const p2pModal = document.getElementById('p2pModalOverlay');
+    if(p2pModal) p2pModal.style.display = 'none';
+    
+    if (typeof originalStartGameP2P === 'function') {
+        originalStartGameP2P(game);
+    }
+};
+// ==========================================
+// --- КОНЕЦ БЛОКА 4 ---
+// ==========================================
+
+
+
+
 
 
     
