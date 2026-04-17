@@ -5801,13 +5801,15 @@ function deselectAllGamesForDelete() {
     // =========================================================
     // --- ОПРОС ГЕЙМПАДА ВНУТРИ ИГРЫ (С НАВИГАЦИЕЙ UI И ЭКРАНОМ)
     // =========================================================
-    let gpInGameState = {};
+   let gpInGameState = {};
 let gp2InGameState = {}; // <-- ПАМЯТЬ ДЛЯ ВТОРОГО ГЕЙМПАДА
+let multiMode = 0; // 0 = SOLO, 1 = SPLIT KBD, 2 = COUCH CO-OP
 let lastInGameUiUpdate = 0;
 let inGameUiIndex = 0;
 
+
     
-    function pollGamepadInGame() {
+      function pollGamepadInGame() {
         if (currentGame && window.location.hash === '#game' && !isGamePaused && !isShuttingDown) {
             const pads = navigator.getGamepads ? navigator.getGamepads() : []; 
             const gp = pads[0];
@@ -5825,7 +5827,7 @@ let inGameUiIndex = 0;
                 const tb = document.getElementById('toolbar');
                 const isUiOpen = tb && !tb.classList.contains('toolbar-hidden');
 
-                // --- НАВИГАЦИЯ В МЕНЮ ЭМУЛЯТОРА ---
+                // --- НАВИГАЦИЯ В МЕНЮ ЭМУЛЯТОРА (ТВОЙ КОД) ---
                 if (isUiOpen) {
                     const activePanel = document.querySelector('#screen-edit-panel.show, #pad-edit-panel.show, #fkeys-panel[style*="display: flex"]');
                     
@@ -5943,12 +5945,16 @@ let inGameUiIndex = 0;
                     requestAnimationFrame(pollGamepadInGame); return; 
                 }
 
-                // --- ОБЫЧНЫЙ ГЕЙМПЛЕЙ ИГРОК 1 ---
+                // ==================================================
+                // --- НОВЫЙ БЛОК: ОБЫЧНЫЙ ГЕЙМПЛЕЙ ИГРОК 1 (или 2)
+                // ==================================================
+                const p1Target = (typeof multiMode !== 'undefined' && multiMode === 2) ? 2 : 1;
+
                 const map = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
                 for (let b in map) {
                     let pressed = gp.buttons[b] && gp.buttons[b].pressed;
-                    if (pressed && !gpInGameState[b]) { sendKey(map[b], true, 1); gpInGameState[b] = true; } 
-                    else if (!pressed && gpInGameState[b]) { sendKey(map[b], false, 1); gpInGameState[b] = false; }
+                    if (pressed && !gpInGameState[b]) { sendKey(map[b], true, p1Target); gpInGameState[b] = true; } 
+                    else if (!pressed && gpInGameState[b]) { sendKey(map[b], false, p1Target); gpInGameState[b] = false; }
                 }
                 const axisDeadzone = 0.4;
                 const axesMap = {
@@ -5957,14 +5963,14 @@ let inGameUiIndex = 0;
                 };
                 for (let dir in axesMap) {
                     let data = axesMap[dir]; let stateKey = 'axis_' + dir;
-                    if (data.pressed && !gpInGameState[stateKey]) { sendKey(data.code, true, 1); gpInGameState[stateKey] = true; } 
-                    else if (!data.pressed && gpInGameState[stateKey]) { sendKey(data.code, false, 1); gpInGameState[stateKey] = false; }
+                    if (data.pressed && !gpInGameState[stateKey]) { sendKey(data.code, true, p1Target); gpInGameState[stateKey] = true; } 
+                    else if (!data.pressed && gpInGameState[stateKey]) { sendKey(data.code, false, p1Target); gpInGameState[stateKey] = false; }
                 }
             } // Конец проверки первого геймпада
 
-            // ==========================================
-            // --- ДОБАВЛЕННЫЙ БЛОК: ИГРОК 2 ---
-            // ==========================================
+            // ==================================================
+            // --- НОВЫЙ БЛОК: ГЕЙМПАД 2 (Всегда Игрок 2)
+            // ==================================================
             const gp2 = pads[1];
             if (gp2) {
                 const map2 = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
@@ -5984,12 +5990,12 @@ let inGameUiIndex = 0;
                     else if (!data.pressed && gp2InGameState[stateKey]) { sendKey(data.code, false, 2); gp2InGameState[stateKey] = false; }
                 }
             }
-            // ==========================================
-
         }
         requestAnimationFrame(pollGamepadInGame);
     }
 
+
+        
     
     
     
@@ -8114,6 +8120,97 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+<style id="multiplayer-neon-styles">
+    #btnToggleMultiplayer {
+        margin-bottom: 12px;
+        width: 100%;
+        font-family: monospace;
+        letter-spacing: 1px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        font-weight: 900;
+        border-width: 2px !important;
+    }
+    .multi-mode-0 {
+        border-color: #38bdf8 !important;
+        background: rgba(56, 189, 248, 0.1) !important;
+        color: #38bdf8 !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+    .multi-mode-1 {
+        border-color: #f59e0b !important;
+        background: rgba(245, 158, 11, 0.1) !important;
+        color: #f59e0b !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    .multi-mode-2 {
+        border-color: #a855f7 !important;
+        background: rgba(168, 85, 247, 0.1) !important;
+        color: #a855f7 !important;
+        box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+    }
+</style>
+
+<script id="multiplayer-core-logic">
+    document.addEventListener('DOMContentLoaded', () => {
+        const padSettings = document.getElementById('pad-general-settings');
+        if (padSettings) {
+            const btn = document.createElement('button');
+            btn.id = 'btnToggleMultiplayer';
+            btn.className = 'edit-btn action-btn multi-mode-0';
+            btn.innerHTML = 'MODE: SOLO [ALL P1]';
+            
+            btn.onclick = (e) => {
+                e.preventDefault();
+                if (typeof multiMode !== 'undefined') {
+                    multiMode = (multiMode + 1) % 3;
+                    btn.className = 'edit-btn action-btn multi-mode-' + multiMode;
+                    const labels = [
+                        'MODE: SOLO [ALL P1]', 
+                        'MODE: SPLIT KBD [P1/P2]', 
+                        'MODE: COUCH [PAD IS P2]'
+                    ];
+                    btn.innerHTML = labels[multiMode];
+                    if (typeof doVibrate === 'function') doVibrate(20);
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+                }
+            };
+            padSettings.insertBefore(btn, padSettings.firstChild);
+        }
+    });
+
+    const handleSplitKeyboard = (e) => {
+        // e.isTrusted защищает от бесконечного цикла, когда sendKey шлет искусственные нажатия!
+        if (window.location.hash !== '#game' || !currentGame || typeof multiMode === 'undefined' || !e.isTrusted) return;
+
+        let mappedCode = null;
+        let mappedPlayer = 1;
+
+        if (multiMode === 0 || multiMode === 2) {
+            const wasdMap = { 'KeyW': 38, 'KeyS': 40, 'KeyA': 37, 'KeyD': 39 };
+            if (wasdMap[e.code]) { mappedCode = wasdMap[e.code]; mappedPlayer = 1; }
+        } 
+        else if (multiMode === 1) {
+            const p1Map = { 'KeyW': 38, 'KeyS': 40, 'KeyA': 37, 'KeyD': 39, 'KeyC': 90, 'KeyX': 88, 'KeyV': 16, 'KeyB': 13 };
+            const p2Map = { 'ArrowUp': 38, 'ArrowDown': 40, 'ArrowLeft': 37, 'ArrowRight': 39, 'KeyJ': 90, 'KeyK': 88, 'KeyU': 16, 'KeyI': 13, 'Numpad1': 90, 'Numpad2': 88, 'Numpad4': 16, 'Numpad5': 13 };
+            
+            if (p1Map[e.code]) { mappedCode = p1Map[e.code]; mappedPlayer = 1; }
+            else if (p2Map[e.code]) { mappedCode = p2Map[e.code]; mappedPlayer = 2; }
+        }
+
+        if (mappedCode) {
+            // Перехватываем управление до того, как эмулятор узнает о нажатии
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (typeof sendKey === 'function') sendKey(mappedCode, e.type === 'keydown', mappedPlayer);
+        }
+    };
+
+    // Слушаем фазу захвата (true), чтобы быть ПЕРВЫМИ в очереди
+    window.addEventListener('keydown', handleSplitKeyboard, true);
+    window.addEventListener('keyup', handleSplitKeyboard, true);
+</script>
 
 
 
@@ -8229,6 +8326,19 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then((registration) => {
+                    console.log('Service Worker успешно зарегистрирован. Область:', registration.scope);
+                })
+                .catch((error) => {
+                    console.log('Ошибка регистрации Service Worker:', error);
+                });
+        });
+    }
+</script>
 
 
     
