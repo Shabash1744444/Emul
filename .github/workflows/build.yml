@@ -23,27 +23,26 @@ jobs:
       - name: Install Tools
         run: |
           npm init -y
-          npm install html-minifier-terser esbuild @capacitor/core @capacitor/cli @capacitor/android
+          npm install html-minifier-terser esbuild @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/share @capacitor/filesystem @capacitor/browser
 
       - name: Minify & Obfuscate (Бусификация кода)
         run: |
           mkdir -p public
-          # Флаги без слова true, чтобы утилита не искала файл с таким названием
+          # Сжимаем HTML
           npx html-minifier-terser index.html --minify-js --collapse-whitespace --remove-comments --output public/index.html
           
-          # Если есть другие HTML файлы — жмем и их
           for f in *.html; do
             if [ "$f" != "index.html" ]; then
               npx html-minifier-terser "$f" --collapse-whitespace --output "public/$f"
             fi
           done
 
-          # Жмем JS расширения через esbuild
+          # Жмем JS и ГОВОРИМ ЕМУ НЕ ИСКАТЬ ПЛАГИНЫ ВНУТРИ (--external)
           if [ -f "arcade-extensions.js" ]; then
-            npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
+            npx esbuild arcade-extensions.js --bundle --minify --format=iife --external:@capacitor/* --outfile=public/arcade-extensions.bundle.js
           fi
           
-          # Копируем ресурсы (WASM, конфиги, музыку)
+          # Копируем всё остальное
           cp *.wasm *.txt *.mp3 public/ 2>/dev/null || true
 
       - name: Capacitor Init & Sync
@@ -60,16 +59,13 @@ jobs:
 
       - name: Patch Android (Ads + Fullscreen)
         run: |
-          # 1. Добавляем разрешения в Манифест (Рекламный ID + Вибро)
           sed -i '/<\/manifest>/i \    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />\n    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
           
-          # 2. Инжектим Immersive Mode (скрываем кнопки навигации) прямо в Java
           FILE="android/app/src/main/java/com/arcade/hub/MainActivity.java"
           sed -i 's/public class MainActivity extends BridgeActivity {/public class MainActivity extends BridgeActivity {\n    @Override\n    public void onWindowFocusChanged(boolean hasFocus) {\n        super.onWindowFocusChanged(hasFocus);\n        if (hasFocus) {\n            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN);\n        }\n    }/' $FILE
 
-      - name: Create Release Key (Авто-генератор)
+      - name: Create Release Key
         run: |
-          # ПАРОЛЬ: arcade123
           keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias arcade-key -storepass arcade123 -keypass arcade123 -dname "CN=ArcadeHub, O=Dev, C=RU"
 
       - name: Build & Sign APK
@@ -77,10 +73,7 @@ jobs:
           cd android && chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
           
-          # Ищем apksigner в недрах Android SDK
           SIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -r | head -n 1)
-          
-          # Подписываем
           $SIGNER sign --ks ../release.jks --ks-key-alias arcade-key --ks-pass pass:arcade123 --key-pass pass:arcade123 --out ArcadeHub_Signed.apk app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload Final APK
