@@ -7781,72 +7781,52 @@ function closeApkSuggest() {
 
 
 
-// 2. ИНИЦИАЛИЗАЦИЯ PEERJS (Создание узла связи)
+// 2. ИНИЦИАЛИЗАЦИЯ PEERJS (Версия "Прорыв")
 function initP2P(targetId = null) {
     if (p2pPeer) return; 
     
     const statusEl = document.getElementById('p2p-status');
-    if (statusEl) {
-        statusEl.innerText = "Стук в облако PeerJS...";
-        statusEl.style.color = "#38bdf8";
-    }
-    
-    // Создаем узел. По умолчанию PeerJS сам выбирает сервер.
-    p2pPeer = new Peer(); 
+    statusEl.innerText = "Установка связи (WSS)...";
+    statusEl.style.color = "#f59e0b"; // Оранжевый (ждем)
 
-    // СОБЫТИЕ: Узел успешно создан (Сервер выдал нам ID)
-    p2pPeer.on('open', id => {
-        if (statusEl) {
-            statusEl.innerText = "Узел создан! Рисую QR...";
-            statusEl.style.color = "#10b981";
-        }
-
-        if (targetId) {
-            // --- МЫ ГОСТЬ (Друг) ---
-            isGuestMode = true;
-            if (statusEl) statusEl.innerText = "Подключение к Хосту...";
-            p2pConn = p2pPeer.connect(targetId);
-            setupConnection(p2pConn);
-        } else {
-            // --- МЫ ХОСТ (Создатель комнаты) ---
-            const joinUrl = `${window.location.origin}${window.location.pathname}#join=${id}`;
-            
-            // Показываем скрытые элементы (QR и Кнопку)
-            document.getElementById('qrcode-container').style.display = 'flex';
-            document.getElementById('p2p-settings').style.display = 'block';
-            if (statusEl) statusEl.innerText = "Твой код для Игрока 2:";
-            
-            // Генерируем QR
-            const qrDiv = document.getElementById('qrcode');
-            qrDiv.innerHTML = "";
-            new QRCode(qrDiv, { 
-                text: joinUrl, width: 140, height: 140, colorDark: "#060608", colorLight: "#ffffff" 
-            });
-            
-            // Кнопка "Отправить ссылку"
-            document.getElementById('btnShareInvite').onclick = async () => {
-                if (navigator.share) {
-                    try { await navigator.share({ title: 'Arcade Hub Co-op', text: 'Залетай ко мне в игру!', url: joinUrl }); } catch (e) {}
-                } else {
-                    navigator.clipboard.writeText(joinUrl);
-                    if (typeof showToast === 'function') showToast("Ссылка скопирована!", "success");
-                }
-            };
-        }
+    // Пробуем максимально стандартные настройки для обхода фильтров
+    p2pPeer = new Peer(undefined, {
+        host: '0.peerjs.com',
+        secure: true,
+        port: 443,
+        key: 'peerjs', // Стандартный ключ библиотеки
+        pingInterval: 3000,
+        debug: 3
     });
 
-    // СОБЫТИЕ: ОШИБКА (Критически важно для дебага!)
+    p2pPeer.on('open', id => {
+        console.log('✅ Соединение открыто! ID:', id);
+        statusEl.innerText = "Связь установлена!";
+        statusEl.style.color = "#10b981";
+        
+        const joinUrl = `${window.location.origin}${window.location.pathname}#join=${id}`;
+        document.getElementById('qrcode-container').style.display = 'flex';
+        document.getElementById('p2p-settings').style.display = 'block';
+        
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = "";
+        new QRCode(qrDiv, { text: joinUrl, width: 140, height: 140 });
+    });
+
+    // САМОЕ ВАЖНОЕ: Ловим причину Status 0
     p2pPeer.on('error', err => {
-        console.error("PeerJS Error Type:", err.type);
-        if (statusEl) {
-            statusEl.style.color = "#ef4444";
-            statusEl.innerText = "ОШИБКА: " + err.type;
-            // Если ошибка 'browser-incompatible' — значит WebRTC заблокирован
-            // Если 'network' — нет связи с сервером-сигнальщиком
-        }
+        console.error("❌ СЕТЕВАЯ ОШИБКА:", err.type, err);
+        statusEl.style.color = "#ef4444";
+        
+        let msg = "Ошибка: " + err.type;
+        if (err.type === 'network') msg = "НЕТ СВЯЗИ С ОБЛАКОМ (Блокировка?)";
+        if (err.type === 'unavailable-id') msg = "ID занят, пробуем еще раз...";
+        
+        statusEl.innerText = msg;
         p2pPeer = null; 
     });
 }
+
 
 
 
