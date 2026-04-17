@@ -28,31 +28,48 @@ jobs:
       - name: Minify & Obfuscate (Бусификация кода)
         run: |
           mkdir -p public
-          # Сжимаем твой гигантский HTML и инлайн JS в непробиваемую кашу
-          npx html-minifier-terser index.html --minify-js true --collapse-whitespace true --remove-comments true --outfile public/index.html
-          # Жмем расширения
-          npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
-          # Копируем остальное (ресурсы)
+          # Сжимаем index.html и инлайн JS (Исправлено: --output вместо --outfile)
+          npx html-minifier-terser index.html --minify-js true --collapse-whitespace true --remove-comments true --output public/index.html
+          
+          # Если есть другие html страницы, жмем и их
+          for f in *.html; do
+            if [ "$f" != "index.html" ]; then
+              npx html-minifier-terser "$f" --collapse-whitespace true --output "public/$f"
+            fi
+          done
+
+          # Жмем расширения через esbuild
+          if [ -f "arcade-extensions.js" ]; then
+            npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
+          fi
+          
+          # Копируем ресурсы (WASM, текст, музыку)
           cp *.wasm *.txt *.mp3 public/ 2>/dev/null || true
 
       - name: Capacitor Sync
         run: |
-          echo '{"appId":"com.arcade.hub","appName":"Arcade Hub","webDir":"public"}' > capacitor.config.json
+          echo '{
+            "appId": "com.arcade.hub",
+            "appName": "Arcade Hub",
+            "webDir": "public",
+            "bundledWebRuntime": false
+          }' > capacitor.config.json
+          
           npx cap add android
           npx cap sync android
 
       - name: Patch Android (Ads + Fullscreen)
         run: |
-          # Добавляем разрешение на Рекламу и Вибро в Манифест
+          # 1. Добавляем разрешения в Манифест (Рекламный ID + Вибро)
           sed -i '/<\/manifest>/i \    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />\n    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
           
-          # Инжектим Immersive Mode (скрываем кнопки навигации) прямо в Java
+          # 2. Инжектим Immersive Mode (скрываем кнопки навигации) прямо в Java код
           FILE="android/app/src/main/java/com/arcade/hub/MainActivity.java"
           sed -i 's/public class MainActivity extends BridgeActivity {/public class MainActivity extends BridgeActivity {\n    @Override\n    public void onWindowFocusChanged(boolean hasFocus) {\n        super.onWindowFocusChanged(hasFocus);\n        if (hasFocus) {\n            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN);\n        }\n    }/' $FILE
 
       - name: Create Release Key (Авто-генерация ключа)
         run: |
-          # Создаем ключ прямо сейчас. ПАРОЛИ: arcade123
+          # ПАРОЛИ И АЛИАС: arcade-key / arcade123
           keytool -genkey -v -keystore release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias arcade-key -storepass arcade123 -keypass arcade123 -dname "CN=ArcadeHub, O=Dev, C=RU"
 
       - name: Build & Sign APK
@@ -60,8 +77,10 @@ jobs:
           cd android && chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
           
-          # Подписываем вручную через apksigner (он есть в Android SDK)
-          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks ../release.jks --ks-key-alias arcade-key --ks-pass pass:arcade123 --key-pass pass:arcade123 --out ArcadeHub_Signed.apk app/build/outputs/apk/release/app-release-unsigned.apk
+          # Подписываем через apksigner (он лежит в build-tools)
+          # Ищем актуальный путь к apksigner
+          SIGNER=$(find $ANDROID_HOME/build-tools -name apksigner | sort -r | head -n 1)
+          $SIGNER sign --ks ../release.jks --ks-key-alias arcade-key --ks-pass pass:arcade123 --key-pass pass:arcade123 --out ArcadeHub_Signed.apk app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload Final APK
         uses: actions/upload-artifact@v4
