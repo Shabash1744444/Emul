@@ -20,32 +20,36 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Install Build Tools
+      - name: Install Build Tools & Plugins
         run: |
           npm init -y
-          npm install html-minifier-terser esbuild @capacitor/core @capacitor/cli @capacitor/android @capacitor/assets fflate@0.8.2 libarchive.js@1.3.0
+          # Вернул ВСЕ твои плагины, чтобы esbuild не падал
+          npm install html-minifier-terser esbuild @capacitor/core @capacitor/cli @capacitor/android @capacitor/app @capacitor/browser @capacitor/filesystem @capacitor/share @capacitor/haptics @capacitor/assets fflate@0.8.2 libarchive.js@1.3.0
 
-      - name: Minify & Heavy Packing (Сборка всех ядер)
+      - name: Minify & Heavy Packing
         run: |
           mkdir -p public
           
-          # 1. Мумифицируем главный файл
+          # 1. Мумифицируем HTML
           npx html-minifier-terser index.html --minify-js --collapse-whitespace --remove-comments --output public/index.html
+          for f in *.html; do
+            if [ "$f" != "index.html" ]; then
+              npx html-minifier-terser "$f" --collapse-whitespace --output "public/$f"
+            fi
+          done
 
-          # 2. Сжимаем твои расширения
+          # 2. Сжимаем расширения (теперь пройдет без ошибок!)
           if [ -f "arcade-extensions.js" ]; then
             npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
           fi
-
-          # 3. КОПИРУЕМ ЯДРА И РЕСУРСЫ (Всё со скриншота)
-          # Забираем WASM, аудио, тексты, картинки и сложные расширения типа .wasm.js
+          
+          # 3. Забираем WASM, музыку, тексты, картинки
           cp *.wasm *.wasm.js *.txt *.mp3 *.png *.json public/ 2>/dev/null || true
           
-          # Копируем ВСЕ JS-файлы (ядра Sega, SNES, GBA, DOS и т.д.)
-          # Исключаем только оригинальный arcade-extensions (т.к. мы его сжали выше)
+          # Копируем остальные JS файлы (ядра)
           find . -maxdepth 1 -name "*.js" ! -name "arcade-extensions.js" -exec cp {} public/ \;
 
-          # 4. Копируем библиотеки распаковки из node_modules
+          # 4. Копируем библиотеки распаковки
           cp node_modules/fflate/umd/index.js public/fflate.js
           cp node_modules/libarchive.js/main.js public/libarchive.js
           cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
@@ -71,10 +75,8 @@ jobs:
 
       - name: Patch Android (Immersive & Permissions)
         run: |
-          # Разрешения на рекламу и вибро
           sed -i '/<\/manifest>/i \    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />\n    <uses-permission android:name="android.permission.VIBRATE" />' android/app/src/main/AndroidManifest.xml
           
-          # Скрываем кнопки навигации (Full Screen)
           FILE="android/app/src/main/java/com/arcade/hub/MainActivity.java"
           sed -i 's/public class MainActivity extends BridgeActivity {/public class MainActivity extends BridgeActivity {\n    @Override\n    public void onWindowFocusChanged(boolean hasFocus) {\n        super.onWindowFocusChanged(hasFocus);\n        if (hasFocus) {\n            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN);\n        }\n    }/' $FILE
 
