@@ -7775,16 +7775,32 @@ function closeApkSuggest() {
     if (typeof showToast === 'function') showToast("Режим: ТОЛЬКО ГЕЙМПАД", "warning");
 }
 
+
+
+
+
+
+
 // 2. ИНИЦИАЛИЗАЦИЯ PEERJS (Создание узла связи)
 function initP2P(targetId = null) {
-    if (p2pPeer) return; // Защита от двойного запуска
+    if (p2pPeer) return; 
     
     const statusEl = document.getElementById('p2p-status');
-    if (statusEl) statusEl.innerText = "Создание узла связи...";
+    if (statusEl) {
+        statusEl.innerText = "Стук в облако PeerJS...";
+        statusEl.style.color = "#38bdf8";
+    }
     
+    // Создаем узел. По умолчанию PeerJS сам выбирает сервер.
     p2pPeer = new Peer(); 
-    
+
+    // СОБЫТИЕ: Узел успешно создан (Сервер выдал нам ID)
     p2pPeer.on('open', id => {
+        if (statusEl) {
+            statusEl.innerText = "Узел создан! Рисую QR...";
+            statusEl.style.color = "#10b981";
+        }
+
         if (targetId) {
             // --- МЫ ГОСТЬ (Друг) ---
             isGuestMode = true;
@@ -7795,13 +7811,15 @@ function initP2P(targetId = null) {
             // --- МЫ ХОСТ (Создатель комнаты) ---
             const joinUrl = `${window.location.origin}${window.location.pathname}#join=${id}`;
             
+            // Показываем скрытые элементы (QR и Кнопку)
             document.getElementById('qrcode-container').style.display = 'flex';
             document.getElementById('p2p-settings').style.display = 'block';
-            if (statusEl) statusEl.innerText = "Отсканируй код или отправь ссылку:";
+            if (statusEl) statusEl.innerText = "Твой код для Игрока 2:";
             
-            // Генерируем QR код
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById('qrcode'), { 
+            // Генерируем QR
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = "";
+            new QRCode(qrDiv, { 
                 text: joinUrl, width: 140, height: 140, colorDark: "#060608", colorLight: "#ffffff" 
             });
             
@@ -7817,27 +7835,26 @@ function initP2P(targetId = null) {
         }
     });
 
-    p2pPeer.on('connection', c => {
-        // Хост принимает входящее подключение
-        p2pConn = c;
-        setupConnection(c);
-    });
-
-    // Прием ВИДЕО ПОТОКА (Только для гостя)
-    p2pPeer.on('call', call => {
-        call.answer(); // Отвечаем
-        call.on('stream', remoteStream => {
-            window.remoteStreamCache = remoteStream;
-            const vid = document.getElementById('remoteVideo');
-            if (vid) {
-                vid.srcObject = remoteStream;
-                vid.style.display = 'block'; // Показываем видео на экране гостя
-            }
-            document.getElementById('p2p-settings').style.display = 'block';
-        });
+    // СОБЫТИЕ: ОШИБКА (Критически важно для дебага!)
+    p2pPeer.on('error', err => {
+        console.error("PeerJS Error Type:", err.type);
+        if (statusEl) {
+            statusEl.style.color = "#ef4444";
+            statusEl.innerText = "ОШИБКА: " + err.type;
+            // Если ошибка 'browser-incompatible' — значит WebRTC заблокирован
+            // Если 'network' — нет связи с сервером-сигнальщиком
+        }
+        p2pPeer = null; 
     });
 }
 
+
+
+
+
+
+
+    
 // 3. НАСТРОЙКА СОЕДИНЕНИЯ ПОСЛЕ КОННЕКТА
 function setupConnection(c) {
     const statusEl = document.getElementById('p2p-status');
