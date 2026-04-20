@@ -989,23 +989,38 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
     
   <div class="sticky-zone">
         <div class="top-actions">
-            <button id="mainImportBtn" class="action-btn" style="flex: 1.5; padding: 0 5px;">
-                ➕ ДОБАВИТЬ ИГРЫ
-            </button>
-            <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none;">
-                📡 СКАНИРОВАТЬ
-            </button>
-            <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-            </button>
-            <button id="infoBtn" class="action-btn" style="width: 44px; padding: 0; margin: 0; flex: none;">
-                ℹ️
-            </button>
-            <button id="portalBtn" class="action-btn" onclick="toggleArcadeStore(true)" style="width: 44px; padding: 0; margin: 0; flex: none; background: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.4) !important;">
-    ❤️
-</button>
+    <button id="mainImportBtn" class="action-btn" style="flex: 1.5; padding: 0 5px;">
+        ➕ ДОБАВИТЬ ИГРЫ
+    </button>
+    <button id="radarBtn" class="action-btn" onclick="if(typeof runDownloadRadar === 'function') runDownloadRadar()" style="display: none;">
+        📡 СКАНИРОВАТЬ
+    </button>
+    <button id="editModeBtn" class="action-btn" onclick="toggleLibraryEditMode()" style="width: 44px; padding: 0; margin: 0; flex: none;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+    </button>
+    
+    <button id="menuP2PBtn" class="action-btn" onclick="toggleP2PPanel()" style="width: 44px; padding: 0; margin: 0; flex: none; background: rgba(217, 70, 239, 0.1) !important; border: 1px solid rgba(217, 70, 239, 0.4) !important; color: #d946ef; box-shadow: inset 0 0 10px rgba(217, 70, 239, 0.1); transition: all 0.3s ease;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <circle cx="5" cy="6" r="3"></circle>
+            <circle cx="19" cy="6" r="3"></circle>
+            <circle cx="5" cy="18" r="3"></circle>
+            <circle cx="19" cy="18" r="3"></circle>
+            <line x1="10.2" y1="10.2" x2="6.8" y2="7.8"></line>
+            <line x1="13.8" y1="10.2" x2="17.2" y2="7.8"></line>
+            <line x1="10.2" y1="13.8" x2="6.8" y2="16.2"></line>
+            <line x1="13.8" y1="13.8" x2="17.2" y2="16.2"></line>
+        </svg>
+    </button>
 
-        </div>
+    <button id="infoBtn" class="action-btn" style="width: 44px; padding: 0; margin: 0; flex: none;">
+        ℹ️
+    </button>
+    <button id="portalBtn" class="action-btn" onclick="toggleArcadeStore(true)" style="width: 44px; padding: 0; margin: 0; flex: none; background: rgba(239, 68, 68, 0.1) !important; border-color: rgba(239, 68, 68, 0.4) !important;">
+        ❤️
+    </button>
+</div>
+
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px; height: 38px; align-items: center;">
             <div class="sys-filter-container" style="width: 100%; display: flex;">
@@ -2731,13 +2746,15 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
         btnKeyboard.classList.toggle('active-tool', !isVisible); 
     }
 
-                function sendKey(defaultCode, down, player = 1) {
-                
-           function sendKey(defaultCode, down, player = 1) {
-                 
-              // --- P2P ПЕРЕХВАТЧИК --- if (typeof window.isP2PGuestCapturing !== 'undefined' && window.isP2PGuestCapturing && window.p2pConn && window.p2pConn.open) { window.p2pConn.send({ k: defaultCode, d: down, p: 2 }); return; 
-         } // -----------------------      
-                
+                    function sendKey(defaultCode, down, player = 1) {
+        
+        // --- P2P ПЕРЕХВАТЧИК (Приемник отправляет кнопки Донору) ---
+        if (typeof window.isP2PGuestCapturing !== 'undefined' && window.isP2PGuestCapturing && window.p2pConn && window.p2pConn.open) { 
+            window.p2pConn.send({ k: defaultCode, d: down, p: 2 }); 
+            return; 
+        }
+        // -----------------------------------------------------------
+
         let finalCode = defaultCode;
         if (player === 1 && currentGame?.keys) { 
             if (defaultCode === 90 && currentGame.keys.a) finalCode = currentGame.keys.a; 
@@ -2791,9 +2808,8 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                         27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
                     };
                 }
-                     } else if (player === 2) {
-                // БЕЗОПАСНАЯ теневая раскладка для Игрока 2 (Numpad)
-                // Не конфликтует с системными клавишами RetroArch
+            } else if (player === 2) {
+                // БЕЗОПАСНАЯ теневая раскладка для Игрока 2 (Донор принимает эти сигналы от Приемника)
                 keyMap = {
                     38: { keyCode: 104, code: 'Numpad8', key: '8' }, // Up
                     40: { keyCode: 101, code: 'Numpad5', key: '5' }, // Down
@@ -2809,7 +2825,6 @@ html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: 
                     87: { keyCode: 106, code: 'NumpadMultiply', key: '*' }  // R
                 };
             }
-
 
             if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
             
@@ -8473,14 +8488,26 @@ trySet('vk_btn_close', d.vk_close);
     let mixedAudioDest = null;
     let hostMediaStream = null;
 
-    const peerConfig = {
+        const peerConfig = {
         config: {
             'iceServers': [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
+                { urls: 'stun:stun1.l.google.com:19302' },
+                // Добавляем бесплатный TURN-сервер для пробития мобильного интернета
+                { 
+                    urls: "turn:openrelay.metered.ca:80", 
+                    username: "openrelayproject", 
+                    credential: "openrelayproject" 
+                },
+                { 
+                    urls: "turn:openrelay.metered.ca:443", 
+                    username: "openrelayproject", 
+                    credential: "openrelayproject" 
+                }
             ]
         }, debug: 1
     };
+
 
     const statusTxt = document.getElementById('p2pStatusText');
     const roomIdInput = document.getElementById('p2pRoomIdInput');
@@ -8491,23 +8518,82 @@ trySet('vk_btn_close', d.vk_close);
     const btnMic = document.getElementById('btnToggleMic');
     const btnAudio = document.getElementById('btnToggleGameAudio');
 
-    function toggleP2PPanel() {
+        function toggleP2PPanel() {
         const panel = document.getElementById('p2p-edit-panel');
-        const btn = document.getElementById('btnP2P');
-        if (panel.style.display === 'none') {
+        const gameBtn = document.getElementById('btnP2P');
+        const menuBtn = document.getElementById('menuP2PBtn');
+        
+        // Элементы внутри панели
+        const hostBtn = document.getElementById('btnHostRoom');
+        const roomInput = document.getElementById('p2pRoomIdInput');
+        
+        if (typeof doVibrate === 'function') doVibrate(15);
+        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+
+        if (panel.style.display === 'none' || panel.style.opacity === '0') {
             panel.style.display = 'flex';
-            btn.classList.add('active-tool');
-            setTimeout(() => { panel.style.opacity = '1'; panel.style.transform = 'translateX(0)'; }, 10);
-            if (isP2PHost && myPeer && myPeer.id) {
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color: #38bdf8; font-size: 14px; letter-spacing: 2px;">${myPeer.id}</b>`;
+            
+            // Проверяем, где мы находимся
+            const isInMenu = window.location.hash !== '#game';
+
+            if (isInMenu) {
+                // МЕНЮ (Режим приемника)
+                panel.style.position = 'fixed';
+                panel.style.top = '50%';
+                panel.style.left = '50%';
+                panel.style.transform = 'translate(-50%, -50%) scale(0.95)';
+                
+                // Прячем кнопку СОЗДАТЬ, показываем поле ввода
+                if (hostBtn) hostBtn.style.display = 'none';
+                if (roomInput) roomInput.style.display = 'block';
+                
+            } else {
+                // ИГРА (Режим донора/хоста)
+                panel.style.position = 'absolute';
+                panel.style.top = 'calc(95px + env(safe-area-inset-top, 0px))';
+                panel.style.left = '15px';
+                panel.style.transform = 'translateX(-10px)';
+                
+                // Возвращаем кнопку СОЗДАТЬ
+                if (hostBtn) hostBtn.style.display = 'block';
+                if (roomInput && !window.p2pConn) roomInput.style.display = 'none';
+            }
+
+            // Подсветка активных кнопок
+            if (gameBtn) gameBtn.classList.add('active-tool');
+            if (menuBtn) {
+                menuBtn.style.background = 'rgba(217, 70, 239, 0.2) !important';
+                menuBtn.style.boxShadow = '0 0 15px rgba(217, 70, 239, 0.6), inset 0 0 10px rgba(217, 70, 239, 0.4)';
+            }
+
+            // Плавное проявление
+            setTimeout(() => { 
+                panel.style.opacity = '1'; 
+                panel.style.transform = isInMenu ? 'translate(-50%, -50%) scale(1)' : 'translateX(0)';
+            }, 10);
+
+            if (typeof isP2PHost !== 'undefined' && isP2PHost && myPeer && myPeer.id) {
+                const statusTxt = document.getElementById('p2pStatusText');
+                if(statusTxt) statusTxt.innerHTML = `ВАШ КОД: <b style="color: #38bdf8; font-size: 14px; letter-spacing: 2px;">${myPeer.id}</b>`;
             }
         } else {
+            // Логика скрытия
             panel.style.opacity = '0';
-            panel.style.transform = 'translateX(-10px)';
-            btn.classList.remove('active-tool');
+            panel.style.transform = window.location.hash !== '#game' ? 'translate(-50%, -50%) scale(0.95)' : 'translateX(-10px)';
+            
+            if (gameBtn) gameBtn.classList.remove('active-tool');
+            if (menuBtn) {
+                menuBtn.style.background = 'rgba(217, 70, 239, 0.1) !important';
+                menuBtn.style.border = '1px solid rgba(217, 70, 239, 0.4) !important';
+                menuBtn.style.boxShadow = 'inset 0 0 10px rgba(217, 70, 239, 0.1)';
+            }
+            
             setTimeout(() => panel.style.display = 'none', 300);
         }
     }
+
+
+
 
     // --- УПРАВЛЕНИЕ АУДИО И МИКРОФОНОМ ---
     btnMic.onclick = async () => {
@@ -8686,17 +8772,15 @@ trySet('vk_btn_close', d.vk_close);
             });
         });
 
-        myPeer.on('call', (call) => {
+              myPeer.on('call', (call) => {
             p2pCall = call;
-            // Отвечаем Хосту своим микрофоном (если он включен)
             call.answer(isMicEnabled ? micStream : undefined); 
 
             call.on('stream', (remoteStream) => {
                 if (currentMode === 'pad_only') {
-                    // Режим пульта: играем только звук в фоне (игнорируем видео)
                     const audioOnly = new Audio();
                     audioOnly.srcObject = remoteStream;
-                    audioOnly.play();
+                    audioOnly.play().catch(e => {});
                     return;
                 }
 
@@ -8705,9 +8789,19 @@ trySet('vk_btn_close', d.vk_close);
                 
                 widget.style.display = 'block';
                 videoEl.srcObject = remoteStream;
+                
+                // ПРИНУДИТЕЛЬНЫЙ ЗАПУСК ВИДЕО
+                setTimeout(() => {
+                    let playPromise = videoEl.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => console.log("Автоплей заблокирован:", e));
+                    }
+                }, 150);
+
                 statusTxt.innerHTML = `<span style="color: #10b981;">✅ ТРАНСЛЯЦИЯ ИДЕТ</span>`;
             });
         });
+
 
         myPeer.on('error', (err) => {
             statusTxt.style.color = '#ef4444';
