@@ -8464,7 +8464,6 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
 <script>
     window.p2pConn = null;
     let myPeer = null;
@@ -8505,7 +8504,7 @@ trySet('vk_btn_close', d.vk_close);
             panel.style.display = 'flex';
             const isInMenu = window.location.hash !== '#game';
             
-            // Если это Гость (в меню), прячем выбор режима
+            // Прячем выбор режима от Гостя
             modeSelector.style.display = isInMenu ? 'none' : 'block';
             const hintText = document.querySelector('#p2p-edit-panel .hint-text');
             if (hintText) hintText.style.display = isInMenu ? 'none' : 'block';
@@ -8537,7 +8536,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     }
 
-    // --- 2. ИНТЕРФЕЙС ГОСТЯ (ИДЕАЛЬНАЯ КОМНАТА И ПОЗИЦИИ КНОПОК) ---
+    // --- 2. ИНТЕРФЕЙС ГОСТЯ (ИДЕАЛЬНАЯ КОМНАТА) ---
     function showGuestRoom() {
         window.location.hash = 'game'; // Жесткий переход в игровой режим
         window.isP2PGuestCapturing = true; // Включаем перехват нажатий Гостя
@@ -8566,18 +8565,14 @@ trySet('vk_btn_close', d.vk_close);
             const el = document.getElementById(id); if (el) el.style.setProperty('display', 'none', 'important');
         });
         
-        // Жестко скрываем ВСЕ шейдеры, оставляем только размер
-        const shaderBlock = document.getElementById('nes-only-settings');
-        if (shaderBlock) shaderBlock.style.display = 'none';
-        const gfxTitle = document.getElementById('lbl_gfx_title');
-        if (gfxTitle) gfxTitle.style.display = 'none';
-        
-        ['btnToggleRGB', 'btnToggleXBR', 'btnToggleBloom', 'btnToggleColors', 'btnToggleCurve'].forEach(id => {
-            const btn = document.getElementById(id); if (btn) btn.style.display = 'none';
+        // Жестко скрываем ВСЕ шейдеры по ID
+        ['nes-only-settings', 'lbl_gfx_title', 'btnToggleRGB', 'btnToggleXBR', 'btnToggleBloom', 'btnToggleColors', 'btnToggleCurve'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
         document.querySelectorAll('#screen-edit-panel select, #screen-edit-panel .hint-text').forEach(el => el.style.display = 'none');
 
-        // КРИТИЧНО: Принудительно расставляем кнопки по дефолту, чтобы они не слиплись!
+        // Принудительно сбрасываем сломанный конфиг кнопок
+        localStorage.removeItem('padV4_default_check');
         if (typeof sanitizePadConfig === 'function') sanitizePadConfig();
         if (typeof updatePadTransforms === 'function') updatePadTransforms();
         
@@ -8587,7 +8582,35 @@ trySet('vk_btn_close', d.vk_close);
         }
     }
 
-    // --- 3. ГОРЯЧАЯ СМЕНА РЕЖИМА ХОСТОМ ---
+    // --- 3. ЖЕЛЕЗОБЕТОННЫЙ ФИКС ПОЗИЦИЙ КНОПОК ---
+    // Перезаписываем старую функцию, чтобы кнопки больше не слипались слева
+    window.updatePadTransforms = function() {
+        ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'].forEach(id => {
+            const el = document.getElementById(id === 'dpad' ? 'joystick-dpad' : 'btn-' + id); if(!el) return; const c = padConfig[id];
+            if (id === 'dpad' && isFloatingDpad && !isPadEditMode) { 
+                el.style.opacity = '0'; el.style.pointerEvents = 'none'; document.getElementById('dpad-catch-zone').style.display = 'block'; 
+            } else {
+                const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
+                // Добавляем left: auto и right: auto, чтобы разорвать привязку к левому краю!
+                if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; el.style.right = 'auto'; }
+                else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
+                else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
+                else if (id === 'x') { el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
+                else if (id === 'y') { el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
+                else if (id === 'l') { el.style.top = '95px'; el.style.left = '20px'; el.style.right = 'auto'; el.style.bottom = 'auto'; } 
+                else if (id === 'r') { el.style.top = '95px'; el.style.right = '20px'; el.style.left = 'auto'; el.style.bottom = 'auto'; } 
+                else if (id === 'select') { el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; el.style.right = 'auto'; } 
+                else if (id === 'start') { el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; el.style.right = 'auto'; } 
+                
+                el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`; el.style.pointerEvents = 'auto'; 
+                if (typeof applyVisuals === 'function') applyVisuals(id); 
+                if (id === 'dpad') { const dz = document.getElementById('dpad-catch-zone'); if(dz) dz.style.display = 'none'; }
+            }
+        });
+        if (typeof updateModeBtnUI === 'function') updateModeBtnUI();
+    };
+
+    // --- 4. ГОРЯЧАЯ СМЕНА РЕЖИМА ХОСТОМ ---
     modeSelector.addEventListener('change', (e) => {
         if (isP2PHost && window.p2pConn && window.p2pConn.open) {
             window.p2pConn.send({ sys_cmd: 'set_mode', mode: e.target.value });
@@ -8595,11 +8618,10 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 
-    // --- 4. АУДИО БЕЗ ПЕТЛИ ---
+    // --- 5. АУДИО БЕЗ ПЕТЛИ ---
     btnMic.onclick = async () => {
         try {
             if (!isMicEnabled) {
-                // Аппаратное эхоподавление
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                 isMicEnabled = true; btnMic.innerHTML = '🎤 МИКР: ВКЛ';
                 btnMic.style.background = 'rgba(16, 185, 129, 0.15) !important'; btnMic.style.color = '#6ee7b7';
@@ -8656,7 +8678,7 @@ trySet('vk_btn_close', d.vk_close);
         });
     }
 
-    // --- 5. КОННЕКТ ХОСТА ---
+    // --- 6. КОННЕКТ ХОСТА ---
     btnHost.onclick = () => {
         if (myPeer) myPeer.destroy();
         statusTxt.innerHTML = "Создание комнаты...";
@@ -8681,7 +8703,7 @@ trySet('vk_btn_close', d.vk_close);
 
             conn.on('data', (data) => {
                 if (data.sys_cmd === 'set_mode') return; 
-                // Хост принимает сигналы Гостя
+                // Хост принимает сигналы Гостя (С мультиплеером больше нет конфликтов)
                 if (data.k !== undefined && typeof sendKey === 'function') sendKey(data.k, data.d, data.p);
             });
             
@@ -8698,7 +8720,7 @@ trySet('vk_btn_close', d.vk_close);
         });
     };
 
-    // --- 6. КОННЕКТ ГОСТЯ ---
+    // --- 7. КОННЕКТ ГОСТЯ ---
     btnJoin.onclick = () => {
         if (roomIdInput.style.display === 'none') {
             roomIdInput.style.display = 'block'; roomIdInput.focus(); return;
@@ -8771,7 +8793,7 @@ trySet('vk_btn_close', d.vk_close);
         });
     };
 
-    // --- 7. ДЕФОЛТНЫЙ ГЕЙМПАД ---
+    // --- 8. ДЕФОЛТНЫЙ ГЕЙМПАД И ИНИЦИАЛИЗАЦИЯ ---
     document.addEventListener('DOMContentLoaded', () => { 
         if (typeof makePanelDraggable === 'function') makePanelDraggable('p2p-edit-panel'); 
         
@@ -8794,5 +8816,9 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
+
+
+
 </body>
 </html>
+
