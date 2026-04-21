@@ -8460,13 +8460,11 @@ trySet('vk_btn_close', d.vk_close);
 </script>
 
 
- <script>
+<script>
     window.p2pConn = null;
     let myPeer = null;
     let p2pCall = null;
     let isP2PHost = false;
-
-    // --- АУДИО ПЕРЕМЕННЫЕ ---
     let micStream = null;
     let isMicEnabled = false;
     let isGameAudioEnabled = true;
@@ -8478,16 +8476,8 @@ trySet('vk_btn_close', d.vk_close);
             'iceServers': [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { 
-                    urls: "turn:openrelay.metered.ca:80", 
-                    username: "openrelayproject", 
-                    credential: "openrelayproject" 
-                },
-                { 
-                    urls: "turn:openrelay.metered.ca:443", 
-                    username: "openrelayproject", 
-                    credential: "openrelayproject" 
-                }
+                { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+                { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
             ]
         }, debug: 1
     };
@@ -8497,344 +8487,175 @@ trySet('vk_btn_close', d.vk_close);
     const btnHost = document.getElementById('btnHostRoom');
     const btnJoin = document.getElementById('btnJoinRoom');
     const modeSelector = document.getElementById('p2pModeSelector');
-    
     const btnMic = document.getElementById('btnToggleMic');
     const btnAudio = document.getElementById('btnToggleGameAudio');
 
+    // --- 1. УМНЫЕ НАСТРОЙКИ ПАНЕЛЕЙ ---
     function toggleP2PPanel() {
         const panel = document.getElementById('p2p-edit-panel');
-        const gameBtn = document.getElementById('btnP2P');
-        const menuBtn = document.getElementById('menuP2PBtn');
-        const hostBtn = document.getElementById('btnHostRoom');
-        const roomInput = document.getElementById('p2pRoomIdInput');
-        
-        if (typeof doVibrate === 'function') doVibrate(15);
-        if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-
         if (panel.style.display === 'none' || panel.style.opacity === '0') {
             panel.style.display = 'flex';
             const isInMenu = window.location.hash !== '#game';
-
+            
+            // Если это Гость (в меню), прячем выбор режима
+            modeSelector.style.display = isInMenu ? 'none' : 'block';
+            document.querySelector('.hint-text').style.display = isInMenu ? 'none' : 'block';
+            
             if (isInMenu) {
-                panel.style.position = 'fixed';
-                panel.style.top = '50%';
-                panel.style.left = '50%';
-                panel.style.transform = 'translate(-50%, -50%) scale(0.95)';
-                if (hostBtn) hostBtn.style.display = 'none';
-                if (roomInput) roomInput.style.display = 'block';
+                panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
+                document.getElementById('btnHostRoom').style.display = 'none';
+                roomIdInput.style.display = 'block';
             } else {
-                panel.style.position = 'absolute';
-                panel.style.top = 'calc(95px + env(safe-area-inset-top, 0px))';
-                panel.style.left = '15px';
-                panel.style.transform = 'translateX(-10px)';
-                if (hostBtn) hostBtn.style.display = 'block';
-                if (roomInput && !window.p2pConn) roomInput.style.display = 'none';
+                panel.style.cssText += 'position:absolute; top:calc(95px + env(safe-area-inset-top, 0px)); left:15px; transform:translateX(0);';
+                document.getElementById('btnHostRoom').style.display = 'block';
             }
-
-            if (gameBtn) gameBtn.classList.add('active-tool');
-            if (menuBtn) {
-                menuBtn.style.background = 'rgba(217, 70, 239, 0.2) !important';
-                menuBtn.style.boxShadow = '0 0 15px rgba(217, 70, 239, 0.6), inset 0 0 10px rgba(217, 70, 239, 0.4)';
-            }
-
-            setTimeout(() => { 
-                panel.style.opacity = '1'; 
-                panel.style.transform = isInMenu ? 'translate(-50%, -50%) scale(1)' : 'translateX(0)';
-            }, 10);
-
-            if (typeof isP2PHost !== 'undefined' && isP2PHost && myPeer && myPeer.id) {
-                if(statusTxt) statusTxt.innerHTML = `ВАШ КОД: <b style="color: #38bdf8; font-size: 14px; letter-spacing: 2px;">${myPeer.id}</b>`;
-            }
+            setTimeout(() => panel.style.opacity = '1', 10);
         } else {
             panel.style.opacity = '0';
-            panel.style.transform = window.location.hash !== '#game' ? 'translate(-50%, -50%) scale(0.95)' : 'translateX(-10px)';
-            
-            if (gameBtn) gameBtn.classList.remove('active-tool');
-            if (menuBtn) {
-                menuBtn.style.background = 'rgba(217, 70, 239, 0.1) !important';
-                menuBtn.style.border = '1px solid rgba(217, 70, 239, 0.4) !important';
-                menuBtn.style.boxShadow = 'inset 0 0 10px rgba(217, 70, 239, 0.1)';
-            }
             setTimeout(() => panel.style.display = 'none', 300);
         }
     }
 
-    // --- ИНТЕРФЕЙС ГОСТЯ (КОМНАТА) ---
+    // --- 2. ИСПРАВЛЕННЫЙ ИНТЕРФЕЙС ГОСТЯ ---
     function applyGuestUI() {
         const ms = document.getElementById('menuScreen');
-        if (ms) { 
-            ms.classList.add('zoomed-out'); 
-            setTimeout(() => ms.style.display = 'none', 400); 
-        }
-        
+        if (ms) { ms.classList.add('zoomed-out'); setTimeout(() => ms.style.display = 'none', 400); }
         const frameDiv = document.getElementById('gameFrame');
-        if (frameDiv) { 
-            frameDiv.style.display = 'block'; 
-            frameDiv.style.opacity = '1'; 
-        }
+        if (frameDiv) { frameDiv.style.display = 'block'; frameDiv.style.opacity = '1'; }
         
-        // Кастрируем тулбар гостя
-        const hideIds = ['btnScreen', 'btnRestart', 'btnSave', 'btnLoad'];
-        hideIds.forEach(id => {
+        // Показываем ВСЕ кнопки управления, но "обрезаем" лишнее внутри
+        const toolbarBtns = ['btnScreen', 'btnRestart', 'btnGamepad', 'btnPadEdit', 'btnP2P'];
+        toolbarBtns.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.style.setProperty('display', 'none', 'important');
+            if (el) el.style.setProperty('display', 'flex', 'important');
         });
         
-        if (typeof toggleGamepad === 'function' && typeof isGamepadVisible !== 'undefined' && !isGamepadVisible) {
-            toggleGamepad(true);
-        }
+        // Скрываем шейдеры в настройках экрана (оставляем только размер)
+        const shaderBlock = document.getElementById('nes-only-settings');
+        if (shaderBlock) shaderBlock.style.display = 'none';
+        document.getElementById('lbl_gfx_title').style.display = 'none';
+        document.querySelectorAll('#screen-edit-panel select, #screen-edit-panel .hint-text').forEach(el => el.style.display = 'none');
+
+        if (typeof toggleGamepad === 'function' && !isGamepadVisible) toggleGamepad(true);
     }
 
-    // --- ГОРЯЧАЯ СМЕНА РЕЖИМА ХОСТОМ ---
-    modeSelector.addEventListener('change', (e) => {
-        if (isP2PHost && window.p2pConn && window.p2pConn.open) {
-            window.p2pConn.send({ sys_cmd: 'set_mode', mode: e.target.value });
-            if (typeof showToast === 'function') showToast('Режим гостя изменен', 'info');
+    // --- 3. ДЕФОЛТНЫЙ ГЕЙМПАД (УБИРАЕМ ХАОС) ---
+    const originalSanitize = window.sanitizePadConfig;
+    window.sanitizePadConfig = function() {
+        if (!padConfig || Object.keys(padConfig).length === 0) {
+            const w = window.innerWidth, h = window.innerHeight;
+            padConfig = {
+                dpad:   { x: 40,  y: -40, s: 1.1, o: 0.4, b: 1 },
+                a:      { x: -30, y: -90, s: 1.2, o: 0.6, b: 1 },
+                b:      { x: -100,y: -40, s: 1.1, o: 0.6, b: 1 },
+                x:      { x: -100,y: -140,s: 1.0, o: 0.6, b: 1 },
+                y:      { x: -170,y: -90, s: 1.0, o: 0.6, b: 1 },
+                start:  { x: 50,  y: -20, s: 0.9, o: 0.5, b: 1 },
+                select: { x: -50, y: -20, s: 0.9, o: 0.5, b: 1 },
+                l:      { x: 20,  y: 80,  s: 1.0, o: 0.5, b: 1 },
+                r:      { x: -20, y: 80,  s: 1.0, o: 0.5, b: 1 },
+                vib: 15, autoStop: false
+            };
         }
-    });
-
-    // --- УПРАВЛЕНИЕ АУДИО И МИКРОФОНОМ ---
-    btnMic.onclick = async () => {
-        if (!isMicEnabled) {
-            const origText = btnMic.innerHTML;
-            btnMic.innerHTML = '⏳ ЖДЕМ ДОСТУП...';
-            btnMic.style.pointerEvents = 'none'; // Блокируем, пока браузер думает
-            
-            try {
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                isMicEnabled = true;
-                btnMic.innerHTML = '🎤 МИКР: ВКЛ';
-                btnMic.style.background = 'rgba(16, 185, 129, 0.15) !important';
-                btnMic.style.borderColor = 'rgba(16, 185, 129, 0.4) !important';
-                btnMic.style.color = '#6ee7b7';
-                if (isP2PHost) updateHostAudioMixer();
-            } catch (e) {
-                btnMic.innerHTML = origText;
-                if (typeof showToast === 'function') showToast('Доступ к микрофону запрещен!', 'error');
-            } finally {
-                btnMic.style.pointerEvents = 'auto';
-            }
-        } else {
-            if (micStream) micStream.getTracks().forEach(t => t.stop());
-            micStream = null;
-            isMicEnabled = false;
-            btnMic.innerHTML = '🎤 МИКР: ВЫКЛ';
-            btnMic.style.background = 'rgba(239, 68, 68, 0.15) !important';
-            btnMic.style.borderColor = 'rgba(239, 68, 68, 0.4) !important';
-            btnMic.style.color = '#fca5a5';
-            if (isP2PHost) updateHostAudioMixer();
-        }
+        if (originalSanitize) originalSanitize();
     };
 
-    btnAudio.onclick = () => {
-        isGameAudioEnabled = !isGameAudioEnabled;
-        if (isGameAudioEnabled) {
-            btnAudio.innerHTML = '🔊 ЗВУК ИГРЫ: ВКЛ';
-            btnAudio.style.background = 'rgba(16, 185, 129, 0.15) !important';
-            btnAudio.style.borderColor = 'rgba(16, 185, 129, 0.4) !important';
-            btnAudio.style.color = '#6ee7b7';
-        } else {
-            btnAudio.innerHTML = '🔇 ЗВУК ИГРЫ: ВЫКЛ';
-            btnAudio.style.background = 'rgba(239, 68, 68, 0.15) !important';
-            btnAudio.style.borderColor = 'rgba(239, 68, 68, 0.4) !important';
-            btnAudio.style.color = '#fca5a5';
-        }
-        if (isP2PHost) updateHostAudioMixer();
-    };
-
+    // --- 4. АУДИО БЕЗ ПЕТЛИ ---
     function updateHostAudioMixer() {
-        if (typeof audioCtx === 'undefined' || !audioCtx) return;
+        if (!audioCtx) return;
         if (!mixedAudioDest) mixedAudioDest = audioCtx.createMediaStreamDestination();
         
-        if (isGameAudioEnabled && typeof audioScriptNode !== 'undefined' && audioScriptNode) {
-            try { audioScriptNode.connect(mixedAudioDest); } catch(e){}
-        } else if (typeof audioScriptNode !== 'undefined' && audioScriptNode) {
-            try { audioScriptNode.disconnect(mixedAudioDest); } catch(e){}
-        }
-
+        // Игра -> Стрим
+        if (isGameAudioEnabled && audioScriptNode) audioScriptNode.connect(mixedAudioDest);
+        // Микрофон Хоста -> Стрим
         if (isMicEnabled && micStream) {
-            if (!micStream.sourceNode) {
-                micStream.sourceNode = audioCtx.createMediaStreamSource(micStream);
-                micStream.sourceNode.connect(mixedAudioDest);
-            }
+            const source = audioCtx.createMediaStreamSource(micStream);
+            source.connect(mixedAudioDest);
         }
     }
-
-    function getHostStream() {
-        const glCanvas = document.getElementById('universal-gl-canvas');
-        if (!glCanvas) return null;
-        const stream = glCanvas.captureStream(30); 
-        updateHostAudioMixer(); 
-        if (mixedAudioDest && mixedAudioDest.stream.getAudioTracks().length > 0) {
-            stream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]); 
-        }
-        return stream;
-    }
-
-    // --- ХОСТ (ДОНОР) ---
-    btnHost.onclick = () => {
-        if (myPeer) myPeer.destroy();
-        statusTxt.style.color = '#f59e0b';
-        statusTxt.textContent = "Создание комнаты...";
-        
-        const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
-        myPeer = new Peer(shortId, peerConfig);
-        isP2PHost = true;
-
-        const currentMode = modeSelector.value;
-
-        myPeer.on('open', (id) => {
-            statusTxt.innerHTML = `ВАШ КОД: <b style="color: #38bdf8; font-size: 14px; letter-spacing: 2px;">${id}</b><br><span style="font-size:8px;">Ждем друга...</span>`;
-            if (typeof doVibrate === 'function') doVibrate(20);
-        });
-
-        myPeer.on('connection', (conn) => {
-            window.p2pConn = conn;
-            statusTxt.innerHTML = `<span style="color: #10b981;">✅ ДРУГ ПОДКЛЮЧЕН!</span>`;
-            if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
-
-            conn.on('data', (data) => {
-                if (modeSelector.value === 'watch_only') return; 
-                if (data.k !== undefined && typeof sendKey === 'function') {
-                    sendKey(data.k, data.d, data.p);
-                }
-            });
-            
-            if (currentMode !== 'pad_only') {
-                hostMediaStream = getHostStream();
-                if (hostMediaStream) {
-                    p2pCall = myPeer.call(conn.peer, hostMediaStream);
-                    handleIncomingAudio(p2pCall);
-                }
-            }
-        });
-
-        myPeer.on('error', (err) => {
-            statusTxt.style.color = '#ef4444';
-            statusTxt.textContent = "Ошибка сервера. Смените сеть.";
-        });
-    };
 
     function handleIncomingAudio(call) {
         call.on('stream', (remoteStream) => {
-            let audioEl = document.getElementById('p2p-guest-audio');
-            if (!audioEl) {
-                audioEl = document.createElement('audio');
-                audioEl.id = 'p2p-guest-audio';
-                audioEl.autoplay = true;
-                document.body.appendChild(audioEl);
-            }
-            audioEl.srcObject = remoteStream;
+            // Звук от Гостя идет ПРЯМО В ДИНАМИКИ ХОСТА (не в микшер!)
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play().catch(e => console.log("Audio block:", e));
         });
     }
 
-    // --- ГОСТЬ (ПРИЕМНИК) ---
-    btnJoin.onclick = () => {
-        if (roomIdInput.style.display === 'none') {
-            roomIdInput.style.display = 'block';
-            roomIdInput.focus();
-            return;
-        }
-
-        const hostId = roomIdInput.value.trim().toUpperCase();
-        if (!hostId) return;
-
-        if (myPeer) myPeer.destroy();
-        statusTxt.style.color = '#f59e0b';
-        statusTxt.textContent = "Подключение...";
-        
-        myPeer = new Peer(null, peerConfig);
-        isP2PHost = false;
-        
-        const currentMode = modeSelector.value;
-
-        myPeer.on('open', () => {
-            window.p2pConn = myPeer.connect(hostId, { reliable: true });
-
-            window.p2pConn.on('open', () => {
-                // ПРИЕМ СИСТЕМНЫХ КОМАНД ОТ ХОСТА
-                window.p2pConn.on('data', (data) => {
-                    if (data.sys_cmd === 'set_mode') {
-                        modeSelector.value = data.mode;
-                        const videoEl = document.getElementById('p2p-remote-video');
-                        const gamepadEl = document.getElementById('gamepad');
-                        
-                        if (data.mode === 'pad_only') {
-                            if (videoEl) videoEl.style.display = 'none';
-                            if (gamepadEl) gamepadEl.style.display = 'block';
-                        } else if (data.mode === 'watch_only') {
-                            if (videoEl) videoEl.style.display = 'block';
-                            if (gamepadEl) gamepadEl.style.display = 'none';
-                        } else {
-                            if (videoEl) videoEl.style.display = 'block';
-                            if (gamepadEl) gamepadEl.style.display = 'block';
-                        }
-                        if (typeof doVibrate === 'function') doVibrate(20);
-                    }
-                });
-
-                if (currentMode === 'pad_only') {
-                    applyGuestUI();
-                    statusTxt.innerHTML = `<span style="color: #10b981;">🎮 РЕЖИМ ПУЛЬТА АКТИВЕН</span>`;
-                    if (typeof doVibrate === 'function') doVibrate([50, 50, 50]);
-                    if (isMicEnabled && micStream) p2pCall = myPeer.call(hostId, micStream);
-                } else {
-                    statusTxt.innerHTML = `<span style="color: #a855f7;">🔗 СОЕДИНЕНО! Ждем стрим...</span>`;
-                    if (typeof doVibrate === 'function') doVibrate(20);
-                }
-            });
+    // --- 5. КОННЕКТ ---
+    btnHost.onclick = () => {
+        const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
+        myPeer = new Peer(shortId, peerConfig);
+        isP2PHost = true;
+        myPeer.on('open', (id) => {
+            statusTxt.innerHTML = `КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b>`;
         });
-
-        myPeer.on('call', (call) => {
-            p2pCall = call;
-            call.answer(isMicEnabled ? micStream : undefined); 
-
-            call.on('stream', (remoteStream) => {
-                const currentMode = modeSelector.value;
-                
-                applyGuestUI();
-
-                let videoEl = document.getElementById('p2p-remote-video');
-                if (!videoEl) {
-                    videoEl = document.createElement('video');
-                    videoEl.id = 'p2p-remote-video';
-                    videoEl.setAttribute('autoplay', '');
-                    videoEl.setAttribute('playsinline', '');
-                    videoEl.style.cssText = 'position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 15; background: #000; pointer-events: none;';
-                    
-                    const container = document.getElementById('canvasContainer');
-                    if (container) container.appendChild(videoEl);
-                }
-
-                videoEl.srcObject = remoteStream;
-                
-                setTimeout(() => {
-                    let playPromise = videoEl.play();
-                    if (playPromise !== undefined) playPromise.catch(e => console.log("Автоплей:", e));
-                }, 150);
-
-                if (currentMode === 'pad_only') {
-                    videoEl.style.display = 'none';
-                } else {
-                    videoEl.style.display = 'block';
-                }
-
-                statusTxt.innerHTML = `<span style="color: #10b981;">✅ ТРАНСЛЯЦИЯ ИДЕТ</span>`;
+        myPeer.on('connection', (conn) => {
+            window.p2pConn = conn;
+            statusTxt.innerHTML = `✅ ПОДКЛЮЧЕНО`;
+            conn.on('data', (data) => {
+                if (data.sys_cmd === 'set_mode') return; // Хост не принимает команды модов
+                if (data.k !== undefined && typeof sendKey === 'function') sendKey(data.k, data.d, data.p);
             });
-        });
-
-        myPeer.on('error', (err) => {
-            statusTxt.style.color = '#ef4444';
-            statusTxt.textContent = "Код не найден или ошибка сети.";
+            hostMediaStream = document.getElementById('universal-gl-canvas').captureStream(30);
+            updateHostAudioMixer();
+            if (mixedAudioDest) hostMediaStream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]);
+            p2pCall = myPeer.call(conn.peer, hostMediaStream);
+            handleIncomingAudio(p2pCall);
         });
     };
 
-    document.addEventListener('DOMContentLoaded', () => { 
-        if (typeof makePanelDraggable === 'function') {
-            makePanelDraggable('p2p-edit-panel'); 
-        }
-    });
+    btnJoin.onclick = () => {
+        const hostId = roomIdInput.value.trim().toUpperCase();
+        if (!hostId) { roomIdInput.style.display = 'block'; roomIdInput.focus(); return; }
+        myPeer = new Peer(null, peerConfig);
+        myPeer.on('open', () => {
+            window.p2pConn = myPeer.connect(hostId);
+            window.p2pConn.on('open', () => {
+                applyGuestUI();
+                statusTxt.innerHTML = `🔗 СОЕДИНЕНО`;
+                // Слушаем команды Хоста
+                window.p2pConn.on('data', (data) => {
+                    if (data.sys_cmd === 'set_mode') {
+                        const v = document.getElementById('p2p-remote-video');
+                        if (v) v.style.display = (data.mode === 'pad_only') ? 'none' : 'block';
+                    }
+                });
+            });
+        });
+        myPeer.on('call', (call) => {
+            call.answer(isMicEnabled ? micStream : undefined);
+            call.on('stream', (stream) => {
+                let v = document.getElementById('p2p-remote-video');
+                if (!v) {
+                    v = document.createElement('video'); v.id = 'p2p-remote-video'; v.autoplay = true; v.playsinline = true;
+                    v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000;';
+                    document.getElementById('canvasContainer').appendChild(v);
+                }
+                v.srcObject = stream;
+            });
+        });
+    };
+
+    btnMic.onclick = async () => {
+        try {
+            if (!isMicEnabled) {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+                isMicEnabled = true; btnMic.innerHTML = '🎤 МИКР: ВКЛ';
+            } else {
+                micStream.getTracks().forEach(t => t.stop()); isMicEnabled = false; btnMic.innerHTML = '🎤 МИКР: ВЫКЛ';
+            }
+            if (isP2PHost) updateHostAudioMixer();
+        } catch (e) { showToast("Нет доступа к микрофону", "error"); }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => { if (typeof makePanelDraggable === 'function') makePanelDraggable('p2p-edit-panel'); });
 </script>
+
+
+
+
 </body>
 </html>
 
