@@ -8461,7 +8461,6 @@ trySet('vk_btn_close', d.vk_close);
 
 
 
-
 <script>
     window.p2pConn = null;
     let myPeer = null;
@@ -8480,7 +8479,7 @@ trySet('vk_btn_close', d.vk_close);
         config: {
             'iceServers': [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:global.stun.twilio.com:3478' }, // Мощный STUN для обхода NAT
                 { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
                 { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
             ]
@@ -8495,8 +8494,7 @@ trySet('vk_btn_close', d.vk_close);
     const btnMic = document.getElementById('btnToggleMic');
     const btnAudio = document.getElementById('btnToggleGameAudio');
 
-    // --- 1. ЖЕЛЕЗОБЕТОННАЯ ПРИВЯЗКА ПАНЕЛЕЙ К КНОПКАМ ---
-    // Теперь функция принимает роль: 'guest' (меню) или 'host' (в игре)
+    // --- 1. ПРИВЯЗКА ПАНЕЛЕЙ К КНОПКАМ ---
     function toggleP2PPanel(forcedRole) {
         const panel = document.getElementById('p2p-edit-panel');
         if (panel.style.display === 'none' || panel.style.opacity === '0') {
@@ -8510,16 +8508,14 @@ trySet('vk_btn_close', d.vk_close);
             if (hintText) hintText.style.display = isGuest ? 'none' : 'block';
             
             if (isGuest) {
-                // РЕЖИМ ГОСТЯ (Кликнули в главном меню)
                 panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
-                btnHost.style.display = 'none'; // Жестко прячем "Создать"
-                btnJoin.style.display = 'block'; // Жестко показываем "Войти"
+                btnHost.style.display = 'none';
+                btnJoin.style.display = 'block';
                 roomIdInput.style.display = 'block';
             } else {
-                // РЕЖИМ ХОСТА (Кликнули внутри игры)
                 panel.style.cssText += 'position:absolute; top:calc(95px + env(safe-area-inset-top, 0px)); left:15px; transform:translateX(0);';
-                btnHost.style.display = 'block'; // Жестко показываем "Создать"
-                btnJoin.style.display = 'none';  // Жестко прячем "Войти"
+                btnHost.style.display = 'block';
+                btnJoin.style.display = 'none';
                 if (!window.p2pConn) roomIdInput.style.display = 'none';
             }
             
@@ -8560,18 +8556,18 @@ trySet('vk_btn_close', d.vk_close);
             const el = document.getElementById(id); if (el) el.style.setProperty('display', 'flex', 'important');
         });
         
-        // Скрываем лишние кнопки
+        // Жестко прячем Клавиатуру и Сейвы
         ['btnRestart', 'btnSave', 'btnLoad', 'btnKeyboard'].forEach(id => {
             const el = document.getElementById(id); if (el) el.style.setProperty('display', 'none', 'important');
         });
         
-        // Жестко скрываем ВСЕ шейдеры по ID
+        // Скрываем шейдеры
         ['nes-only-settings', 'lbl_gfx_title', 'btnToggleRGB', 'btnToggleXBR', 'btnToggleBloom', 'btnToggleColors', 'btnToggleCurve'].forEach(id => {
             const el = document.getElementById(id); if (el) el.style.display = 'none';
         });
         document.querySelectorAll('#screen-edit-panel select, #screen-edit-panel .hint-text').forEach(el => el.style.display = 'none');
 
-        // КРИТИЧНО: Принудительно сбрасываем сломанные координаты кнопок из памяти!
+        // Сброс и применение координат кнопок
         padConfig = {};
         localStorage.removeItem('padV4_default_check');
         if (typeof sanitizePadConfig === 'function') sanitizePadConfig();
@@ -8590,7 +8586,6 @@ trySet('vk_btn_close', d.vk_close);
                 el.style.opacity = '0'; el.style.pointerEvents = 'none'; document.getElementById('dpad-catch-zone').style.display = 'block'; 
             } else {
                 const baseTransform = (id === 'start' || id === 'select') ? 'translateX(-50%)' : '';
-                // Принудительно обнуляем противоположные стороны, чтобы кнопки не прилипали к краям
                 if (id === 'dpad') { el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; el.style.right = 'auto'; }
                 else if (id === 'a') { el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
                 else if (id === 'b') { el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; el.style.left = 'auto'; } 
@@ -8609,15 +8604,13 @@ trySet('vk_btn_close', d.vk_close);
         if (typeof updateModeBtnUI === 'function') updateModeBtnUI();
     };
 
-    // --- 4. ГОРЯЧАЯ СМЕНА РЕЖИМА ХОСТОМ ---
+    // --- 4. АУДИО БЕЗ ПЕТЛИ ---
     modeSelector.addEventListener('change', (e) => {
         if (isP2PHost && window.p2pConn && window.p2pConn.open) {
             window.p2pConn.send({ sys_cmd: 'set_mode', mode: e.target.value });
-            if (typeof showToast === 'function') showToast('Режим гостя изменен', 'info');
         }
     });
 
-    // --- 5. АУДИО БЕЗ ПЕТЛИ ---
     btnMic.onclick = async () => {
         try {
             if (!isMicEnabled) {
@@ -8664,7 +8657,6 @@ trySet('vk_btn_close', d.vk_close);
 
     function handleIncomingAudio(call) {
         call.on('stream', (remoteStream) => {
-            // Звук Гостя идет СТРОГО В ДИНАМИКИ ХОСТА
             let audioEl = document.getElementById('p2p-guest-audio');
             if (!audioEl) {
                 audioEl = document.createElement('audio');
@@ -8677,7 +8669,7 @@ trySet('vk_btn_close', d.vk_close);
         });
     }
 
-    // --- 6. КОННЕКТ ХОСТА ---
+    // --- 5. КОННЕКТ ХОСТА ---
     btnHost.onclick = () => {
         if (myPeer) myPeer.destroy();
         statusTxt.innerHTML = "Создание комнаты...";
@@ -8702,24 +8694,25 @@ trySet('vk_btn_close', d.vk_close);
 
             conn.on('data', (data) => {
                 if (data.sys_cmd === 'set_mode') return; 
-                // Хост принимает сигналы Гостя (С мультиплеером больше нет конфликтов)
                 if (data.k !== undefined && typeof sendKey === 'function') sendKey(data.k, data.d, data.p);
             });
             
             const glCanvas = document.getElementById('universal-gl-canvas');
             if (glCanvas && modeSelector.value !== 'pad_only') {
-                hostMediaStream = glCanvas.captureStream(30);
-                updateHostAudioMixer();
-                if (mixedAudioDest && mixedAudioDest.stream.getAudioTracks().length > 0) {
-                    hostMediaStream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]);
-                }
-                p2pCall = myPeer.call(conn.peer, hostMediaStream);
-                handleIncomingAudio(p2pCall);
+                try {
+                    hostMediaStream = glCanvas.captureStream(30);
+                    updateHostAudioMixer();
+                    if (mixedAudioDest && mixedAudioDest.stream.getAudioTracks().length > 0) {
+                        hostMediaStream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]);
+                    }
+                    p2pCall = myPeer.call(conn.peer, hostMediaStream);
+                    handleIncomingAudio(p2pCall);
+                } catch(e) { console.error("Stream capture failed", e); }
             }
         });
     };
 
-    // --- 7. КОННЕКТ ГОСТЯ ---
+    // --- 6. КОННЕКТ ГОСТЯ ---
     btnJoin.onclick = () => {
         if (roomIdInput.style.display === 'none') {
             roomIdInput.style.display = 'block'; roomIdInput.focus(); return;
@@ -8763,6 +8756,7 @@ trySet('vk_btn_close', d.vk_close);
             });
         });
 
+        // ПРИЕМ ВИДЕО (С ЖЕЛЕЗОБЕТОННЫМ ОТОБРАЖЕНИЕМ И ЗВУКОМ)
         myPeer.on('call', (call) => {
             p2pCall = call;
             call.answer(isMicEnabled ? micStream : undefined);
@@ -8774,15 +8768,18 @@ trySet('vk_btn_close', d.vk_close);
                 if (!v) {
                     v = document.createElement('video'); 
                     v.id = 'p2p-remote-video'; 
-                    // ФИКС: Добавляем muted, чтобы видео 100% автоплеилось на телефонах
-                    v.muted = true; 
-                    v.setAttribute('autoplay', ''); 
-                    v.setAttribute('playsinline', ''); 
-                    v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none;';
+                    v.setAttribute('autoplay', 'true'); 
+                    v.setAttribute('playsinline', 'true'); 
+                    // Жестко задаем display:block
+                    v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
                     const container = document.getElementById('canvasContainer');
                     if (container) container.appendChild(v);
                 }
-                v.srcObject = stream;
+                
+                // Защита от дублирования потока
+                if (v.srcObject !== stream) {
+                    v.srcObject = stream;
+                }
                 
                 setTimeout(() => {
                     let playPromise = v.play();
@@ -8794,9 +8791,9 @@ trySet('vk_btn_close', d.vk_close);
         });
     };
 
-    // --- 8. ДЕФОЛТНЫЙ ГЕЙМПАД И ИНИЦИАЛИЗАЦИЯ КНОПОК ---
+    // --- 7. ИНИЦИАЛИЗАЦИЯ КНОПОК И ВЫЗОВОВ ---
     document.addEventListener('DOMContentLoaded', () => { 
-        // ПРИВЯЗЫВАЕМ КНОПКИ К РОЛЯМ НАПРЯМУЮ, ЧТОБЫ ИЗБЕЖАТЬ УГАДЫВАНИЙ!
+        // ПРИВЯЗЫВАЕМ ПАНЕЛИ
         const menuBtn = document.getElementById('menuP2PBtn');
         if (menuBtn) menuBtn.onclick = (e) => { e.preventDefault(); toggleP2PPanel('guest'); };
 
@@ -8824,6 +8821,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
+
 
 
 
