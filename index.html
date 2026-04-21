@@ -8460,7 +8460,6 @@ trySet('vk_btn_close', d.vk_close);
 </script>
 
 
-
 <script>
     window.p2pConn = null;
     let myPeer = null;
@@ -8500,7 +8499,9 @@ trySet('vk_btn_close', d.vk_close);
         if (panel.style.display === 'none' || panel.style.opacity === '0') {
             panel.style.display = 'flex';
             
-            const isGuest = (forcedRole === 'guest');
+            // ЖЕСТКАЯ ПРОВЕРКА РОЛИ: Если мы не хост, то мы гость, независимо от кнопки
+            const isGuest = (forcedRole === 'guest') || (isP2PHost === false && window.location.hash === '#game');
+            const isConnected = (window.p2pConn && window.p2pConn.open);
             
             // Прячем выбор режима от Гостя
             modeSelector.style.display = isGuest ? 'none' : 'block';
@@ -8509,12 +8510,21 @@ trySet('vk_btn_close', d.vk_close);
             
             if (isGuest) {
                 panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
-                btnHost.style.display = 'none';
-                btnJoin.style.display = 'block';
-                roomIdInput.style.display = 'block';
+                btnHost.style.display = 'none'; // У гостя ВСЕГДА скрыто "Создать"
+                
+                // Если уже соединено - прячем ввод и кнопку войти
+                if (isConnected) {
+                    btnJoin.style.display = 'none';
+                    roomIdInput.style.display = 'none';
+                } else {
+                    btnJoin.style.display = 'block';
+                    roomIdInput.style.display = 'block';
+                }
             } else {
                 panel.style.cssText += 'position:absolute; top:calc(95px + env(safe-area-inset-top, 0px)); left:15px; transform:translateX(0);';
-                btnHost.style.display = 'block';
+                
+                // У хоста прячем "Создать", если гость уже зашел
+                btnHost.style.display = isConnected ? 'none' : 'block';
                 btnJoin.style.display = 'none';
                 if (!window.p2pConn) roomIdInput.style.display = 'none';
             }
@@ -8523,8 +8533,10 @@ trySet('vk_btn_close', d.vk_close);
             if (typeof AudioGen !== 'undefined') AudioGen.playClick();
             setTimeout(() => panel.style.opacity = '1', 10);
             
-            if (isP2PHost && myPeer && myPeer.id) {
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:14px; letter-spacing:2px;">${myPeer.id}</b>`;
+            if (myPeer && myPeer.id) {
+                statusTxt.innerHTML = isConnected ? 
+                    `<span style="color:#10b981;">✅ СОЕДИНЕНО!</span>` : 
+                    (isGuest ? "Введите код для подключения:" : `ВАШ КОД: <b style="color:#38bdf8; font-size:14px; letter-spacing:2px;">${myPeer.id}</b>`);
             }
         } else {
             panel.style.opacity = '0';
@@ -8770,7 +8782,8 @@ trySet('vk_btn_close', d.vk_close);
                     v.id = 'p2p-remote-video'; 
                     v.setAttribute('autoplay', 'true'); 
                     v.setAttribute('playsinline', 'true'); 
-                    // Жестко задаем display:block
+                    // ФИКС ВИДЕО: Браузер требует muted для автоматического старта стрима
+                    v.muted = true; 
                     v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
                     const container = document.getElementById('canvasContainer');
                     if (container) container.appendChild(v);
@@ -8822,13 +8835,9 @@ trySet('vk_btn_close', d.vk_close);
     });
 </script>
 
-
-
-
-    
-
 </body>
 </html>
+
 
 
 
