@@ -8504,28 +8504,27 @@ trySet('vk_btn_close', d.vk_close);
             panel.style.display = 'flex';
             const isInMenu = window.location.hash !== '#game';
             
-            // Если Гость (в меню) - прячем выбор режима, оставляем только ввод кода
+            // Если это Гость (в меню), прячем выбор режима
             modeSelector.style.display = isInMenu ? 'none' : 'block';
             const hintText = document.querySelector('#p2p-edit-panel .hint-text');
             if (hintText) hintText.style.display = isInMenu ? 'none' : 'block';
             
             if (isInMenu) {
                 panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
-                btnHost.style.display = 'none';
+                document.getElementById('btnHostRoom').style.display = 'none';
                 roomIdInput.style.display = 'block';
             } else {
                 panel.style.cssText += 'position:absolute; top:calc(95px + env(safe-area-inset-top, 0px)); left:15px; transform:translateX(0);';
-                btnHost.style.display = 'block';
+                document.getElementById('btnHostRoom').style.display = 'block';
                 if (!window.p2pConn) roomIdInput.style.display = 'none';
             }
             
             if (typeof doVibrate === 'function') doVibrate(15);
             if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-            
-            setTimeout(() => { panel.style.opacity = '1'; }, 10);
+            setTimeout(() => panel.style.opacity = '1', 10);
             
             if (isP2PHost && myPeer && myPeer.id) {
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:14px;">${myPeer.id}</b>`;
+                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:14px; letter-spacing:2px;">${myPeer.id}</b>`;
             }
         } else {
             panel.style.opacity = '0';
@@ -8533,48 +8532,42 @@ trySet('vk_btn_close', d.vk_close);
         }
     }
 
-    // --- 2. ИСПРАВЛЕННЫЙ ИНТЕРФЕЙС ГОСТЯ (ВОЗВРАЩАЕМ ТУЛБАР) ---
-    function applyGuestUI() {
+    // --- 2. ИНТЕРФЕЙС ГОСТЯ (ЖЕЛЕЗОБЕТОННЫЙ ПЕРЕХОД) ---
+    function showGuestRoom() {
+        // 1. Убираем меню Пакмана
         const ms = document.getElementById('menuScreen');
-        if (ms) { ms.classList.add('zoomed-out'); setTimeout(() => ms.style.display = 'none', 400); }
+        if (ms) { ms.style.opacity = '0'; setTimeout(() => ms.style.display = 'none', 300); }
         
+        // 2. Выводим игровой экран
         const frameDiv = document.getElementById('gameFrame');
         if (frameDiv) { frameDiv.style.display = 'block'; frameDiv.style.opacity = '1'; }
         
-        // КРИТИЧНО: ВОЗВРАЩАЕМ ТУЛБАР И КНОПКУ МЕНЮ ГОСТЮ
+        // 3. Закрываем панель P2P, чтобы она не висела на экране
+        const p2pPanel = document.getElementById('p2p-edit-panel');
+        if (p2pPanel) { p2pPanel.style.opacity = '0'; setTimeout(() => p2pPanel.style.display = 'none', 300); }
+        
+        // 4. Показываем Тулбар
         const tbToggle = document.getElementById('toolbar-toggle');
-        if (tbToggle) {
-            tbToggle.style.display = 'flex';
-            tbToggle.innerHTML = window.L ? window.L.btn_menu_hide : '▲ СКРЫТЬ';
-        }
+        if (tbToggle) { tbToggle.style.display = 'flex'; tbToggle.innerHTML = window.L ? window.L.btn_menu_hide : '▲ СКРЫТЬ'; }
         const tb = document.getElementById('toolbar');
-        if (tb) {
-            tb.style.display = 'flex';
-            tb.classList.remove('toolbar-hidden');
-        }
+        if (tb) { tb.style.display = 'flex'; tb.classList.remove('toolbar-hidden'); }
         
-        // Оставляем только Управление, Экран и Сеть
-        const showIds = ['btnScreen', 'btnGamepad', 'btnPadEdit', 'btnP2P'];
-        showIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.setProperty('display', 'flex', 'important');
+        // 5. Режем кнопки (оставляем Настройки экрана, Геймпад, P2P)
+        ['btnScreen', 'btnGamepad', 'btnPadEdit', 'btnP2P', 'btnKeyboard'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.setProperty('display', 'flex', 'important');
+        });
+        ['btnRestart', 'btnSave', 'btnLoad'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.setProperty('display', 'none', 'important');
         });
         
-        // Прячем Сейвы и Рестарт
-        const hideIds = ['btnRestart', 'btnSave', 'btnLoad'];
-        hideIds.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.setProperty('display', 'none', 'important');
-        });
-        
-        // Обрезаем шейдеры в настройках экрана (оставляем только размер)
+        // 6. Скрываем шейдеры, оставляем только размер экрана
         const shaderBlock = document.getElementById('nes-only-settings');
         if (shaderBlock) shaderBlock.style.display = 'none';
         const gfxTitle = document.getElementById('lbl_gfx_title');
         if (gfxTitle) gfxTitle.style.display = 'none';
         document.querySelectorAll('#screen-edit-panel select, #screen-edit-panel .hint-text').forEach(el => el.style.display = 'none');
 
-        // Включаем геймпад
+        // 7. Включаем геймпад
         if (typeof toggleGamepad === 'function' && typeof isGamepadVisible !== 'undefined' && !isGamepadVisible) {
             toggleGamepad(true);
         }
@@ -8592,7 +8585,7 @@ trySet('vk_btn_close', d.vk_close);
     btnMic.onclick = async () => {
         try {
             if (!isMicEnabled) {
-                // Включаем встроенное эхоподавление
+                // Включаем встроенное эхоподавление устройства
                 micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
                 isMicEnabled = true; btnMic.innerHTML = '🎤 МИКР: ВКЛ';
                 btnMic.style.background = 'rgba(16, 185, 129, 0.15) !important';
@@ -8640,7 +8633,7 @@ trySet('vk_btn_close', d.vk_close);
 
     function handleIncomingAudio(call) {
         call.on('stream', (remoteStream) => {
-            // Звук от Гостя идет ПРЯМО В ДИНАМИКИ ХОСТА (не в микшер!)
+            // Звук от Гостя идет ПРЯМО В ДИНАМИКИ ХОСТА (не смешивается со стримом!)
             let audioEl = document.getElementById('p2p-guest-audio');
             if (!audioEl) {
                 audioEl = document.createElement('audio');
@@ -8670,6 +8663,12 @@ trySet('vk_btn_close', d.vk_close);
             window.p2pConn = conn;
             statusTxt.innerHTML = `<span style="color:#10b981;">✅ ДРУГ ПОДКЛЮЧЕН!</span>`;
             if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
+
+            // Автоматически прячем панель Хоста, чтобы не мешала играть
+            setTimeout(() => {
+                const panel = document.getElementById('p2p-edit-panel');
+                if (panel) { panel.style.opacity = '0'; setTimeout(() => panel.style.display = 'none', 300); }
+            }, 1500);
 
             conn.on('data', (data) => {
                 if (data.sys_cmd === 'set_mode') return; // Хост не принимает команды модов
@@ -8707,7 +8706,7 @@ trySet('vk_btn_close', d.vk_close);
             window.p2pConn = myPeer.connect(hostId, { reliable: true });
             
             window.p2pConn.on('open', () => {
-                applyGuestUI(); // <-- ТЕПЕРЬ ОНО ОТКРЫВАЕТ ОКНО
+                showGuestRoom(); // Вызываем открытие комнаты здесь (на случай режима Без Видео)
                 statusTxt.innerHTML = `<span style="color:#a855f7;">🔗 СОЕДИНЕНО!</span>`;
                 
                 window.p2pConn.on('data', (data) => {
@@ -8733,25 +8732,26 @@ trySet('vk_btn_close', d.vk_close);
             });
         });
 
-        // ПРИЕМ ВИДЕО
+        // ПРИЕМ ВИДЕО (ИМЕННО ЗДЕСЬ СРАБАТЫВАЕТ ЖЕЛЕЗОБЕТОННЫЙ ПЕРЕХОД В ИГРУ)
         myPeer.on('call', (call) => {
             p2pCall = call;
             call.answer(isMicEnabled ? micStream : undefined);
             
             call.on('stream', (stream) => {
+                showGuestRoom(); // <--- КРИТИЧЕСКИЙ ФИКС: Вызов комнаты при поступлении видео
+                
                 let v = document.getElementById('p2p-remote-video');
                 if (!v) {
                     v = document.createElement('video'); 
                     v.id = 'p2p-remote-video'; 
                     v.setAttribute('autoplay', ''); 
-                    v.setAttribute('playsinline', ''); // КРИТИЧНО ДЛЯ IOS И ТЕЛЕФОНОВ
+                    v.setAttribute('playsinline', ''); 
                     v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none;';
                     const container = document.getElementById('canvasContainer');
                     if (container) container.appendChild(v);
                 }
                 v.srcObject = stream;
                 
-                // ПРИНУДИТЕЛЬНЫЙ ПЛЕЙ
                 setTimeout(() => {
                     let playPromise = v.play();
                     if (playPromise !== undefined) playPromise.catch(e => console.log("Play error:", e));
@@ -8762,7 +8762,7 @@ trySet('vk_btn_close', d.vk_close);
         });
     };
 
-    // --- 7. ДЕФОЛТНЫЙ ГЕЙМПАД ---
+    // --- 7. ДЕФОЛТНЫЙ ГЕЙМПАД (БОРЬБА С ХАОСОМ КНОПОК) ---
     document.addEventListener('DOMContentLoaded', () => { 
         if (typeof makePanelDraggable === 'function') makePanelDraggable('p2p-edit-panel'); 
         
@@ -8785,14 +8785,8 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
-
-
-
-
-
 </body>
 </html>
-
 
 
 
