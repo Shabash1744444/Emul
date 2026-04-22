@@ -8459,41 +8459,35 @@ trySet('vk_btn_close', d.vk_close);
     let mixedAudioDest = null;
     let hostMediaStream = null;
 
-    // ВНЕДРЕНИЕ: Умная маршрутизация STUN-серверов по регионам (35 стран)
-    function getPeerConfig() {
-        let lang = localStorage.getItem('app_lang') || 'EN';
-        let iceServers = [];
-        
-        if (['RU', 'KK', 'UK', 'TT'].includes(lang)) {
-            iceServers = [
-                { urls: 'stun:stun.yandex.ru:3478' }, // Приоритет для РФ и СНГ
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-                { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
-            ];
-        } else if (['JA', 'ZH'].includes(lang)) {
-            iceServers = [
-                { urls: 'stun:stun.miwifi.com:3478' }, // Азиатский узел (Xiaomi)
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-                { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
-            ];
-        } else {
-            iceServers = [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478' }, // Мощный западный STUN
-                { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-                { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
-            ];
-        }
-        
-        return {
-            config: {
-                iceServers: iceServers,
-                iceTransportPolicy: 'all' // Агрессивный сбор кандидатов для работы локалки (mDNS)
+    // ВНЕДРЕНИЕ: Функция возвращает массив Сигнальных серверов (Регистратур) для перебора
+    function getBrokerConfigs() {
+        let iceServers = [
+            { urls: 'stun:stun.yandex.ru:3478' },
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
+        ];
+
+        return [
+            {
+                // Попытка 1: Официальный сервер (быстрый, но может быть заблокирован провайдером)
+                host: '0.peerjs.com',
+                port: 443,
+                path: '/',
+                secure: true,
+                config: { iceServers: iceServers, iceTransportPolicy: 'all' },
+                debug: 1
             },
-            debug: 1
-        };
+            {
+                // Попытка 2: Твой личный сервер на Render (пробивает блокировки, но может спать)
+                host: 'rarcade-hub-broker.onrender.com',
+                port: 443,
+                path: '/',
+                secure: true,
+                config: { iceServers: iceServers, iceTransportPolicy: 'all' },
+                debug: 1
+            }
+        ];
     }
 
     const statusTxt = document.getElementById('p2pStatusText');
@@ -8504,7 +8498,7 @@ trySet('vk_btn_close', d.vk_close);
     const btnMic = document.getElementById('btnToggleMic');
     const btnAudio = document.getElementById('btnToggleGameAudio');
 
-       // --- 1. ПРИВЯЗКА ПАНЕЛЕЙ К КНОПКАМ (БЕЗ ЛИШНЕЙ ЛОГИКИ) ---
+    // --- 1. ПРИВЯЗКА ПАНЕЛЕЙ К КНОПКАМ (БЕЗ ЛИШНЕЙ ЛОГИКИ) ---
     function toggleP2PPanel(forcedRole) {
         const panel = document.getElementById('p2p-edit-panel');
         if (panel.style.display === 'none' || panel.style.opacity === '0') {
@@ -8583,7 +8577,6 @@ trySet('vk_btn_close', d.vk_close);
             }, 300);
         }
     }
-
 
     // --- 2. ИНТЕРФЕЙС ГОСТЯ (ИДЕАЛЬНАЯ КОМНАТА) ---
     function showGuestRoom() {
@@ -8722,51 +8715,87 @@ trySet('vk_btn_close', d.vk_close);
         });
     }
 
-    // --- 5. КОННЕКТ ХОСТА ---
+    // --- 5. КОННЕКТ ХОСТА С ПЕРЕБОРОМ СЕРВЕРОВ ---
     btnHost.onclick = () => {
         if (myPeer) myPeer.destroy();
-        statusTxt.innerHTML = "Создание комнаты...";
         
         const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
-        // ВНЕДРЕНИЕ: Вызов динамического конфига со свахами
-        myPeer = new Peer(shortId, getPeerConfig());
-        isP2PHost = true;
+        const brokers = getBrokerConfigs();
+        let currentBroker = 0;
 
-        myPeer.on('open', (id) => {
-            statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b>`;
-        });
-
-        myPeer.on('connection', (conn) => {
-            window.p2pConn = conn;
-            statusTxt.innerHTML = `<span style="color:#10b981;">✅ ДРУГ ПОДКЛЮЧЕН!</span>`;
-            if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
-
-            setTimeout(() => {
-                const panel = document.getElementById('p2p-edit-panel');
-                if (panel) { panel.style.opacity = '0'; setTimeout(() => panel.style.display = 'none', 300); }
-            }, 1500);
-
-            conn.on('data', (data) => {
-                if (data.sys_cmd === 'set_mode') return; 
-                if (data.k !== undefined && typeof sendKey === 'function') sendKey(data.k, data.d, data.p);
-            });
+        function connectHost() {
+            if (myPeer) myPeer.destroy(); // Убиваем старый коннект перед новой попыткой
+            statusTxt.innerHTML = `Создание комнаты (Попытка ${currentBroker + 1}/${brokers.length})...`;
             
-            const glCanvas = document.getElementById('universal-gl-canvas');
-            if (glCanvas && modeSelector.value !== 'pad_only') {
-                try {
-                    hostMediaStream = glCanvas.captureStream(30);
-                    updateHostAudioMixer();
-                    if (mixedAudioDest && mixedAudioDest.stream.getAudioTracks().length > 0) {
-                        hostMediaStream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]);
+            myPeer = new Peer(shortId, brokers[currentBroker]);
+            isP2PHost = true;
+            let isOpened = false;
+
+            // Умный таймер: 5 сек для первого сервера, 60 сек для Render (чтобы успел проснуться)
+            const timeoutId = setTimeout(() => {
+                if (!isOpened) {
+                    if (currentBroker < brokers.length - 1) {
+                        currentBroker++;
+                        connectHost(); // Пробуем следующий сервер
+                    } else {
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ СЕРВЕРЫ НЕДОСТУПНЫ</span>`;
                     }
-                    p2pCall = myPeer.call(conn.peer, hostMediaStream);
-                    handleIncomingAudio(p2pCall);
-                } catch(e) { console.error("Stream capture failed", e); }
-            }
-        });
+                }
+            }, currentBroker === 0 ? 5000 : 60000);
+
+            myPeer.on('open', (id) => {
+                isOpened = true;
+                clearTimeout(timeoutId);
+                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b>`;
+            });
+
+            // Отлов критических сбоев связи до истечения таймера
+            myPeer.on('error', (err) => {
+                if (!isOpened || err.type === 'network' || err.type === 'socket-error' || err.type === 'server-error') {
+                    clearTimeout(timeoutId);
+                    if (currentBroker < brokers.length - 1) {
+                        currentBroker++;
+                        connectHost(); // Пробуем следующий сервер
+                    } else {
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ОШИБКА: ${err.type}</span>`;
+                    }
+                }
+            });
+
+            myPeer.on('connection', (conn) => {
+                window.p2pConn = conn;
+                statusTxt.innerHTML = `<span style="color:#10b981;">✅ ДРУГ ПОДКЛЮЧЕН!</span>`;
+                if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
+
+                setTimeout(() => {
+                    const panel = document.getElementById('p2p-edit-panel');
+                    if (panel) { panel.style.opacity = '0'; setTimeout(() => panel.style.display = 'none', 300); }
+                }, 1500);
+
+                conn.on('data', (data) => {
+                    if (data.sys_cmd === 'set_mode') return; 
+                    if (data.k !== undefined && typeof sendKey === 'function') sendKey(data.k, data.d, data.p);
+                });
+                
+                const glCanvas = document.getElementById('universal-gl-canvas');
+                if (glCanvas && modeSelector.value !== 'pad_only') {
+                    try {
+                        hostMediaStream = glCanvas.captureStream(30);
+                        updateHostAudioMixer();
+                        if (mixedAudioDest && mixedAudioDest.stream.getAudioTracks().length > 0) {
+                            hostMediaStream.addTrack(mixedAudioDest.stream.getAudioTracks()[0]);
+                        }
+                        p2pCall = myPeer.call(conn.peer, hostMediaStream);
+                        handleIncomingAudio(p2pCall);
+                    } catch(e) { console.error("Stream capture failed", e); }
+                }
+            });
+        }
+        
+        connectHost(); // Запускаем цикл попыток
     };
 
-    // --- 6. КОННЕКТ ГОСТЯ ---
+    // --- 6. КОННЕКТ ГОСТЯ С ПЕРЕБОРОМ СЕРВЕРОВ ---
     btnJoin.onclick = () => {
         if (roomIdInput.style.display === 'none') {
             roomIdInput.style.display = 'block'; roomIdInput.focus(); return;
@@ -8776,85 +8805,126 @@ trySet('vk_btn_close', d.vk_close);
         if (!hostId) return;
 
         if (myPeer) myPeer.destroy();
-        statusTxt.innerHTML = "Подключение...";
-        // ВНЕДРЕНИЕ: Вызов динамического конфига со свахами
-        myPeer = new Peer(null, getPeerConfig());
-        isP2PHost = false;
         
-        myPeer.on('open', () => {
-            window.p2pConn = myPeer.connect(hostId, { reliable: true });
+        const brokers = getBrokerConfigs();
+        let currentBroker = 0;
+
+        function connectGuest() {
+            if (myPeer) myPeer.destroy();
+            statusTxt.innerHTML = `Подключение (Попытка ${currentBroker + 1}/${brokers.length})...`;
             
-            window.p2pConn.on('open', () => {
-                showGuestRoom(); 
-                statusTxt.innerHTML = `<span style="color:#a855f7;">🔗 СОЕДИНЕНО!</span>`;
-                
-                window.p2pConn.on('data', (data) => {
-                    if (data.sys_cmd === 'set_mode') {
-                        const v = document.getElementById('p2p-remote-video');
-                        const gamepadEl = document.getElementById('gamepad');
-                        
-                        if (data.mode === 'pad_only') {
-                            if (v) v.style.display = 'none';
-                            if (gamepadEl) gamepadEl.style.display = 'block';
-                        } else if (data.mode === 'watch_only') {
-                            if (v) v.style.display = 'block';
-                            if (gamepadEl) gamepadEl.style.display = 'none';
-                        } else {
-                            if (v) v.style.display = 'block';
-                            if (gamepadEl) gamepadEl.style.display = 'block';
-                        }
-                        if (typeof doVibrate === 'function') doVibrate(20);
+            myPeer = new Peer(null, brokers[currentBroker]);
+            isP2PHost = false;
+            let isOpened = false;
+
+            const timeoutId = setTimeout(() => {
+                if (!isOpened) {
+                    if (currentBroker < brokers.length - 1) {
+                        currentBroker++;
+                        connectGuest(); // Пробуем следующий сервер
+                    } else {
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ СЕРВЕРЫ НЕДОСТУПНЫ</span>`;
                     }
+                }
+            }, currentBroker === 0 ? 5000 : 60000);
+
+            // Отлов ситуации, когда Гость зашел на сервер 1, а Хост сидит на сервере 2 (peer-unavailable)
+            myPeer.on('error', (err) => {
+                if (!isOpened || err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'socket-error' || err.type === 'server-error') {
+                    clearTimeout(timeoutId);
+                    if (currentBroker < brokers.length - 1) {
+                        currentBroker++;
+                        connectGuest(); // Пробуем следующий сервер
+                    } else {
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ОШИБКА: НЕТ ХОСТА ИЛИ СВЯЗИ</span>`;
+                    }
+                }
+            });
+
+            myPeer.on('open', () => {
+                isOpened = true;
+                clearTimeout(timeoutId);
+                
+                window.p2pConn = myPeer.connect(hostId, { reliable: true });
+                
+                window.p2pConn.on('open', () => {
+                    showGuestRoom(); 
+                    statusTxt.innerHTML = `<span style="color:#a855f7;">🔗 СОЕДИНЕНО!</span>`;
+                    
+                    window.p2pConn.on('data', (data) => {
+                        if (data.sys_cmd === 'set_mode') {
+                            const v = document.getElementById('p2p-remote-video');
+                            const gamepadEl = document.getElementById('gamepad');
+                            
+                            if (data.mode === 'pad_only') {
+                                if (v) v.style.display = 'none';
+                                if (gamepadEl) gamepadEl.style.display = 'block';
+                            } else if (data.mode === 'watch_only') {
+                                if (v) v.style.display = 'block';
+                                if (gamepadEl) gamepadEl.style.display = 'none';
+                            } else {
+                                if (v) v.style.display = 'block';
+                                if (gamepadEl) gamepadEl.style.display = 'block';
+                            }
+                            if (typeof doVibrate === 'function') doVibrate(20);
+                        }
+                    });
+
+                    if (isMicEnabled && micStream) p2pCall = myPeer.call(hostId, micStream);
                 });
-
-                if (isMicEnabled && micStream) p2pCall = myPeer.call(hostId, micStream);
             });
-        });
 
-        // ПРИЕМ ВИДЕО (С ЖЕЛЕЗОБЕТОННЫМ ОТОБРАЖЕНИЕМ И ЗВУКОМ)
-        myPeer.on('call', (call) => {
-            p2pCall = call;
-            call.answer(isMicEnabled ? micStream : undefined);
-            
-            call.on('stream', (stream) => {
-                showGuestRoom(); 
+            // ПРИЕМ ВИДЕО
+            myPeer.on('call', (call) => {
+                p2pCall = call;
+                call.answer(isMicEnabled ? micStream : undefined);
                 
-                let v = document.getElementById('p2p-remote-video');
-                if (!v) {
-                    v = document.createElement('video'); 
-                    v.id = 'p2p-remote-video'; 
-                    v.setAttribute('autoplay', 'true'); 
-                    v.setAttribute('playsinline', 'true'); 
-                    // ФИКС ВИДЕО: Возвращаем звук Гостю! Браузер не заблокирует, т.к. был клик пользователя на кнопку ВОЙТИ.
-                    v.muted = false; 
-                    v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
-                    const container = document.getElementById('canvasContainer');
-                    if (container) container.appendChild(v);
-                }
-                
-                // Защита от дублирования потока
-                if (v.srcObject !== stream) {
-                    v.srcObject = stream;
-                }
-                
-                setTimeout(() => {
-                    let playPromise = v.play();
-                    if (playPromise !== undefined) playPromise.catch(e => console.log("Play error:", e));
-                }, 150);
-                
-                statusTxt.innerHTML = `<span style="color:#10b981;">✅ ТРАНСЛЯЦИЯ ИДЕТ</span>`;
+                call.on('stream', (stream) => {
+                    showGuestRoom(); 
+                    
+                    let v = document.getElementById('p2p-remote-video');
+                    if (!v) {
+                        v = document.createElement('video'); 
+                        v.id = 'p2p-remote-video'; 
+                        v.setAttribute('autoplay', 'true'); 
+                        v.setAttribute('playsinline', 'true'); 
+                        v.muted = false; 
+                        v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
+                        const container = document.getElementById('canvasContainer');
+                        if (container) container.appendChild(v);
+                    }
+                    
+                    if (v.srcObject !== stream) {
+                        v.srcObject = stream;
+                    }
+                    
+                    setTimeout(() => {
+                        let playPromise = v.play();
+                        if (playPromise !== undefined) playPromise.catch(e => console.log("Play error:", e));
+                    }, 150);
+                    
+                    statusTxt.innerHTML = `<span style="color:#10b981;">✅ ТРАНСЛЯЦИЯ ИДЕТ</span>`;
+                });
             });
-        });
+        }
+        
+        connectGuest(); // Запускаем цикл попыток
     };
 
     // --- 7. ИНИЦИАЛИЗАЦИЯ КНОПОК И ВЫЗОВОВ ---
     document.addEventListener('DOMContentLoaded', () => { 
-        // ПРИВЯЗЫВАЕМ ПАНЕЛИ
+        // ПРИВЯЗЫВАЕМ ПАНЕЛИ ЖЕСТКО, УБИВАЯ СТАРЫЕ HTML-КЛИКИ
         const menuBtn = document.getElementById('menuP2PBtn');
-        if (menuBtn) menuBtn.onclick = (e) => { e.preventDefault(); toggleP2PPanel('guest'); };
+        if (menuBtn) {
+            menuBtn.removeAttribute('onclick');
+            menuBtn.onclick = (e) => { e.preventDefault(); toggleP2PPanel('guest'); };
+        }
 
         const gameBtn = document.getElementById('btnP2P');
-        if (gameBtn) gameBtn.onclick = (e) => { e.preventDefault(); toggleP2PPanel('host'); };
+        if (gameBtn) {
+            gameBtn.removeAttribute('onclick');
+            gameBtn.onclick = (e) => { e.preventDefault(); toggleP2PPanel('host'); };
+        }
 
         if (typeof makePanelDraggable === 'function') makePanelDraggable('p2p-edit-panel'); 
         
@@ -8878,10 +8948,10 @@ trySet('vk_btn_close', d.vk_close);
     });
 </script>
 
-
 </body>
 </html>
 
+    
 
 
-
+    
