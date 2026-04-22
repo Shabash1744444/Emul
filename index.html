@@ -8463,14 +8463,15 @@ trySet('vk_btn_close', d.vk_close);
     function getBrokerConfigs() {
         let iceServers = [
             { urls: 'stun:stun.yandex.ru:3478' },
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-            { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
+            { urls: 'stun:stun.l.google.com:19302' }
+            // ВРЕМЕННО ОТКЛЮЧАЕМ КАНАДУ (TURN), ЧТОБЫ ЗАСТАВИТЬ ТЕЛЕФОНЫ ИСКАТЬ ПРЯМОЙ ПУТЬ
+            // { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+            // { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" }
         ];
 
         return [
             {
-                // Попытка 1: Официальный сервер (быстрый, но может быть заблокирован провайдером)
+                // Попытка 1: Официальный сервер
                 host: '0.peerjs.com',
                 port: 443,
                 path: '/',
@@ -8479,7 +8480,7 @@ trySet('vk_btn_close', d.vk_close);
                 debug: 1
             },
             {
-                // Попытка 2: Твой личный сервер на Render (пробивает блокировки, но может спать)
+                // Попытка 2: Твой личный сервер на Render
                 host: 'rarcade-hub-broker.onrender.com',
                 port: 443,
                 path: '/',
@@ -8489,6 +8490,7 @@ trySet('vk_btn_close', d.vk_close);
             }
         ];
     }
+
 
     const statusTxt = document.getElementById('p2pStatusText');
     const roomIdInput = document.getElementById('p2pRoomIdInput');
