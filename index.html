@@ -8830,11 +8830,12 @@ trySet('vk_btn_close', d.vk_close);
                 netSelect.style.display = isHost ? 'block' : 'none';
             }
 
-            // ЛОГИКА ОТОБРАЖЕНИЯ ПОЛЗУНКОВ И ЗВУКА: 
-            // СКРЫТЫ ДО КОННЕКТА У ВСЕХ! Отображаются только когда isConnected = true (или если Хост).
+                    // ЛОГИКА ОТОБРАЖЕНИЯ ПОЛЗУНКОВ И ЗВУКА: 
+            // СКРЫТЫ ДО КОННЕКТА У ВСЕХ! Отображаются только когда isConnected = true.
             const volControls = document.getElementById('p2pVolumeControls');
             if (volControls) {
-                if (isHost || isConnected) {
+                // ПРАВКА: Убрали "isHost ||", теперь Хост не видит ползунки до прихода Гостя
+                if (isConnected) {
                     volControls.style.display = 'flex'; 
                     triggerNeon(document.getElementById('gameVolSlider'));
                     triggerNeon(document.getElementById('voiceVolSlider'));
@@ -8844,7 +8845,7 @@ trySet('vk_btn_close', d.vk_close);
                     const bitrateBlock = document.getElementById('p2pBitrateBlock');
                     const resBlock = document.getElementById('p2pResolutionBlock');
                     
-                    if (isHost) {
+                    if (isP2PHost) {
                         if (bitrateBlock) bitrateBlock.style.display = 'none';
                         if (resBlock) resBlock.style.display = 'flex';
                     } else {
@@ -8861,19 +8862,22 @@ trySet('vk_btn_close', d.vk_close);
                 if (isGuest) {
                     hintText.style.display = 'none';
                 } else {
-                    hintText.style.display = 'block';
+                    // Подсказка видна Хосту только пока никто не подключился
+                    hintText.style.display = isConnected ? 'none' : 'block';
                 }
             }
             
-            // КНОПКИ АУДИО ТОЖЕ ТОЛЬКО ПОСЛЕ КОННЕКТА ИЛИ У ХОСТА
+            // КНОПКИ АУДИО ТАКЖЕ СКРЫТЫ ДО МОМЕНТА КОННЕКТА
             const audioRow = document.querySelector('#p2p-edit-panel .edit-row');
             if (audioRow) {
-                if (isHost || isConnected) {
+                // ПРАВКА: Убрали "isHost ||", чтобы кнопки Микрофона/Звука не мешались на старте
+                if (isConnected) {
                     audioRow.style.display = 'flex'; 
                 } else {
                     audioRow.style.display = 'none';
                 }
             }
+
 
             // ЖЕЛЕЗОБЕТОННОЕ РАЗДЕЛЕНИЕ КНОПОК ГОСТЯ И ХОСТА
             if (isGuest) {
