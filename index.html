@@ -8469,6 +8469,10 @@ trySet('vk_btn_close', d.vk_close);
     let mixedAudioDest = null;
     let hostMediaStream = null;
 
+    // Новые переменные для разделения звука
+    let gameLocalGain = null;
+    let isAudioRouted = false;
+
     // --- ТЕНЕВОЙ КАНВАС (УБИЙЦА ПИНГА) ---
     let shadowCanvas = null;
     let shadowCtx = null;
@@ -8531,6 +8535,7 @@ trySet('vk_btn_close', d.vk_close);
             }
             hostRoomId = null;
             connectedGuests = 0;
+            isAudioRouted = false;
             return origCleanup.apply(this, arguments);
         };
         window.p2pCleanupHooked = true;
@@ -8603,8 +8608,44 @@ trySet('vk_btn_close', d.vk_close);
             `;
             netSelect.parentNode.insertBefore(offlineRow, netSelect.nextSibling);
 
+            // Блок ползунков громкости
+            const volRow = document.createElement('div');
+            volRow.style.cssText = 'display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
+            volRow.innerHTML = `
+                <div class="slider-row" style="margin-bottom: 0;">
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #6ee7b7;">ГРОМКОСТЬ ИГРЫ: <span id="gameVolVal">100%</span></label>
+                    <input type="range" id="gameVolSlider" min="0" max="100" value="100" style="margin: 4px 0;">
+                </div>
+                <div class="slider-row" style="margin-bottom: 0;">
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fca5a5;">ГОЛОС ДРУГА: <span id="voiceVolVal">100%</span></label>
+                    <input type="range" id="voiceVolSlider" min="0" max="100" value="100" style="margin: 4px 0;">
+                </div>
+            `;
+            offlineRow.parentNode.insertBefore(volRow, offlineRow.nextSibling);
+
             document.getElementById('btnShowQR').onclick = showHostQR;
             document.getElementById('btnScanQR').onclick = startQRScanner;
+
+            document.getElementById('gameVolSlider').oninput = (e) => {
+                const val = e.target.value;
+                document.getElementById('gameVolVal').innerText = val + '%';
+                if (isP2PHost) {
+                    if (gameLocalGain && isGameAudioEnabled) {
+                        gameLocalGain.gain.value = val / 100;
+                    }
+                } else {
+                    const vid = document.getElementById('p2p-remote-video');
+                    if (vid && isGameAudioEnabled) {
+                        vid.volume = val / 100;
+                    }
+                }
+            };
+
+            document.getElementById('voiceVolSlider').oninput = (e) => {
+                const val = e.target.value;
+                document.getElementById('voiceVolVal').innerText = val + '%';
+                document.querySelectorAll('audio[id^="p2p-guest-audio"]').forEach(a => a.volume = val / 100);
+            };
         }
     }
 
@@ -8685,6 +8726,15 @@ trySet('vk_btn_close', d.vk_close);
                 modeSelector.style.display = 'none';
             } else {
                 modeSelector.style.display = 'block';
+            }
+            
+            const netSelect = document.getElementById('p2pNetworkMode');
+            if (netSelect) {
+                if (myPeer && !myPeer.destroyed) {
+                    netSelect.style.display = 'none';
+                } else {
+                    netSelect.style.display = 'block';
+                }
             }
             
             const hintText = document.querySelector('#p2p-edit-panel .hint-text');
@@ -8946,7 +8996,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     };
 
-    // --- 4. АУДИО И МИКРОФОН ---
+    // --- 4. АУДИО И МИКРОФОН (ОБНОВЛЕННАЯ ЛОГИКА РАЗДЕЛЕНИЯ) ---
     modeSelector.addEventListener('change', (e) => {
         if (isP2PHost && window.p2pConn && window.p2pConn.open) {
             window.p2pConn.send({ sys_cmd: 'set_mode', mode: e.target.value });
@@ -9017,21 +9067,45 @@ trySet('vk_btn_close', d.vk_close);
             mixedAudioDest = audioCtx.createMediaStreamDestination();
         }
         
-        if (isGameAudioEnabled && audioScriptNode) {
+        if (audioScriptNode && !isAudioRouted) {
             try { 
-                audioScriptNode.connect(mixedAudioDest); 
-            } catch(e){}
-        } else if (audioScriptNode) {
-            try { 
-                audioScriptNode.disconnect(mixedAudioDest); 
-            } catch(e){}
+                audioScriptNode.disconnect(); 
+            } catch(e){} 
+            
+            if (!gameLocalGain) {
+                gameLocalGain = audioCtx.createGain();
+                gameLocalGain.connect(audioCtx.destination);
+            }
+            
+            audioScriptNode.connect(gameLocalGain); 
+            audioScriptNode.connect(mixedAudioDest); 
+            isAudioRouted = true;
+        }
+
+        if (gameLocalGain) {
+            const volSlider = document.getElementById('gameVolSlider');
+            let vol = 1;
+            if (volSlider) {
+                vol = volSlider.value / 100;
+            }
+            if (isGameAudioEnabled) {
+                gameLocalGain.gain.value = vol;
+            } else {
+                gameLocalGain.gain.value = 0;
+            }
         }
         
         if (isMicEnabled && micStream) {
             if (!micStream.sourceNode) {
                 micStream.sourceNode = audioCtx.createMediaStreamSource(micStream);
-                micStream.sourceNode.connect(mixedAudioDest);
             }
+            try { 
+                micStream.sourceNode.connect(mixedAudioDest); 
+            } catch(e){}
+        } else if (micStream && micStream.sourceNode) {
+            try { 
+                micStream.sourceNode.disconnect(mixedAudioDest); 
+            } catch(e){}
         }
     }
 
@@ -9047,6 +9121,11 @@ trySet('vk_btn_close', d.vk_close);
             }
             audioEl.srcObject = remoteStream;
             
+            const volSlider = document.getElementById('voiceVolSlider');
+            if (volSlider) {
+                audioEl.volume = volSlider.value / 100;
+            }
+
             const playPromise = audioEl.play();
             if (playPromise !== undefined) {
                 playPromise.catch(e => console.log("Audio block:", e));
@@ -9096,16 +9175,18 @@ trySet('vk_btn_close', d.vk_close);
                 isOpened = true;
                 clearTimeout(timeoutId);
                 btnHost.style.display = 'none'; 
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b><br><span style="color:#94a3b8; font-size:10px;">Ожидание игроков...</span>`;
+                
+                const btnShowQR = document.getElementById('btnShowQR');
+                if (btnShowQR) {
+                    btnShowQR.style.display = 'block';
+                }
                 
                 const netSelect = document.getElementById('p2pNetworkMode');
                 if (netSelect) {
                     netSelect.style.display = 'none';
                 }
-                const btnShowQR = document.getElementById('btnShowQR');
-                if (btnShowQR) {
-                    btnShowQR.style.display = 'block';
-                }
+                
+                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b><br><span style="color:#94a3b8; font-size:10px;">Ожидание игроков...</span>`;
             });
 
             myPeer.on('error', (err) => {
@@ -9122,7 +9203,6 @@ trySet('vk_btn_close', d.vk_close);
             });
 
             myPeer.on('call', (incomingCall) => {
-                // ФИКС ЭХА
                 incomingCall.answer(undefined); 
                 handleIncomingAudio(incomingCall);
             });
@@ -9174,7 +9254,7 @@ trySet('vk_btn_close', d.vk_close);
         connectHost(); 
     };
 
-    // --- 6. КОННЕКТ ГОСТЯ С ПЕРЕБОРОМ СЕРВЕРОВ ---
+    // --- 6. КОННЕКТ ГОСТЯ (С ФИКСОМ ДЛЯ iOS) ---
     btnJoin.onclick = () => {
         if (roomIdInput.style.display === 'none') {
             roomIdInput.style.display = 'block'; 
@@ -9252,14 +9332,26 @@ trySet('vk_btn_close', d.vk_close);
                             const gamepadEl = document.getElementById('gamepad');
                             
                             if (data.mode === 'pad_only') {
-                                if (v) v.style.display = 'none';
-                                if (gamepadEl) gamepadEl.style.display = 'block';
+                                if (v) {
+                                    v.style.display = 'none';
+                                }
+                                if (gamepadEl) {
+                                    gamepadEl.style.display = 'block';
+                                }
                             } else if (data.mode === 'watch_only') {
-                                if (v) v.style.display = 'block';
-                                if (gamepadEl) gamepadEl.style.display = 'none';
+                                if (v) {
+                                    v.style.display = 'block';
+                                }
+                                if (gamepadEl) {
+                                    gamepadEl.style.display = 'none';
+                                }
                             } else {
-                                if (v) v.style.display = 'block';
-                                if (gamepadEl) gamepadEl.style.display = 'block';
+                                if (v) {
+                                    v.style.display = 'block';
+                                }
+                                if (gamepadEl) {
+                                    gamepadEl.style.display = 'block';
+                                }
                             }
                             if (typeof doVibrate === 'function') {
                                 doVibrate(20);
@@ -9273,10 +9365,13 @@ trySet('vk_btn_close', d.vk_close);
                 });
             });
 
-            // ПРИЕМ ВИДЕО
             myPeer.on('call', (call) => {
                 p2pCall = call;
-                call.answer(isMicEnabled ? micStream : undefined);
+                let streamToSend = undefined;
+                if (isMicEnabled) {
+                    streamToSend = micStream;
+                }
+                call.answer(streamToSend);
                 
                 call.on('stream', (stream) => {
                     showGuestRoom(); 
@@ -9287,7 +9382,7 @@ trySet('vk_btn_close', d.vk_close);
                         v.id = 'p2p-remote-video'; 
                         v.setAttribute('autoplay', 'true'); 
                         v.setAttribute('playsinline', 'true'); 
-                        v.muted = !isGameAudioEnabled; // Учитываем локальный выбор Гостя
+                        v.setAttribute('webkit-playsinline', 'true'); // ФИКС iOS
                         v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
                         const container = document.getElementById('canvasContainer');
                         if (container) {
@@ -9299,10 +9394,25 @@ trySet('vk_btn_close', d.vk_close);
                         v.srcObject = stream;
                     }
                     
+                    if (!isGameAudioEnabled) {
+                        v.muted = true;
+                    } else {
+                        v.muted = false;
+                    }
+                    
+                    const volSlider = document.getElementById('gameVolSlider');
+                    if (volSlider) {
+                        v.volume = volSlider.value / 100;
+                    }
+
                     setTimeout(() => {
                         let playPromise = v.play();
                         if (playPromise !== undefined) {
-                            playPromise.catch(e => console.log("Play error:", e));
+                            playPromise.catch(e => {
+                                console.log("Play blocked by iOS, forcing muted autoplay:", e);
+                                v.muted = true;
+                                v.play();
+                            });
                         }
                     }, 150);
                     
@@ -9361,6 +9471,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
+
 
 
 </body>
