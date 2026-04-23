@@ -8477,13 +8477,6 @@ trySet('vk_btn_close', d.vk_close);
     let isAudioRouted = false;
     let gameAudioDest = null; 
 
-    // --- ТЕНЕВОЙ КАНВАС (УБИЙЦА ПИНГА) ---
-    let shadowCanvas = null;
-    let shadowCtx = null;
-    let shadowLoopId = null;
-    let isShadowLoopRunning = false;
-    let currentShadowHeight = 240; // СТАРТ С МИНИМУМА: 240p
-
     // --- ОТЛАДОЧНЫЙ ОВЕРЛЕЙ И АБСОЛЮТНОЕ ЛОГИРОВАНИЕ ---
     let p2pPingInterval = null;
     let lastPingTime = 0;
@@ -8551,7 +8544,7 @@ trySet('vk_btn_close', d.vk_close);
         if (overlay) overlay.style.display = 'block';
         if (logConsole) logConsole.style.display = 'block';
         
-        window.P2PLog(`--- START DEBUG STATS (${isHostRole ? 'HOST' : 'GUEST'}) ---`);
+        window.P2PLog(`--- START DEBUG STATS (${isHostRole ? 'HOST' : 'GUEST'}) V2 DIRECT ---`);
         
         if (p2pPingInterval) {
             clearInterval(p2pPingInterval);
@@ -8667,79 +8660,12 @@ trySet('vk_btn_close', d.vk_close);
                 window.P2PLog(`Changing remote bitrate to ${val}kbps`);
                 window.p2pConn.send({ sys_cmd: 'set_bitrate', bps: val });
             }
-        } else if (type === 'res') {
-            document.getElementById('resVal').innerText = val + 'p';
-            currentShadowHeight = parseInt(val);
-            if (shadowCanvas) {
-                shadowCanvas.height = currentShadowHeight;
-                shadowCanvas.width = Math.round(currentShadowHeight * (16/9));
-                window.P2PLog(`Host shadow canvas resized to ${shadowCanvas.width}x${shadowCanvas.height}`);
-            }
         }
     };
-
-    function startShadowCanvasLoop() {
-        if (isShadowLoopRunning) {
-            return;
-        }
-        const glCanvas = document.getElementById('universal-gl-canvas');
-        if (!glCanvas) {
-            return;
-        }
-
-        window.P2PLog(`Starting Shadow Canvas Loop at ${currentShadowHeight}p`);
-
-        if (!shadowCanvas) {
-            shadowCanvas = document.createElement('canvas');
-            shadowCanvas.height = currentShadowHeight;
-            shadowCanvas.width = Math.round(currentShadowHeight * (16/9)); 
-            shadowCanvas.style.display = 'none'; 
-            document.body.appendChild(shadowCanvas);
-            shadowCtx = shadowCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
-            shadowCtx.imageSmoothingEnabled = false; 
-        }
-
-        isShadowLoopRunning = true;
-        let lastDrawTime = 0;
-        
-        function loop() {
-            if (!isShadowLoopRunning) {
-                return;
-            }
-            const now = performance.now();
-            
-            // Троттлинг 30 FPS (~33ms)
-            if (now - lastDrawTime >= 33) {
-                if (glCanvas.width > 0 && glCanvas.height > 0) {
-                    const t0 = performance.now();
-                    shadowCtx.drawImage(glCanvas, 0, 0, shadowCanvas.width, shadowCanvas.height);
-                    const t1 = performance.now();
-                    
-                    // Логируем лаги отрисовки (если drawImage занимает больше 10мс - это просадка CPU)
-                    if (t1 - t0 > 10) {
-                        window.P2PLog(`[WARN] CPU Lag: shadowCtx.drawImage took ${(t1-t0).toFixed(1)}ms`);
-                    }
-                    framesCount++; 
-                }
-                lastDrawTime = now;
-            }
-            shadowLoopId = requestAnimationFrame(loop);
-        }
-        loop();
-    }
-
-    function stopShadowCanvasLoop() {
-        isShadowLoopRunning = false;
-        if (shadowLoopId) {
-            cancelAnimationFrame(shadowLoopId);
-            shadowLoopId = null;
-        }
-    }
 
     if (typeof window.executeCleanup === 'function' && !window.p2pCleanupHooked) {
         const origCleanup = window.executeCleanup;
         window.executeCleanup = async function(skipSave = false) {
-            stopShadowCanvasLoop();
             stopDebugStats();
             window.P2PLog("Executing total cleanup...");
             if (window.p2pConn) { 
@@ -8836,7 +8762,7 @@ trySet('vk_btn_close', d.vk_close);
             volRow.id = 'p2pVolumeControls';
             volRow.style.cssText = 'display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
             
-            // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (и РАЗРЕШЕНИЕ 240p)
+            // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (БЕЗ ползунка разрешения для V2)
             volRow.innerHTML = `
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pGameVolBlock">
                     <label style="font-size: 8px; display: flex; justify-content: space-between; color: #6ee7b7;">ГРОМКОСТЬ ИГРЫ: <span id="gameVolVal">100%</span></label>
@@ -8849,10 +8775,6 @@ trySet('vk_btn_close', d.vk_close);
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pBitrateBlock">
                     <label style="font-size: 8px; display: flex; justify-content: space-between; color: #a855f7;">БИТРЕЙТ (КАЧЕСТВО): <span id="bitrateVal">200 kbps</span></label>
                     <input type="range" id="bitrateSlider" min="100" max="5000" step="100" value="200" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'bitrate')">
-                </div>
-                <div class="slider-row" style="margin-bottom: 0;" id="p2pResolutionBlock">
-                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fbbf24;">РАЗРЕШЕНИЕ ХОСТА: <span id="resVal">240p</span></label>
-                    <input type="range" id="resSlider" min="120" max="720" step="60" value="240" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'res')">
                 </div>
             `;
             offlineRow.parentNode.insertBefore(volRow, offlineRow.nextSibling);
@@ -8954,17 +8876,13 @@ trySet('vk_btn_close', d.vk_close);
                     triggerNeon(document.getElementById('gameVolSlider'));
                     triggerNeon(document.getElementById('voiceVolSlider'));
                     triggerNeon(document.getElementById('bitrateSlider'));
-                    triggerNeon(document.getElementById('resSlider'));
 
                     const bitrateBlock = document.getElementById('p2pBitrateBlock');
-                    const resBlock = document.getElementById('p2pResolutionBlock');
                     
                     if (isP2PHost) {
                         if (bitrateBlock) bitrateBlock.style.display = 'none';
-                        if (resBlock) resBlock.style.display = 'flex';
                     } else {
                         if (bitrateBlock) bitrateBlock.style.display = 'flex';
-                        if (resBlock) resBlock.style.display = 'none';
                     }
                 } else {
                     volControls.style.display = 'none'; 
@@ -9321,7 +9239,6 @@ trySet('vk_btn_close', d.vk_close);
         if (isP2PHost && myPeer && !myPeer.destroyed) return; 
         
         if (myPeer) myPeer.destroy();
-        stopShadowCanvasLoop(); 
         
         hostRoomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         connectedGuests = 0;
@@ -9486,20 +9403,19 @@ trySet('vk_btn_close', d.vk_close);
                 const glCanvas = document.getElementById('universal-gl-canvas');
                 if (glCanvas) {
                     try {
-                        startShadowCanvasLoop(); 
-                        
-                        window.P2PLog(`Initiating separate Video and Audio streams...`);
-                        hostMediaStream = shadowCanvas.captureStream(60); 
+                        // V2: DIRECT CANVAS CAPTURE (NO SHADOW CANVAS)
+                        window.P2PLog(`Initiating direct Video and Audio streams from original canvas...`);
+                        hostMediaStream = glCanvas.captureStream(60); 
                         const videoOnlyStream = new MediaStream([hostMediaStream.getVideoTracks()[0]]);
                         if (videoOnlyStream.getVideoTracks()[0]) {
                             videoOnlyStream.getVideoTracks()[0].contentHint = 'motion';
-                            window.P2PLog("Applied contentHint = 'motion'");
+                            window.P2PLog("Applied contentHint = 'motion' to original canvas track");
                         }
                         
                         p2pCall = myPeer.call(conn.peer, videoOnlyStream, { metadata: { type: 'video' } });
                         activeCalls[conn.peer] = p2pCall; 
                         
-                        // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (Защита от буферизации при старте)
+                        // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps
                         if (p2pCall.peerConnection) {
                             const senders = p2pCall.peerConnection.getSenders();
                             const videoSender = senders.find(s => s.track && s.track.kind === 'video');
@@ -9622,9 +9538,7 @@ trySet('vk_btn_close', d.vk_close);
                         triggerNeon(document.getElementById('bitrateSlider'));
                         
                         const bitrateBlock = document.getElementById('p2pBitrateBlock');
-                        const resBlock = document.getElementById('p2pResolutionBlock');
                         if (bitrateBlock) bitrateBlock.style.display = 'flex';
-                        if (resBlock) resBlock.style.display = 'none';
                     }
 
                     startDebugStats(false);
@@ -9757,6 +9671,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
+
 
 
 
