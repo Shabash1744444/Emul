@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p public
           
-          # 1. Мумифицируем HTML
+          # 1. Сжимаем HTML
           npx html-minifier-terser index.html --minify-js --collapse-whitespace --remove-comments --output public/index.html
           for f in *.html; do
             if [ "$f" != "index.html" ]; then
@@ -39,16 +39,16 @@ jobs:
             fi
           done
 
-          # 2. Сжимаем расширения
+          # 2. Бандлим расширения
           if [ -f "arcade-extensions.js" ]; then
             npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
           fi
           
-          # 3. Забираем ресурсы
+          # 3. Копируем ресурсы
           cp *.wasm *.wasm.js *.txt *.mp3 *.png *.json public/ 2>/dev/null || true
           find . -maxdepth 1 -name "*.js" ! -name "arcade-extensions.js" -exec cp {} public/ \;
 
-          # 4. Копируем библиотеки
+          # 4. Библиотеки распаковки
           cp node_modules/fflate/umd/index.js public/fflate.js
           cp node_modules/libarchive.js/main.js public/libarchive.js
           cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
@@ -72,23 +72,22 @@ jobs:
             npx capacitor-assets generate --android
           fi
 
-      - name: Patch Android (System Permissions & Hard WebRTC Fix)
+      - name: Patch Android (Permissions & Hard WebRTC Fix)
         run: |
-          # 1. Патчим AndroidManifest.xml
-          # Добавляем разрешения и объявляем камеру как фичу
+          # 1. Патчим AndroidManifest.xml (используем | как разделитель)
           sed -i '/<\/manifest>/i \    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />' android/app/src/main/AndroidManifest.xml
           
-          # Разрешаем Legacy Storage
-          sed -i 's/<application/<application android:requestLegacyExternalStorage="true"/' android/app/src/main/AndroidManifest.xml
+          sed -i 's|<application|<application android:requestLegacyExternalStorage="true"|' android/app/src/main/AndroidManifest.xml
 
-          # 2. Патчим MainActivity.java (Хард-запрос разрешений у Android)
+          # 2. Патчим MainActivity.java
           FILE="android/app/src/main/java/com/arcade/hub/MainActivity.java"
           
-          # Добавляем нативные импорты Android для разрешений
-          sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport android.webkit.PermissionRequest;\nimport android.webkit.WebChromeClient;\nimport android.webkit.WebView;\nimport android.Manifest;\nimport android.content.pm.PackageManager;\nimport androidx.core.app.ActivityCompat;\nimport androidx.core.content.ContextCompat;/' $FILE
+          # Инъекция импортов
+          sed -i 's|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport android.webkit.PermissionRequest;\nimport android.webkit.WebChromeClient;\nimport android.webkit.WebView;\nimport android.Manifest;\nimport android.content.pm.PackageManager;\nimport androidx.core.app.ActivityCompat;\nimport androidx.core.content.ContextCompat;|' $FILE
           
-          # Инъекция кода, который заставит телефон ВЫКИНУТЬ ОКНО РАЗРЕШЕНИЯ
-          sed -i 's/public class MainActivity extends BridgeActivity {/public class MainActivity extends BridgeActivity {\n\n    @Override\n    public void onStart() {\n        super.onStart();\n        \n        // Запрашиваем права у системы Android при каждом старте, если их нет\n        String[] perms = {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};\n        boolean needsPerms = false;\n        for (String p : perms) {\n            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) needsPerms = true;\n        }\n        if (needsPerms) ActivityCompat.requestPermissions(this, perms, 1);\n\n        // Настройка WebView для WebRTC\n        WebView webView = this.getBridge().getWebView();\n        webView.setWebChromeClient(new WebChromeClient() {\n            @Override\n            public void onPermissionRequest(final PermissionRequest request) {\n                MainActivity.this.runOnUiThread(new Runnable() {\n                    @Override\n                    public void run() {\n                        request.grant(request.getResources());\n                    }\n                });\n            }\n        });\n    }\n\n    @Override\n    public void onWindowFocusChanged(boolean hasFocus) {\n        super.onWindowFocusChanged(hasFocus);\n        if (hasFocus) {\n            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE | android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | android.view.View.SYSTEM_UI_FLAG_FULLSCREEN);\n        }\n    }/' $FILE
+          # Инъекция логики запроса прав (onStart) и иммерсивного режима
+          # Используем | как безопасный разделитель для sed
+          sed -i 's|public class MainActivity extends BridgeActivity {|public class MainActivity extends BridgeActivity {\n\n    @Override\n    public void onStart() {\n        super.onStart();\n        String[] perms = {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE};\n        boolean needsPerms = false;\n        for (String p : perms) {\n            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) needsPerms = true;\n        }\n        if (needsPerms) ActivityCompat.requestPermissions(this, perms, 1);\n\n        WebView webView = this.getBridge().getWebView();\n        webView.setWebChromeClient(new WebChromeClient() {\n            @Override\n            public void onPermissionRequest(final PermissionRequest request) {\n                MainActivity.this.runOnUiThread(new Runnable() {\n                    @Override\n                    public void run() {\n                        request.grant(request.getResources());\n                    }\n                });\n            }\n        });\n    }\n\n    @Override\n    public void onWindowFocusChanged(boolean hasFocus) {\n        super.onWindowFocusChanged(hasFocus);\n        if (hasFocus) {\n            getWindow().getDecorView().setSystemUiVisibility(android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY \| android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE \| android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION \| android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN \| android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION \| android.view.View.SYSTEM_UI_FLAG_FULLSCREEN);\n        }\n    }|' $FILE
 
       - name: Create Release Key
         run: |
@@ -107,9 +106,9 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: |
-            🚀 **Arcade Hub: Билд с исправленной камерой!**
+            🚀 **Arcade Hub: Камера исправлена!**
             
-            Руслан, в этом APK при первом запуске телефон ДОЛЖЕН спросить разрешение на камеру.
+            Руслан, теперь секреты в порядке, а камера должна запросить доступ при первом запуске.
           document: android/ArcadeHub_Signed.apk
 
       - name: Upload Artifact (Backup)
