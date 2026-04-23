@@ -31,7 +31,7 @@ jobs:
         run: |
           mkdir -p public
           
-          # 1. Максимальное сжатие HTML и встроенного JS
+          # Сжатие HTML
           npx html-minifier-terser index.html --minify-js --collapse-whitespace --remove-comments --output public/index.html
           for f in *.html; do
             if [ "$f" != "index.html" ]; then
@@ -39,16 +39,16 @@ jobs:
             fi
           done
 
-          # 2. Бандлинг расширений
+          # Бандлинг расширений
           if [ -f "arcade-extensions.js" ]; then
             npx esbuild arcade-extensions.js --bundle --minify --format=iife --outfile=public/arcade-extensions.bundle.js
           fi
           
-          # 3. Копирование статики
+          # Копирование ресурсов
           cp *.wasm *.wasm.js *.txt *.mp3 *.png *.json public/ 2>/dev/null || true
           find . -maxdepth 1 -name "*.js" ! -name "arcade-extensions.js" -exec cp {} public/ \;
 
-          # 4. Внешние библиотеки
+          # Библиотеки
           cp node_modules/fflate/umd/index.js public/fflate.js
           cp node_modules/libarchive.js/main.js public/libarchive.js
           cp node_modules/libarchive.js/dist/worker-bundle.js public/worker-bundle.js
@@ -72,92 +72,35 @@ jobs:
             npx capacitor-assets generate --android
           fi
 
-      - name: Patch Android (Just-In-Time Permissions & WebRTC Bridge)
+      - name: Patch Android (Manifest Correct Placement & Clean Java)
         run: |
-          # 1. Прописываем права в Манифест
-          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />' android/app/src/main/AndroidManifest.xml
+          # 1. Вставляем разрешения СТРОГО перед тегом <application>, иначе Android 10+ их игнорирует!
+          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n\n    <application|' android/app/src/main/AndroidManifest.xml
           
-          # Разрешаем Legacy Storage для доступа к файлам
-          sed -i 's/<application/<application android:requestLegacyExternalStorage="true"/' android/app/src/main/AndroidManifest.xml
+          # Разрешаем Legacy Storage
+          sed -i 's|<application|<application android:requestLegacyExternalStorage="true"|' android/app/src/main/AndroidManifest.xml
 
-          # 2. ПОЛНАЯ ПЕРЕЗАПИСЬ MainActivity.java (Запрос прав по факту нажатия кнопок)
+          # 2. ПОЛНАЯ ПЕРЕЗАПИСЬ MainActivity.java (Чистый запрос в onCreate)
           cat <<EOF > android/app/src/main/java/com/arcade/hub/MainActivity.java
           package com.arcade.hub;
 
           import android.os.Bundle;
           import android.Manifest;
-          import android.content.pm.PackageManager;
-          import android.webkit.PermissionRequest;
-          import android.webkit.WebChromeClient;
-          import android.webkit.WebView;
           import android.view.View;
           import androidx.core.app.ActivityCompat;
-          import androidx.core.content.ContextCompat;
           import com.getcapacitor.BridgeActivity;
-          import java.util.ArrayList;
-          import java.util.List;
 
           public class MainActivity extends BridgeActivity {
               
-              // Сохраняем запрос от WebView, чтобы дождаться ответа пользователя
-              private PermissionRequest pendingRequest;
-
               @Override
-              protected void onCreate(Bundle savedInstanceState) {
+              public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   
-                  // МОСТ ДЛЯ ВНУТРЕННЕГО БРАУЗЕРА (WebView Level)
-                  // Перехватываем запрос из JS и просим системные права JIT (Just-In-Time)
-                  WebView webView = this.getBridge().getWebView();
-                  webView.setWebChromeClient(new WebChromeClient() {
-                      @Override
-                      public void onPermissionRequest(final PermissionRequest request) {
-                          pendingRequest = request;
-                          List<String> perms = new ArrayList<>();
-                          
-                          // Проверяем, чего именно хочет JavaScript
-                          for (String resource : request.getResources()) {
-                              if (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
-                                  if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                                      perms.add(Manifest.permission.CAMERA);
-                                  }
-                              } else if (resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
-                                  if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-                                      perms.add(Manifest.permission.RECORD_AUDIO);
-                                  }
-                              }
-                          }
-                          
-                          if (perms.isEmpty()) {
-                              // Системные права уже есть, сразу разрешаем WebView доступ к камере/микрофону
-                              MainActivity.this.runOnUiThread(new Runnable() {
-                                  @Override
-                                  public void run() {
-                                      request.grant(request.getResources());
-                                  }
-                              });
-                          } else {
-                              // Системных прав нет, вызываем системное окно Android (в момент нажатия сканера)
-                              ActivityCompat.requestPermissions(MainActivity.this, perms.toArray(new String[0]), 101);
-                          }
-                      }
-                  });
-              }
-
-              // Слушаем ответ пользователя в системном окне
-              @Override
-              public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-                  if (requestCode == 101 && pendingRequest != null) {
-                      MainActivity.this.runOnUiThread(new Runnable() {
-                          @Override
-                          public void run() {
-                              // Разрешаем WebView использовать ресурсы после положительного ответа юзера
-                              pendingRequest.grant(pendingRequest.getResources());
-                              pendingRequest = null;
-                          }
-                      });
-                  }
+                  // Бьем напрямую в систему при создании активности
+                  ActivityCompat.requestPermissions(this, new String[]{
+                      Manifest.permission.CAMERA,
+                      Manifest.permission.RECORD_AUDIO
+                  }, 1);
               }
 
               @Override
@@ -194,9 +137,9 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: |
-            🚀 **Arcade Hub: JIT Permissions!**
+            🚀 **Arcade Hub: Финальный бронебойный патч!**
             
-            Руслан, теперь запрос прав выскочит ТОЛЬКО когда ты нажмешь кнопку СКАНИРОВАТЬ или включишь МИКРОФОН в P2P панели. Идеальный UX!
+            Руслан, разрешения теперь прописаны в правильном месте манифеста. Диалог появится при старте!
           document: android/ArcadeHub_Signed.apk
 
       - name: Upload Artifact (Backup)
