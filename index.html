@@ -8456,15 +8456,15 @@ trySet('vk_btn_close', d.vk_close);
     let myPeer = null;
     let p2pCall = null;
     let isP2PHost = false;
-    window.isP2PGuestCapturing = false;
+    window.isP2PGuestCapturing = false; // Флаг перехвата нажатий Гостя
 
     // --- НОВЫЕ ПЕРЕМЕННЫЕ ЛОББИ И СЛОТОВ ---
     let hostRoomId = null;
     let connectedGuests = 0;
-    let playerSlots = {}; 
-    let hostConnections = {}; 
-    let activeCalls = {}; 
-    window.p2pGuestPlayer = 2; 
+    let playerSlots = {}; // Отслеживание: кто какой джойстик держит { peerId: 2 }
+    let hostConnections = {}; // Охотник за привидениями (очистка зависших гостей)
+    let activeCalls = {}; // Для динамического изменения битрейта и режимов
+    window.p2pGuestPlayer = 2; // По умолчанию Гость - это P2
 
     // --- АУДИО ПЕРЕМЕННЫЕ ---
     let micStream = null;
@@ -8473,9 +8473,17 @@ trySet('vk_btn_close', d.vk_close);
     let mixedAudioDest = null;
     let hostMediaStream = null;
 
+    // Новые переменные для разделения звука
     let gameLocalGain = null;
     let isAudioRouted = false;
-    let gameAudioDest = null; 
+    let gameAudioDest = null; // Выделенный канал для звука игры в сеть
+
+    // --- ТЕНЕВОЙ КАНВАС (УБИЙЦА ПИНГА) ---
+    let shadowCanvas = null;
+    let shadowCtx = null;
+    let shadowLoopId = null;
+    let isShadowLoopRunning = false;
+    let currentShadowHeight = 240; // СТАРТ С МИНИМУМА: 240p
 
     // --- ОТЛАДОЧНЫЙ ОВЕРЛЕЙ И АБСОЛЮТНОЕ ЛОГИРОВАНИЕ ---
     let p2pPingInterval = null;
@@ -8494,15 +8502,15 @@ trySet('vk_btn_close', d.vk_close);
             document.body.appendChild(debugOverlay);
         }
 
-        // Абсолютная консоль логирования (Снизу)
+        // Абсолютная консоль логирования (Снизу - Компактная версия)
         if (!document.getElementById('p2p-log-console')) {
             const logConsole = document.createElement('div');
             logConsole.id = 'p2p-log-console';
-            logConsole.style.cssText = 'position:fixed; bottom:0; left:0; width:100%; height:25vh; background:rgba(0,0,0,0.85); border-top: 2px solid #a855f7; color:#e2e8f0; font-family:monospace; font-size:9px; padding:10px; z-index:99998; overflow-y:auto; display:none; pointer-events:auto; line-height: 1.2;';
+            logConsole.style.cssText = 'position:fixed; bottom:0; left:0; width:100%; height:15vh; background:rgba(0,0,0,0.75); border-top: 2px solid #a855f7; color:#e2e8f0; font-family:monospace; font-size:9px; padding:10px; z-index:99998; overflow-y:auto; display:none; pointer-events:auto; line-height: 1.2;';
             
             const closeBtn = document.createElement('button');
-            closeBtn.innerText = 'X';
-            closeBtn.style.cssText = 'position:absolute; top:5px; right:15px; background:red; color:white; border:none; padding:2px 5px; font-weight:bold;';
+            closeBtn.innerText = 'ЗАКРЫТЬ ЛОГИ';
+            closeBtn.style.cssText = 'position:absolute; top:5px; right:15px; background:#ef4444; color:white; border:none; padding:4px 8px; font-weight:bold; border-radius: 4px; z-index: 99999;';
             closeBtn.onclick = () => logConsole.style.display = 'none';
             
             logConsole.appendChild(closeBtn);
@@ -8544,7 +8552,7 @@ trySet('vk_btn_close', d.vk_close);
         if (overlay) overlay.style.display = 'block';
         if (logConsole) logConsole.style.display = 'block';
         
-        window.P2PLog(`--- START DEBUG STATS (${isHostRole ? 'HOST' : 'GUEST'}) V2 DIRECT ---`);
+        window.P2PLog(`--- START DEBUG STATS (${isHostRole ? 'HOST' : 'GUEST'}) V1 MONOLITH ---`);
         
         if (p2pPingInterval) {
             clearInterval(p2pPingInterval);
@@ -8570,7 +8578,6 @@ trySet('vk_btn_close', d.vk_close);
             let connType = 'UNKNOWN';
             let jitter = 0;
             let packetLoss = 0;
-            let bytesReceived = 0;
 
             if (myPeer && window.p2pConn.peerConnection) {
                 try {
@@ -8589,7 +8596,6 @@ trySet('vk_btn_close', d.vk_close);
                         if (!isHostRole && report.type === 'inbound-rtp' && report.kind === 'video') {
                             jitter = report.jitter ? (report.jitter * 1000).toFixed(1) : 0;
                             packetLoss = report.packetsLost || 0;
-                            bytesReceived = report.bytesReceived || 0;
                         }
                     });
                 } catch(e) {
@@ -8606,7 +8612,7 @@ trySet('vk_btn_close', d.vk_close);
             }
             
             // Логируем скачки пинга в консоль
-            if (!isHostRole && currentPing > 50) {
+            if (!isHostRole && currentPing > 60) {
                 window.P2PLog(`[WARN] High Ping Detected: ${currentPing}ms, Jitter: ${jitter}ms`);
             }
 
@@ -8640,6 +8646,7 @@ trySet('vk_btn_close', d.vk_close);
         slider.style.setProperty('--val-num', percent);
     }
 
+    // --- ЖЕЛЕЗОБЕТОННЫЙ ОБРАБОТЧИК ЗВУКА И БИТРЕЙТА ---
     window.handleP2PVol = function(el, type) {
         triggerNeon(el);
         const val = el.value;
@@ -8660,12 +8667,80 @@ trySet('vk_btn_close', d.vk_close);
                 window.P2PLog(`Changing remote bitrate to ${val}kbps`);
                 window.p2pConn.send({ sys_cmd: 'set_bitrate', bps: val });
             }
+        } else if (type === 'res') {
+            document.getElementById('resVal').innerText = val + 'p';
+            currentShadowHeight = parseInt(val);
+            if (shadowCanvas) {
+                shadowCanvas.height = currentShadowHeight;
+                shadowCanvas.width = Math.round(currentShadowHeight * (16/9));
+                window.P2PLog(`Host shadow canvas resized to ${shadowCanvas.width}x${shadowCanvas.height}`);
+            }
         }
     };
+
+    // --- АППАРАТНЫЙ ПРОПУСК КАДРОВ (ТРОТТЛИНГ CANVAS ДО 30 FPS) ---
+    function startShadowCanvasLoop() {
+        if (isShadowLoopRunning) {
+            return;
+        }
+        const glCanvas = document.getElementById('universal-gl-canvas');
+        if (!glCanvas) {
+            return;
+        }
+
+        window.P2PLog(`Starting Shadow Canvas Loop at ${currentShadowHeight}p`);
+
+        if (!shadowCanvas) {
+            shadowCanvas = document.createElement('canvas');
+            shadowCanvas.height = currentShadowHeight;
+            shadowCanvas.width = Math.round(currentShadowHeight * (16/9)); 
+            shadowCanvas.style.display = 'none'; 
+            document.body.appendChild(shadowCanvas);
+            shadowCtx = shadowCanvas.getContext('2d', { alpha: false, willReadFrequently: false });
+            shadowCtx.imageSmoothingEnabled = false; 
+        }
+
+        isShadowLoopRunning = true;
+        let lastDrawTime = 0;
+        
+        function loop() {
+            if (!isShadowLoopRunning) {
+                return;
+            }
+            const now = performance.now();
+            
+            // Троттлинг 30 FPS (~33ms)
+            if (now - lastDrawTime >= 33) {
+                if (glCanvas.width > 0 && glCanvas.height > 0) {
+                    const t0 = performance.now();
+                    shadowCtx.drawImage(glCanvas, 0, 0, shadowCanvas.width, shadowCanvas.height);
+                    const t1 = performance.now();
+                    
+                    // Логируем лаги отрисовки (если drawImage занимает больше 10мс - это просадка CPU)
+                    if (t1 - t0 > 10) {
+                        window.P2PLog(`[WARN] CPU Lag: shadowCtx.drawImage took ${(t1-t0).toFixed(1)}ms`);
+                    }
+                    framesCount++; 
+                }
+                lastDrawTime = now;
+            }
+            shadowLoopId = requestAnimationFrame(loop);
+        }
+        loop();
+    }
+
+    function stopShadowCanvasLoop() {
+        isShadowLoopRunning = false;
+        if (shadowLoopId) {
+            cancelAnimationFrame(shadowLoopId);
+            shadowLoopId = null;
+        }
+    }
 
     if (typeof window.executeCleanup === 'function' && !window.p2pCleanupHooked) {
         const origCleanup = window.executeCleanup;
         window.executeCleanup = async function(skipSave = false) {
+            stopShadowCanvasLoop();
             stopDebugStats();
             window.P2PLog("Executing total cleanup...");
             if (window.p2pConn) { 
@@ -8762,7 +8837,7 @@ trySet('vk_btn_close', d.vk_close);
             volRow.id = 'p2pVolumeControls';
             volRow.style.cssText = 'display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
             
-            // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (БЕЗ ползунка разрешения для V2)
+            // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (и РАЗРЕШЕНИЕ 240p)
             volRow.innerHTML = `
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pGameVolBlock">
                     <label style="font-size: 8px; display: flex; justify-content: space-between; color: #6ee7b7;">ГРОМКОСТЬ ИГРЫ: <span id="gameVolVal">100%</span></label>
@@ -8775,6 +8850,10 @@ trySet('vk_btn_close', d.vk_close);
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pBitrateBlock">
                     <label style="font-size: 8px; display: flex; justify-content: space-between; color: #a855f7;">БИТРЕЙТ (КАЧЕСТВО): <span id="bitrateVal">200 kbps</span></label>
                     <input type="range" id="bitrateSlider" min="100" max="5000" step="100" value="200" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'bitrate')">
+                </div>
+                <div class="slider-row" style="margin-bottom: 0;" id="p2pResolutionBlock">
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fbbf24;">РАЗРЕШЕНИЕ ХОСТА: <span id="resVal">240p</span></label>
+                    <input type="range" id="resSlider" min="120" max="720" step="60" value="240" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'res')">
                 </div>
             `;
             offlineRow.parentNode.insertBefore(volRow, offlineRow.nextSibling);
@@ -8856,6 +8935,7 @@ trySet('vk_btn_close', d.vk_close);
                 isConnected = true;
             }
             
+            // ЛОГИКА ОТОБРАЖЕНИЯ МЕНЮ РЕЖИМОВ
             if (isGuest) {
                 modeSelector.style.display = 'block';
                 netSelect = document.getElementById('p2pNetworkMode');
@@ -8876,13 +8956,17 @@ trySet('vk_btn_close', d.vk_close);
                     triggerNeon(document.getElementById('gameVolSlider'));
                     triggerNeon(document.getElementById('voiceVolSlider'));
                     triggerNeon(document.getElementById('bitrateSlider'));
+                    triggerNeon(document.getElementById('resSlider'));
 
                     const bitrateBlock = document.getElementById('p2pBitrateBlock');
+                    const resBlock = document.getElementById('p2pResolutionBlock');
                     
                     if (isP2PHost) {
                         if (bitrateBlock) bitrateBlock.style.display = 'none';
+                        if (resBlock) resBlock.style.display = 'flex';
                     } else {
                         if (bitrateBlock) bitrateBlock.style.display = 'flex';
+                        if (resBlock) resBlock.style.display = 'none';
                     }
                 } else {
                     volControls.style.display = 'none'; 
@@ -8909,6 +8993,7 @@ trySet('vk_btn_close', d.vk_close);
 
             if (isGuest) {
                 panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
+                // ГОСТЬ НИКОГДА НЕ ВИДИТ КНОПКУ СОЗДАТЬ
                 btnHost.style.display = 'none'; 
                 
                 if (isConnected) {
@@ -8928,11 +9013,12 @@ trySet('vk_btn_close', d.vk_close);
                 roomIdInput.style.display = 'none'; 
                 document.getElementById('btnScanQR').style.display = 'none';
                 
+                // ХОСТ ВСЕГДА ВИДИТ КНОПКУ СОЗДАТЬ (чтобы мог пересоздать комнату)
+                btnHost.style.display = 'block';
+                
                 if (isP2PHost && myPeer && !myPeer.destroyed) {
-                    btnHost.style.display = 'none';
                     document.getElementById('btnShowQR').style.display = 'block';
                 } else {
-                    btnHost.style.display = 'block';
                     document.getElementById('btnShowQR').style.display = 'none';
                 }
             }
@@ -9103,6 +9189,7 @@ trySet('vk_btn_close', d.vk_close);
                 if (gamepadEl) gamepadEl.style.display = 'block';
             }
             
+            // Отправляем тихую команду Хосту отключить трек
             window.p2pConn.send({ sys_cmd: 'guest_mode', mode: mode });
             if (typeof doVibrate === 'function') doVibrate(20);
         }
@@ -9203,14 +9290,7 @@ trySet('vk_btn_close', d.vk_close);
             else gameLocalGain.gain.value = 0;
         }
         
-        if (isMicEnabled && micStream) {
-            if (!micStream.sourceNode) {
-                micStream.sourceNode = audioCtx.createMediaStreamSource(micStream);
-            }
-            try { micStream.sourceNode.connect(mixedAudioDest); } catch(e){}
-        } else if (micStream && micStream.sourceNode) {
-            try { micStream.sourceNode.disconnect(mixedAudioDest); } catch(e){}
-        }
+        // ВНИМАНИЕ: Микрофон Хоста больше не миксуется в общий канал, летит отдельно!
     }
 
     function handleIncomingVoice(call, remoteStream) {
@@ -9236,9 +9316,8 @@ trySet('vk_btn_close', d.vk_close);
 
     // --- КОННЕКТ ХОСТА ---
     btnHost.onclick = () => {
-        if (isP2PHost && myPeer && !myPeer.destroyed) return; 
-        
         if (myPeer) myPeer.destroy();
+        stopShadowCanvasLoop(); 
         
         hostRoomId = Math.random().toString(36).substring(2, 6).toUpperCase();
         connectedGuests = 0;
@@ -9273,8 +9352,7 @@ trySet('vk_btn_close', d.vk_close);
             myPeer.on('open', (id) => {
                 isOpened = true;
                 clearTimeout(timeoutId);
-                btnHost.style.display = 'none'; 
-                window.P2PLog(`Host Room Created! ID: ${id}`);
+                // ВАЖНО: Кнопка "Создать" у Хоста остается видимой для рестарта
                 
                 const btnShowQR = document.getElementById('btnShowQR');
                 if (btnShowQR) btnShowQR.style.display = 'block';
@@ -9291,7 +9369,6 @@ trySet('vk_btn_close', d.vk_close);
                 if (!navigator.onLine) {
                     clearTimeout(timeoutId);
                     statusTxt.innerHTML = `<span style="color:#ef4444;">❌ НЕТ ИНТЕРНЕТА ДЛЯ РУКОПОЖАТИЯ! Включите 3G/LTE на 2 секунды.</span>`;
-                    btnHost.style.display = 'block';
                     return;
                 }
                 if (!isOpened || err.type === 'network' || err.type === 'socket-error' || err.type === 'server-error') {
@@ -9301,7 +9378,6 @@ trySet('vk_btn_close', d.vk_close);
                         connectHost();
                     } else {
                         statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ОШИБКА: ${err.type}</span>`;
-                        btnHost.style.display = 'block'; 
                     }
                 }
             });
@@ -9403,19 +9479,20 @@ trySet('vk_btn_close', d.vk_close);
                 const glCanvas = document.getElementById('universal-gl-canvas');
                 if (glCanvas) {
                     try {
-                        // V2: DIRECT CANVAS CAPTURE (NO SHADOW CANVAS)
-                        window.P2PLog(`Initiating direct Video and Audio streams from original canvas...`);
-                        hostMediaStream = glCanvas.captureStream(60); 
+                        startShadowCanvasLoop(); 
+                        
+                        window.P2PLog(`Initiating separate Video and Audio streams...`);
+                        hostMediaStream = shadowCanvas.captureStream(60); 
                         const videoOnlyStream = new MediaStream([hostMediaStream.getVideoTracks()[0]]);
                         if (videoOnlyStream.getVideoTracks()[0]) {
                             videoOnlyStream.getVideoTracks()[0].contentHint = 'motion';
-                            window.P2PLog("Applied contentHint = 'motion' to original canvas track");
+                            window.P2PLog("Applied contentHint = 'motion'");
                         }
                         
                         p2pCall = myPeer.call(conn.peer, videoOnlyStream, { metadata: { type: 'video' } });
                         activeCalls[conn.peer] = p2pCall; 
                         
-                        // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps
+                        // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (Защита от буферизации при старте)
                         if (p2pCall.peerConnection) {
                             const senders = p2pCall.peerConnection.getSenders();
                             const videoSender = senders.find(s => s.track && s.track.kind === 'video');
@@ -9508,7 +9585,7 @@ trySet('vk_btn_close', d.vk_close);
                 clearTimeout(timeoutId);
                 window.P2PLog(`Guest Peer Created. Connecting to Host ID: ${hostId}...`);
                 
-                // ВОЗВРАТ К RELIABLE: TRUE ДЛЯ СТАБИЛЬНОГО УПРАВЛЕНИЯ
+                // РЕЖИМ RELIABLE: TRUE ДЛЯ СТАБИЛЬНОГО УПРАВЛЕНИЯ
                 window.p2pConn = myPeer.connect(hostId, { reliable: true });
                 window.P2PLog("DataChannel mode: reliable: true");
                 
@@ -9538,7 +9615,9 @@ trySet('vk_btn_close', d.vk_close);
                         triggerNeon(document.getElementById('bitrateSlider'));
                         
                         const bitrateBlock = document.getElementById('p2pBitrateBlock');
+                        const resBlock = document.getElementById('p2pResolutionBlock');
                         if (bitrateBlock) bitrateBlock.style.display = 'flex';
+                        if (resBlock) resBlock.style.display = 'none';
                     }
 
                     startDebugStats(false);
@@ -9584,7 +9663,7 @@ trySet('vk_btn_close', d.vk_close);
                             v.setAttribute('autoplay', 'true'); 
                             v.setAttribute('playsinline', 'true'); 
                             v.setAttribute('webkit-playsinline', 'true'); 
-                            v.setAttribute('latencyHint', 'interactive'); // УБИЙСТВО БУФЕРА В ПЛЕЕРЕ
+                            v.setAttribute('latencyHint', 'interactive'); // МАГИЯ: УБИЙСТВО БУФЕРА В ПЛЕЕРЕ
                             v.setAttribute('disablePictureInPicture', 'true');
                             v.controls = false;
                             v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
@@ -9593,7 +9672,7 @@ trySet('vk_btn_close', d.vk_close);
                         }
                         
                         if (v.srcObject !== stream) v.srcObject = stream;
-                        v.muted = true; // Видео теперь летит БЕЗ звука
+                        v.muted = true; // Видео теперь летит БЕЗ звука (звук летит отдельным треком)
 
                         setTimeout(() => {
                             let playPromise = v.play();
@@ -9671,6 +9750,7 @@ trySet('vk_btn_close', d.vk_close);
         }
     });
 </script>
+
 
 
 
