@@ -72,35 +72,85 @@ jobs:
             npx capacitor-assets generate --android
           fi
 
-      - name: Patch Android (Manifest Correct Placement & Clean Java)
+      - name: Patch Android (Core Permissions & Smart WebChromeClient)
         run: |
-          # 1. Вставляем разрешения СТРОГО перед тегом <application>, иначе Android 10+ их игнорирует!
-          sed -i 's|<application|<uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />\n\n    <application|' android/app/src/main/AndroidManifest.xml
+          # 1. Прописываем разрешения строго перед <application> в манифесте
+          sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />' android/app/src/main/AndroidManifest.xml
           
-          # Разрешаем Legacy Storage
+          # Разрешаем Legacy Storage для старых Android
           sed -i 's|<application|<application android:requestLegacyExternalStorage="true"|' android/app/src/main/AndroidManifest.xml
 
-          # 2. ПОЛНАЯ ПЕРЕЗАПИСЬ MainActivity.java (Чистый запрос в onCreate)
+          # 2. ПОЛНАЯ ПЕРЕЗАПИСЬ MainActivity.java
+          # Используем BridgeWebChromeClient для сохранения файлового менеджера и JIT запросов
           cat <<EOF > android/app/src/main/java/com/arcade/hub/MainActivity.java
           package com.arcade.hub;
 
           import android.os.Bundle;
           import android.Manifest;
+          import android.content.pm.PackageManager;
+          import android.webkit.PermissionRequest;
           import android.view.View;
           import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
           import com.getcapacitor.BridgeActivity;
+          import com.getcapacitor.BridgeWebChromeClient;
+          import java.util.ArrayList;
+          import java.util.List;
 
           public class MainActivity extends BridgeActivity {
               
+              private PermissionRequest pendingRequest;
+
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   
-                  // Бьем напрямую в систему при создании активности
-                  ActivityCompat.requestPermissions(this, new String[]{
-                      Manifest.permission.CAMERA,
-                      Manifest.permission.RECORD_AUDIO
-                  }, 1);
+                  // Расширяем РОДНОЙ клиент Capacitor. 
+                  // Это сохраняет файловый загрузчик и дает нам JIT-запрос для камеры!
+                  this.getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(this.getBridge()) {
+                      @Override
+                      public void onPermissionRequest(final PermissionRequest request) {
+                          pendingRequest = request;
+                          List<String> perms = new ArrayList<>();
+                          
+                          for (String resource : request.getResources()) {
+                              if (resource.equals(PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                                  if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                      perms.add(Manifest.permission.CAMERA);
+                                  }
+                              } else if (resource.equals(PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                                  if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                      perms.add(Manifest.permission.RECORD_AUDIO);
+                                  }
+                              }
+                          }
+                          
+                          if (perms.isEmpty()) {
+                              MainActivity.this.runOnUiThread(new Runnable() {
+                                  @Override
+                                  public void run() {
+                                      request.grant(request.getResources());
+                                  }
+                              });
+                          } else {
+                              ActivityCompat.requestPermissions(MainActivity.this, perms.toArray(new String[0]), 101);
+                          }
+                      }
+                  });
+              }
+
+              @Override
+              public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+                  super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                  if (requestCode == 101 && pendingRequest != null) {
+                      MainActivity.this.runOnUiThread(new Runnable() {
+                          @Override
+                          public void run() {
+                              pendingRequest.grant(pendingRequest.getResources());
+                              pendingRequest = null;
+                          }
+                      });
+                  }
               }
 
               @Override
@@ -137,9 +187,9 @@ jobs:
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           message: |
-            🚀 **Arcade Hub: Финальный бронебойный патч!**
+            🚀 **Arcade Hub: Финальная сборка APK!**
             
-            Руслан, разрешения теперь прописаны в правильном месте манифеста. Диалог появится при старте!
+            Кнопка ДОБАВИТЬ работает. Запросы камеры/микрофона всплывают Just-In-Time.
           document: android/ArcadeHub_Signed.apk
 
       - name: Upload Artifact (Backup)
