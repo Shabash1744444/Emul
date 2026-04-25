@@ -68,7 +68,18 @@
     --neon-red: #ef4444;
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; }
+html, body { 
+    margin: 0; padding: 0; background: #000; color: #eee; font-family: sans-serif; height: 100%; width: 100%; overscroll-behavior-y: none; overflow: hidden; 
+    -webkit-user-select: none; 
+    user-select: none; 
+    -webkit-touch-callout: none; 
+}
+
+input, textarea, select { 
+    -webkit-user-select: auto !important; 
+    user-select: auto !important; 
+}
+
 
 /* Плавный и тягучий фон меню с GPU-ускорением (Виньетка + Неон) */
 #menuScreen { 
