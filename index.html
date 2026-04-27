@@ -977,8 +977,11 @@ input, textarea, select {
 </div>
 
 <div id="splashScreen">
-    <div class="splash-title">ARCADE HUB</div>
+
+    <div class="splash-title" id="lbl_hub_title">ARCADE HUB</div>
+
     <div class="splash-sub" id="lbl_init">INITIALIZING RETRO CORES...</div>
+
 </div>
 
 <div id="menuScreen">
@@ -1340,28 +1343,28 @@ input, textarea, select {
 
 <div id="p2p-edit-panel" style="display: none; opacity: 0; transform: translateX(-10px); position: absolute; top: calc(95px + env(safe-area-inset-top, 0px)); left: 15px; z-index: 9998; flex-direction: column; gap: 6px; background: rgba(15, 10, 25, 0.85) !important; backdrop-filter: blur(25px) saturate(200%); -webkit-backdrop-filter: blur(25px) saturate(200%); padding: 12px 12px 15px 12px; border-radius: 16px; color: #fff; font-size: 11px; width: 240px; box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.05); transition: opacity 0.3s ease, transform 0.3s ease;">
     <div class="drag-handle"></div>
-    <div id="lbl_p2p_title" style="border-bottom: 1px dashed rgba(56, 189, 248, 0.4); padding-bottom: 5px; margin-bottom: 10px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue); text-transform: uppercase; font-size: 11px;">СЕТЕВАЯ ИГРА (P2P)</div>
+    <div id="lbl_p2p_title" style="border-bottom: 1px dashed rgba(56, 189, 248, 0.4); padding-bottom: 5px; margin-bottom: 10px; text-align: center; color: var(--neon-blue); font-weight: bold; text-shadow: 0 0 5px var(--neon-blue); text-transform: uppercase; font-size: 11px;">NETWORK PLAY (P2P)</div>
     
-    <div class="hint-text" style="color: #94a3b8;">РЕЖИМ ПОДКЛЮЧЕНИЯ:</div>
+    <div class="hint-text" id="lbl_p2p_mode" style="color: #94a3b8;">CONNECTION MODE:</div>
     <select id="p2pModeSelector" style="width: 100%; margin-bottom: 10px; background: rgba(15, 20, 30, 0.9); color: #fff; border: 1px solid rgba(56, 189, 248, 0.4); padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; text-align: center; outline: none;">
-        <option value="full" selected>📺 ЭКРАН + 🎮 ГЕЙМПАД</option>
-        <option value="pad_only">🎮 ТОЛЬКО ГЕЙМПАД (ТВ-ПУЛЬТ)</option>
-        <option value="watch_only">👀 ТОЛЬКО ЗРИТЕЛЬ</option>
+        <option value="full" id="opt_p2p_full" selected>📺 SCREEN + 🎮 PAD</option>
+        <option value="pad_only" id="opt_p2p_pad">🎮 PAD ONLY (REMOTE)</option>
+        <option value="watch_only" id="opt_p2p_watch">👀 SPECTATOR</option>
     </select>
 
     <div class="edit-row" style="margin-bottom: 10px;">
-        <button class="edit-btn action-btn" id="btnToggleMic" style="background: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #fca5a5;">🎤 МИКР: ВЫКЛ</button>
-        <button class="edit-btn action-btn" id="btnToggleGameAudio" style="background: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #6ee7b7;">🔊 ЗВУК ИГРЫ: ВКЛ</button>
+        <button class="edit-btn action-btn" id="btnToggleMic" style="background: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.4) !important; color: #fca5a5;">🎤 MIC: OFF</button>
+        <button class="edit-btn action-btn" id="btnToggleGameAudio" style="background: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.4) !important; color: #6ee7b7;">🔊 AUDIO: ON</button>
     </div>
 
     <div style="display: flex; gap: 6px;">
-        <button class="edit-btn action-btn" id="btnHostRoom" style="flex: 1; background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; text-shadow: 0 0 5px #fff;">🌐 СОЗДАТЬ</button>
-        <button class="edit-btn action-btn" id="btnJoinRoom" style="flex: 1; background: rgba(168, 85, 247, 0.2) !important; border-color: var(--neon-purple) !important; text-shadow: 0 0 5px #fff;">🔗 ВОЙТИ</button>
+        <button class="edit-btn action-btn" id="btnHostRoom" style="flex: 1; background: rgba(56, 189, 248, 0.2) !important; border-color: var(--neon-blue) !important; text-shadow: 0 0 5px #fff;">🌐 CREATE</button>
+        <button class="edit-btn action-btn" id="btnJoinRoom" style="flex: 1; background: rgba(168, 85, 247, 0.2) !important; border-color: var(--neon-purple) !important; text-shadow: 0 0 5px #fff;">🔗 JOIN</button>
     </div>
     
-    <input type="text" id="p2pRoomIdInput" placeholder="Введите код друга..." autocomplete="off" style="width: 100%; padding: 8px; margin-top: 8px; border-radius: 8px; border: 1px solid #475569; background: rgba(0, 0, 0, 0.5); color: #fff; font-weight: bold; text-align: center; display: none;">
+    <input type="text" id="p2pRoomIdInput" placeholder="Enter friend code..." autocomplete="off" style="width: 100%; padding: 8px; margin-top: 8px; border-radius: 8px; border: 1px solid #475569; background: rgba(0, 0, 0, 0.5); color: #fff; font-weight: bold; text-align: center; display: none;">
     
-    <div id="p2pStatusText" style="text-align: center; font-size: 9px; color: #94a3b8; margin-top: 8px; word-break: break-all;">Ожидание...</div>
+    <div id="p2pStatusText" style="text-align: center; font-size: 9px; color: #94a3b8; margin-top: 8px; word-break: break-all;" data-i18n="p2p_stat_wait">Waiting for network...</div>
 </div>
 
 
@@ -2794,54 +2797,16 @@ input, textarea, select {
             
             if (player === 1) {
                 if (typeof currentDos !== 'undefined' && currentDos) {
-                    keyMap = { 
-                        38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
-                        40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
-                        37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
-                        39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
-                        90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                        88: { keyCode: 32, code: 'Space', key: ' ' }, 
-                        65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 
-                        83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
-                        81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 
-                        87: { keyCode: 89, code: 'KeyY', key: 'y' }, 
-                        13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                        16: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 
-                        27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
-                    };
+                    keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 13, code: 'Enter', key: 'Enter' }, 88: { keyCode: 32, code: 'Space', key: ' ' }, 65: { keyCode: 17, code: 'ControlLeft', key: 'Control' }, 83: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 81: { keyCode: 27, code: 'Escape', key: 'Escape' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftLeft', key: 'Shift', location: 1 }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
                 } else {
-                    keyMap = { 
-                        38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 
-                        40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 
-                        37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 
-                        39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 
-                        90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 
-                        88: { keyCode: 88, code: 'KeyX', key: 'x' }, 
-                        65: { keyCode: 65, code: 'KeyA', key: 'a' }, 
-                        83: { keyCode: 83, code: 'KeyS', key: 's' }, 
-                        81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 
-                        87: { keyCode: 87, code: 'KeyW', key: 'w' }, 
-                        13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 
-                        16: { keyCode: 16, code: 'ShiftRight', key: 'Shift', location: 2 },
-                        27: { keyCode: 27, code: 'Escape', key: 'Escape' } 
-                    };
+                    keyMap = { 38: { keyCode: 38, code: 'ArrowUp', key: 'ArrowUp' }, 40: { keyCode: 40, code: 'ArrowDown', key: 'ArrowDown' }, 37: { keyCode: 37, code: 'ArrowLeft', key: 'ArrowLeft' }, 39: { keyCode: 39, code: 'ArrowRight', key: 'ArrowRight' }, 90: { keyCode: 90, code: 'KeyZ', key: 'z' }, 88: { keyCode: 88, code: 'KeyX', key: 'x' }, 65: { keyCode: 65, code: 'KeyA', key: 'a' }, 83: { keyCode: 83, code: 'KeyS', key: 's' }, 81: { keyCode: 81, code: 'KeyQ', key: 'q' }, 87: { keyCode: 87, code: 'KeyW', key: 'w' }, 13: { keyCode: 13, code: 'Enter', key: 'Enter' }, 16: { keyCode: 16, code: 'ShiftRight', key: 'Shift', location: 2 }, 27: { keyCode: 27, code: 'Escape', key: 'Escape' } };
                 }
             } else if (player === 2) {
-                // БЕЗОПАСНАЯ теневая раскладка для Игрока 2 (Донор принимает эти сигналы от Приемника)
-                keyMap = {
-                    38: { keyCode: 104, code: 'Numpad8', key: '8' }, // Up
-                    40: { keyCode: 101, code: 'Numpad5', key: '5' }, // Down
-                    37: { keyCode: 100, code: 'Numpad4', key: '4' }, // Left
-                    39: { keyCode: 102, code: 'Numpad6', key: '6' }, // Right
-                    90: { keyCode: 97,  code: 'Numpad1', key: '1' }, // B
-                    88: { keyCode: 98,  code: 'Numpad2', key: '2' }, // A
-                    65: { keyCode: 103, code: 'Numpad7', key: '7' }, // Y
-                    83: { keyCode: 105, code: 'Numpad9', key: '9' }, // X
-                    16: { keyCode: 109, code: 'NumpadSubtract', key: '-' }, // Select
-                    13: { keyCode: 107, code: 'NumpadAdd', key: '+' },      // Start
-                    81: { keyCode: 111, code: 'NumpadDivide', key: '/' },   // L
-                    87: { keyCode: 106, code: 'NumpadMultiply', key: '*' }  // R
-                };
+                keyMap = { 38: { keyCode: 84, code: 'KeyT', key: 't' }, 40: { keyCode: 71, code: 'KeyG', key: 'g' }, 37: { keyCode: 70, code: 'KeyF', key: 'f' }, 39: { keyCode: 72, code: 'KeyH', key: 'h' }, 90: { keyCode: 86, code: 'KeyV', key: 'v' }, 88: { keyCode: 66, code: 'KeyB', key: 'b' }, 65: { keyCode: 78, code: 'KeyN', key: 'n' }, 83: { keyCode: 77, code: 'KeyM', key: 'm' }, 16: { keyCode: 49, code: 'Digit1', key: '1' }, 13: { keyCode: 50, code: 'Digit2', key: '2' }, 81: { keyCode: 82, code: 'KeyR', key: 'r' }, 87: { keyCode: 89, code: 'KeyY', key: 'y' } };
+            } else if (player === 3) {
+                keyMap = { 38: { keyCode: 73, code: 'KeyI', key: 'i' }, 40: { keyCode: 75, code: 'KeyK', key: 'k' }, 37: { keyCode: 74, code: 'KeyJ', key: 'j' }, 39: { keyCode: 76, code: 'KeyL', key: 'l' }, 90: { keyCode: 79, code: 'KeyO', key: 'o' }, 88: { keyCode: 80, code: 'KeyP', key: 'p' }, 65: { keyCode: 219, code: 'BracketLeft', key: '[' }, 83: { keyCode: 221, code: 'BracketRight', key: ']' }, 16: { keyCode: 57, code: 'Digit9', key: '9' }, 13: { keyCode: 48, code: 'Digit0', key: '0' }, 81: { keyCode: 85, code: 'KeyU', key: 'u' }, 87: { keyCode: 186, code: 'Semicolon', key: ';' } };
+            } else if (player === 4) {
+                keyMap = { 38: { keyCode: 104, code: 'Numpad8', key: '8' }, 40: { keyCode: 101, code: 'Numpad5', key: '5' }, 37: { keyCode: 100, code: 'Numpad4', key: '4' }, 39: { keyCode: 102, code: 'Numpad6', key: '6' }, 90: { keyCode: 97, code: 'Numpad1', key: '1' }, 88: { keyCode: 98, code: 'Numpad2', key: '2' }, 65: { keyCode: 99, code: 'Numpad3', key: '3' }, 83: { keyCode: 110, code: 'NumpadDecimal', key: '.' }, 16: { keyCode: 109, code: 'NumpadSubtract', key: '-' }, 13: { keyCode: 107, code: 'NumpadAdd', key: '+' }, 81: { keyCode: 111, code: 'NumpadDivide', key: '/' }, 87: { keyCode: 106, code: 'NumpadMultiply', key: '*' } };
             }
 
             if (keyMap[finalCode]) targetKeyCode = keyMap[finalCode].keyCode;
@@ -5910,11 +5875,14 @@ function deselectAllGamesForDelete() {
     // =========================================================
     // --- ОПРОС ГЕЙМПАДА ВНУТРИ ИГРЫ (С НАВИГАЦИЕЙ UI И ЭКРАНОМ)
     // =========================================================
-       let gpInGameState = {};
+    let gpInGameState = {};
     let gp2InGameState = {}; // <-- ПАМЯТЬ ДЛЯ ВТОРОГО ГЕЙМПАДА
+    let gp3InGameState = {}; // <-- ПАМЯТЬ ДЛЯ ТРЕТЬЕГО ГЕЙМПАДА
+    let gp4InGameState = {}; // <-- ПАМЯТЬ ДЛЯ ЧЕТВЕРТОГО ГЕЙМПАДА
     let multiMode = 0; // 0 = SOLO, 1 = SPLIT KBD, 2 = COUCH CO-OP
     let lastInGameUiUpdate = 0;
     let inGameUiIndex = 0;
+
 
     // --- ЖЕСТКИЙ САНИТАЙЗЕР ВВОДА (Броня от фантомных нажатий PS4/Xbox) ---
     function sanitizeGamepadState(pad) {
@@ -5923,7 +5891,7 @@ function deselectAllGamesForDelete() {
         
         // 1. Фильтр осей: оставляем только левый стик (оси 0 и 1).
         for (let i = 0; i < pad.axes.length; i++) {
-            if (i > 1) {
+            if (i > 3) {
                 cleanPad.axes.push(0); // Рубим правый стик и курки в 0
             } else {
                 let val = pad.axes[i];
@@ -5949,6 +5917,8 @@ function deselectAllGamesForDelete() {
             // ПРОПУСКАЕМ ГЕЙМПАДЫ ЧЕРЕЗ ФИЛЬТР ПЕРЕД РАБОТОЙ
             const gp = sanitizeGamepadState(pads[0]);
             const gp2 = sanitizeGamepadState(pads[1]); // Второй геймпад тоже очищаем
+            const gp3 = sanitizeGamepadState(pads[2]); // Третий геймпад
+            const gp4 = sanitizeGamepadState(pads[3]); // Четвертый геймпад
             
             if (gp) {
                 const now = Date.now();
@@ -6127,6 +6097,53 @@ function deselectAllGamesForDelete() {
                     else if (!data.pressed && gp2InGameState[stateKey]) { sendKey(data.code, false, 2); gp2InGameState[stateKey] = false; }
                 }
             }
+            
+            
+            // ==================================================
+            // --- ГЕЙМПАД 3 (Всегда Игрок 3)
+            // ==================================================
+            if (gp3) {
+                const map3 = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
+                for (let b in map3) {
+                    let pressed = gp3.buttons[b] && gp3.buttons[b].pressed;
+                    if (pressed && !gp3InGameState[b]) { sendKey(map3[b], true, 3); gp3InGameState[b] = true; } 
+                    else if (!pressed && gp3InGameState[b]) { sendKey(map3[b], false, 3); gp3InGameState[b] = false; }
+                }
+                const axisDeadzone3 = 0.4;
+                const axesMap3 = {
+                    'up': { code: 38, pressed: gp3.axes[1] < -axisDeadzone3 }, 'down': { code: 40, pressed: gp3.axes[1] > axisDeadzone3 },
+                    'left': { code: 37, pressed: gp3.axes[0] < -axisDeadzone3 }, 'right': { code: 39, pressed: gp3.axes[0] > axisDeadzone3 }
+                };
+                for (let dir in axesMap3) {
+                    let data = axesMap3[dir]; let stateKey = 'axis_' + dir;
+                    if (data.pressed && !gp3InGameState[stateKey]) { sendKey(data.code, true, 3); gp3InGameState[stateKey] = true; } 
+                    else if (!data.pressed && gp3InGameState[stateKey]) { sendKey(data.code, false, 3); gp3InGameState[stateKey] = false; }
+                }
+            }
+
+            // ==================================================
+            // --- ГЕЙМПАД 4 (Всегда Игрок 4)
+            // ==================================================
+            if (gp4) {
+                const map4 = { 0: 90, 1: 88, 2: 65, 3: 83, 8: 16, 9: 13, 12: 38, 13: 40, 14: 37, 15: 39, 4: 81, 5: 87 };
+                for (let b in map4) {
+                    let pressed = gp4.buttons[b] && gp4.buttons[b].pressed;
+                    if (pressed && !gp4InGameState[b]) { sendKey(map4[b], true, 4); gp4InGameState[b] = true; } 
+                    else if (!pressed && gp4InGameState[b]) { sendKey(map4[b], false, 4); gp4InGameState[b] = false; }
+                }
+                const axisDeadzone4 = 0.4;
+                const axesMap4 = {
+                    'up': { code: 38, pressed: gp4.axes[1] < -axisDeadzone4 }, 'down': { code: 40, pressed: gp4.axes[1] > axisDeadzone4 },
+                    'left': { code: 37, pressed: gp4.axes[0] < -axisDeadzone4 }, 'right': { code: 39, pressed: gp4.axes[0] > axisDeadzone4 }
+                };
+                for (let dir in axesMap4) {
+                    let data = axesMap4[dir]; let stateKey = 'axis_' + dir;
+                    if (data.pressed && !gp4InGameState[stateKey]) { sendKey(data.code, true, 4); gp4InGameState[stateKey] = true; } 
+                    else if (!data.pressed && gp4InGameState[stateKey]) { sendKey(data.code, false, 4); gp4InGameState[stateKey] = false; }
+                }
+            }
+            
+            
         }
         requestAnimationFrame(pollGamepadInGame);
     }
@@ -6723,6 +6740,9 @@ function deselectAllGamesForDelete() {
             logo_scan: '⏳ СКАНЕРЛАУ...', logo_all: '✨ БАРЛЫК УЕННАРНЫҢ ТЫШЛЫГЫ БАР!', logo_sel: '✨ БАШКА УЕННАРНЫ ТАҢЛАГЫЗ',
             logo_search: '⏳ ИЗЛӘҮ:', logo_found: '✅ ТАБЫЛДЫ:', ms: 'мс', share_title: 'Arcade Hub Backup', share_desc: 'Уеннарны саклау'
         },
+        
+        
+        
         'JA': { 
             newest: '最新', sys: 'システム',
             init: 'コアを初期化中...', omnom: 'ワッカワッカ!', dendy: 'ファミコン', sega: 'メガドライブ', snes: 'スーファミ', ngp: 'ネオジオ', dos: 'DOS', html: 'HTML', gba: 'GBA', random: 'ランダム',
@@ -7645,8 +7665,539 @@ function deselectAllGamesForDelete() {
     
 
         
-        
-        
+    // --- ОТДЕЛЬНЫЙ БЛОК ПЕРЕВОДОВ ДЛЯ МАГАЗИНА И P2P ---
+    // --- ОТДЕЛЬНЫЙ БЛОК ПЕРЕВОДОВ ДЛЯ МАГАЗИНА И P2P ---
+    const extraI18n = {
+        'EN': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ CLOSE STORE', store_title: 'ARCADE STORE', store_sub: 'QUANTUM STORAGE', store_search: 'SEARCH...', store_all: 'ALL', store_no_cover: 'NO COVER', 
+            p2p_title: 'NETWORK PLAY (P2P)', p2p_mode: 'CONNECTION MODE:', p2p_full: '📺 SCREEN + 🎮 PAD', p2p_pad: '🎮 PAD ONLY (REMOTE)', p2p_watch: '👀 SPECTATOR', 
+            p2p_mic_on: '🎤 MIC: ON', p2p_mic_off: '🎤 MIC: OFF', p2p_audio_on: '🔊 AUDIO: ON', p2p_audio_off: '🔇 AUDIO: OFF', p2p_create: '🌐 CREATE', p2p_join: '🔗 JOIN', 
+            p2p_wait: 'Waiting...', p2p_placeholder: 'Enter friend code...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI / HOTSPOT',
+            p2p_show_qr: '📱 SHOW QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'GAME VOLUME', p2p_vol_voice: 'FRIEND VOICE', p2p_bitrate: 'BITRATE (QUALITY)', p2p_res: 'HOST RESOLUTION',
+            p2p_stat_wait: 'Waiting for network...', p2p_stat_code: 'ENTER CODE TO JOIN:', p2p_stat_your_code: 'YOUR CODE:', p2p_stat_players: 'PLAYERS:',
+            p2p_stat_conn: '✅ CONNECTED!', p2p_stat_stream: '✅ STREAMING LIVE', p2p_stat_creating: 'Creating room (Attempt ', p2p_stat_joining: 'Connecting (Attempt ',
+            p2p_err_no_server: '❌ SERVERS UNAVAILABLE', p2p_err_no_net: '❌ NO INTERNET FOR HANDSHAKE! Turn on 3G/LTE for 2 seconds.', p2p_err_no_host: '❌ ERROR: NO HOST OR CONNECTION',
+            p2p_err_cam: 'Camera error: ', p2p_warn_create: 'Click CREATE first',
+            p2p_btn_close: 'CLOSE', p2p_btn_cancel: 'CANCEL',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'RU': { 
+            hub_title: 'ИГРОВОЙ ЦЕНТР', store_back: '◀ ЗАКРЫТЬ МАГАЗИН', store_title: 'ARCADE STORE', store_sub: 'КВАНТОВЫЙ СКЛАД', store_search: 'ПОИСК ПО БАЗЕ...', store_all: 'ВСЕ', store_no_cover: 'НЕТ ОБЛОЖКИ', 
+            p2p_title: 'СЕТЕВАЯ ИГРА (P2P)', p2p_mode: 'РЕЖИМ ПОДКЛЮЧЕНИЯ:', p2p_full: '📺 ЭКРАН + 🎮 ГЕЙМПАД', p2p_pad: '🎮 ТОЛЬКО ПУЛЬТ', p2p_watch: '👀 ЗРИТЕЛЬ', 
+            p2p_mic_on: '🎤 МИКР: ВКЛ', p2p_mic_off: '🎤 МИКР: ВЫКЛ', p2p_audio_on: '🔊 ЗВУК: ВКЛ', p2p_audio_off: '🔇 ЗВУК: ВЫКЛ', p2p_create: '🌐 СОЗДАТЬ', p2p_join: '🔗 ВОЙТИ', 
+            p2p_wait: 'Ожидание...', p2p_placeholder: 'Код друга...',
+            p2p_net_global: '🌍 ИНТЕРНЕТ (ГЛОБАЛЬНО)', p2p_net_local: '🏠 WI-FI / ТОЧКА ДОСТУПА',
+            p2p_show_qr: '📱 ПОКАЗАТЬ QR', p2p_scan_qr: '📷 СКАНЕР',
+            p2p_vol_game: 'ГРОМКОСТЬ ИГРЫ', p2p_vol_voice: 'ГОЛОС ДРУГА', p2p_bitrate: 'БИТРЕЙТ (КАЧЕСТВО)', p2p_res: 'РАЗРЕШЕНИЕ ХОСТА',
+            p2p_stat_wait: 'Ожидание сети...', p2p_stat_code: 'Введите код для подключения:', p2p_stat_your_code: 'ВАШ КОД:', p2p_stat_players: 'ИГРОКОВ:',
+            p2p_stat_conn: '✅ СОЕДИНЕНО!', p2p_stat_stream: '✅ ТРАНСЛЯЦИЯ ИДЕТ', p2p_stat_creating: 'Создание комнаты (Попытка ', p2p_stat_joining: 'Подключение (Попытка ',
+            p2p_err_no_server: '❌ СЕРВЕРЫ НЕДОСТУПНЫ', p2p_err_no_net: '❌ НЕТ ИНТЕРНЕТА ДЛЯ РУКОПОЖАТИЯ! Включите 3G/LTE на 2 секунды.', p2p_err_no_host: '❌ ОШИБКА: НЕТ ХОСТА ИЛИ СВЯЗИ',
+            p2p_err_cam: 'Ошибка камеры: ', p2p_warn_create: 'Сначала нажмите СОЗДАТЬ',
+            p2p_btn_close: 'ЗАКРЫТЬ', p2p_btn_cancel: 'ОТМЕНА',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'DE': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ SHOP SCHLIESSEN', store_title: 'ARCADE STORE', store_sub: 'QUANTENLAGER', store_search: 'SUCHE...', store_all: 'ALLE', store_no_cover: 'KEIN COVER', 
+            p2p_title: 'NETZWERK (P2P)', p2p_mode: 'MODUS:', p2p_full: '📺 VOLL + 🎮 PAD', p2p_pad: '🎮 NUR PAD', p2p_watch: '👀 ZUSCHAUER', 
+            p2p_mic_on: '🎤 MIC: AN', p2p_mic_off: '🎤 MIC: AUS', p2p_audio_on: '🔊 TON: AN', p2p_audio_off: '🔇 TON: AUS', p2p_create: '🌐 ERSTELLEN', p2p_join: '🔗 BEITRETEN', 
+            p2p_wait: 'Warten...', p2p_placeholder: 'Code eingeben...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 LOKALES WLAN',
+            p2p_show_qr: '📱 QR ZEIGEN', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'SPIELLAUTSTÄRKE', p2p_vol_voice: 'FREUND STIMME', p2p_bitrate: 'BITRATE (QUALITÄT)', p2p_res: 'HOST AUFLÖSUNG',
+            p2p_stat_wait: 'Warten auf Netzwerk...', p2p_stat_code: 'Code eingeben:', p2p_stat_your_code: 'DEIN CODE:', p2p_stat_players: 'SPIELER:',
+            p2p_stat_conn: '✅ VERBUNDEN!', p2p_stat_stream: '✅ LIVE STREAMING', p2p_stat_creating: 'Raum wird erstellt (Versuch ', p2p_stat_joining: 'Verbinden (Versuch ',
+            p2p_err_no_server: '❌ SERVER NICHT ERREICHBAR', p2p_err_no_net: '❌ KEIN INTERNET! Bitte 3G/LTE kurz aktivieren.', p2p_err_no_host: '❌ FEHLER: KEIN HOST ODER VERBINDUNG',
+            p2p_err_cam: 'Kamerafehler: ', p2p_warn_create: 'Bitte zuerst ERSTELLEN klicken',
+            p2p_btn_close: 'SCHLIESSEN', p2p_btn_cancel: 'ABBRECHEN',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'FR': { 
+            hub_title: 'CENTRE ARCADE', store_back: '◀ FERMER BOUTIQUE', store_title: 'ARCADE STORE', store_sub: 'STOCKAGE QUANTIQUE', store_search: 'CHERCHER...', store_all: 'TOUT', store_no_cover: 'PAS DE JAQUETTE', 
+            p2p_title: 'RÉSEAU (P2P)', p2p_mode: 'MODE DE CONNEXION:', p2p_full: '📺 ÉCRAN + 🎮 MANETTE', p2p_pad: '🎮 MANETTE SEULE', p2p_watch: '👀 SPECTATEUR', 
+            p2p_mic_on: '🎤 MIC: OUI', p2p_mic_off: '🎤 MIC: NON', p2p_audio_on: '🔊 SON: OUI', p2p_audio_off: '🔇 SON: NON', p2p_create: '🌐 CRÉER', p2p_join: '🔗 REJOINDRE', 
+            p2p_wait: 'Attente...', p2p_placeholder: 'Code ami...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI LOCAL',
+            p2p_show_qr: '📱 AFFICHER QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'VOLUME JEU', p2p_vol_voice: 'VOIX AMI', p2p_bitrate: 'DÉBIT (QUALITÉ)', p2p_res: 'RÉSOLUTION HÔTE',
+            p2p_stat_wait: 'Attente du réseau...', p2p_stat_code: 'Entrez le code:', p2p_stat_your_code: 'VOTRE CODE:', p2p_stat_players: 'JOUEURS:',
+            p2p_stat_conn: '✅ CONNECTÉ!', p2p_stat_stream: '✅ DIFFUSION EN COURS', p2p_stat_creating: 'Création (Tentative ', p2p_stat_joining: 'Connexion (Tentative ',
+            p2p_err_no_server: '❌ SERVEURS INDISPONIBLES', p2p_err_no_net: '❌ PAS D\'INTERNET! Activez la 3G/4G brièvement.', p2p_err_no_host: '❌ ERREUR: AUCUN HÔTE OU CONNEXION',
+            p2p_err_cam: 'Erreur caméra: ', p2p_warn_create: 'Cliquez d\'abord sur CRÉER',
+            p2p_btn_close: 'FERMER', p2p_btn_cancel: 'ANNULER',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'ES': { 
+            hub_title: 'CENTRO ARCADE', store_back: '◀ CERRAR TIENDA', store_title: 'ARCADE STORE', store_sub: 'ALMACÉN CUÁNTICO', store_search: 'BUSCAR...', store_all: 'TODO', store_no_cover: 'SIN PORTADA', 
+            p2p_title: 'RED (P2P)', p2p_mode: 'MODO:', p2p_full: '📺 PANTALLA + 🎮 MANDO', p2p_pad: '🎮 SOLO MANDO', p2p_watch: '👀 ESPECTADOR', 
+            p2p_mic_on: '🎤 MIC: SÍ', p2p_mic_off: '🎤 MIC: NO', p2p_audio_on: '🔊 AUDIO: SÍ', p2p_audio_off: '🔇 AUDIO: NO', p2p_create: '🌐 CREAR', p2p_join: '🔗 UNIRSE', 
+            p2p_wait: 'Esperando...', p2p_placeholder: 'Código amigo...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI LOCAL',
+            p2p_show_qr: '📱 MOSTRAR QR', p2p_scan_qr: '📷 ESCÁNER',
+            p2p_vol_game: 'VOLUMEN JUEGO', p2p_vol_voice: 'VOZ AMIGO', p2p_bitrate: 'TASA DE BITS (CALIDAD)', p2p_res: 'RESOLUCIÓN HOST',
+            p2p_stat_wait: 'Esperando red...', p2p_stat_code: 'Introduce el código:', p2p_stat_your_code: 'TU CÓDIGO:', p2p_stat_players: 'JUGADORES:',
+            p2p_stat_conn: '✅ ¡CONECTADO!', p2p_stat_stream: '✅ TRANSMITIENDO', p2p_stat_creating: 'Creando sala (Intento ', p2p_stat_joining: 'Conectando (Intento ',
+            p2p_err_no_server: '❌ SERVIDORES NO DISPONIBLES', p2p_err_no_net: '❌ ¡SIN INTERNET! Activa 3G/LTE un momento.', p2p_err_no_host: '❌ ERROR: SIN HOST O CONEXIÓN',
+            p2p_err_cam: 'Error de cámara: ', p2p_warn_create: 'Haz clic en CREAR primero',
+            p2p_btn_close: 'CERRAR', p2p_btn_cancel: 'CANCELAR',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'IT': { 
+            hub_title: 'CENTRO ARCADE', store_back: '◀ CHIUDI NEGOZIO', store_title: 'ARCADE STORE', store_sub: 'DEPOSITO QUANTICO', store_search: 'CERCA...', store_all: 'TUTTI', store_no_cover: 'NO COVER', 
+            p2p_title: 'RETE (P2P)', p2p_mode: 'MODALITÀ:', p2p_full: '📺 SCHERMO + 🎮 PAD', p2p_pad: '🎮 SOLO PAD', p2p_watch: '👀 SPETTATORE', 
+            p2p_mic_on: '🎤 MIC: ON', p2p_mic_off: '🎤 MIC: OFF', p2p_audio_on: '🔊 AUDIO: ON', p2p_audio_off: '🔇 AUDIO: OFF', p2p_create: '🌐 CREA', p2p_join: '🔗 ENTRA', 
+            p2p_wait: 'Attesa...', p2p_placeholder: 'Codice amico...',
+            p2p_net_global: '🌍 INTERNET (GLOBALE)', p2p_net_local: '🏠 WI-FI LOCALE',
+            p2p_show_qr: '📱 MOSTRA QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'VOLUME GIOCO', p2p_vol_voice: 'VOCE AMICO', p2p_bitrate: 'BITRATE (QUALITÀ)', p2p_res: 'RISOLUZIONE HOST',
+            p2p_stat_wait: 'In attesa della rete...', p2p_stat_code: 'Inserisci codice:', p2p_stat_your_code: 'TUO CODICE:', p2p_stat_players: 'GIOCATORI:',
+            p2p_stat_conn: '✅ CONNESSO!', p2p_stat_stream: '✅ TRASMISSIONE IN CORSO', p2p_stat_creating: 'Creazione stanza (Tentativo ', p2p_stat_joining: 'Connessione (Tentativo ',
+            p2p_err_no_server: '❌ SERVER NON DISPONIBILI', p2p_err_no_net: '❌ NESSUNA CONNESSIONE! Attiva 3G/LTE.', p2p_err_no_host: '❌ ERRORE: NESSUN HOST O CONNESSIONE',
+            p2p_err_cam: 'Errore fotocamera: ', p2p_warn_create: 'Clicca CREA prima',
+            p2p_btn_close: 'CHIUDI', p2p_btn_cancel: 'ANNULLA',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'PT': { 
+            hub_title: 'CENTRO ARCADE', store_back: '◀ FECHAR LOJA', store_title: 'ARCADE STORE', store_sub: 'ARMAZÉM QUÂNTICO', store_search: 'BUSCAR...', store_all: 'TUDO', store_no_cover: 'SEM CAPA', 
+            p2p_title: 'REDE (P2P)', p2p_mode: 'MODO:', p2p_full: '📺 TELA + 🎮 CONTROLE', p2p_pad: '🎮 SÓ CONTROLE', p2p_watch: '👀 ASSISTIR', 
+            p2p_mic_on: '🎤 MIC: LIG', p2p_mic_off: '🎤 MIC: DESL', p2p_audio_on: '🔊 SOM: LIG', p2p_audio_off: '🔇 SOM: DESL', p2p_create: '🌐 CRIAR', p2p_join: '🔗 ENTRAR', 
+            p2p_wait: 'Esperando...', p2p_placeholder: 'Código...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI LOCAL',
+            p2p_show_qr: '📱 MOSTRAR QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'VOLUME JOGO', p2p_vol_voice: 'VOZ AMIGO', p2p_bitrate: 'TAXA DE BITS (QUALIDADE)', p2p_res: 'RESOLUÇÃO HOST',
+            p2p_stat_wait: 'Esperando rede...', p2p_stat_code: 'Insira o código:', p2p_stat_your_code: 'SEU CÓDIGO:', p2p_stat_players: 'JOGADORES:',
+            p2p_stat_conn: '✅ CONECTADO!', p2p_stat_stream: '✅ TRANSMITINDO', p2p_stat_creating: 'Criando sala (Tentativa ', p2p_stat_joining: 'Conectando (Tentativa ',
+            p2p_err_no_server: '❌ SERVIDORES INDISPONÍVEIS', p2p_err_no_net: '❌ SEM INTERNET! Ligue 3G/LTE.', p2p_err_no_host: '❌ ERRO: SEM HOST OU CONEXÃO',
+            p2p_err_cam: 'Erro de câmera: ', p2p_warn_create: 'Clique em CRIAR primeiro',
+            p2p_btn_close: 'FECHAR', p2p_btn_cancel: 'CANCELAR',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'PL': { 
+            hub_title: 'CENTRUM ARCADE', store_back: '◀ ZAMKNIJ SKLEP', store_title: 'ARCADE STORE', store_sub: 'MAGAZYN KWANTOWY', store_search: 'SZUKAJ...', store_all: 'WSZYSTKIE', store_no_cover: 'BRAK OKŁADKI', 
+            p2p_title: 'SIEĆ (P2P)', p2p_mode: 'TRYB:', p2p_full: '📺 EKRAN + 🎮 PAD', p2p_pad: '🎮 TYLKO PAD', p2p_watch: '👀 WIDZ', 
+            p2p_mic_on: '🎤 MIK: WŁ', p2p_mic_off: '🎤 MIK: WYŁ', p2p_audio_on: '🔊 AUDIO: WŁ', p2p_audio_off: '🔇 AUDIO: WYŁ', p2p_create: '🌐 STWÓRZ', p2p_join: '🔗 DOŁĄCZ', 
+            p2p_wait: 'Czekanie...', p2p_placeholder: 'Kod znajomego...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 LOKALNE WI-FI',
+            p2p_show_qr: '📱 POKAŻ QR', p2p_scan_qr: '📷 SKANER',
+            p2p_vol_game: 'GŁOŚNOŚĆ GRY', p2p_vol_voice: 'GŁOS ZNAJOMEGO', p2p_bitrate: 'BITRATE (JAKOŚĆ)', p2p_res: 'ROZDZIELCZOŚĆ HOSTA',
+            p2p_stat_wait: 'Oczekiwanie na sieć...', p2p_stat_code: 'Wprowadź kod:', p2p_stat_your_code: 'TWÓJ KOD:', p2p_stat_players: 'GRACZE:',
+            p2p_stat_conn: '✅ POŁĄCZONO!', p2p_stat_stream: '✅ TRANSMISJA TRWA', p2p_stat_creating: 'Tworzenie pokoju (Próba ', p2p_stat_joining: 'Łączenie (Próba ',
+            p2p_err_no_server: '❌ SERWERY NIEDOSTĘPNE', p2p_err_no_net: '❌ BRAK INTERNETU! Włącz 3G/LTE.', p2p_err_no_host: '❌ BŁĄD: BRAK HOSTA LUB POŁĄCZENIA',
+            p2p_err_cam: 'Błąd kamery: ', p2p_warn_create: 'Najpierw kliknij STWÓRZ',
+            p2p_btn_close: 'ZAMKNIJ', p2p_btn_cancel: 'ANULUJ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'NL': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ WINKEL SLUITEN', store_title: 'ARCADE STORE', store_sub: 'KWANTUMOPSLAG', store_search: 'ZOEKEN...', store_all: 'ALLES', store_no_cover: 'GEEN HOES', 
+            p2p_title: 'NETWERK (P2P)', p2p_mode: 'MODUS:', p2p_full: '📺 SCHERM + 🎮 PAD', p2p_pad: '🎮 ALLEEN PAD', p2p_watch: '👀 KIJKER', 
+            p2p_mic_on: '🎤 MIC: AAN', p2p_mic_off: '🎤 MIC: UIT', p2p_audio_on: '🔊 GELUID: AAN', p2p_audio_off: '🔇 GELUID: UIT', p2p_create: '🌐 MAKEN', p2p_join: '🔗 VERBINDEN', 
+            p2p_wait: 'Wachten...', p2p_placeholder: 'Vriendencode...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 LOKALE WI-FI',
+            p2p_show_qr: '📱 TOON QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'GAME VOLUME', p2p_vol_voice: 'VRIEND STEM', p2p_bitrate: 'BITRATE (KWALITEIT)', p2p_res: 'HOST RESOLUTIE',
+            p2p_stat_wait: 'Wachten op netwerk...', p2p_stat_code: 'Voer code in:', p2p_stat_your_code: 'JOUW CODE:', p2p_stat_players: 'SPELERS:',
+            p2p_stat_conn: '✅ VERBONDEN!', p2p_stat_stream: '✅ LIVE STREAMING', p2p_stat_creating: 'Kamer maken (Poging ', p2p_stat_joining: 'Verbinden (Poging ',
+            p2p_err_no_server: '❌ SERVERS NIET BESCHIKBAAR', p2p_err_no_net: '❌ GEEN INTERNET! Zet 3G/LTE aan.', p2p_err_no_host: '❌ FOUT: GEEN HOST OF VERBINDING',
+            p2p_err_cam: 'Camera fout: ', p2p_warn_create: 'Klik eerst op MAKEN',
+            p2p_btn_close: 'SLUITEN', p2p_btn_cancel: 'ANNULEREN',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'SV': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ STÄNG BUTIK', store_title: 'ARCADE STORE', store_sub: 'KVANTLAGER', store_search: 'SÖK...', store_all: 'ALLA', store_no_cover: 'INGET OMSLAG', 
+            p2p_title: 'NÄTVERK (P2P)', p2p_mode: 'LÄGE:', p2p_full: '📺 SKÄRM + 🎮 PAD', p2p_pad: '🎮 BARA PAD', p2p_watch: '👀 ÅSKÅDARE', 
+            p2p_mic_on: '🎤 MIK: PÅ', p2p_mic_off: '🎤 MIK: AV', p2p_audio_on: '🔊 LJUD: PÅ', p2p_audio_off: '🔇 LJUD: AV', p2p_create: '🌐 SKAPA', p2p_join: '🔗 ANSLUT', 
+            p2p_wait: 'Väntar...', p2p_placeholder: 'Vänkod...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 LOKALT WI-FI',
+            p2p_show_qr: '📱 VISA QR', p2p_scan_qr: '📷 SKANNER',
+            p2p_vol_game: 'SPELVOLYM', p2p_vol_voice: 'VÄN RÖST', p2p_bitrate: 'BITRATE (KVALITET)', p2p_res: 'HOST UPPLÖSNING',
+            p2p_stat_wait: 'Väntar på nätverk...', p2p_stat_code: 'Ange kod:', p2p_stat_your_code: 'DIN KOD:', p2p_stat_players: 'SPELARE:',
+            p2p_stat_conn: '✅ ANSLUTEN!', p2p_stat_stream: '✅ SÄNDER LIVE', p2p_stat_creating: 'Skapar rum (Försök ', p2p_stat_joining: 'Ansluter (Försök ',
+            p2p_err_no_server: '❌ SERVRAR EJ TILLGÄNGLIGA', p2p_err_no_net: '❌ INGET INTERNET! Slå på 3G/LTE.', p2p_err_no_host: '❌ FEL: INGEN VÄRD ELLER ANSLUTNING',
+            p2p_err_cam: 'Kamerafel: ', p2p_warn_create: 'Klicka SKAPA först',
+            p2p_btn_close: 'STÄNG', p2p_btn_cancel: 'AVBRYT',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'TR': { 
+            hub_title: 'ARCADE MERKEZİ', store_back: '◀ MAĞAZAYI KAPAT', store_title: 'ARCADE STORE', store_sub: 'KUANTUM DEPO', store_search: 'ARA...', store_all: 'HEPSİ', store_no_cover: 'KAPAK YOK', 
+            p2p_title: 'AĞ (P2P)', p2p_mode: 'MOD:', p2p_full: '📺 EKRAN + 🎮 PAD', p2p_pad: '🎮 SADECE PAD', p2p_watch: '👀 İZLEYİCİ', 
+            p2p_mic_on: '🎤 MİK: AÇIK', p2p_mic_off: '🎤 MİK: KAPALI', p2p_audio_on: '🔊 SES: AÇIK', p2p_audio_off: '🔇 SES: KAPALI', p2p_create: '🌐 OLUŞTUR', p2p_join: '🔗 KATIL', 
+            p2p_wait: 'Bekleniyor...', p2p_placeholder: 'Arkadaş kodu...',
+            p2p_net_global: '🌍 İNTERNET (GLOBAL)', p2p_net_local: '🏠 YEREL WI-FI',
+            p2p_show_qr: '📱 QR GÖSTER', p2p_scan_qr: '📷 TARAYICI',
+            p2p_vol_game: 'OYUN SESİ', p2p_vol_voice: 'ARKADAŞ SESİ', p2p_bitrate: 'BİT HIZI (KALİTE)', p2p_res: 'HOST ÇÖZÜNÜRLÜĞÜ',
+            p2p_stat_wait: 'Ağ bekleniyor...', p2p_stat_code: 'Kodu girin:', p2p_stat_your_code: 'KODUNUZ:', p2p_stat_players: 'OYUNCULAR:',
+            p2p_stat_conn: '✅ BAĞLANDI!', p2p_stat_stream: '✅ CANLI YAYINDA', p2p_stat_creating: 'Oda oluşturuluyor (Deneme ', p2p_stat_joining: 'Bağlanıyor (Deneme ',
+            p2p_err_no_server: '❌ SUNUCULARA ULAŞILAMIYOR', p2p_err_no_net: '❌ İNTERNET YOK! 3G/LTE açın.', p2p_err_no_host: '❌ HATA: HOST VEYA BAĞLANTI YOK',
+            p2p_err_cam: 'Kamera hatası: ', p2p_warn_create: 'Önce OLUŞTURa tıklayın',
+            p2p_btn_close: 'KAPAT', p2p_btn_cancel: 'İPTAL',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'KK': { 
+            hub_title: 'АРКАДА ОРТАЛЫҒЫ', store_back: '◀ ДҮКЕНДІ ЖАБУ', store_title: 'ARCADE STORE', store_sub: 'КВАНТТЫҚ ҚОЙМА', store_search: 'ІЗДЕУ...', store_all: 'БАРЛЫҒЫ', store_no_cover: 'МҰҚАБА ЖОҚ', 
+            p2p_title: 'ЖЕЛІ (P2P)', p2p_mode: 'РЕЖИМІ:', p2p_full: '📺 ЭКРАН + 🎮 ГЕЙМПАД', p2p_pad: '🎮 ТЕК ПУЛЬТ', p2p_watch: '👀 КӨРЕРМЕН', 
+            p2p_mic_on: '🎤 МИК: ҚОСУ', p2p_mic_off: '🎤 МИК: ӨШІРУ', p2p_audio_on: '🔊 ДЫБЫС: ҚОСУ', p2p_audio_off: '🔇 ДЫБЫС: ӨШІРУ', p2p_create: '🌐 ҚҰРУ', p2p_join: '🔗 КІРУ', 
+            p2p_wait: 'Күту...', p2p_placeholder: 'Код...',
+            p2p_net_global: '🌍 ИНТЕРНЕТ (ГЛОБАЛДЫҚ)', p2p_net_local: '🏠 ЖЕРГІЛІКТІ WI-FI',
+            p2p_show_qr: '📱 QR КӨРСЕТУ', p2p_scan_qr: '📷 СКАНЕР',
+            p2p_vol_game: 'ОЙЫН ДЫБЫСЫ', p2p_vol_voice: 'ДОС ДЫБЫСЫ', p2p_bitrate: 'БИТРЕЙТ (САПА)', p2p_res: 'ХОСТ АЖЫРАТЫМДЫЛЫҒЫ',
+            p2p_stat_wait: 'Желіні күту...', p2p_stat_code: 'Қосылу кодын енгізіңіз:', p2p_stat_your_code: 'СІЗДІҢ КОДЫҢЫЗ:', p2p_stat_players: 'ОЙЫНШЫЛАР:',
+            p2p_stat_conn: '✅ ҚОСЫЛДЫ!', p2p_stat_stream: '✅ ТРАНСЛЯЦИЯ ЖҮРІП ЖАТЫР', p2p_stat_creating: 'Бөлме құру (Әрекет ', p2p_stat_joining: 'Қосылу (Әрекет ',
+            p2p_err_no_server: '❌ СЕРВЕРЛЕР ҚОЛЖЕТІМСІЗ', p2p_err_no_net: '❌ ИНТЕРНЕТ ЖОҚ! 3G/LTE қосыңыз.', p2p_err_no_host: '❌ ҚАТЕ: ХОСТ НЕМЕСЕ БАЙЛАНЫС ЖОҚ',
+            p2p_err_cam: 'Камера қатесі: ', p2p_warn_create: 'Алдымен ҚҰРУ түймесін басыңыз',
+            p2p_btn_close: 'ЖАБУ', p2p_btn_cancel: 'БАС ТАРТУ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'TT': { 
+            hub_title: 'УЕН ҮЗӘГЕ', store_back: '◀ КИБЕТНЕ ЯБУ', store_title: 'ARCADE STORE', store_sub: 'КВАНТ СКЛАДЫ', store_search: 'ЭЗЛӘҮ...', store_all: 'БАРЛЫГЫ', store_no_cover: 'ТЫШЛЫК ЮК', 
+            p2p_title: 'ЧЕЛТӘР УЕНЫ (P2P)', p2p_mode: 'РЕЖИМЫ:', p2p_full: '📺 ЭКРАН + 🎮 ГЕЙМПАД', p2p_pad: '🎮 ПУЛЬТ КЫНА', p2p_watch: '👀 ТАМАШАЧЫ', 
+            p2p_mic_on: '🎤 МИКР: КАБЫЗУ', p2p_mic_off: '🎤 МИКР: СҮНДЕРҮ', p2p_audio_on: '🔊 ТАВЫШ: КАБЫЗУ', p2p_audio_off: '🔇 ТАВЫШ: СҮНДЕРҮ', p2p_create: '🌐 ТӨЗҮ', p2p_join: '🔗 КЕРҮ', 
+            p2p_wait: 'Көтү...', p2p_placeholder: 'Код...',
+            p2p_net_global: '🌍 ИНТЕРНЕТ (ГЛОБАЛЬ)', p2p_net_local: '🏠 ЖИРЛЕ WI-FI',
+            p2p_show_qr: '📱 QR КҮРСӘТҮ', p2p_scan_qr: '📷 СКАНЕР',
+            p2p_vol_game: 'УЕН ТАВЫШЫ', p2p_vol_voice: 'ДУС ТАВЫШЫ', p2p_bitrate: 'БИТРЕЙТ (СЫЙФАТ)', p2p_res: 'ХОСТ РАЗРЕШЕНИЕСЕ',
+            p2p_stat_wait: 'Челтәр көтү...', p2p_stat_code: 'Код кертегез:', p2p_stat_your_code: 'СЕЗНЕҢ КОД:', p2p_stat_players: 'УЕНЧЫЛАР:',
+            p2p_stat_conn: '✅ ТОТАШКАН!', p2p_stat_stream: '✅ ТРАНСЛЯЦИЯ БАРА', p2p_stat_creating: 'Бүлмә төзү (Омтылыш ', p2p_stat_joining: 'Тоташу (Омтылыш ',
+            p2p_err_no_server: '❌ СЕРВЕРЛАР ЭШЛӘМИ', p2p_err_no_net: '❌ ИНТЕРНЕТ ЮК! 3G/LTE кабызыгыз.', p2p_err_no_host: '❌ ХАТА: ХОСТ ЯКИ ТОТАШУ ЮК',
+            p2p_err_cam: 'Камера хатасы: ', p2p_warn_create: 'Башта ТӨЗҮ төймәсенә басыгыз',
+            p2p_btn_close: 'ЯБУ', p2p_btn_cancel: 'БАШ ТАРТУ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'JA': { 
+            hub_title: 'アーケードハブ', store_back: '◀ ストアを閉じる', store_title: 'アーケードストア', store_sub: '量子ストレージ', store_search: '検索...', store_all: '全て', store_no_cover: 'カバーなし', 
+            p2p_title: 'ネット対戦 (P2P)', p2p_mode: '接続モード:', p2p_full: '📺 画面 + 🎮 パッド', p2p_pad: '🎮 パッドのみ', p2p_watch: '👀 観戦', 
+            p2p_mic_on: '🎤 マイク: オン', p2p_mic_off: '🎤 マイク: オフ', p2p_audio_on: '🔊 音声: オン', p2p_audio_off: '🔇 音声: オフ', p2p_create: '🌐 作成', p2p_join: '🔗 参加', 
+            p2p_wait: '待機中...', p2p_placeholder: 'フレンドコード...',
+            p2p_net_global: '🌍 インターネット (グローバル)', p2p_net_local: '🏠 ローカル WI-FI',
+            p2p_show_qr: '📱 QRを表示', p2p_scan_qr: '📷 スキャナー',
+            p2p_vol_game: 'ゲーム音量', p2p_vol_voice: 'フレンドの声', p2p_bitrate: 'ビットレート (画質)', p2p_res: 'ホスト解像度',
+            p2p_stat_wait: 'ネットワーク待機中...', p2p_stat_code: 'コードを入力:', p2p_stat_your_code: 'あなたのコード:', p2p_stat_players: 'プレイヤー:',
+            p2p_stat_conn: '✅ 接続完了!', p2p_stat_stream: '✅ 配信中', p2p_stat_creating: 'ルーム作成中 (試行 ', p2p_stat_joining: '接続中 (試行 ',
+            p2p_err_no_server: '❌ サーバーに接続できません', p2p_err_no_net: '❌ インターネットがありません! 3G/LTEをオンにしてください。', p2p_err_no_host: '❌ エラー: ホストまたは接続がありません',
+            p2p_err_cam: 'カメラエラー: ', p2p_warn_create: '先に「作成」をクリックしてください',
+            p2p_btn_close: '閉じる', p2p_btn_cancel: 'キャンセル',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'KO': { 
+            hub_title: '아케이드 허브', store_back: '◀ 스토어 닫기', store_title: '아케이드 스토어', store_sub: '양자 저장소', store_search: '검색...', store_all: '전체', store_no_cover: '커버 없음', 
+            p2p_title: '네트워크 플레이 (P2P)', p2p_mode: '연결 모드:', p2p_full: '📺 화면 + 🎮 패드', p2p_pad: '🎮 패드 전용', p2p_watch: '👀 관전', 
+            p2p_mic_on: '🎤 마이크: 켜짐', p2p_mic_off: '🎤 마이크: 꺼짐', p2p_audio_on: '🔊 오디오: 켜짐', p2p_audio_off: '🔇 오디오: 꺼짐', p2p_create: '🌐 방 만들기', p2p_join: '🔗 참가', 
+            p2p_wait: '대기 중...', p2p_placeholder: '친구 코드 입력...',
+            p2p_net_global: '🌍 인터넷 (글로벌)', p2p_net_local: '🏠 로컬 WI-FI',
+            p2p_show_qr: '📱 QR 보기', p2p_scan_qr: '📷 스캐너',
+            p2p_vol_game: '게임 볼륨', p2p_vol_voice: '친구 음성', p2p_bitrate: '비트레이트 (화질)', p2p_res: '호스트 해상도',
+            p2p_stat_wait: '네트워크 대기 중...', p2p_stat_code: '코드 입력:', p2p_stat_your_code: '내 코드:', p2p_stat_players: '플레이어:',
+            p2p_stat_conn: '✅ 연결됨!', p2p_stat_stream: '✅ 스트리밍 중', p2p_stat_creating: '방 생성 중 (시도 ', p2p_stat_joining: '연결 중 (시도 ',
+            p2p_err_no_server: '❌ 서버에 연결할 수 없습니다', p2p_err_no_net: '❌ 인터넷 없음! 3G/LTE를 켜주세요.', p2p_err_no_host: '❌ 오류: 호스트 또는 연결 없음',
+            p2p_err_cam: '카메라 오류: ', p2p_warn_create: '먼저 만들기를 클릭하세요',
+            p2p_btn_close: '닫기', p2p_btn_cancel: '취소',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'ZH': { 
+            hub_title: '街机中心', store_back: '◀ 关闭商店', store_title: '街机商店', store_sub: '量子存储', store_search: '搜索...', store_all: '全部', store_no_cover: '无封面', 
+            p2p_title: '联机 (P2P)', p2p_mode: '连接模式:', p2p_full: '📺 屏幕 + 🎮 手柄', p2p_pad: '🎮 仅手柄', p2p_watch: '👀 观战', 
+            p2p_mic_on: '🎤 麦克风: 开', p2p_mic_off: '🎤 麦克风: 关', p2p_audio_on: '🔊 声音: 开', p2p_audio_off: '🔇 声音: 关', p2p_create: '🌐 创建', p2p_join: '🔗 加入', 
+            p2p_wait: '等待...', p2p_placeholder: '输入好友代码...',
+            p2p_net_global: '🌍 互联网 (全局)', p2p_net_local: '🏠 局域网 WI-FI',
+            p2p_show_qr: '📱 显示 QR', p2p_scan_qr: '📷 扫描器',
+            p2p_vol_game: '游戏音量', p2p_vol_voice: '好友语音', p2p_bitrate: '比特率 (画质)', p2p_res: '主机分辨率',
+            p2p_stat_wait: '等待网络...', p2p_stat_code: '输入代码:', p2p_stat_your_code: '你的代码:', p2p_stat_players: '玩家:',
+            p2p_stat_conn: '✅ 已连接!', p2p_stat_stream: '✅ 正在直播', p2p_stat_creating: '创建房间 (尝试 ', p2p_stat_joining: '连接中 (尝试 ',
+            p2p_err_no_server: '❌ 服务器不可用', p2p_err_no_net: '❌ 无网络! 请打开 3G/LTE.', p2p_err_no_host: '❌ 错误: 无主机或连接',
+            p2p_err_cam: '相机错误: ', p2p_warn_create: '请先点击创建',
+            p2p_btn_close: '关闭', p2p_btn_cancel: '取消',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'HI': { 
+            hub_title: 'आर्केड हब', store_back: '◀ स्टोर बंद करें', store_title: 'ARCADE STORE', store_sub: 'क्वांटम स्टोरेज', store_search: 'खोजें...', store_all: 'सभी', store_no_cover: 'कोई कवर नहीं', 
+            p2p_title: 'नेटवर्क प्ले (P2P)', p2p_mode: 'कनेक्शन मोड:', p2p_full: '📺 स्क्रीन + 🎮 पैड', p2p_pad: '🎮 केवल पैड', p2p_watch: '👀 दर्शक', 
+            p2p_mic_on: '🎤 माइक: चालू', p2p_mic_off: '🎤 माइक: बंद', p2p_audio_on: '🔊 ऑडियो: चालू', p2p_audio_off: '🔇 ऑडियो: बंद', p2p_create: '🌐 बनाएँ', p2p_join: '🔗 जुड़ें', 
+            p2p_wait: 'प्रतीक्षा...', p2p_placeholder: 'मित्र कोड दर्ज करें...',
+            p2p_net_global: '🌍 इंटरनेट (ग्लोबल)', p2p_net_local: '🏠 स्थानीय वाई-फाई',
+            p2p_show_qr: '📱 QR दिखाएं', p2p_scan_qr: '📷 स्कैनर',
+            p2p_vol_game: 'गेम वॉल्यूम', p2p_vol_voice: 'दोस्त की आवाज़', p2p_bitrate: 'बिटरेट (क्वालिटी)', p2p_res: 'होस्ट रिज़ॉल्यूशन',
+            p2p_stat_wait: 'नेटवर्क की प्रतीक्षा...', p2p_stat_code: 'कोड दर्ज करें:', p2p_stat_your_code: 'आपका कोड:', p2p_stat_players: 'खिलाड़ी:',
+            p2p_stat_conn: '✅ कनेक्टेड!', p2p_stat_stream: '✅ लाइव स्ट्रीमिंग', p2p_stat_creating: 'रूम बन रहा है (प्रयास ', p2p_stat_joining: 'कनेक्ट हो रहा है (प्रयास ',
+            p2p_err_no_server: '❌ सर्वर अनुपलब्ध', p2p_err_no_net: '❌ इंटरनेट नहीं! 3G/LTE चालू करें।', p2p_err_no_host: '❌ त्रुटि: कोई होस्ट या कनेक्शन नहीं',
+            p2p_err_cam: 'कैमरा त्रुटि: ', p2p_warn_create: 'पहले बनाएँ पर क्लिक करें',
+            p2p_btn_close: 'बंद करें', p2p_btn_cancel: 'रद्द करें',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'AR': { 
+            hub_title: 'مركز الأركيد', store_back: '◀ إغلاق المتجر', store_title: 'ARCADE STORE', store_sub: 'التخزين الكمي', store_search: 'بحث...', store_all: 'الكل', store_no_cover: 'لا يوجد غلاف', 
+            p2p_title: 'اللعب عبر الشبكة (P2P)', p2p_mode: 'وضع الاتصال:', p2p_full: '📺 شاشة + 🎮 يد تحكم', p2p_pad: '🎮 يد تحكم فقط', p2p_watch: '👀 مشاهد', 
+            p2p_mic_on: '🎤 الميكروفون: تشغيل', p2p_mic_off: '🎤 الميكروفون: إيقاف', p2p_audio_on: '🔊 الصوت: تشغيل', p2p_audio_off: '🔇 الصوت: إيقاف', p2p_create: '🌐 إنشاء', p2p_join: '🔗 انضمام', 
+            p2p_wait: 'انتظار...', p2p_placeholder: 'أدخل كود الصديق...',
+            p2p_net_global: '🌍 إنترنت (عالمي)', p2p_net_local: '🏠 واي فاي محلي',
+            p2p_show_qr: '📱 عرض QR', p2p_scan_qr: '📷 ماسح ضوئي',
+            p2p_vol_game: 'صوت اللعبة', p2p_vol_voice: 'صوت الصديق', p2p_bitrate: 'معدل البت (جودة)', p2p_res: 'دقة المضيف',
+            p2p_stat_wait: 'انتظار الشبكة...', p2p_stat_code: 'أدخل الكود:', p2p_stat_your_code: 'الكود الخاص بك:', p2p_stat_players: 'اللاعبون:',
+            p2p_stat_conn: '✅ متصل!', p2p_stat_stream: '✅ بث مباشر', p2p_stat_creating: 'إنشاء غرفة (محاولة ', p2p_stat_joining: 'جاري الاتصال (محاولة ',
+            p2p_err_no_server: '❌ السيرفرات غير متاحة', p2p_err_no_net: '❌ لا يوجد إنترنت! قم بتشغيل 3G/LTE.', p2p_err_no_host: '❌ خطأ: لا يوجد مضيف أو اتصال',
+            p2p_err_cam: 'خطأ الكاميرا: ', p2p_warn_create: 'اضغط على إنشاء أولاً',
+            p2p_btn_close: 'إغلاق', p2p_btn_cancel: 'إلغاء',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'FA': { 
+            hub_title: 'مرکز آرکید', store_back: '◀ بستن فروشگاه', store_title: 'ARCADE STORE', store_sub: 'ذخیره‌سازی کوانتومی', store_search: 'جستجو...', store_all: 'همه', store_no_cover: 'بدون کاور', 
+            p2p_title: 'بازی شبکه‌ای (P2P)', p2p_mode: 'حالت اتصال:', p2p_full: '📺 صفحه + 🎮 پد', p2p_pad: '🎮 فقط پد', p2p_watch: '👀 تماشاگر', 
+            p2p_mic_on: '🎤 میکروفون: روشن', p2p_mic_off: '🎤 میکروفون: خاموش', p2p_audio_on: '🔊 صدا: روشن', p2p_audio_off: '🔇 صدا: خاموش', p2p_create: '🌐 ایجاد', p2p_join: '🔗 پیوستن', 
+            p2p_wait: 'در حال انتظار...', p2p_placeholder: 'کد دوست را وارد کنید...',
+            p2p_net_global: '🌍 اینترنت (جهانی)', p2p_net_local: '🏠 وای‌فای محلی',
+            p2p_show_qr: '📱 نمایش QR', p2p_scan_qr: '📷 اسکنر',
+            p2p_vol_game: 'صدای بازی', p2p_vol_voice: 'صدای دوست', p2p_bitrate: 'بیت‌ریت (کیفیت)', p2p_res: 'رزولوشن میزبان',
+            p2p_stat_wait: 'در انتظار شبکه...', p2p_stat_code: 'کد را وارد کنید:', p2p_stat_your_code: 'کد شما:', p2p_stat_players: 'بازیکنان:',
+            p2p_stat_conn: '✅ متصل شد!', p2p_stat_stream: '✅ در حال پخش', p2p_stat_creating: 'در حال ایجاد اتاق (تلاش ', p2p_stat_joining: 'در حال اتصال (تلاش ',
+            p2p_err_no_server: '❌ سرورها در دسترس نیستند', p2p_err_no_net: '❌ اینترنت وصل نیست! 3G/LTE را روشن کنید.', p2p_err_no_host: '❌ خطا: میزبان یا اتصالی وجود ندارد',
+            p2p_err_cam: 'خطای دوربین: ', p2p_warn_create: 'ابتدا روی ایجاد کلیک کنید',
+            p2p_btn_close: 'بستن', p2p_btn_cancel: 'لغو',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'ID': { 
+            hub_title: 'PUSAT ARCADE', store_back: '◀ TUTUP TOKO', store_title: 'ARCADE STORE', store_sub: 'PENYIMPANAN KUANTUM', store_search: 'CARI...', store_all: 'SEMUA', store_no_cover: 'TIDAK ADA SAMPUL', 
+            p2p_title: 'MAIN JARINGAN (P2P)', p2p_mode: 'MODE KONEKSI:', p2p_full: '📺 LAYAR + 🎮 PAD', p2p_pad: '🎮 HANYA PAD', p2p_watch: '👀 PENONTON', 
+            p2p_mic_on: '🎤 MIK: NYALA', p2p_mic_off: '🎤 MIK: MATI', p2p_audio_on: '🔊 AUDIO: NYALA', p2p_audio_off: '🔇 AUDIO: MATI', p2p_create: '🌐 BUAT', p2p_join: '🔗 GABUNG', 
+            p2p_wait: 'Menunggu...', p2p_placeholder: 'Masukkan kode teman...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI LOKAL',
+            p2p_show_qr: '📱 TAMPILKAN QR', p2p_scan_qr: '📷 PEMINDAI',
+            p2p_vol_game: 'VOLUME GAME', p2p_vol_voice: 'SUARA TEMAN', p2p_bitrate: 'BITRATE (KUALITAS)', p2p_res: 'RESOLUSI HOST',
+            p2p_stat_wait: 'Menunggu jaringan...', p2p_stat_code: 'Masukkan kode:', p2p_stat_your_code: 'KODE ANDA:', p2p_stat_players: 'PEMAIN:',
+            p2p_stat_conn: '✅ TERHUBUNG!', p2p_stat_stream: '✅ STREAMING LANGSUNG', p2p_stat_creating: 'Membuat ruang (Percobaan ', p2p_stat_joining: 'Menghubungkan (Percobaan ',
+            p2p_err_no_server: '❌ SERVER TIDAK TERSEDIA', p2p_err_no_net: '❌ TIDAK ADA INTERNET! Nyalakan 3G/LTE.', p2p_err_no_host: '❌ KESALAHAN: TIDAK ADA HOST ATAU KONEKSI',
+            p2p_err_cam: 'Kesalahan kamera: ', p2p_warn_create: 'Klik BUAT terlebih dahulu',
+            p2p_btn_close: 'TUTUP', p2p_btn_cancel: 'BATAL',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'UK': { 
+            hub_title: 'ІГРОВИЙ ЦЕНТР', store_back: '◀ ЗАКРИТИ МАГАЗИН', store_title: 'ARCADE STORE', store_sub: 'КВАНТОВИЙ СКЛАД', store_search: 'ПОШУК...', store_all: 'ВСІ', store_no_cover: 'НЕМАЄ ОБКЛАДИНКИ', 
+            p2p_title: 'МЕРЕЖЕВА ГРА (P2P)', p2p_mode: 'РЕЖИМ ПІДКЛЮЧЕННЯ:', p2p_full: '📺 ЕКРАН + 🎮 ГЕЙМПАД', p2p_pad: '🎮 ТІЛЬКИ ПУЛЬТ', p2p_watch: '👀 ГЛЯДАЧ', 
+            p2p_mic_on: '🎤 МІКР: УВІМК', p2p_mic_off: '🎤 МІКР: ВИМК', p2p_audio_on: '🔊 ЗВУК: УВІМК', p2p_audio_off: '🔇 ЗВУК: ВИМК', p2p_create: '🌐 СТВОРИТИ', p2p_join: '🔗 ВВІЙТИ', 
+            p2p_wait: 'Очікування...', p2p_placeholder: 'Код друга...',
+            p2p_net_global: '🌍 ІНТЕРНЕТ (ГЛОБАЛЬНО)', p2p_net_local: '🏠 WI-FI / ТОЧКА ДОСТУПУ',
+            p2p_show_qr: '📱 ПОКАЗАТИ QR', p2p_scan_qr: '📷 СКАНЕР',
+            p2p_vol_game: 'ГУЧНІСТЬ ГРИ', p2p_vol_voice: 'ГОЛОС ДРУГА', p2p_bitrate: 'БІТРЕЙТ (ЯКІСТЬ)', p2p_res: 'РОЗДІЛЬНА ЗДАТНІСТЬ ХОСТА',
+            p2p_stat_wait: 'Очікування мережі...', p2p_stat_code: 'Введіть код:', p2p_stat_your_code: 'ВАШ КОД:', p2p_stat_players: 'ГРАВЦІВ:',
+            p2p_stat_conn: '✅ З\'ЄДНАНО!', p2p_stat_stream: '✅ ТРАНСЛЯЦІЯ ЙДЕ', p2p_stat_creating: 'Створення кімнати (Спроба ', p2p_stat_joining: 'Підключення (Спроба ',
+            p2p_err_no_server: '❌ СЕРВЕРИ НЕДОСТУПНІ', p2p_err_no_net: '❌ НЕМАЄ ІНТЕРНЕТУ! Увімкніть 3G/LTE на 2 секунди.', p2p_err_no_host: '❌ ПОМИЛКА: НЕМАЄ ХОСТА АБО ЗВ\'ЯЗКУ',
+            p2p_err_cam: 'Помилка камери: ', p2p_warn_create: 'Спочатку натисніть СТВОРИТИ',
+            p2p_btn_close: 'ЗАКРИТИ', p2p_btn_cancel: 'СКАСУВАТИ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'UZ': { 
+            hub_title: 'ARKADA MARKAZI', store_back: '◀ DO‘KONNI YOPISH', store_title: 'ARCADE STORE', store_sub: 'KVANT OMBORI', store_search: 'QIDIRISH...', store_all: 'BARCHASI', store_no_cover: 'MUQOVA YO‘Q', 
+            p2p_title: 'TARMOQ O‘YINI (P2P)', p2p_mode: 'ULANISH REJIMI:', p2p_full: '📺 EKRAN + 🎮 GEYMPAD', p2p_pad: '🎮 FAQAT PULT', p2p_watch: '👀 TOMOSHABIN', 
+            p2p_mic_on: '🎤 MIKR: YONIQ', p2p_mic_off: '🎤 MIKR: O‘CHIQ', p2p_audio_on: '🔊 OVOZ: YONIQ', p2p_audio_off: '🔇 OVOZ: O‘CHIQ', p2p_create: '🌐 YARATISH', p2p_join: '🔗 KIRISH', 
+            p2p_wait: 'Kutilmoqda...', p2p_placeholder: 'Do‘st kodini kiriting...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 MAHALLIY WI-FI',
+            p2p_show_qr: '📱 QR KOʻRSATISH', p2p_scan_qr: '📷 SKANER',
+            p2p_vol_game: 'OʻYIN OVOZI', p2p_vol_voice: 'DOʻST OVOZI', p2p_bitrate: 'BITREYT (SIFAT)', p2p_res: 'HOST RUXSATI',
+            p2p_stat_wait: 'Tarmoq kutilmoqda...', p2p_stat_code: 'Kodni kiriting:', p2p_stat_your_code: 'SIZNING KODINGIZ:', p2p_stat_players: 'OʻYINCHILAR:',
+            p2p_stat_conn: '✅ ULANDI!', p2p_stat_stream: '✅ JONLI EFIR', p2p_stat_creating: 'Xona yaratilmoqda (Urinish ', p2p_stat_joining: 'Ulanmoqda (Urinish ',
+            p2p_err_no_server: '❌ SERVERLAR MAVJUD EMAS', p2p_err_no_net: '❌ INTERNET YOʻQ! 3G/LTE ni yoqing.', p2p_err_no_host: '❌ XATO: HOST YOKI ALOQA YOʻQ',
+            p2p_err_cam: 'Kamera xatosi: ', p2p_warn_create: 'Avval YARATISH tugmasini bosing',
+            p2p_btn_close: 'YOPISH', p2p_btn_cancel: 'BEKOR QILISH',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'AZ': { 
+            hub_title: 'ARKADA MƏRKƏZİ', store_back: '◀ MAĞAZANI BAĞLA', store_title: 'ARCADE STORE', store_sub: 'KVANT ANBARI', store_search: 'AXTARIŞ...', store_all: 'HAMISI', store_no_cover: 'ÖRTÜK YOXDUR', 
+            p2p_title: 'ŞƏBƏKƏ OYUNU (P2P)', p2p_mode: 'QOŞULMA REJİMİ:', p2p_full: '📺 EKRAN + 🎮 GEYMPAD', p2p_pad: '🎮 YALNIZ PULT', p2p_watch: '👀 İZLƏYİCİ', 
+            p2p_mic_on: '🎤 MİKR: AÇIQ', p2p_mic_off: '🎤 MİKR: BAĞLI', p2p_audio_on: '🔊 SƏS: AÇIQ', p2p_audio_off: '🔇 SƏS: BAĞLI', p2p_create: '🌐 YARAT', p2p_join: '🔗 QOŞUL', 
+            p2p_wait: 'Gözlənilir...', p2p_placeholder: 'Dost kodunu daxil edin...',
+            p2p_net_global: '🌍 İNTERNET (QLOBAL)', p2p_net_local: '🏠 YERLİ WI-FI',
+            p2p_show_qr: '📱 QR GÖSTƏR', p2p_scan_qr: '📷 SKANER',
+            p2p_vol_game: 'OYUN SƏSİ', p2p_vol_voice: 'DOST SƏSİ', p2p_bitrate: 'BİT SÜRƏTİ (KEYFİYYƏT)', p2p_res: 'HOST İCAZƏSİ',
+            p2p_stat_wait: 'Şəbəkə gözlənilir...', p2p_stat_code: 'Kodu daxil edin:', p2p_stat_your_code: 'SİZİN KODUNUZ:', p2p_stat_players: 'OYUNÇULAR:',
+            p2p_stat_conn: '✅ QOŞULDU!', p2p_stat_stream: '✅ CANLI YAYIM', p2p_stat_creating: 'Otaq yaradılır (Cəhd ', p2p_stat_joining: 'Qoşulur (Cəhd ',
+            p2p_err_no_server: '❌ SERVERLƏR ƏLÇATAN DEYİL', p2p_err_no_net: '❌ İNTERNET YOXDUR! 3G/LTE yandırın.', p2p_err_no_host: '❌ XƏTA: HOST VƏ YA ƏLAQƏ YOXDUR',
+            p2p_err_cam: 'Kamera xətası: ', p2p_warn_create: 'Əvvəlcə YARAT düyməsini basın',
+            p2p_btn_close: 'BAĞLA', p2p_btn_cancel: 'LƏĞV ET',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'EL': { 
+            hub_title: 'ΚΕΝΤΡΟ ARCADE', store_back: '◀ ΚΛΕΙΣΙΜΟ ΚΑΤΑΣΤΗΜΑΤΟΣ', store_title: 'ARCADE STORE', store_sub: 'ΚΒΑΝΤΙΚΗ ΑΠΟΘΗΚΕΥΣΗ', store_search: 'ΑΝΑΖΗΤΗΣΗ...', store_all: 'ΟΛΑ', store_no_cover: 'ΧΩΡΙΣ ΕΞΩΦΥΛΛΟ', 
+            p2p_title: 'ΔΙΚΤΥΑΚΟ ΠΑΙΧΝΙΔΙ (P2P)', p2p_mode: 'ΛΕΙΤΟΥΡΓΙΑ ΣΥΝΔΕΣΗΣ:', p2p_full: '📺 ΟΘΟΝΗ + 🎮 PAD', p2p_pad: '🎮 ΜΟΝΟ PAD', p2p_watch: '👀 ΘΕΑΤΗΣ', 
+            p2p_mic_on: '🎤 ΜΙΚΡΟΦΩΝΟ: ON', p2p_mic_off: '🎤 ΜΙΚΡΟΦΩΝΟ: OFF', p2p_audio_on: '🔊 ΗΧΟΣ: ON', p2p_audio_off: '🔇 ΗΧΟΣ: OFF', p2p_create: '🌐 ΔΗΜΙΟΥΡΓΙΑ', p2p_join: '🔗 ΕΙΣΟΔΟΣ', 
+            p2p_wait: 'Αναμονή...', p2p_placeholder: 'Κωδικός φίλου...',
+            p2p_net_global: '🌍 INTERNET (ΠΑΓΚΟΣΜΙΟ)', p2p_net_local: '🏠 ΤΟΠΙΚΟ WI-FI',
+            p2p_show_qr: '📱 ΕΜΦΑΝΙΣΗ QR', p2p_scan_qr: '📷 ΣΑΡΩΤΗΣ',
+            p2p_vol_game: 'ΕΝΤΑΣΗ ΠΑΙΧΝΙΔΙΟΥ', p2p_vol_voice: 'ΦΩΝΗ ΦΙΛΟΥ', p2p_bitrate: 'BITRATE (ΠΟΙΟΤΗΤΑ)', p2p_res: 'ΑΝΑΛΥΣΗ HOST',
+            p2p_stat_wait: 'Αναμονή δικτύου...', p2p_stat_code: 'Εισαγωγή κωδικού:', p2p_stat_your_code: 'Ο ΚΩΔΙΚΟΣ ΣΑΣ:', p2p_stat_players: 'ΠΑΙΚΤΕΣ:',
+            p2p_stat_conn: '✅ ΣΥΝΔΕΘΗΚΕ!', p2p_stat_stream: '✅ LIVE STREAMING', p2p_stat_creating: 'Δημιουργία (Προσπάθεια ', p2p_stat_joining: 'Σύνδεση (Προσπάθεια ',
+            p2p_err_no_server: '❌ ΔΙΑΚΟΜΙΣΤΕΣ ΜΗ ΔΙΑΘΕΣΙΜΟΙ', p2p_err_no_net: '❌ ΧΩΡΙΣ ΙΝΤΕΡΝΕΤ! Ενεργοποιήστε 3G/LTE.', p2p_err_no_host: '❌ ΣΦΑΛΜΑ: ΧΩΡΙΣ HOST Η ΣΥΝΔΕΣΗ',
+            p2p_err_cam: 'Σφάλμα κάμερας: ', p2p_warn_create: 'Πατήστε ΔΗΜΙΟΥΡΓΙΑ πρώτα',
+            p2p_btn_close: 'ΚΛΕΙΣΙΜΟ', p2p_btn_cancel: 'ΑΚΥΡΩΣΗ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'HE': { 
+            hub_title: 'מרכז ארקייד', store_back: '◀ סגור חנות', store_title: 'ARCADE STORE', store_sub: 'אחסון קוונטי', store_search: 'חיפוש...', store_all: 'הכל', store_no_cover: 'אין עטיפה', 
+            p2p_title: 'משחק רשת (P2P)', p2p_mode: 'מצב חיבור:', p2p_full: '📺 מסך + 🎮 שלט', p2p_pad: '🎮 רק שלט', p2p_watch: '👀 צופה', 
+            p2p_mic_on: '🎤 מיקרופון: פועל', p2p_mic_off: '🎤 מיקרופון: כבוי', p2p_audio_on: '🔊 שמע: פועל', p2p_audio_off: '🔇 שמע: כבוי', p2p_create: '🌐 צור', p2p_join: '🔗 הצטרף', 
+            p2p_wait: 'ממתין...', p2p_placeholder: 'הזן קוד חבר...',
+            p2p_net_global: '🌍 אינטרנט (גלובלי)', p2p_net_local: '🏠 WI-FI מקומי',
+            p2p_show_qr: '📱 הצג QR', p2p_scan_qr: '📷 סורק',
+            p2p_vol_game: 'עוצמת משחק', p2p_vol_voice: 'קול חבר', p2p_bitrate: 'קצב סיביות (איכות)', p2p_res: 'רזולוציית מארח',
+            p2p_stat_wait: 'ממתין לרשת...', p2p_stat_code: 'הזן קוד:', p2p_stat_your_code: 'הקוד שלך:', p2p_stat_players: 'שחקנים:',
+            p2p_stat_conn: '✅ מחובר!', p2p_stat_stream: '✅ משדר חי', p2p_stat_creating: 'יוצר חדר (ניסיון ', p2p_stat_joining: 'מתחבר (ניסיון ',
+            p2p_err_no_server: '❌ שרתים לא זמינים', p2p_err_no_net: '❌ אין אינטרנט! הפעל 3G/LTE.', p2p_err_no_host: '❌ שגיאה: אין מארח או חיבור',
+            p2p_err_cam: 'שגיאת מצלמה: ', p2p_warn_create: 'לחץ על צור תחילה',
+            p2p_btn_close: 'סגור', p2p_btn_cancel: 'ביטול',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'VI': { 
+            hub_title: 'TRUNG TÂM ARCADE', store_back: '◀ ĐÓNG CỬA HÀNG', store_title: 'ARCADE STORE', store_sub: 'LƯU TRỮ LƯỢNG TỬ', store_search: 'TÌM KIẾM...', store_all: 'TẤT CẢ', store_no_cover: 'KHÔNG CÓ ẢNH BÌA', 
+            p2p_title: 'CHƠI MẠNG (P2P)', p2p_mode: 'CHẾ ĐỘ KẾT NỐI:', p2p_full: '📺 MÀN HÌNH + 🎮 TAY CẦM', p2p_pad: '🎮 CHỈ TAY CẦM', p2p_watch: '👀 NGƯỜI XEM', 
+            p2p_mic_on: '🎤 MIC: BẬT', p2p_mic_off: '🎤 MIC: TẮT', p2p_audio_on: '🔊 ÂM THANH: BẬT', p2p_audio_off: '🔇 ÂM THANH: TẮT', p2p_create: '🌐 TẠO', p2p_join: '🔗 THAM GIA', 
+            p2p_wait: 'Đang đợi...', p2p_placeholder: 'Nhập mã bạn bè...',
+            p2p_net_global: '🌍 INTERNET (TOÀN CẦU)', p2p_net_local: '🏠 WI-FI NỘI BỘ',
+            p2p_show_qr: '📱 HIỂN THỊ QR', p2p_scan_qr: '📷 MÁY QUÉT',
+            p2p_vol_game: 'ÂM LƯỢNG GAME', p2p_vol_voice: 'GIỌNG BẠN BÈ', p2p_bitrate: 'BITRATE (CHẤT LƯỢNG)', p2p_res: 'ĐỘ PHÂN GIẢI HOST',
+            p2p_stat_wait: 'Đang đợi mạng...', p2p_stat_code: 'Nhập mã:', p2p_stat_your_code: 'MÃ CỦA BẠN:', p2p_stat_players: 'NGƯỜI CHƠI:',
+            p2p_stat_conn: '✅ ĐÃ KẾT NỐI!', p2p_stat_stream: '✅ ĐANG PHÁT TRỰC TIẾP', p2p_stat_creating: 'Đang tạo phòng (Thử ', p2p_stat_joining: 'Đang kết nối (Thử ',
+            p2p_err_no_server: '❌ MÁY CHỦ KHÔNG KHẢ DỤNG', p2p_err_no_net: '❌ KHÔNG CÓ MẠNG! Bật 3G/LTE.', p2p_err_no_host: '❌ LỖI: KHÔNG CÓ HOST HOẶC KẾT NỐI',
+            p2p_err_cam: 'Lỗi camera: ', p2p_warn_create: 'Hãy nhấn TẠO trước',
+            p2p_btn_close: 'ĐÓNG', p2p_btn_cancel: 'HỦY',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'TH': { 
+            hub_title: 'อาร์เคดฮับ', store_back: '◀ ปิดร้านค้า', store_title: 'ARCADE STORE', store_sub: 'ที่เก็บข้อมูลควอนตัม', store_search: 'ค้นหา...', store_all: 'ทั้งหมด', store_no_cover: 'ไม่มีหน้าปก', 
+            p2p_title: 'เล่นผ่านเครือข่าย (P2P)', p2p_mode: 'โหมดการเชื่อมต่อ:', p2p_full: '📺 หน้าจอ + 🎮 จอย', p2p_pad: '🎮 จอยเท่านั้น', p2p_watch: '👀 ผู้ชม', 
+            p2p_mic_on: '🎤 ไมค์: เปิด', p2p_mic_off: '🎤 ไมค์: ปิด', p2p_audio_on: '🔊 เสียง: เปิด', p2p_audio_off: '🔇 เสียง: ปิด', p2p_create: '🌐 สร้าง', p2p_join: '🔗 เข้าร่วม', 
+            p2p_wait: 'กำลังรอ...', p2p_placeholder: 'ใส่รหัสเพื่อน...',
+            p2p_net_global: '🌍 อินเทอร์เน็ต (ทั่วโลก)', p2p_net_local: '🏠 WI-FI ในพื้นที่',
+            p2p_show_qr: '📱 แสดง QR', p2p_scan_qr: '📷 สแกนเนอร์',
+            p2p_vol_game: 'ระดับเสียงเกม', p2p_vol_voice: 'เสียงเพื่อน', p2p_bitrate: 'บิตเรต (คุณภาพ)', p2p_res: 'ความละเอียดโฮสต์',
+            p2p_stat_wait: 'รอเครือข่าย...', p2p_stat_code: 'ป้อนรหัส:', p2p_stat_your_code: 'รหัสของคุณ:', p2p_stat_players: 'ผู้เล่น:',
+            p2p_stat_conn: '✅ เชื่อมต่อแล้ว!', p2p_stat_stream: '✅ กำลังสตรีมสด', p2p_stat_creating: 'กำลังสร้างห้อง (ลองครั้งที่ ', p2p_stat_joining: 'กำลังเชื่อมต่อ (ลองครั้งที่ ',
+            p2p_err_no_server: '❌ เซิร์ฟเวอร์ไม่พร้อมใช้งาน', p2p_err_no_net: '❌ ไม่มีอินเทอร์เน็ต! เปิด 3G/LTE', p2p_err_no_host: '❌ ข้อผิดพลาด: ไม่มีโฮสต์หรือการเชื่อมต่อ',
+            p2p_err_cam: 'ข้อผิดพลาดของกล้อง: ', p2p_warn_create: 'คลิกสร้างก่อน',
+            p2p_btn_close: 'ปิด', p2p_btn_cancel: 'ยกเลิก',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'FI': { 
+            hub_title: 'ARCADE KESKUS', store_back: '◀ SULJE KAUPPA', store_title: 'ARCADE STORE', store_sub: 'KVANTTIVARASTO', store_search: 'ETSI...', store_all: 'KAIKKI', store_no_cover: 'EI KANSIKUVAA', 
+            p2p_title: 'VERKKOPELI (P2P)', p2p_mode: 'YHTEYSTILA:', p2p_full: '📺 RUUTU + 🎮 OHJAIN', p2p_pad: '🎮 VAIN OHJAIN', p2p_watch: '👀 KATSOJA', 
+            p2p_mic_on: '🎤 MIK: PÄÄLLÄ', p2p_mic_off: '🎤 MIK: POIS', p2p_audio_on: '🔊 ÄÄNI: PÄÄLLÄ', p2p_audio_off: '🔇 ÄÄNI: POIS', p2p_create: '🌐 LUO', p2p_join: '🔗 LIITY', 
+            p2p_wait: 'Odotetaan...', p2p_placeholder: 'Koodi...',
+            p2p_net_global: '🌍 INTERNET (GLOBAALI)', p2p_net_local: '🏠 PAIKALLINEN WI-FI',
+            p2p_show_qr: '📱 NÄYTÄ QR', p2p_scan_qr: '📷 SKANNERI',
+            p2p_vol_game: 'PELIN ÄÄNI', p2p_vol_voice: 'KAVERIN ÄÄNI', p2p_bitrate: 'BITTINOPEUS (LAATU)', p2p_res: 'ISÄNNÄN RESOLUUTIO',
+            p2p_stat_wait: 'Odotetaan verkkoa...', p2p_stat_code: 'Syötä koodi:', p2p_stat_your_code: 'KOODISI:', p2p_stat_players: 'PELAAJAT:',
+            p2p_stat_conn: '✅ YHDISTETTY!', p2p_stat_stream: '✅ LÄHETYS KÄYNNISSÄ', p2p_stat_creating: 'Luodaan huonetta (Yritys ', p2p_stat_joining: 'Yhdistetään (Yritys ',
+            p2p_err_no_server: '❌ PALVELIMET EIVÄT VASTAA', p2p_err_no_net: '❌ EI INTERNETIÄ! Laita 3G/LTE päälle.', p2p_err_no_host: '❌ VIRHE: EI ISÄNTÄÄ TAI YHTEYTTÄ',
+            p2p_err_cam: 'Kameravirhe: ', p2p_warn_create: 'Paina LUO ensin',
+            p2p_btn_close: 'SULJE', p2p_btn_cancel: 'PERUUTA',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'NO': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ LUKK BUTIKK', store_title: 'ARCADE STORE', store_sub: 'KVANTELAGER', store_search: 'SØK...', store_all: 'ALLE', store_no_cover: 'INGET OMSLAG', 
+            p2p_title: 'NETTSPILL (P2P)', p2p_mode: 'TILKOBLINGSMODUS:', p2p_full: '📺 SKJERM + 🎮 KONTROLLER', p2p_pad: '🎮 KUN KONTROLLER', p2p_watch: '👀 TILSKUER', 
+            p2p_mic_on: '🎤 MIK: PÅ', p2p_mic_off: '🎤 MIK: AV', p2p_audio_on: '🔊 LYD: PÅ', p2p_audio_off: '🔇 LYD: AV', p2p_create: '🌐 OPPRETT', p2p_join: '🔗 BLI MED', 
+            p2p_wait: 'Venter...', p2p_placeholder: 'Venn-kode...',
+            p2p_net_global: '🌍 INTERNETT (GLOBAL)', p2p_net_local: '🏠 LOKALT WI-FI',
+            p2p_show_qr: '📱 VIS QR', p2p_scan_qr: '📷 SKANNER',
+            p2p_vol_game: 'SPILLVOLUM', p2p_vol_voice: 'VENN STEMME', p2p_bitrate: 'BITRATE (KVALITET)', p2p_res: 'VERT OPPLØSNING',
+            p2p_stat_wait: 'Venter på nettverk...', p2p_stat_code: 'Skriv inn kode:', p2p_stat_your_code: 'DIN KODE:', p2p_stat_players: 'SPILLERE:',
+            p2p_stat_conn: '✅ TILKOBLET!', p2p_stat_stream: '✅ SENDER LIVE', p2p_stat_creating: 'Oppretter rom (Forsøk ', p2p_stat_joining: 'Kobler til (Forsøk ',
+            p2p_err_no_server: '❌ SERVERNE ER NEDE', p2p_err_no_net: '❌ INGEN INTERNETT! Slå på 3G/LTE.', p2p_err_no_host: '❌ FEIL: INGEN VERT ELLER TILKOBLING',
+            p2p_err_cam: 'Kamerafeil: ', p2p_warn_create: 'Klikk OPPRETT først',
+            p2p_btn_close: 'LUKK', p2p_btn_cancel: 'AVBRYT',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'DA': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ LUK BUTIK', store_title: 'ARCADE STORE', store_sub: 'KVANTELAGER', store_search: 'SØG...', store_all: 'ALLE', store_no_cover: 'INTET OMSLAG', 
+            p2p_title: 'NETVÆRKSSPIL (P2P)', p2p_mode: 'TILSLUTNINGSMODUS:', p2p_full: '📺 SKÆRM + 🎮 CONTROLLER', p2p_pad: '🎮 KUN CONTROLLER', p2p_watch: '👀 TILSKUER', 
+            p2p_mic_on: '🎤 MIK: TIL', p2p_mic_off: '🎤 MIK: FRA', p2p_audio_on: '🔊 LYD: TIL', p2p_audio_off: '🔇 LYD: FRA', p2p_create: '🌐 OPRET', p2p_join: '🔗 DELTAG', 
+            p2p_wait: 'Venter...', p2p_placeholder: 'Vennekode...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 LOKALT WI-FI',
+            p2p_show_qr: '📱 VIS QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'SPIL LYDSTYRKE', p2p_vol_voice: 'VEN STEMME', p2p_bitrate: 'BITRATE (KVALITET)', p2p_res: 'VÆRT OPLØSNING',
+            p2p_stat_wait: 'Venter på netværk...', p2p_stat_code: 'Indtast kode:', p2p_stat_your_code: 'DIN KODE:', p2p_stat_players: 'SPILLERE:',
+            p2p_stat_conn: '✅ FORBUNDET!', p2p_stat_stream: '✅ SENDER LIVE', p2p_stat_creating: 'Opretter rum (Forsøg ', p2p_stat_joining: 'Forbinder (Forsøg ',
+            p2p_err_no_server: '❌ SERVERE UTILGÆNGELIGE', p2p_err_no_net: '❌ INGEN INTERNET! Tænd 3G/LTE.', p2p_err_no_host: '❌ FEJL: INGEN VÆRT ELLER FORBINDELSE',
+            p2p_err_cam: 'Kamerafejl: ', p2p_warn_create: 'Klik OPRET først',
+            p2p_btn_close: 'LUK', p2p_btn_cancel: 'ANNULLER',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'CS': { 
+            hub_title: 'ARKÁDOVÉ CENTRUM', store_back: '◀ ZAVŘÍT OBCHOD', store_title: 'ARCADE STORE', store_sub: 'KVANTOVÉ ÚLOŽIŠTĚ', store_search: 'HLEDAT...', store_all: 'VŠECHNY', store_no_cover: 'BEZ OBALU', 
+            p2p_title: 'SÍŤOVÁ HRA (P2P)', p2p_mode: 'REŽIM PŘIPOJENÍ:', p2p_full: '📺 OBRAZOVKA + 🎮 OVLADAČ', p2p_pad: '🎮 POUZE OVLADAČ', p2p_watch: '👀 DIVÁK', 
+            p2p_mic_on: '🎤 MIKR: ZAP', p2p_mic_off: '🎤 MIKR: VYP', p2p_audio_on: '🔊 ZVUK: ZAP', p2p_audio_off: '🔇 ZVUK: VYP', p2p_create: '🌐 VYTVOŘIT', p2p_join: '🔗 PŘIPOJIT', 
+            p2p_wait: 'Čekání...', p2p_placeholder: 'Kód přítele...',
+            p2p_net_global: '🌍 INTERNET (GLOBÁLNÍ)', p2p_net_local: '🏠 LOKÁLNÍ WI-FI',
+            p2p_show_qr: '📱 UKÁZAT QR', p2p_scan_qr: '📷 SKENER',
+            p2p_vol_game: 'HLASITOST HRY', p2p_vol_voice: 'HLAS PŘÍTELE', p2p_bitrate: 'DAT. TOK (KVALITA)', p2p_res: 'ROZLIŠENÍ HOSTA',
+            p2p_stat_wait: 'Čekání na síť...', p2p_stat_code: 'Zadejte kód:', p2p_stat_your_code: 'VÁŠ KÓD:', p2p_stat_players: 'HRÁČI:',
+            p2p_stat_conn: '✅ PŘIPOJENO!', p2p_stat_stream: '✅ ŽIVÉ VYSÍLÁNÍ', p2p_stat_creating: 'Vytváření místnosti (Pokus ', p2p_stat_joining: 'Připojování (Pokus ',
+            p2p_err_no_server: '❌ SERVERY NEDOSTUPNÉ', p2p_err_no_net: '❌ CHYBÍ INTERNET! Zapněte 3G/LTE.', p2p_err_no_host: '❌ CHYBA: ŽÁDNÝ HOST NEBO PŘIPOJENÍ',
+            p2p_err_cam: 'Chyba kamery: ', p2p_warn_create: 'Nejprve klikněte na VYTVOŘIT',
+            p2p_btn_close: 'ZAVŘÍT', p2p_btn_cancel: 'ZRUŠIT',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'HU': { 
+            hub_title: 'ÁRKÁD KÖZPONT', store_back: '◀ BOLT BEZÁRÁSA', store_title: 'ARCADE STORE', store_sub: 'KVANTUM TÁROLÓ', store_search: 'KERESÉS...', store_all: 'ÖSSZES', store_no_cover: 'NINCS BORÍTÓ', 
+            p2p_title: 'HÁLÓZATI JÁTÉK (P2P)', p2p_mode: 'KAPCSOLAT MÓDJA:', p2p_full: '📺 KÉPERNYŐ + 🎮 KONTROLLER', p2p_pad: '🎮 CSAK KONTROLLER', p2p_watch: '👀 NÉZŐ', 
+            p2p_mic_on: '🎤 MIK: BE', p2p_mic_off: '🎤 MIK: KI', p2p_audio_on: '🔊 HANG: BE', p2p_audio_off: '🔇 HANG: KI', p2p_create: '🌐 LÉTREHOZÁS', p2p_join: '🔗 CSATLAKOZÁS', 
+            p2p_wait: 'Várakozás...', p2p_placeholder: 'Barát kódja...',
+            p2p_net_global: '🌍 INTERNET (GLOBÁLIS)', p2p_net_local: '🏠 HELYI WI-FI',
+            p2p_show_qr: '📱 QR MUTATÁSA', p2p_scan_qr: '📷 SZKENNER',
+            p2p_vol_game: 'JÁTÉK HANGEREJE', p2p_vol_voice: 'BARÁT HANGJA', p2p_bitrate: 'BITRÁTA (MINŐSÉG)', p2p_res: 'HOST FELBONTÁS',
+            p2p_stat_wait: 'Várakozás hálózatra...', p2p_stat_code: 'Írd be a kódot:', p2p_stat_your_code: 'A TE KÓDOD:', p2p_stat_players: 'JÁTÉKOSOK:',
+            p2p_stat_conn: '✅ CSATLAKOZVA!', p2p_stat_stream: '✅ ÉLŐ KÖZVETÍTÉS', p2p_stat_creating: 'Szoba létrehozása (Próbálkozás ', p2p_stat_joining: 'Csatlakozás (Próbálkozás ',
+            p2p_err_no_server: '❌ SZERVEREK NEM ELÉRHETŐK', p2p_err_no_net: '❌ NINCS INTERNET! Kapcsold be a 3G/LTE-t.', p2p_err_no_host: '❌ HIBA: NINCS HOST VAGY KAPCSOLAT',
+            p2p_err_cam: 'Kamera hiba: ', p2p_warn_create: 'Kattints előbb a LÉTREHOZÁSRA',
+            p2p_btn_close: 'BEZÁRÁS', p2p_btn_cancel: 'MÉGSE',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'RO': { 
+            hub_title: 'CENTRU ARCADE', store_back: '◀ ÎNCHIDE MAGAZIN', store_title: 'ARCADE STORE', store_sub: 'STOCARE CUANTICĂ', store_search: 'CĂUTARE...', store_all: 'TOATE', store_no_cover: 'FĂRĂ COPERTĂ', 
+            p2p_title: 'JOC ÎN REȚEA (P2P)', p2p_mode: 'MOD CONEXIUNE:', p2p_full: '📺 ECRAN + 🎮 CONTROLER', p2p_pad: '🎮 DOAR CONTROLER', p2p_watch: '👀 SPECTATOR', 
+            p2p_mic_on: '🎤 MIC: PORNIT', p2p_mic_off: '🎤 MIC: OPRIT', p2p_audio_on: '🔊 AUDIO: PORNIT', p2p_audio_off: '🔇 AUDIO: OPRIT', p2p_create: '🌐 CREEAZĂ', p2p_join: '🔗 ALĂTURĂ-TE', 
+            p2p_wait: 'Așteptare...', p2p_placeholder: 'Cod prieten...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI LOCAL',
+            p2p_show_qr: '📱 ARATĂ QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'VOLUM JOC', p2p_vol_voice: 'VOCE PRIETEN', p2p_bitrate: 'BITRATE (CALITATE)', p2p_res: 'REZOLUȚIE HOST',
+            p2p_stat_wait: 'Așteptare rețea...', p2p_stat_code: 'Introdu codul:', p2p_stat_your_code: 'CODUL TĂU:', p2p_stat_players: 'JUCĂTORI:',
+            p2p_stat_conn: '✅ CONECTAT!', p2p_stat_stream: '✅ TRANSMISIE LIVE', p2p_stat_creating: 'Creare cameră (Încercare ', p2p_stat_joining: 'Conectare (Încercare ',
+            p2p_err_no_server: '❌ SERVER INDISPONIBIL', p2p_err_no_net: '❌ FĂRĂ INTERNET! Pornește 3G/LTE.', p2p_err_no_host: '❌ EROARE: FĂRĂ HOST SAU CONEXIUNE',
+            p2p_err_cam: 'Eroare cameră: ', p2p_warn_create: 'Apasă CREEAZĂ mai întâi',
+            p2p_btn_close: 'ÎNCHIDE', p2p_btn_cancel: 'ANULEAZĂ',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        },
+        'DEFAULT': { 
+            hub_title: 'ARCADE HUB', store_back: '◀ CLOSE STORE', store_title: 'ARCADE STORE', store_sub: 'QUANTUM STORAGE', store_search: 'SEARCH...', store_all: 'ALL', store_no_cover: 'NO COVER', 
+            p2p_title: 'NETWORK PLAY (P2P)', p2p_mode: 'CONNECTION MODE:', p2p_full: '📺 SCREEN + 🎮 PAD', p2p_pad: '🎮 PAD ONLY (REMOTE)', p2p_watch: '👀 SPECTATOR', 
+            p2p_mic_on: '🎤 MIC: ON', p2p_mic_off: '🎤 MIC: OFF', p2p_audio_on: '🔊 AUDIO: ON', p2p_audio_off: '🔇 AUDIO: OFF', p2p_create: '🌐 CREATE', p2p_join: '🔗 JOIN', 
+            p2p_wait: 'Waiting...', p2p_placeholder: 'Enter friend code...',
+            p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI / HOTSPOT',
+            p2p_show_qr: '📱 SHOW QR', p2p_scan_qr: '📷 SCANNER',
+            p2p_vol_game: 'GAME VOLUME', p2p_vol_voice: 'FRIEND VOICE', p2p_bitrate: 'BITRATE (QUALITY)', p2p_res: 'HOST RESOLUTION',
+            p2p_stat_wait: 'Waiting for network...', p2p_stat_code: 'ENTER CODE TO JOIN:', p2p_stat_your_code: 'YOUR CODE:', p2p_stat_players: 'PLAYERS:',
+            p2p_stat_conn: '✅ CONNECTED!', p2p_stat_stream: '✅ STREAMING LIVE', p2p_stat_creating: 'Creating room (Attempt ', p2p_stat_joining: 'Connecting (Attempt ',
+            p2p_err_no_server: '❌ SERVERS UNAVAILABLE', p2p_err_no_net: '❌ NO INTERNET FOR HANDSHAKE! Turn on 3G/LTE for 2 seconds.', p2p_err_no_host: '❌ ERROR: NO HOST OR CONNECTION',
+            p2p_err_cam: 'Camera error: ', p2p_warn_create: 'Click CREATE first',
+            p2p_btn_close: 'CLOSE', p2p_btn_cancel: 'CANCEL',
+            p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP'
+        }
+    };
+
+ // Сливаем новые фразы с твоим основным словарем (твои правки не пострадают!)
+    for (let lang in extraI18n) {
+        if (i18n[lang]) {
+            Object.assign(i18n[lang], extraI18n[lang]);
+        }
+    }
+
+    // --- ДОПОЛНИТЕЛЬНЫЕ ПЕРЕВОДЫ ДЛЯ P2P UI И ЗАСТАВКИ ---
+    const extraI18n_v2 = {
+        'EN': { hub_title: 'ARCADE HUB', p2p_net_global: '🌍 INTERNET (GLOBAL)', p2p_net_local: '🏠 WI-FI / HOTSPOT', p2p_show_qr: '📱 SHOW QR', p2p_scan_qr: '📷 SCANNER', p2p_vol_game: 'GAME VOLUME', p2p_vol_voice: 'FRIEND VOICE', p2p_bitrate: 'BITRATE (QUALITY)', p2p_res: 'HOST RESOLUTION', p2p_stat_wait: 'Waiting for network...', p2p_stat_code: 'ENTER CODE TO JOIN:', p2p_stat_your_code: 'YOUR CODE:', p2p_stat_players: 'PLAYERS:', p2p_stat_conn: '✅ CONNECTED!', p2p_stat_stream: '✅ STREAMING LIVE', p2p_stat_creating: 'Creating room (Attempt ', p2p_stat_joining: 'Connecting (Attempt ', p2p_err_no_server: '❌ SERVERS UNAVAILABLE', p2p_err_no_net: '❌ NO INTERNET FOR HANDSHAKE! Turn on 3G/LTE.', p2p_err_no_host: '❌ ERROR: NO HOST OR CONNECTION', p2p_err_cam: 'Camera error: ', p2p_warn_create: 'Click CREATE first', p2p_btn_close: 'CLOSE', p2p_btn_cancel: 'CANCEL', p2p_mode_solo: 'MODE: SOLO [ALL P1]', p2p_mode_split: 'MODE: SPLIT KBD [4 P ON KBD]', p2p_mode_coop: 'MODE: COUCH CO-OP' },
+        'RU': { hub_title: 'ИГРОВОЙ ЦЕНТР', p2p_net_global: '🌍 ИНТЕРНЕТ (ГЛОБАЛЬНО)', p2p_net_local: '🏠 WI-FI / ТОЧКА ДОСТУПА', p2p_show_qr: '📱 ПОКАЗАТЬ QR', p2p_scan_qr: '📷 СКАНЕР', p2p_vol_game: 'ГРОМКОСТЬ ИГРЫ', p2p_vol_voice: 'ГОЛОС ДРУГА', p2p_bitrate: 'БИТРЕЙТ (КАЧЕСТВО)', p2p_res: 'РАЗРЕШЕНИЕ ХОСТА', p2p_stat_wait: 'Ожидание сети...', p2p_stat_code: 'Введите код для подключения:', p2p_stat_your_code: 'ВАШ КОД:', p2p_stat_players: 'ИГРОКОВ:', p2p_stat_conn: '✅ СОЕДИНЕНО!', p2p_stat_stream: '✅ ТРАНСЛЯЦИЯ ИДЕТ', p2p_stat_creating: 'Создание комнаты (Попытка ', p2p_stat_joining: 'Подключение (Попытка ', p2p_err_no_server: '❌ СЕРВЕРЫ НЕДОСТУПНЫ', p2p_err_no_net: '❌ НЕТ ИНТЕРНЕТА ДЛЯ РУКОПОЖАТИЯ! Включите 3G/LTE.', p2p_err_no_host: '❌ ОШИБКА: НЕТ ХОСТА ИЛИ СВЯЗИ', p2p_err_cam: 'Ошибка камеры: ', p2p_warn_create: 'Сначала нажмите СОЗДАТЬ', p2p_btn_close: 'ЗАКРЫТЬ', p2p_btn_cancel: 'ОТМЕНА', p2p_mode_solo: 'РЕЖИМ: СОЛО [ВСЕ P1]', p2p_mode_split: 'РЕЖИМ: КЛАВИАТУРА [4 ИГРОКА]', p2p_mode_coop: 'РЕЖИМ: КООПЕРАТИВ' },
+        'JA': { hub_title: 'アーケードハブ', p2p_net_global: '🌍 インターネット', p2p_net_local: '🏠 ローカル WI-FI', p2p_show_qr: '📱 QRを表示', p2p_scan_qr: '📷 スキャナー', p2p_vol_game: 'ゲーム音量', p2p_vol_voice: 'フレンドの声', p2p_bitrate: 'ビットレート', p2p_res: 'ホスト解像度', p2p_stat_wait: '待機中...', p2p_stat_code: 'コードを入力:', p2p_stat_your_code: 'あなたのコード:', p2p_stat_players: 'プレイヤー:', p2p_stat_conn: '✅ 接続完了!', p2p_stat_stream: '✅ 配信中', p2p_stat_creating: '作成中 (試行 ', p2p_stat_joining: '接続中 (試行 ', p2p_err_no_server: '❌ サーバーエラー', p2p_err_no_net: '❌ インターネットなし!', p2p_err_no_host: '❌ ホストなし', p2p_err_cam: 'カメラエラー: ', p2p_warn_create: '先に作成してください', p2p_btn_close: '閉じる', p2p_btn_cancel: 'キャンセル', p2p_mode_solo: 'モード: ソロ [全てP1]', p2p_mode_split: 'モード: 分割キーボード', p2p_mode_coop: 'モード: 協力プレイ' },
+        'ZH': { hub_title: '街机中心', p2p_net_global: '🌍 互联网 (全局)', p2p_net_local: '🏠 局域网 WI-FI', p2p_show_qr: '📱 显示 QR', p2p_scan_qr: '📷 扫描器', p2p_vol_game: '游戏音量', p2p_vol_voice: '好友语音', p2p_bitrate: '比特率', p2p_res: '主机分辨率', p2p_stat_wait: '等待网络...', p2p_stat_code: '输入代码:', p2p_stat_your_code: '你的代码:', p2p_stat_players: '玩家:', p2p_stat_conn: '✅ 已连接!', p2p_stat_stream: '✅ 正在直播', p2p_stat_creating: '创建房间 (尝试 ', p2p_stat_joining: '连接中 (尝试 ', p2p_err_no_server: '❌ 服务器不可用', p2p_err_no_net: '❌ 无网络!', p2p_err_no_host: '❌ 无主机或连接', p2p_err_cam: '相机错误: ', p2p_warn_create: '请先点击创建', p2p_btn_close: '关闭', p2p_btn_cancel: '取消', p2p_mode_solo: '模式: 单人 [全部P1]', p2p_mode_split: '模式: 分屏键盘', p2p_mode_coop: '模式: 合作' },
+        'KO': { hub_title: '아케이드 허브', p2p_net_global: '🌍 인터넷 (글로벌)', p2p_net_local: '🏠 로컬 WI-FI', p2p_show_qr: '📱 QR 보기', p2p_scan_qr: '📷 스캐너', p2p_vol_game: '게임 볼륨', p2p_vol_voice: '친구 음성', p2p_bitrate: '비트레이트', p2p_res: '호스트 해상도', p2p_stat_wait: '대기 중...', p2p_stat_code: '코드 입력:', p2p_stat_your_code: '내 코드:', p2p_stat_players: '플레이어:', p2p_stat_conn: '✅ 연결됨!', p2p_stat_stream: '✅ 스트리밍 중', p2p_stat_creating: '방 생성 중 (시도 ', p2p_stat_joining: '연결 중 (시도 ', p2p_err_no_server: '❌ 서버 오류', p2p_err_no_net: '❌ 인터넷 없음!', p2p_err_no_host: '❌ 호스트 없음', p2p_err_cam: '카메라 오류: ', p2p_warn_create: '먼저 만들기를 클릭하세요', p2p_btn_close: '닫기', p2p_btn_cancel: '취소', p2p_mode_solo: '모드: 솔로 [전체 P1]', p2p_mode_split: '모드: 분할 키보드', p2p_mode_coop: '모드: 협동' }
+    };
+    for (let lang in extraI18n_v2) {
+        if (i18n[lang]) Object.assign(i18n[lang], extraI18n_v2[lang]);
+    }
         
         
         
@@ -7692,8 +8243,10 @@ function deselectAllGamesForDelete() {
         }
         
         const trySet = (id, text) => { const el = document.getElementById(id); if(el && text) el.innerHTML = text; };
-        
-        trySet('lbl_init', d.init); trySet('lbl_omnom', d.omnom); 
+
+        trySet('lbl_hub_title', d.hub_title || 'ARCADE HUB');
+        trySet('p2pStatusText', d.p2p_stat_wait || 'Waiting...');
+        trySet('lbl_init', d.init); trySet('lbl_omnom', d.omnom);
         trySet('lbl_dendy', d.dendy); trySet('lbl_sega', d.sega);
         trySet('lbl_snes', d.snes); trySet('lbl_ngp', d.ngp); trySet('lbl_dos', d.dos); trySet('lbl_html', d.html); trySet('lbl_gba', d.gba);
         trySet('btn_f_nes', d.dendy); trySet('btn_f_smd', d.sega);
@@ -7727,14 +8280,38 @@ function deselectAllGamesForDelete() {
         
         trySet('opt_sort_newest', d.newest); trySet('opt_sort_sys', d.sys); trySet('opt_sort_random', d.random);
         
+        trySet('vk_btn_lang', d.vk_lang);
+        trySet('vk_btn_clear', d.vk_clear);
+        trySet('vk_btn_close', d.vk_close);
         
-trySet('vk_btn_lang', d.vk_lang);
-trySet('vk_btn_clear', d.vk_clear);
-trySet('vk_btn_close', d.vk_close);
+        // --- ПЕРЕВОД МАГАЗИНА ---
+        trySet('lbl_store_back', d.store_back);
+        trySet('lbl_store_title', d.store_title);
+        trySet('lbl_store_sub', d.store_sub);
+        const storeSearchInp = document.getElementById('storeSearchInput');
+        if (storeSearchInp && d.store_search) storeSearchInp.placeholder = d.store_search;
         
+        // --- ПЕРЕВОД СЕТЕВОЙ ИГРЫ (P2P) ---
+        trySet('lbl_p2p_title', d.p2p_title); 
+        trySet('lbl_p2p_mode', d.p2p_mode);
+        trySet('opt_p2p_full', d.p2p_full); 
+        trySet('opt_p2p_pad', d.p2p_pad); 
+        trySet('opt_p2p_watch', d.p2p_watch);
+        trySet('btnHostRoom', d.p2p_create); 
+        trySet('btnJoinRoom', d.p2p_join);
         
-        
-        
+        const p2pInp = document.getElementById('p2pRoomIdInput');
+        if (p2pInp && d.p2p_placeholder) p2pInp.placeholder = d.p2p_placeholder;
+
+        // Динамический текст в P2P кнопках
+        const btnMic = document.getElementById('btnToggleMic');
+        if (btnMic) {
+            btnMic.innerHTML = (typeof isMicEnabled !== 'undefined' && isMicEnabled) ? d.p2p_mic_on : d.p2p_mic_off;
+        }
+        const btnAudio = document.getElementById('btnToggleGameAudio');
+        if (btnAudio) {
+            btnAudio.innerHTML = (typeof isGameAudioEnabled !== 'undefined' && isGameAudioEnabled) ? d.p2p_audio_on : d.p2p_audio_off;
+        }
         
         trySet('lbl_plat_nes', d.dendy + ' / NES'); trySet('lbl_plat_smd', d.sega + ' Mega Drive / Genesis'); 
         trySet('lbl_plat_snes', 'Super Nintendo (' + d.snes + ')'); trySet('lbl_plat_gba', 'Game Boy (' + d.gba + ' / GBC / GB)');
@@ -7764,10 +8341,42 @@ trySet('vk_btn_close', d.vk_close);
         if (typeof updateVideoUI === 'function') updateVideoUI();
         if (typeof updateAutoStopBtnUI === 'function') updateAutoStopBtnUI();
         if (typeof updateFloatingBtnUI === 'function') updateFloatingBtnUI();
-        if (typeof updateModeBtnUI === 'function') updateModeBtnUI();
+               if (typeof updateModeBtnUI === 'function') updateModeBtnUI();
         
+        // --- ДИНАМИЧЕСКИЕ ЭЛЕМЕНТЫ P2P (Обновление при смене языка) ---
+        const netSelect = document.getElementById('p2pNetworkMode');
+        if (netSelect && netSelect.options.length > 1) {
+            netSelect.options[0].text = d.p2p_net_global || '🌍 INTERNET';
+            netSelect.options[1].text = d.p2p_net_local || '🏠 WI-FI';
+        }
+        trySet('btnShowQR', d.p2p_show_qr);
+        trySet('btnScanQR', d.p2p_scan_qr);
+        
+        const gameVolLbl = document.querySelector('#p2pGameVolBlock label');
+        if (gameVolLbl && document.getElementById('gameVolSlider')) gameVolLbl.innerHTML = (d.p2p_vol_game || 'GAME VOL') + ': <span id="gameVolVal">' + document.getElementById('gameVolSlider').value + '%</span>';
+        
+        const voiceVolLbl = document.querySelector('#p2pVoiceVolBlock label');
+        if (voiceVolLbl && document.getElementById('voiceVolSlider')) voiceVolLbl.innerHTML = (d.p2p_vol_voice || 'VOICE VOL') + ': <span id="voiceVolVal">' + document.getElementById('voiceVolSlider').value + '%</span>';
+        
+        const bitLbl = document.querySelector('#p2pBitrateBlock label');
+        if (bitLbl && document.getElementById('bitrateSlider')) bitLbl.innerHTML = (d.p2p_bitrate || 'BITRATE') + ': <span id="bitrateVal">' + document.getElementById('bitrateSlider').value + ' kbps</span>';
+        
+        const resLbl = document.querySelector('#p2pResolutionBlock label');
+        if (resLbl && document.getElementById('resSlider')) resLbl.innerHTML = (d.p2p_res || 'RESOLUTION') + ': <span id="resVal">' + document.getElementById('resSlider').value + 'p</span>';
+
+        // Реклама (Монетизация)
+        if (typeof adNetworks !== 'undefined') {
+            CURRENT_AD_URL = adNetworks[langCode] || adNetworks['DEFAULT'];
+        }
+
+        if (typeof buildStoreFilters === 'function' && storeAllGames && storeAllGames.length > 0) buildStoreFilters();
+        if (typeof applyStoreFilters === 'function' && storeAllGames && storeAllGames.length > 0) {
+            applyStoreFilters();
+        }
+
         if (typeof AudioGen !== 'undefined') AudioGen.playClick();
     }
+
 
 
     window.addEventListener('load', () => {
@@ -7818,7 +8427,7 @@ trySet('vk_btn_close', d.vk_close);
         #arcade-store-overlay .search-box { width: 100%; max-width: 400px; margin-top: 15px; }
         #arcade-store-overlay .search-input { width: 100%; padding: 12px 15px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--neon-blue); color: #fff; font-weight: bold; outline: none; text-align: center; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); transition: 0.3s; }
         #arcade-store-overlay .search-input:focus { box-shadow: 0 0 15px var(--neon-blue); }
-        #arcade-store-overlay .sys-filter-container { display: flex; gap: 8px; overflow-x: auto; padding: 15px; scrollbar-width: none; align-items: center; justify-content: center; flex-wrap: wrap; margin: 0; }
+        #arcade-store-overlay .sys-filter-container { display: flex; gap: 8px; overflow-x: auto; padding: 15px; scrollbar-width: none; align-items: center; justify-content: flex-start; flex-wrap: nowrap; margin: 0; }
         #arcade-store-overlay .sys-filter-container::-webkit-scrollbar { display: none; }
         #arcade-store-overlay .sys-filter-btn { flex-shrink: 0; padding: 0 15px; height: 38px; border-radius: 10px; font-weight: 900; font-size: 10px; cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); text-transform: uppercase; transition: 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: none; }
         #arcade-store-overlay .sys-filter-btn.active { filter: brightness(1.2); box-shadow: inset 0 0 10px currentColor; border-width: 2px; }
@@ -7847,25 +8456,75 @@ trySet('vk_btn_close', d.vk_close);
     </style>
 
     <div class="meme-header">
-        <div class="back-link hub-nav-item" onclick="toggleArcadeStore(false)">◀ ЗАКРЫТЬ МАГАЗИН</div>
-        <div class="splash-title">ARCADE STORE</div>
-        <div class="splash-sub">QUANTUM ROM STORAGE</div>
+        <div class="back-link hub-nav-item" id="lbl_store_back" onclick="toggleArcadeStore(false)">◀ ЗАКРЫТЬ МАГАЗИН</div>
+        <div class="splash-title" id="lbl_store_title">ARCADE STORE</div>
+        <div class="splash-sub" id="lbl_store_sub">QUANTUM ROM STORAGE</div>
         <div class="search-box">
             <input type="text" id="storeSearchInput" class="search-input hub-nav-item" placeholder="ПОИСК ПО БАЗЕ..." oninput="triggerStoreSearch()">
         </div>
     </div>
 
     <div class="sys-filter-container" id="store-filter-bar"></div>
+    <div class="sys-filter-container" id="store-region-bar" style="margin-top: -15px; padding-top: 0; padding-bottom: 10px; display: none;"></div>
     <div class="grid" id="store-game-grid"></div>
 
     <script>
-        const WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
-        const RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
-        
+        // Глобальные переменные серверов и рекламы (динамические)
+        let WAREHOUSE_URL = 'https://crottorc91-oss.github.io/Baza/';
+        let RAW_URL = 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/';
+        let CURRENT_AD_URL = ''; // Сюда будет подставляться ссылка на рекламу (Монетизация)
+
+        // Матрица серверов по языкам (Можешь добавлять свои репозитории для каждого языка)
+        const regionServers = {
+            'RU': { 
+                warehouse: 'https://crottorc91-oss.github.io/Baza/', // Заменишь на Baza_RU когда создашь
+                raw: 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/', // Заменишь на Baza_RU
+                ad: 'https://your-ad-network.com/ru-segment'
+            },
+            'EN': { 
+                warehouse: 'https://crottorc91-oss.github.io/Baza/', // Заменишь на Baza_EN когда создашь
+                raw: 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/', // Заменишь на Baza_EN
+                ad: 'https://your-ad-network.com/en-segment'
+            },
+            // Базовый сервер для всех остальных языков
+            'DEFAULT': { 
+                warehouse: 'https://crottorc91-oss.github.io/Baza/', 
+                raw: 'https://raw.githubusercontent.com/crottorc91-oss/Baza/main/',
+                ad: 'https://your-ad-network.com/global-segment'
+            }
+        };
+
         let storeAllGames = [];
         let storeInstalledMap = new Map(); 
         let dbStore;
         let isHubOpen = false;
+
+        let currentStoreSys = 'all';
+        let currentStoreRegion = 'all';
+
+        // База тегов No-Intro и GoodTools для умного парсинга
+        const storeRegionInfo = {
+            'all': { name: 'ВСЕ', flag: '🌍', color: '#fff' },
+            'ru': { name: 'RUS', flag: '🇷🇺', color: '#ef4444', tags: ['ru', 'rus', 'russian', 't+rus', 't-rus', 'tr_ru', 'tr_rus'] },
+            'us': { name: 'USA', flag: '🇺🇸', color: '#38bdf8', tags: ['u', 'us', 'usa', 't+usa'] },
+            'eu': { name: 'EUR', flag: '🇪🇺', color: '#f59e0b', tags: ['e', 'eu', 'europe', 't+eur'] },
+            'jp': { name: 'JAP', flag: '🇯🇵', color: '#ec4899', tags: ['j', 'jp', 'japan', 'asia', 't+jap'] },
+            'br': { name: 'BRA', flag: '🇧🇷', color: '#10b981', tags: ['bra', 'br', 'pt', 'portuguese', 't+bra', 't+pt'] },
+            'es': { name: 'ESP', flag: '🇪🇸', color: '#facc15', tags: ['es', 'spa', 'spanish', 't+spa'] },
+            'cn': { name: 'CHN', flag: '🇨🇳', color: '#f43f5e', tags: ['ch', 'chn', 'china', 'chinese', 'zh', 't+chi', 't+zh'] }
+        };
+
+        function getGameRegion(title) {
+            const lower = title.toLowerCase();
+            for (let r in storeRegionInfo) {
+                if (r === 'all') continue;
+                for (let tag of storeRegionInfo[r].tags) {
+                    // Проверяем наличие тега как в круглых (), так и в квадратных [] скобках
+                    if (lower.includes('(' + tag + ')') || lower.includes('[' + tag + ']')) return r;
+                }
+            }
+            return 'unk';
+        }
         
         // --- ГЛОБАЛЬНЫЕ ФЛАГИ ДЛЯ ДЕМО-РЕЖИМА ---
         window.isPreviewMode = false;
@@ -7928,6 +8587,23 @@ trySet('vk_btn_close', d.vk_close);
             'snes': { css: 'sys-snes', badge: 'badge-snes', name: 'SNES', color: '#8b5cf6' },
             'ngp': { css: 'sys-ngp', badge: 'badge-ngp', name: 'NGP', color: '#06b6d4' } 
         };
+        
+        
+        
+        // --- ФУНКЦИЯ ДИНАМИЧЕСКОГО ПЕРЕВОДА КОНСОЛЕЙ ДЛЯ МАГАЗИНА ---
+        function getLocalizedSysName(sysCode) {
+            const d = window.L || {};
+            if (sysCode === 'nes') return d.dendy || 'NES';
+            if (sysCode === 'smd') return d.sega || 'SEGA';
+            if (sysCode === 'snes') return d.snes || 'SNES';
+            if (sysCode === 'ngp') return d.ngp || 'NGP';
+            if (sysCode === 'gba') return d.gba || 'GBA';
+            if (sysCode === 'dos') return d.dos || 'DOS';
+            if (sysCode === 'html') return d.html || 'HTML';
+            return sysCode.toUpperCase();
+        }
+        
+        
 
         document.getElementById('arcade-store-overlay').addEventListener('touchmove', function(e) {
             e.stopPropagation(); 
@@ -7991,8 +8667,9 @@ trySet('vk_btn_close', d.vk_close);
         }
 
         function buildStoreFilters() {
-            const bar = document.getElementById('store-filter-bar');
-            bar.innerHTML = '<button class="sys-filter-btn hub-nav-item active" style="color:#fff; border-color:#fff;" onclick="filterStoreGames(\'all\', this)">ВСЕ</button>';
+            const barSys = document.getElementById('store-filter-bar');
+            barSys.innerHTML = '<button class="sys-filter-btn hub-nav-item active" style="color:#fff; border-color:#fff;" onclick="setStoreFilter(\'sys\', \'all\', this)">' + (window.L && window.L.store_all ? window.L.store_all : 'ВСЕ') + '</button>';
+            
             const systems = [...new Set(storeAllGames.map(g => g.sys))];
             systems.forEach(sys => {
                 const info = storeSysInfo[sys] || { name: sys.toUpperCase(), color: '#fff' };
@@ -8000,33 +8677,102 @@ trySet('vk_btn_close', d.vk_close);
                 btn.className = 'sys-filter-btn hub-nav-item';
                 btn.style.color = info.color;
                 btn.style.borderColor = info.color + '44';
-                btn.textContent = info.name;
-                btn.onclick = (e) => filterStoreGames(sys, e.target);
-                bar.appendChild(btn);
+                // Подставляем каноничный перевод (Денди, ファミコン и т.д.)
+                btn.textContent = getLocalizedSysName(sys);
+                btn.onclick = (e) => setStoreFilter('sys', sys, e.target);
+                barSys.appendChild(btn);
             });
+            
+            buildRegionFilters();
         }
 
-        function filterStoreGames(sys, btn) {
-            document.querySelectorAll('#store-filter-bar .sys-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderStoreGames(sys === 'all' ? storeAllGames : storeAllGames.filter(g => g.sys === sys));
+        function buildRegionFilters() {
+            const barReg = document.getElementById('store-region-bar');
+            barReg.innerHTML = '<button class="sys-filter-btn hub-nav-item active" style="color:#fff; border-color:#fff;" onclick="setStoreFilter(\'region\', \'all\', this)">🌍 ' + (window.L && window.L.store_all ? window.L.store_all : 'ВСЕ') + '</button>';
+            
+            let availableRegions = new Set();
+            storeAllGames.forEach(g => {
+                if (currentStoreSys === 'all' || g.sys === currentStoreSys) {
+                    availableRegions.add(getGameRegion(g.title));
+                }
+            });
+
+            let hasRegions = false;
+            for (let r in storeRegionInfo) {
+                if (r === 'all') continue;
+                if (availableRegions.has(r)) {
+                    hasRegions = true;
+                    const info = storeRegionInfo[r];
+                    const btn = document.createElement('button');
+                    btn.className = 'sys-filter-btn hub-nav-item';
+                    btn.style.color = info.color;
+                    btn.style.borderColor = info.color + '44';
+                    btn.innerHTML = `${info.flag} ${info.name}`;
+                    btn.onclick = (e) => setStoreFilter('region', r, e.target);
+                    if (currentStoreRegion === r) btn.classList.add('active');
+                    barReg.appendChild(btn);
+                }
+            }
+            
+            barReg.style.display = hasRegions ? 'flex' : 'none';
+        }
+
+        function setStoreFilter(type, value, btn) {
+            if (type === 'sys') {
+                currentStoreSys = value;
+                document.querySelectorAll('#store-filter-bar .sys-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // При смене консоли сбрасываем регион на "ВСЕ" и перестраиваем список
+                currentStoreRegion = 'all';
+                buildRegionFilters();
+            } else if (type === 'region') {
+                currentStoreRegion = value;
+                document.querySelectorAll('#store-region-bar .sys-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            
+            applyStoreFilters();
+        }
+
+        function applyStoreFilters() {
+            let filtered = storeAllGames;
+            
+            if (currentStoreSys !== 'all') {
+                filtered = filtered.filter(g => g.sys === currentStoreSys);
+            }
+            
+            if (currentStoreRegion !== 'all') {
+                filtered = filtered.filter(g => getGameRegion(g.title) === currentStoreRegion);
+            }
+            
+            const q = document.getElementById('storeSearchInput') ? document.getElementById('storeSearchInput').value.toLowerCase() : '';
+            if (q) {
+                filtered = filtered.filter(g => g.title.toLowerCase().includes(q));
+            }
+            
+            renderStoreGames(filtered);
         }
 
         function triggerStoreSearch() {
-            const q = document.getElementById('storeSearchInput').value.toLowerCase();
-            renderStoreGames(storeAllGames.filter(g => g.title.toLowerCase().includes(q)));
+            applyStoreFilters();
         }
 
-        function renderStoreGames(list) {
+                function renderStoreGames(list) {
             const grid = document.getElementById('store-game-grid');
             grid.innerHTML = '';
             const heartSvg = `<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 
             list.forEach(game => {
+                // СТРОГОЕ ПРАВИЛО ПАРСЕРА: НЕТ КАРТИНКИ = НЕТ ИГРЫ В МАГАЗИНЕ
+                if (!game.image || game.image === "no-image.png") return;
+
                 const info = storeSysInfo[game.sys] || { css: '', badge: '', name: game.sys };
                 const isInst = storeInstalledMap.has(game.title);
                 const localId = isInst ? storeInstalledMap.get(game.title) : null;
-                const cover = WAREHOUSE_URL + game.url.replace('.zip', '.png');
+                
+                // Берем точное имя картинки из реестра (как прописал Харвестер)
+                const cover = WAREHOUSE_URL + game.image;
 
                 const card = document.createElement('div');
                 card.className = `game-card hub-nav-item ${info.css} ${isInst ? 'installed' : ''}`;
@@ -8037,19 +8783,18 @@ trySet('vk_btn_close', d.vk_close);
                     launchGameDirectly(game, isInst, localId);
                 };
 
+                const sysNameDisplay = typeof getLocalizedSysName === 'function' ? getLocalizedSysName(game.sys) : info.name;
+
                 card.innerHTML = `
-                    <div class="heart-btn" onclick="installGameFromStore(event, this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}')">${heartSvg}</div>
-                    <div class="no-cover-icon">NO COVER</div>
-                    <div class="sys-badge ${info.badge}">${info.name}</div>
+                    <div class="heart-btn" onclick="installGameFromStore(event, this, '${game.sys}', '${game.url}', '${game.title.replace(/'/g, "\\'")}', '${game.image}')">${heartSvg}</div>
+                    <div class="sys-badge ${info.badge}">${sysNameDisplay}</div>
                     <div class="game-title">${game.title}</div>
                 `;
-                const img = new Image();
-                img.onload = () => { if(card.querySelector('.no-cover-icon')) card.querySelector('.no-cover-icon').style.display='none'; };
-                img.src = cover;
                 grid.appendChild(card);
             });
             hubNavIndex = 0; 
         }
+
 
         async function extractRomForCore(blob, title, sys) {
             if (sys === 'dos' || sys === 'html') {
@@ -8071,7 +8816,7 @@ trySet('vk_btn_close', d.vk_close);
             return new File([blob], title + ".zip", {type: "application/zip", lastModified: Date.now()});
         }
 
-        async function installGameFromStore(event, btn, sys, url, title) {
+        async function installGameFromStore(event, btn, sys, url, title, imageName) {
             event.stopPropagation();
             if (btn.parentElement.classList.contains('installed')) return;
             btn.classList.add('loading');
@@ -8081,7 +8826,7 @@ trySet('vk_btn_close', d.vk_close);
                 const file = await extractRomForCore(blob, title, sys);
                 
                 try {
-                    const coverBlob = await fetch(WAREHOUSE_URL + url.replace('.zip', '.png')).then(r => r.blob());
+                    const coverBlob = await fetch(WAREHOUSE_URL + imageName).then(r => r.blob());
                     const reader = new FileReader();
                     file._customCover = await new Promise(res => { reader.onloadend = () => res(reader.result); reader.readAsDataURL(coverBlob); });
                 } catch(e) {}
@@ -8289,66 +9034,143 @@ trySet('vk_btn_close', d.vk_close);
 </style>
 
 <script id="multiplayer-core-logic">
-    document.addEventListener('DOMContentLoaded', () => {
-        const padSettings = document.getElementById('pad-general-settings');
-        if (padSettings) {
-            const btn = document.createElement('button');
-            btn.id = 'btnToggleMultiplayer';
-            btn.className = 'edit-btn action-btn multi-mode-0';
-            btn.innerHTML = 'MODE: SOLO [ALL P1]';
-            
-            btn.onclick = (e) => {
-                e.preventDefault();
-                if (typeof multiMode !== 'undefined') {
-                    multiMode = (multiMode + 1) % 3;
-                    btn.className = 'edit-btn action-btn multi-mode-' + multiMode;
-                    const labels = [
-                        'MODE: SOLO [ALL P1]', 
-                        'MODE: SPLIT KBD [P1/P2]', 
-                        'MODE: COUCH [PAD IS P2]'
-                    ];
-                    btn.innerHTML = labels[multiMode];
-                    if (typeof doVibrate === 'function') doVibrate(20);
-                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
-                }
-            };
-            padSettings.insertBefore(btn, padSettings.firstChild);
-        }
-    });
 
-    const handleSplitKeyboard = (e) => {
-        // e.isTrusted защищает от бесконечного цикла, когда sendKey шлет искусственные нажатия!
-        if (window.location.hash !== '#game' || !currentGame || typeof multiMode === 'undefined' || !e.isTrusted) return;
+    document.addEventListener('DOMContentLoaded', () => {
 
-        let mappedCode = null;
-        let mappedPlayer = 1;
+        const padSettings = document.getElementById('pad-general-settings');
 
-        if (multiMode === 0 || multiMode === 2) {
-            const wasdMap = { 'KeyW': 38, 'KeyS': 40, 'KeyA': 37, 'KeyD': 39 };
-            if (wasdMap[e.code]) { mappedCode = wasdMap[e.code]; mappedPlayer = 1; }
-        } 
-        else if (multiMode === 1) {
-            const p1Map = { 'KeyW': 38, 'KeyS': 40, 'KeyA': 37, 'KeyD': 39, 'KeyC': 90, 'KeyX': 88, 'KeyV': 16, 'KeyB': 13 };
-            const p2Map = { 'ArrowUp': 38, 'ArrowDown': 40, 'ArrowLeft': 37, 'ArrowRight': 39, 'KeyJ': 90, 'KeyK': 88, 'KeyU': 16, 'KeyI': 13, 'Numpad1': 90, 'Numpad2': 88, 'Numpad4': 16, 'Numpad5': 13 };
-            
-            if (p1Map[e.code]) { mappedCode = p1Map[e.code]; mappedPlayer = 1; }
-            else if (p2Map[e.code]) { mappedCode = p2Map[e.code]; mappedPlayer = 2; }
-        }
+        if (padSettings) {
 
-        if (mappedCode) {
-            // Перехватываем управление до того, как эмулятор узнает о нажатии
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            if (typeof sendKey === 'function') sendKey(mappedCode, e.type === 'keydown', mappedPlayer);
-        }
-    };
+            const btn = document.createElement('button');
 
-    // Слушаем фазу захвата (true), чтобы быть ПЕРВЫМИ в очереди
-    window.addEventListener('keydown', handleSplitKeyboard, true);
-    window.addEventListener('keyup', handleSplitKeyboard, true);
+            btn.id = 'btnToggleMultiplayer';
+
+            btn.className = 'edit-btn action-btn multi-mode-0';
+
+            
+            setTimeout(() => { const d = window.L || {}; btn.innerHTML = d.p2p_mode_solo || 'MODE: SOLO [ALL P1]'; }, 500);
+
+            
+
+            btn.onclick = (e) => {
+
+                e.preventDefault();
+
+                if (typeof multiMode !== 'undefined') {
+
+                    multiMode = (multiMode + 1) % 3;
+
+                    btn.className = 'edit-btn action-btn multi-mode-' + multiMode;
+
+                    const d = window.L || {};
+
+                    const labels = [
+
+                        d.p2p_mode_solo || 'MODE: SOLO [ALL P1]', 
+
+                        d.p2p_mode_split || 'MODE: SPLIT KBD [4 P ON KBD]', 
+
+                        d.p2p_mode_coop || 'MODE: COUCH CO-OP'
+
+                    ];
+
+                    btn.innerHTML = labels[multiMode];
+
+                    if (typeof doVibrate === 'function') doVibrate(20);
+
+                    if (typeof AudioGen !== 'undefined') AudioGen.playClick();
+
+                }
+
+            };
+
+            padSettings.insertBefore(btn, padSettings.firstChild);
+
+        }
+
+    });
+
+    const handleSplitKeyboard = (e) => {
+
+        // e.isTrusted защищает от бесконечного цикла, когда sendKey шлет искусственные нажатия!
+
+        if (window.location.hash !== '#game' || !currentGame || typeof multiMode === 'undefined' || !e.isTrusted) return;
+
+        let mappedCode = null;
+
+        let mappedPlayer = 1;
+
+        // Зона 1 (Левая рука): WASD + ZXCV
+
+        const zone1Map = { 'KeyW': 38, 'KeyS': 40, 'KeyA': 37, 'KeyD': 39, 'KeyZ': 90, 'KeyX': 88, 'KeyC': 65, 'KeyV': 83, 'KeyQ': 81, 'KeyE': 87, 'ShiftLeft': 16, 'Space': 13 };
+
+        
+
+        // Зона 2 (Правая рука): Стрелки + Numpad
+
+        const zone2Map = { 'ArrowUp': 38, 'ArrowDown': 40, 'ArrowLeft': 37, 'ArrowRight': 39, 'Numpad1': 90, 'Numpad2': 88, 'Numpad4': 65, 'Numpad5': 83, 'Numpad7': 81, 'Numpad8': 87, 'NumpadSubtract': 16, 'NumpadAdd': 13 };
+
+        // Зона 3 (Центр-Справа): IJKL + UOP[
+
+        const zone3Map = { 'KeyI': 38, 'KeyK': 40, 'KeyJ': 37, 'KeyL': 39, 'KeyO': 90, 'KeyP': 88, 'BracketLeft': 65, 'BracketRight': 83, 'KeyU': 81, 'Semicolon': 87, 'Digit9': 16, 'Digit0': 13 };
+
+        // Зона 4 (Центр-Слева): TFGH + VBNM
+
+        const zone4Map = { 'KeyT': 38, 'KeyG': 40, 'KeyF': 37, 'KeyH': 39, 'KeyV': 90, 'KeyB': 88, 'KeyN': 65, 'KeyM': 83, 'KeyR': 81, 'KeyY': 87, 'Digit1': 16, 'Digit2': 13 };
+
+        if (multiMode === 0 || multiMode === 2) {
+
+            // РЕЖИМ СВОБОДЫ (SOLO & COUCH): Как бы ты ни положил руки, все кнопки управляют Игроком 1
+
+            if (zone1Map[e.code]) { mappedCode = zone1Map[e.code]; }
+
+            else if (zone2Map[e.code]) { mappedCode = zone2Map[e.code]; }
+
+            else if (zone3Map[e.code]) { mappedCode = zone3Map[e.code]; }
+
+            else if (zone4Map[e.code]) { mappedCode = zone4Map[e.code]; }
+
+            mappedPlayer = 1;
+
+        } 
+
+        else if (multiMode === 1) {
+
+            // SPLIT KBD: 4 игрока садятся за одну клавиатуру (рассадка слева направо)
+
+            if (zone1Map[e.code]) { mappedCode = zone1Map[e.code]; mappedPlayer = 1; }
+
+            else if (zone4Map[e.code]) { mappedCode = zone4Map[e.code]; mappedPlayer = 2; }
+
+            else if (zone3Map[e.code]) { mappedCode = zone3Map[e.code]; mappedPlayer = 3; }
+
+            else if (zone2Map[e.code]) { mappedCode = zone2Map[e.code]; mappedPlayer = 4; }
+
+        }
+
+        if (mappedCode) {
+
+            // Перехватываем управление до того, как эмулятор узнает о нажатии физической клавиши
+
+            e.preventDefault();
+
+            e.stopPropagation();
+
+            e.stopImmediatePropagation();
+
+            if (typeof sendKey === 'function') sendKey(mappedCode, e.type === 'keydown', mappedPlayer);
+
+        }
+
+    };
+
+    // Слушаем фазу захвата (true), чтобы быть ПЕРВЫМИ в очереди
+
+    window.addEventListener('keydown', handleSplitKeyboard, true);
+
+    window.addEventListener('keyup', handleSplitKeyboard, true);
+
 </script>
-
 
 
 
@@ -8718,20 +9540,20 @@ trySet('vk_btn_close', d.vk_close);
 
     function ensureNetworkSelectorExists() {
         initDebugOverlay();
-
         if (!document.getElementById('p2pNetworkMode') && modeSelector) {
+            const d = window.L || {};
             const netSelect = document.createElement('select');
             netSelect.id = 'p2pNetworkMode';
             netSelect.style.cssText = 'width: 100%; margin-bottom: 10px; background: rgba(15, 20, 30, 0.9); color: #fff; border: 1px solid rgba(56, 189, 248, 0.4); padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; text-align: center; outline: none;';
-            netSelect.innerHTML = '<option value="global" selected>🌍 ИНТЕРНЕТ (ГЛОБАЛЬНО)</option><option value="local">🏠 WI-FI / ТОЧКА ДОСТУПА</option>';
+            netSelect.innerHTML = `<option value="global" selected>${d.p2p_net_global || '🌍 INTERNET (GLOBAL)'}</option><option value="local">${d.p2p_net_local || '🏠 WI-FI / HOTSPOT'}</option>`;
             modeSelector.parentNode.insertBefore(netSelect, modeSelector.nextSibling);
             
             const offlineRow = document.createElement('div');
             offlineRow.id = 'p2pOfflineRow';
             offlineRow.style.cssText = 'display: flex; gap: 6px; margin-bottom: 10px;';
             offlineRow.innerHTML = `
-                <button class="edit-btn action-btn" id="btnShowQR" style="flex: 1; font-size: 8px; background: rgba(255,255,255,0.1) !important;">📱 ПОКАЗАТЬ QR</button>
-                <button class="edit-btn action-btn" id="btnScanQR" style="flex: 1; font-size: 8px; background: rgba(255,255,255,0.1) !important;">📷 СКАНЕР</button>
+                <button class="edit-btn action-btn" id="btnShowQR" style="flex: 1; font-size: 8px; background: rgba(255,255,255,0.1) !important;">${d.p2p_show_qr || '📱 SHOW QR'}</button>
+                <button class="edit-btn action-btn" id="btnScanQR" style="flex: 1; font-size: 8px; background: rgba(255,255,255,0.1) !important;">${d.p2p_scan_qr || '📷 SCANNER'}</button>
             `;
             netSelect.parentNode.insertBefore(offlineRow, netSelect.nextSibling);
 
@@ -8739,22 +9561,21 @@ trySet('vk_btn_close', d.vk_close);
             volRow.id = 'p2pVolumeControls';
             volRow.style.cssText = 'display: none; flex-direction: column; gap: 6px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);';
             
-            // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps (и РАЗРЕШЕНИЕ 240p)
             volRow.innerHTML = `
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pGameVolBlock">
-                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #6ee7b7;">ГРОМКОСТЬ ИГРЫ: <span id="gameVolVal">100%</span></label>
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #6ee7b7;">${d.p2p_vol_game || 'GAME VOLUME'}: <span id="gameVolVal">100%</span></label>
                     <input type="range" id="gameVolSlider" min="0" max="100" value="100" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'game')">
                 </div>
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pVoiceVolBlock">
-                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fca5a5;">ГОЛОС ДРУГА: <span id="voiceVolVal">100%</span></label>
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fca5a5;">${d.p2p_vol_voice || 'FRIEND VOICE'}: <span id="voiceVolVal">100%</span></label>
                     <input type="range" id="voiceVolSlider" min="0" max="100" value="100" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'voice')">
                 </div>
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pBitrateBlock">
-                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #a855f7;">БИТРЕЙТ (КАЧЕСТВО): <span id="bitrateVal">200 kbps</span></label>
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #a855f7;">${d.p2p_bitrate || 'BITRATE'}: <span id="bitrateVal">200 kbps</span></label>
                     <input type="range" id="bitrateSlider" min="100" max="5000" step="100" value="200" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'bitrate')">
                 </div>
                 <div class="slider-row" style="margin-bottom: 0;" id="p2pResolutionBlock">
-                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fbbf24;">РАЗРЕШЕНИЕ ХОСТА: <span id="resVal">240p</span></label>
+                    <label style="font-size: 8px; display: flex; justify-content: space-between; color: #fbbf24;">${d.p2p_res || 'HOST RESOLUTION'}: <span id="resVal">240p</span></label>
                     <input type="range" id="resSlider" min="120" max="720" step="60" value="240" style="margin: 4px 0; -webkit-appearance: none; background: transparent;" oninput="window.handleP2PVol(this, 'res')">
                 </div>
             `;
@@ -8765,16 +9586,17 @@ trySet('vk_btn_close', d.vk_close);
         }
     }
 
-    async function showHostQR() {
+        async function showHostQR() {
+        const d = window.L || {};
         if (!myPeer || myPeer.destroyed) {
-            alert("Сначала нажмите СОЗДАТЬ");
+            alert(d.p2p_warn_create || "Сначала нажмите СОЗДАТЬ");
             return;
         }
         
         const qrContainer = document.createElement('div');
         qrContainer.id = "p2p-qr-modal";
         qrContainer.style.cssText = 'position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;';
-        qrContainer.innerHTML = '<div id="qrcode" style="background:#fff; padding:10px; border-radius:10px;"></div><button class="action-btn" style="margin-top:20px; width:200px;" onclick="this.parentElement.remove()">ЗАКРЫТЬ</button>';
+        qrContainer.innerHTML = '<div id="qrcode" style="background:#fff; padding:10px; border-radius:10px;"></div><button class="action-btn" style="margin-top:20px; width:200px;" onclick="this.parentElement.remove()">' + (d.p2p_btn_close || 'ЗАКРЫТЬ') + '</button>';
         document.body.appendChild(qrContainer);
         
         new QRCode(document.getElementById("qrcode"), {
@@ -8786,13 +9608,15 @@ trySet('vk_btn_close', d.vk_close);
     }
 
     function startQRScanner() {
+        const d = window.L || {};
         const scanContainer = document.createElement('div');
         scanContainer.id = "p2p-scan-modal";
         scanContainer.style.cssText = 'position:fixed; inset:0; z-index:10000; background:#000; display:flex; flex-direction:column;';
-        scanContainer.innerHTML = '<div id="reader" style="flex:1;"></div><button class="action-btn" style="height:60px;" onclick="window.stopQR()">ОТМЕНА</button>';
+        scanContainer.innerHTML = '<div id="reader" style="flex:1;"></div><button class="action-btn" style="height:60px;" onclick="window.stopQR()">' + (d.p2p_btn_cancel || 'ОТМЕНА') + '</button>';
         document.body.appendChild(scanContainer);
 
         const html5QrCode = new Html5Qrcode("reader");
+
         window.stopQR = () => {
             html5QrCode.stop().then(() => {
                 scanContainer.remove();
@@ -8813,10 +9637,11 @@ trySet('vk_btn_close', d.vk_close);
                 // Игнорируем ошибки поиска кода
             }
         ).catch(err => { 
-            alert("Ошибка камеры: " + err); 
+            alert((d.p2p_err_cam || "Ошибка камеры: ") + err); 
             scanContainer.remove(); 
         });
     }
+
 
     function toggleP2PPanel(forcedRole) {
         ensureNetworkSelectorExists(); 
@@ -8829,30 +9654,23 @@ trySet('vk_btn_close', d.vk_close);
             let isHost = (forcedRole === 'host');
             let isConnected = !!(window.p2pConn && window.p2pConn.open);
             
-            // СЕЛЕКТОР РЕЖИМОВ ЭКРАНА: ВИДЕН ВСЕГДА И ОБОИМ 
-            // Гость может настроить его до коннекта. Хост видит, что выбрал гость.
             if (modeSelector) {
                 modeSelector.style.display = 'block';
             }
 
-            // ЛОГИКА ОТОБРАЖЕНИЯ СЕТИ (Хост - всегда, Гость - никогда)
             const netSelect = document.getElementById('p2pNetworkMode');
             if (netSelect) {
                 netSelect.style.display = isHost ? 'block' : 'none';
             }
 
-                    // ЛОГИКА ОТОБРАЖЕНИЯ ПОЛЗУНКОВ И ЗВУКА: 
-            // СКРЫТЫ ДО КОННЕКТА У ВСЕХ! Отображаются только когда isConnected = true.
             const volControls = document.getElementById('p2pVolumeControls');
             if (volControls) {
-                // ПРАВКА: Убрали "isHost ||", теперь Хост не видит ползунки до прихода Гостя
                 if (isConnected) {
                     volControls.style.display = 'flex'; 
                     triggerNeon(document.getElementById('gameVolSlider'));
                     triggerNeon(document.getElementById('voiceVolSlider'));
                     triggerNeon(document.getElementById('bitrateSlider'));
                     triggerNeon(document.getElementById('resSlider'));
-
                     const bitrateBlock = document.getElementById('p2pBitrateBlock');
                     const resBlock = document.getElementById('p2pResolutionBlock');
                     
@@ -8873,15 +9691,12 @@ trySet('vk_btn_close', d.vk_close);
                 if (isGuest) {
                     hintText.style.display = 'none';
                 } else {
-                    // Подсказка видна Хосту только пока никто не подключился
                     hintText.style.display = isConnected ? 'none' : 'block';
                 }
             }
             
-            // КНОПКИ АУДИО ТАКЖЕ СКРЫТЫ ДО МОМЕНТА КОННЕКТА
             const audioRow = document.querySelector('#p2p-edit-panel .edit-row');
             if (audioRow) {
-                // ПРАВКА: Убрали "isHost ||", чтобы кнопки Микрофона/Звука не мешались на старте
                 if (isConnected) {
                     audioRow.style.display = 'flex'; 
                 } else {
@@ -8889,14 +9704,10 @@ trySet('vk_btn_close', d.vk_close);
                 }
             }
 
-
-            // ЖЕЛЕЗОБЕТОННОЕ РАЗДЕЛЕНИЕ КНОПОК ГОСТЯ И ХОСТА
             if (isGuest) {
                 panel.style.cssText += 'position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);';
-                // ГОСТЬ НИКОГДА НЕ ВИДИТ КНОПКУ СОЗДАТЬ
                 btnHost.style.setProperty('display', 'none', 'important'); 
                 
-                // ГОСТЬ ВСЕГДА ВИДИТ ИНПУТЫ И КНОПКУ ПОДКЛЮЧИТЬСЯ (для переподключения из игры)
                 btnJoin.style.display = 'block';
                 roomIdInput.style.display = 'block';
                 document.getElementById('btnShowQR').style.display = 'none';
@@ -8908,7 +9719,6 @@ trySet('vk_btn_close', d.vk_close);
                 roomIdInput.style.display = 'none'; 
                 document.getElementById('btnScanQR').style.display = 'none';
                 
-                // ХОСТ ВСЕГДА ВИДИТ КНОПКУ СОЗДАТЬ (чтобы мог пересоздать комнату)
                 btnHost.style.setProperty('display', 'block', 'important');
                 
                 if (isP2PHost && myPeer && !myPeer.destroyed) {
@@ -8923,16 +9733,17 @@ trySet('vk_btn_close', d.vk_close);
             
             setTimeout(() => { panel.style.opacity = '1'; }, 10);
             
+            const d = window.L || {};
             if (myPeer && myPeer.id) {
                 if (isP2PHost) {
-                    statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${hostRoomId || myPeer.id}</b><br><span style="color:#10b981; font-size:10px;">✅ ИГРОКОВ: ${connectedGuests}</span>`;
+                    statusTxt.innerHTML = `${d.p2p_stat_your_code || 'YOUR CODE:'} <b style="color:#38bdf8; font-size:16px;">${hostRoomId || myPeer.id}</b><br><span style="color:#10b981; font-size:10px;">✅ ${d.p2p_stat_players || 'PLAYERS:'} ${connectedGuests}</span>`;
                 } else if (isConnected) {
-                    statusTxt.innerHTML = `<span style="color:#10b981;">✅ СОЕДИНЕНО!</span>`;
+                    statusTxt.innerHTML = `<span style="color:#10b981;">${d.p2p_stat_conn || '✅ CONNECTED!'}</span>`;
                 } else {
-                    statusTxt.innerHTML = "Введите код для подключения:";
+                    statusTxt.innerHTML = d.p2p_stat_code || "ENTER CODE TO JOIN:";
                 }
             } else {
-                statusTxt.innerHTML = "Ожидание сети...";
+                statusTxt.innerHTML = d.p2p_stat_wait || "Waiting for network...";
             }
         } else {
             panel.style.opacity = '0';
@@ -8941,166 +9752,308 @@ trySet('vk_btn_close', d.vk_close);
     }
 
     function showGuestRoom() {
+
         window.location.hash = 'game'; 
+
         window.isP2PGuestCapturing = true; 
 
         const ms = document.getElementById('menuScreen');
+
         if (ms) { 
+
             ms.style.opacity = '0'; 
+
             setTimeout(() => { ms.style.display = 'none'; }, 300); 
+
         }
+
         
+
         const frameDiv = document.getElementById('gameFrame');
+
         if (frameDiv) { 
+
             frameDiv.style.display = 'block'; 
+
             frameDiv.style.opacity = '1'; 
+
         }
+
         
+
         const p2pPanel = document.getElementById('p2p-edit-panel');
+
         if (p2pPanel) { 
+
             p2pPanel.style.opacity = '0'; 
+
             setTimeout(() => { p2pPanel.style.display = 'none'; }, 300); 
+
         }
+
         
+
         const tbToggle = document.getElementById('toolbar-toggle');
+
         if (tbToggle) { 
+
             tbToggle.style.display = 'flex'; 
+
             if (window.L) tbToggle.innerHTML = window.L.btn_menu_hide;
+
             else tbToggle.innerHTML = '▲ СКРЫТЬ';
+
         }
+
         
+
         const tb = document.getElementById('toolbar');
+
         if (tb) { 
+
             tb.style.display = 'flex'; 
+
             tb.classList.remove('toolbar-hidden'); 
+
         }
+
         
+
         const buttonsToShow = ['btnScreen', 'btnGamepad', 'btnPadEdit', 'btnP2P'];
+
         buttonsToShow.forEach(id => {
+
             const el = document.getElementById(id); 
+
             if (el) el.style.setProperty('display', 'flex', 'important');
+
         });
+
         
+
         const buttonsToHide = ['btnRestart', 'btnSave', 'btnLoad', 'btnKeyboard'];
+
         buttonsToHide.forEach(id => {
+
             const el = document.getElementById(id); 
+
             if (el) el.style.setProperty('display', 'none', 'important');
+
         });
+
         
+
         const settingsToHide = ['nes-only-settings', 'lbl_gfx_title', 'btnToggleRGB', 'btnToggleXBR', 'btnToggleBloom', 'btnToggleColors', 'btnToggleCurve'];
+
         settingsToHide.forEach(id => {
+
             const el = document.getElementById(id); 
+
             if (el) el.style.display = 'none';
+
         });
+
         
+
         const screenEditSels = document.querySelectorAll('#screen-edit-panel select, #screen-edit-panel .hint-text');
+
         screenEditSels.forEach(el => el.style.display = 'none');
 
         padConfig = {};
+
         localStorage.removeItem('padV4_default_check');
+
         
+
         if (typeof sanitizePadConfig === 'function') sanitizePadConfig();
+
         if (typeof updatePadTransforms === 'function') updatePadTransforms();
+
         
+
         if (typeof toggleGamepad === 'function' && typeof isGamepadVisible !== 'undefined' && !isGamepadVisible) {
+
             toggleGamepad(true);
+
         }
 
         const oldSliders = ['opacitySlider', 'brightnessSlider', 'vibrationSlider'];
+
         oldSliders.forEach(id => {
+
             const el = document.getElementById(id);
+
             if (el) triggerNeon(el);
+
         });
+
     }
 
     window.updatePadTransforms = function() {
+
         const buttonsList = ['dpad', 'select', 'start', 'b', 'a', 'x', 'y', 'l', 'r'];
+
         buttonsList.forEach(id => {
+
             let targetId = 'btn-' + id;
+
             if (id === 'dpad') targetId = 'joystick-dpad';
+
             const el = document.getElementById(targetId); 
+
             if(!el) return; 
+
             const c = padConfig[id];
+
             
+
             if (id === 'dpad' && isFloatingDpad && !isPadEditMode) { 
+
                 el.style.opacity = '0'; 
+
                 el.style.pointerEvents = 'none'; 
+
                 const catchZone = document.getElementById('dpad-catch-zone');
+
                 if (catchZone) catchZone.style.display = 'block'; 
+
             } else {
+
                 let baseTransform = '';
+
                 if (id === 'start' || id === 'select') baseTransform = 'translateX(-50%)';
+
                 
+
                 if (id === 'dpad') { 
+
                     el.style.bottom = '95px'; el.style.left = '20px'; el.style.top = 'auto'; el.style.right = 'auto'; 
+
                 } else if (id === 'a') { 
+
                     el.style.bottom = '145px'; el.style.right = '20px'; el.style.top = 'auto'; el.style.left = 'auto'; 
+
                 } else if (id === 'b') { 
+
                     el.style.bottom = '90px'; el.style.right = '85px'; el.style.top = 'auto'; el.style.left = 'auto'; 
+
                 } else if (id === 'x') { 
+
                     el.style.bottom = '200px'; el.style.right = '85px'; el.style.top = 'auto'; el.style.left = 'auto'; 
+
                 } else if (id === 'y') { 
+
                     el.style.bottom = '145px'; el.style.right = '150px'; el.style.top = 'auto'; el.style.left = 'auto'; 
+
                 } else if (id === 'l') { 
+
                     el.style.top = '95px'; el.style.left = '20px'; el.style.right = 'auto'; el.style.bottom = 'auto'; 
+
                 } else if (id === 'r') { 
+
                     el.style.top = '95px'; el.style.right = '20px'; el.style.left = 'auto'; el.style.bottom = 'auto'; 
+
                 } else if (id === 'select') { 
+
                     el.style.bottom = '57px'; el.style.left = 'calc(50% - 40px)'; el.style.top = 'auto'; el.style.right = 'auto'; 
+
                 } else if (id === 'start') { 
+
                     el.style.bottom = '57px'; el.style.left = 'calc(50% + 40px)'; el.style.top = 'auto'; el.style.right = 'auto'; 
+
                 } 
+
                 
+
                 el.style.transform = baseTransform + ` translate(${c.x}px, ${c.y}px) scale(${c.s})`; 
+
                 el.style.pointerEvents = 'auto'; 
+
                 
+
                 if (typeof applyVisuals === 'function') applyVisuals(id); 
+
                 
+
                 if (id === 'dpad') { 
+
                     const dz = document.getElementById('dpad-catch-zone'); 
+
                     if(dz) dz.style.display = 'none'; 
+
                 }
+
             }
+
         });
+
         if (typeof updateModeBtnUI === 'function') updateModeBtnUI();
+
     };
 
     // --- СИНХРОНИЗИРОВАННЫЙ ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА ЭКРАНА ---
+
     modeSelector.addEventListener('change', (e) => {
+
         const mode = e.target.value;
+
         
+
         // Если меняет Гость - сразу применяем локально
+
         if (!isP2PHost) {
+
             const v = document.getElementById('p2p-remote-video');
+
             const gamepadEl = document.getElementById('gamepad');
+
             
+
             if (mode === 'pad_only') {
+
                 if (v) v.style.display = 'none';
+
                 if (gamepadEl) gamepadEl.style.display = 'block';
+
             } else if (mode === 'watch_only') {
+
                 if (v) v.style.display = 'block';
+
                 if (gamepadEl) gamepadEl.style.display = 'none';
+
             } else {
+
                 if (v) v.style.display = 'block';
+
                 if (gamepadEl) gamepadEl.style.display = 'block';
+
             }
+
         }
+
         
+
         // Отправляем команду синхронизации по сети
+
         if (window.p2pConn && window.p2pConn.open) {
+
             window.p2pConn.send({ sys_cmd: 'sync_mode', mode: mode });
+
         }
+
         if (typeof doVibrate === 'function') doVibrate(20);
+
     });
 
     btnMic.onclick = async () => {
+        const d = window.L || {};
         try {
             if (!isMicEnabled) {
                 micStream = await navigator.mediaDevices.getUserMedia({ 
                     audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } 
                 });
                 isMicEnabled = true; 
-                btnMic.innerHTML = '🎤 МИКР: ВКЛ';
+                btnMic.innerHTML = d.p2p_mic_on || '🎤 MIC: ON';
                 btnMic.style.background = 'rgba(16, 185, 129, 0.15) !important'; 
                 btnMic.style.color = '#6ee7b7';
                 
@@ -9117,7 +10070,7 @@ trySet('vk_btn_close', d.vk_close);
                     tracks.forEach(t => t.stop()); 
                 }
                 isMicEnabled = false; 
-                btnMic.innerHTML = '🎤 МИКР: ВЫКЛ';
+                btnMic.innerHTML = d.p2p_mic_off || '🎤 MIC: OFF';
                 btnMic.style.background = 'rgba(239, 68, 68, 0.15) !important'; 
                 btnMic.style.color = '#fca5a5';
             }
@@ -9125,18 +10078,19 @@ trySet('vk_btn_close', d.vk_close);
                 updateHostAudioMixer();
             }
         } catch (e) { 
-            if(typeof showToast === 'function') showToast("Нет доступа к микрофону", "error"); 
+            if(typeof showToast === 'function') showToast(d.p2p_err_mic || "Mic error", "error"); 
         }
     };
 
     btnAudio.onclick = () => {
+        const d = window.L || {};
         isGameAudioEnabled = !isGameAudioEnabled;
         if (isGameAudioEnabled) {
-            btnAudio.innerHTML = '🔊 ЗВУК ИГРЫ: ВКЛ';
+            btnAudio.innerHTML = d.p2p_audio_on || '🔊 AUDIO: ON';
             btnAudio.style.background = 'rgba(16, 185, 129, 0.15) !important'; 
             btnAudio.style.color = '#6ee7b7';
         } else {
-            btnAudio.innerHTML = '🔇 ЗВУК ИГРЫ: ВЫКЛ';
+            btnAudio.innerHTML = d.p2p_audio_off || '🔇 AUDIO: OFF';
             btnAudio.style.background = 'rgba(239, 68, 68, 0.15) !important'; 
             btnAudio.style.color = '#fca5a5';
         }
@@ -9156,251 +10110,528 @@ trySet('vk_btn_close', d.vk_close);
     };
 
     function updateHostAudioMixer() {
+
         if (!audioCtx) return;
+
         if (!mixedAudioDest) mixedAudioDest = audioCtx.createMediaStreamDestination();
+
         if (!gameAudioDest) gameAudioDest = audioCtx.createMediaStreamDestination();
+
         
+
         if (audioScriptNode && !isAudioRouted) {
+
             try { audioScriptNode.disconnect(); } catch(e){} 
+
             
+
             if (!gameLocalGain) {
+
                 gameLocalGain = audioCtx.createGain();
+
                 gameLocalGain.connect(audioCtx.destination);
+
             }
+
             
+
             audioScriptNode.connect(gameLocalGain); 
+
             audioScriptNode.connect(gameAudioDest); 
+
             isAudioRouted = true;
+
         }
 
         if (gameLocalGain) {
+
             const volSlider = document.getElementById('gameVolSlider');
+
             let vol = 1;
+
             if (volSlider) vol = volSlider.value / 100;
+
             if (isGameAudioEnabled) gameLocalGain.gain.value = vol;
+
             else gameLocalGain.gain.value = 0;
+
         }
+
     }
 
     function handleIncomingVoice(call, remoteStream) {
+
         let audioEl = document.getElementById('p2p-guest-audio-' + call.peer);
+
         if (!audioEl) {
+
             audioEl = document.createElement('audio');
+
             audioEl.id = 'p2p-guest-audio-' + call.peer;
+
             audioEl.autoplay = true;
+
             audioEl.controls = false;
+
             document.body.appendChild(audioEl);
+
         }
+
         audioEl.srcObject = remoteStream;
+
         
+
         const volSlider = document.getElementById('voiceVolSlider');
+
         if (volSlider) audioEl.volume = volSlider.value / 100;
 
         const playPromise = audioEl.play();
+
         if (playPromise !== undefined) {
+
             playPromise.catch(e => console.log("Audio block:", e));
+
         }
+
     }
 
     // --- КОННЕКТ ХОСТА ---
+
     btnHost.onclick = () => {
+
+        const d = window.L || {};
+
         if (myPeer) myPeer.destroy();
+
         stopShadowCanvasLoop(); 
+
         
+
         hostRoomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+
         connectedGuests = 0;
+
         playerSlots = {}; 
+
         hostConnections = {};
+
         activeCalls = {};
+
         
+
         const brokers = getBrokerConfigs();
+
         let currentBroker = 0;
 
         function connectHost() {
+
             if (myPeer) myPeer.destroy(); 
-            statusTxt.innerHTML = `Создание комнаты (Попытка ${currentBroker + 1}/${brokers.length})...`;
+
+            statusTxt.innerHTML = `${d.p2p_stat_creating || 'Creating room (Attempt '}${currentBroker + 1}/${brokers.length})...`;
+
             
+
             myPeer = new Peer(hostRoomId, brokers[currentBroker]); 
+
             isP2PHost = true;
+
             let isOpened = false;
 
             const timeoutId = setTimeout(() => {
+
                 if (!isOpened) {
+
                     if (currentBroker < brokers.length - 1) {
+
                         currentBroker++;
+
                         connectHost();
+
                     } else {
-                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ СЕРВЕРЫ НЕДОСТУПНЫ</span>`;
+
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">${d.p2p_err_no_server || '❌ SERVERS UNAVAILABLE'}</span>`;
+
                     }
+
                 }
+
             }, currentBroker === 0 ? 5000 : 60000);
 
             myPeer.on('open', (id) => {
+
                 isOpened = true;
+
                 clearTimeout(timeoutId);
+
                 
+
                 const btnShowQR = document.getElementById('btnShowQR');
+
                 if (btnShowQR) btnShowQR.style.display = 'block';
+
                 
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${id}</b><br><span style="color:#94a3b8; font-size:10px;">Ожидание игроков...</span>`;
+
+                statusTxt.innerHTML = `${d.p2p_stat_your_code || 'YOUR CODE:'} <b style="color:#38bdf8; font-size:16px;">${id}</b><br><span style="color:#94a3b8; font-size:10px;">${d.p2p_stat_wait || 'Waiting for network...'}</span>`;
+
                 startDebugStats(true);
+
             });
 
             myPeer.on('error', (err) => {
+
                 if (!navigator.onLine) {
+
                     clearTimeout(timeoutId);
-                    statusTxt.innerHTML = `<span style="color:#ef4444;">❌ НЕТ ИНТЕРНЕТА ДЛЯ РУКОПОЖАТИЯ! Включите 3G/LTE на 2 секунды.</span>`;
+
+                    statusTxt.innerHTML = `<span style="color:#ef4444;">${d.p2p_err_no_net || '❌ NO INTERNET FOR HANDSHAKE!'}</span>`;
+
                     return;
+
                 }
+
                 if (!isOpened || err.type === 'network' || err.type === 'socket-error' || err.type === 'server-error') {
+
                     clearTimeout(timeoutId);
+
                     if (currentBroker < brokers.length - 1) {
+
                         currentBroker++;
+
                         connectHost();
+
                     } else {
-                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ОШИБКА: ${err.type}</span>`;
+
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ${err.type}</span>`;
+
                     }
+
                 }
+
             });
 
             myPeer.on('call', (incomingCall) => {
+
                 incomingCall.answer(undefined); 
+
                 incomingCall.on('stream', (stream) => {
+
                     handleIncomingVoice(incomingCall, stream);
+
                 });
+
             });
 
             myPeer.on('connection', (conn) => {
+
                 hostConnections[conn.peer] = conn;
 
+                // 1. Агрессивная зачистка фантомов (с проверкой iceConnectionState)
+
                 Object.keys(hostConnections).forEach(peerId => {
+
                     const c = hostConnections[peerId];
-                    if (!c || !c.open || (c.peerConnection && ['disconnected', 'failed', 'closed'].includes(c.peerConnection.connectionState))) {
-                        delete playerSlots[peerId];
-                        delete hostConnections[peerId];
+
+                    let isDead = false;
+
+                    if (!c || !c.open) {
+
+                        isDead = true;
+
+                    } else if (c.peerConnection) {
+
+                        const state = c.peerConnection.connectionState;
+
+                        const iceState = c.peerConnection.iceConnectionState;
+
+                        if (['disconnected', 'failed', 'closed'].includes(state) || ['disconnected', 'failed', 'closed'].includes(iceState)) {
+
+                            isDead = true;
+
+                        }
+
                     }
+
+                    
+
+                    if (isDead) {
+
+                        delete playerSlots[peerId];
+
+                        delete hostConnections[peerId];
+
+                        if (activeCalls[peerId]) {
+
+                            activeCalls[peerId].close();
+
+                            delete activeCalls[peerId];
+
+                        }
+
+                    }
+
                 });
 
+                // 2. Железобетонная раздача слотов
+
                 if (!playerSlots[conn.peer]) {
+
                     let usedSlots = Object.values(playerSlots);
-                    if (!usedSlots.includes(2)) playerSlots[conn.peer] = 2;
-                    else if (!usedSlots.includes(3)) playerSlots[conn.peer] = 3;
-                    else if (!usedSlots.includes(4)) playerSlots[conn.peer] = 4;
-                    else playerSlots[conn.peer] = 2; 
-                }
-                
-                connectedGuests = Object.keys(playerSlots).length;
-                window.p2pConn = conn;
-                statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${hostRoomId}</b><br><span style="color:#10b981; font-size:10px;">✅ ИГРОКОВ: ${connectedGuests}</span>`;
-                
-                if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
-                
-                conn.on('close', () => {
-                    delete playerSlots[conn.peer];
-                    delete hostConnections[conn.peer];
-                    connectedGuests = Object.keys(playerSlots).length;
-                    if (isP2PHost && statusTxt) {
-                        statusTxt.innerHTML = `ВАШ КОД: <b style="color:#38bdf8; font-size:16px;">${hostRoomId}</b><br><span style="color:#10b981; font-size:10px;">✅ ИГРОКОВ: ${connectedGuests}</span>`;
+
+                    
+
+                    if (!usedSlots.includes(2)) {
+
+                        playerSlots[conn.peer] = 2;
+
+                    } else if (!usedSlots.includes(3)) {
+
+                        playerSlots[conn.peer] = 3;
+
+                    } else if (!usedSlots.includes(4)) {
+
+                        playerSlots[conn.peer] = 4;
+
+                    } else {
+
+                        // Фоллбэк: если все слоты заняты (фантомы зависли намертво),
+
+                        // принудительно выкидываем старого владельца Слота 2 и отдаем новичку
+
+                        let ghostPeerId = Object.keys(playerSlots).find(key => playerSlots[key] === 2);
+
+                        if (ghostPeerId) {
+
+                            if (hostConnections[ghostPeerId]) hostConnections[ghostPeerId].close();
+
+                            delete hostConnections[ghostPeerId];
+
+                            delete playerSlots[ghostPeerId];
+
+                        }
+
+                        playerSlots[conn.peer] = 2;
+
                     }
+
+                }
+
+                
+
+                connectedGuests = Object.keys(playerSlots).length;
+
+                window.p2pConn = conn;
+
+                statusTxt.innerHTML = `${d.p2p_stat_your_code || 'YOUR CODE:'} <b style="color:#38bdf8; font-size:16px;">${hostRoomId}</b><br><span style="color:#10b981; font-size:10px;">✅ ${d.p2p_stat_players || 'PLAYERS:'} ${connectedGuests}</span>`;
+
+                
+
+                if (typeof doVibrate === 'function') doVibrate([30, 50, 30]);
+
+                
+
+                conn.on('close', () => {
+
+                    delete playerSlots[conn.peer];
+
+                    delete hostConnections[conn.peer];
+
+                    connectedGuests = Object.keys(playerSlots).length;
+
+                    if (isP2PHost && statusTxt) {
+
+                        statusTxt.innerHTML = `${d.p2p_stat_your_code || 'YOUR CODE:'} <b style="color:#38bdf8; font-size:16px;">${hostRoomId}</b><br><span style="color:#10b981; font-size:10px;">✅ ${d.p2p_stat_players || 'PLAYERS:'} ${connectedGuests}</span>`;
+
+                    }
+
                 });
 
                 conn.on('open', () => {
+
                     conn.send({ sys_cmd: 'set_player', p: playerSlots[conn.peer] });
+
                     
+
                     // Обновляем панель (чтобы показать ползунки)
+
                     const p = document.getElementById('p2p-edit-panel');
+
                     if (p && p.style.display !== 'none') toggleP2PPanel('host');
+
                 });
+
                 
+
                 conn.on('data', (data) => {
+
                     if (data.sys_cmd === 'ping_req') {
+
                         conn.send({ sys_cmd: 'ping_res' });
+
                         return;
+
                     }
+
                     if (data.sys_cmd === 'set_bitrate') {
+
                         const targetCall = activeCalls[conn.peer];
+
                         if (targetCall && targetCall.peerConnection) {
+
                             const senders = targetCall.peerConnection.getSenders();
+
                             const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+
                             if (videoSender) {
+
                                 const params = videoSender.getParameters();
+
                                 if (!params.encodings) params.encodings = [{}];
+
                                 params.encodings[0].maxBitrate = data.bps * 1000;
+
                                 videoSender.setParameters(params).catch(e => console.error(e));
+
                             }
+
                         }
+
                         return;
+
                     }
+
                     if (data.sys_cmd === 'sync_mode') {
+
                         // Меняем надпись в селекторе Хоста
+
                         const mSel = document.getElementById('p2pModeSelector');
+
                         if (mSel) mSel.value = data.mode;
+
                         
+
                         // Останавливаем кодирование видео для экономии Wi-Fi
+
                         const targetCall = activeCalls[conn.peer];
+
                         if (targetCall && targetCall.peerConnection) {
+
                             const senders = targetCall.peerConnection.getSenders();
+
                             const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+
                             if (videoSender && videoSender.track) {
+
                                 videoSender.track.enabled = (data.mode !== 'pad_only');
+
                             }
+
                         }
+
                         return;
+
                     }
+
                     if (data.sys_cmd === 'set_mode') {
+
                         return; 
+
                     }
+
                     if (data.k !== undefined && typeof sendKey === 'function') {
+
                         sendKey(data.k, data.d, data.p);
+
                     }
+
                 });
+
                 
+
                 const glCanvas = document.getElementById('universal-gl-canvas');
+
                 if (glCanvas) {
+
                     try {
+
                         startShadowCanvasLoop(); 
+
                         
+
                         hostMediaStream = shadowCanvas.captureStream(60); 
+
                         const videoOnlyStream = new MediaStream([hostMediaStream.getVideoTracks()[0]]);
+
                         if (videoOnlyStream.getVideoTracks()[0]) {
+
                             videoOnlyStream.getVideoTracks()[0].contentHint = 'motion';
+
                         }
+
                         
+
                         p2pCall = myPeer.call(conn.peer, videoOnlyStream, { metadata: { type: 'video' } });
+
                         activeCalls[conn.peer] = p2pCall; 
+
                         
+
                         // МИНИМАЛЬНЫЙ СТАРТОВЫЙ БИТРЕЙТ: 200 kbps
+
                         if (p2pCall.peerConnection) {
+
                             const senders = p2pCall.peerConnection.getSenders();
+
                             const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+
                             if (videoSender) {
+
                                 const params = videoSender.getParameters();
+
                                 if (!params.encodings) params.encodings = [{}];
+
                                 params.encodings[0].maxBitrate = 200000; 
+
                                 videoSender.setParameters(params).catch(e => console.error(e));
+
                             }
+
                         }
 
                         updateHostAudioMixer();
+
                         if (gameAudioDest && gameAudioDest.stream.getAudioTracks().length > 0) {
+
                             myPeer.call(conn.peer, gameAudioDest.stream, { metadata: { type: 'game_audio' } });
+
                         }
 
                         if (isMicEnabled && micStream) {
+
                             myPeer.call(conn.peer, micStream, { metadata: { type: 'voice' } });
+
                         }
+
                     } catch(e) { 
+
                         console.error("Stream capture/call failed", e);
+
                     }
+
                 }
+
             });
+
         }
+
         
+
         connectHost(); 
+
     };
 
-    // --- КОННЕКТ ГОСТЯ ---
+        // --- КОННЕКТ ГОСТЯ ---
     btnJoin.onclick = () => {
+        const d = window.L || {};
         if (roomIdInput.style.display === 'none') {
             roomIdInput.style.display = 'block'; 
             roomIdInput.focus(); 
@@ -9409,16 +10640,15 @@ trySet('vk_btn_close', d.vk_close);
 
         const hostId = roomIdInput.value.trim().toUpperCase();
         if (!hostId) return;
-
         if (myPeer) myPeer.destroy();
-        
+
         const brokers = getBrokerConfigs();
         let currentBroker = 0;
 
         function connectGuest() {
             if (myPeer) myPeer.destroy();
-            statusTxt.innerHTML = `Подключение (Попытка ${currentBroker + 1}/${brokers.length})...`;
-            
+            statusTxt.innerHTML = (d.p2p_stat_joining || 'Connecting (Attempt ') + (currentBroker + 1) + '/' + brokers.length + ')...';
+
             myPeer = new Peer(null, brokers[currentBroker]);
             isP2PHost = false;
             let isOpened = false;
@@ -9429,24 +10659,19 @@ trySet('vk_btn_close', d.vk_close);
                         currentBroker++;
                         connectGuest(); 
                     } else {
-                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ СЕРВЕРЫ НЕДОСТУПНЫ</span>`;
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">${d.p2p_err_no_server || '❌ SERVERS UNAVAILABLE'}</span>`;
                     }
                 }
-            }, currentBroker === 0 ? 5000 : 60000);
+            }, 5000);
 
             myPeer.on('error', (err) => {
-                if (!navigator.onLine) {
-                    clearTimeout(timeoutId);
-                    statusTxt.innerHTML = `<span style="color:#ef4444;">❌ НЕТ ИНТЕРНЕТА ДЛЯ РУКОПОЖАТИЯ! Включите 3G/LTE на 2 секунды.</span>`;
-                    return;
-                }
-                if (!isOpened || err.type === 'peer-unavailable' || err.type === 'network' || err.type === 'socket-error' || err.type === 'server-error') {
+                if (!isOpened) {
                     clearTimeout(timeoutId);
                     if (currentBroker < brokers.length - 1) {
                         currentBroker++;
                         connectGuest(); 
                     } else {
-                        statusTxt.innerHTML = `<span style="color:#ef4444;">❌ ОШИБКА: НЕТ ХОСТА ИЛИ СВЯЗИ</span>`;
+                        statusTxt.innerHTML = `<span style="color:#ef4444;">${d.p2p_err_no_host || '❌ ERROR: NO HOST'}</span>`;
                     }
                 }
             });
@@ -9456,34 +10681,23 @@ trySet('vk_btn_close', d.vk_close);
                 clearTimeout(timeoutId);
                 
                 window.p2pConn = myPeer.connect(hostId, { reliable: true });
-                
-                const origSend = window.p2pConn.send.bind(window.p2pConn);
-                window.p2pConn.send = function(data) {
-                    if (data && data.k !== undefined && data.p === 2) {
-                        data.p = window.p2pGuestPlayer || 2;
-                    }
-                    origSend(data);
-                };
-                
+
                 window.p2pConn.on('open', () => {
                     showGuestRoom(); 
-                    statusTxt.innerHTML = `<span style="color:#a855f7;">🔗 СОЕДИНЕНО!</span>`;
-                    
-                    // Обновляем панель (открываем ползунки)
+                    statusTxt.innerHTML = `<span style="color:#a855f7;">🔗 ${d.p2p_stat_conn || 'CONNECTED!'}</span>`;
+
                     const p = document.getElementById('p2p-edit-panel');
                     if (p && p.style.display !== 'none') toggleP2PPanel('guest');
-
-                    startDebugStats(false);
                     
-                    // Стартовый битрейт считываем со слайдера (дефолт 200)
+                    if (typeof startDebugStats === 'function') startDebugStats(false);
+
                     const bitrateSlider = document.getElementById('bitrateSlider');
                     const defaultBitrate = bitrateSlider ? bitrateSlider.value : 200;
                     window.p2pConn.send({ sys_cmd: 'set_bitrate', bps: defaultBitrate });
-                    
-                    // Отправляем текущий режим дисплея Хосту
+
                     const mSel = document.getElementById('p2pModeSelector');
                     if (mSel) window.p2pConn.send({ sys_cmd: 'sync_mode', mode: mSel.value });
-                    
+
                     window.p2pConn.on('data', (data) => {
                         if (data.sys_cmd === 'ping_res') {
                             currentPing = Date.now() - lastPingTime;
@@ -9493,10 +10707,8 @@ trySet('vk_btn_close', d.vk_close);
                             window.p2pGuestPlayer = data.p;
                         }
                         if (data.sys_cmd === 'sync_mode') {
-                            // Хост сменил режим для Гостя
                             const mSelLocal = document.getElementById('p2pModeSelector');
                             if (mSelLocal) mSelLocal.value = data.mode;
-
                             const v = document.getElementById('p2p-remote-video');
                             const gamepadEl = document.getElementById('gamepad');
                             if (data.mode === 'pad_only') {
@@ -9520,67 +10732,33 @@ trySet('vk_btn_close', d.vk_close);
             });
 
             myPeer.on('call', (call) => {
-                const cType = call.metadata ? call.metadata.type : 'unknown';
                 call.answer(undefined); 
-                
                 call.on('stream', (stream) => {
                     showGuestRoom(); 
-                    
                     if (stream.getVideoTracks().length > 0) {
                         let v = document.getElementById('p2p-remote-video');
                         if (!v) {
-                            v = document.createElement('video'); 
-                            v.id = 'p2p-remote-video'; 
-                            v.setAttribute('autoplay', 'true'); 
-                            v.setAttribute('playsinline', 'true'); 
-                            v.setAttribute('webkit-playsinline', 'true'); 
-                            v.setAttribute('latencyHint', 'interactive');
-                            v.setAttribute('disablePictureInPicture', 'true');
-                            v.controls = false;
-                            v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none; display:block !important;';
-                            const container = document.getElementById('canvasContainer');
-                            if (container) container.appendChild(v);
+                            v = document.createElement('video'); v.id = 'p2p-remote-video'; v.autoplay = true; v.playsInline = true;
+                            v.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; z-index:15; background:#000; pointer-events:none;';
+                            document.getElementById('canvasContainer').appendChild(v);
                         }
-                        
-                        if (v.srcObject !== stream) v.srcObject = stream;
-                        v.muted = true; // Видео летит БЕЗ звука
-
-                        // Применяем текущий режим (если Гость выбрал "Только пульт" до появления видео)
-                        const mSel = document.getElementById('p2pModeSelector');
-                        if (mSel && mSel.value === 'pad_only') {
-                            v.style.display = 'none';
-                        }
-
-                        setTimeout(() => {
-                            let playPromise = v.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(e => console.log("Play blocked by iOS", e));
-                            }
-                        }, 150);
-                    } else if (cType === 'game_audio') {
-                        let a = document.getElementById('p2p-remote-game-audio');
-                        if (!a) {
-                            a = document.createElement('audio');
-                            a.id = 'p2p-remote-game-audio';
-                            a.autoplay = true;
-                            document.body.appendChild(a);
-                        }
-                        a.srcObject = stream;
-                        a.muted = !isGameAudioEnabled;
-                        const volSlider = document.getElementById('gameVolSlider');
-                        if (volSlider && isGameAudioEnabled) a.volume = volSlider.value / 100;
-                        a.play().catch(e => console.log("Game Audio block", e));
-                    } else {
+                        v.srcObject = stream;
+                    } else if (call.metadata && call.metadata.type === 'game_audio') {
+                        let a = document.getElementById('p2p-remote-game-audio') || document.createElement('audio');
+                        a.id = 'p2p-remote-game-audio'; a.autoplay = true; a.srcObject = stream; document.body.appendChild(a);
+                                      } else {
                         handleIncomingVoice(call, stream);
                     }
                     
-                    statusTxt.innerHTML = `<span style="color:#10b981;">✅ ТРАНСЛЯЦИЯ ИДЕТ</span>`;
+                    statusTxt.innerHTML = `<span style="color:#10b981;">${d.p2p_stat_stream || '✅ STREAMING LIVE'}</span>`;
                 });
             });
         }
         
         connectGuest(); 
+ 
     };
+
 
     document.addEventListener('DOMContentLoaded', () => { 
         ensureNetworkSelectorExists();
