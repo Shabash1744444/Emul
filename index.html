@@ -1216,9 +1216,8 @@ input, textarea, select {
         </svg>
     </div>
 
-
-
 </div>
+
 
 
 
@@ -8792,7 +8791,7 @@ function deselectAllGamesForDelete() {
 
 
 
-        async function extractRomForCore(blob, title, sys) {
+                async function extractRomForCore(blob, title, sys) {
             if (sys === 'dos' || sys === 'html') {
                 const ext = sys === 'html' ? '.html' : '.zip';
                 const type = sys === 'html' ? 'text/html' : 'application/zip';
@@ -8805,12 +8804,14 @@ function deselectAllGamesForDelete() {
                 for (const path in unzipped) {
                     const ext = path.split('.').pop().toLowerCase();
                     if (ext !== 'png' && ext !== 'jpg' && ext !== 'jpeg' && ext !== 'txt') {
-                        return new File([unzipped[path]], path.split('/').pop(), {type: "application/octet-stream", lastModified: Date.now()});
+                        // ВОТ ФИКС: Принудительно называем файл как в магазине (title + "." + ext)
+                        return new File([unzipped[path]], title + "." + ext, {type: "application/octet-stream", lastModified: Date.now()});
                     }
                 }
             }
             return new File([blob], title + ".zip", {type: "application/zip", lastModified: Date.now()});
         }
+
 
                 async function installGameFromStore(event, btn, sys, url, title) {
             event.stopPropagation();
