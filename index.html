@@ -3,8 +3,6 @@
     
 
 
-
-    
 <head>
     
     
@@ -8819,7 +8817,7 @@ function deselectAllGamesForDelete() {
             btn.classList.add('loading');
 
             try {
-                const blob = await fetch(RAW_URL + url).then(r => r.blob());
+                const blob = await fetch(RAW_URL + url.split('/').pop()).then(r => r.blob());
                 const file = await extractRomForCore(blob, title, sys);
                 
                 try {
@@ -8902,7 +8900,7 @@ function deselectAllGamesForDelete() {
                     }
                 };
             } else {
-                fetch(RAW_URL + game.url).then(r => r.blob()).then(blob => {
+                fetch(RAW_URL + game.url.split('/').pop()).then(r => r.blob()).then(blob => {
                     startAndFind(blob, game.title, game.sys);
                 }).catch(err => {
                     toggleArcadeStore(true);
