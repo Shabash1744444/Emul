@@ -8838,7 +8838,7 @@ function deselectAllGamesForDelete() {
                 await window.processSingleFile(file);
                 
                 // Синхронизируем статус "Установлено"
-                const req = dbStore.transaction("games", "readonly").objectStore("games").getAll();
+                const req = db.transaction("games", "readonly").objectStore("games").getAll();
                 req.onsuccess = (ev) => {
                     const gamesList = ev.target.result;
                     const targetGame = gamesList.slice().reverse().find(g => g.n === title);
@@ -8869,7 +8869,7 @@ function deselectAllGamesForDelete() {
                 await window.processSingleFile(file);
                 if(typeof renderAllGames === 'function') renderAllGames();
                 
-                const req = dbStore.transaction("games", "readonly").objectStore("games").getAll();
+                const req = db.transaction("games", "readonly").objectStore("games").getAll();
                 req.onsuccess = (ev) => {
                     const gamesList = ev.target.result;
                     const targetGame = gamesList.slice().reverse().find(g => g.n === title);
