@@ -78,6 +78,17 @@
     </div>
 
     <div class="layout">
+
+        <!-- Public portfolio demonstration: synthetic documents and visibly invalid marks only -->
+        <section style="background:#102936;border:1px solid #167997;border-radius:12px;padding:13px;margin-bottom:14px;">
+            <div style="font-size:12px;color:#7dd3fc;font-weight:700;margin-bottom:8px;">ПОРТФОЛИО · ТЕСТОВЫЕ ДАННЫЕ</div>
+            <button type="button" class="btn" id="btnDemo" style="background:#0ea5e9;color:#06171e;font-weight:800;margin:0 0 10px;">▶ Запустить демо</button>
+            <label style="display:flex;gap:8px;align-items:center;color:#e2e8f0;font-size:12px;font-weight:400;cursor:pointer;">
+                <input type="checkbox" id="demoBatch" style="accent-color:#0ea5e9;"> Проверить пакетную обработку (3 PDF)
+            </label>
+            <p id="demoInfo" style="font-size:12px;color:#cbd5e1;line-height:1.5;margin:10px 0 0;">Создаст вымышленный PDF, образец подписи и печать с маркировкой DEMO. Затем можно перемещать элементы в предпросмотре и нажать «ПОДПИСАТЬ И СКАЧАТЬ». Собственные PDF по-прежнему можно загружать ниже.</p>
+        </section>
+
         
         <div class="panel">
             
@@ -429,5 +440,101 @@
 
     initFromCache();
 </script>
+
+<script>
+/* Portfolio demo: preserve original rendering, anchoring and export handlers. */
+(() => {
+  'use strict';
+  const trigger = document.getElementById('btnDemo');
+  if (!trigger) return;
+
+  function imageDataUrl(kind) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (kind === 'stamp') {
+      canvas.width = 420; canvas.height = 420;
+      ctx.strokeStyle = '#bd293a'; ctx.fillStyle = '#bd293a'; ctx.lineWidth = 13;
+      ctx.beginPath(); ctx.arc(210, 210, 170, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(210, 210, 145, 0, Math.PI * 2); ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 72px Arial, sans-serif'; ctx.fillText('DEMO', 210, 212);
+      ctx.font = 'bold 29px Arial, sans-serif'; ctx.fillText('SAMPLE ONLY', 210, 264);
+      ctx.font = 'bold 25px Arial, sans-serif'; ctx.fillText('NOT VALID', 210, 125);
+    } else {
+      canvas.width = 540; canvas.height = 170;
+      ctx.strokeStyle = '#24496a'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(24, 90);
+      ctx.bezierCurveTo(90, 12, 60, 133, 155, 62);
+      ctx.bezierCurveTo(215, 20, 184, 120, 263, 70);
+      ctx.bezierCurveTo(340, 12, 295, 119, 460, 58); ctx.stroke();
+      ctx.fillStyle = '#24496a'; ctx.textAlign = 'center';
+      ctx.font = 'bold 33px Arial, sans-serif'; ctx.fillText('SAMPLE SIGNATURE', 264, 146);
+    }
+    return canvas.toDataURL('image/png');
+  }
+
+  async function makeDocument(index) {
+    const doc = await PDFLib.PDFDocument.create();
+    const page = doc.addPage([595, 842]);
+    const font = await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+    const ink = PDFLib.rgb(0.13, 0.23, 0.33);
+    const pale = PDFLib.rgb(0.86, 0.91, 0.95);
+    const gray = PDFLib.rgb(0.35, 0.43, 0.49);
+    page.drawRectangle({x:42, y:718, width:511, height:92, color:pale});
+    page.drawText('DEMO DOCUMENT - NOT A REAL RECORD', {x:57, y:766, size:17, font, color:ink});
+    page.drawText('PDF STAMPER PRO / PORTFOLIO TEST', {x:57, y:739, size:11, font, color:gray});
+    page.drawText('Document: DEMO-2026-' + String(index).padStart(3, '0'), {x:57, y:662, size:13, font, color:ink});
+    page.drawText('Sample item: Test component ' + index, {x:57, y:630, size:12, font, color:ink});
+    page.drawText('Quantity: ' + index * 5, {x:57, y:606, size:12, font, color:ink});
+    page.drawText('The content of this document is entirely fictional.', {x:57, y:561, size:12, font, color:gray});
+    page.drawText('The signature and stamp below are synthetic examples.', {x:57, y:541, size:12, font, color:gray});
+    page.drawRectangle({x:57, y:135, width:470, height:165, borderColor:pale, borderWidth:1});
+    page.drawText('SIGNATURE / STAMP TEST AREA', {x:72, y:273, size:12, font, color:gray});
+    // Original PDF anchor algorithm uses a text line containing five+ underscores.
+    page.drawText('_________________________', {x:74, y:183, size:14, font, color:ink});
+    page.drawText('Demo sign-off line (not legally binding)', {x:74, y:156, size:9, font, color:gray});
+    return await doc.save();
+  }
+
+  trigger.addEventListener('click', async () => {
+    if (!window.PDFLib || !window.pdfjsLib) {
+      alert('Библиотеки PDF не загрузились. Проверьте интернет и обновите страницу.');
+      return;
+    }
+    trigger.disabled = true;
+    trigger.textContent = 'Создание демо...';
+    try {
+      const count = document.getElementById('demoBatch').checked ? 3 : 1;
+      const collection = new DataTransfer();
+      for (let i = 1; i <= count; i++) {
+        const bytes = await makeDocument(i);
+        collection.items.add(new File([bytes], 'demo-document-' + i + '.pdf', {type:'application/pdf'}));
+      }
+      DOM.pdfInput.files = collection.files;
+      DOM.signInput.value = '';
+      DOM.stampInput.value = '';
+      const sign = imageDataUrl('signature'), stamp = imageDataUrl('stamp');
+      signImgData = await loadBase64ToImage(sign);
+      stampImgData = await loadBase64ToImage(stamp);
+      DOM.previewSign.src = sign;
+      DOM.previewStamp.src = stamp;
+      DOM.badgeSign.style.display = 'inline-block';
+      DOM.badgeStamp.style.display = 'inline-block';
+      DOM.fioInput.value = '';  // Skips optional network font download for the synthetic demo.
+      DOM.pdfInput.dispatchEvent(new Event('change', {bubbles:true}));
+      document.getElementById('demoInfo').textContent =
+        'Загружено тестовых PDF: ' + count + '. После открытия предпросмотра переместите отметки при необходимости и нажмите «ПОДПИСАТЬ И СКАЧАТЬ». В пакетном режиме браузер может запросить разрешение на несколько скачиваний.';
+    } catch (error) {
+      DOM.workStatus.style.color = '#ef4444';
+      DOM.workStatus.textContent = 'Ошибка подготовки демо: ' + error.message;
+    } finally {
+      trigger.disabled = false;
+      trigger.textContent = '▶ Запустить демо';
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
