@@ -9,10 +9,23 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
 endobj
 4 0 obj
-<< /Length 236 >>
+<< /Length 254 >>
 stream
-BT /F1 19 Tf 48 740 Td (SAMPLE DOCUMENT - DEMO ONLY) Tj /F1 12 Tf 0 -50 Td (Reference: DEMO-2026-001) Tj 0 -25 Td (Item: Sample component) Tj 0 -25 Td (Quantity: 3) Tj 0 -45 Td (Sign and stamp test area below:) Tj ET
-48 400 310 90 re S
+BT
+/F1 18 Tf
+48 757 Td
+(DEMO DOCUMENT - NOT A REAL RECORD) Tj
+/F1 11 Tf
+0 -50 Td
+(Document DEMO-2026-001) Tj
+0 -24 Td
+(Quantity 3 - synthetic test data) Tj
+0 -200 Td
+(SIGNATURE AND STAMP TEST AREA) Tj
+/F1 14 Tf
+0 -64 Td
+(_________________________) Tj
+ET
 endstream
 endobj
 5 0 obj
@@ -25,9 +38,9 @@ xref
 0000000058 00000 n 
 0000000115 00000 n 
 0000000241 00000 n 
-0000000527 00000 n 
+0000000545 00000 n 
 trailer
 << /Size 6 /Root 1 0 R >>
 startxref
-597
+615
 %%EOF
