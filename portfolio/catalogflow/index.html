@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CatalogFlow — каталог и поиск по номенклатуре</title>
+<meta name="description" content="Учебный каталог. Все товарные данные вымышлены.">
+<meta name="theme-color" content="#355c72">
+<style>
+:root{--accent:#355c72;--bg:#f6f7fb;--card:#fff;--text:#111827;--border:#e5e7eb;--muted:#6b7280;--focus:#e9f1f5}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 Segoe UI,system-ui,Roboto,Arial;color:var(--text);background:var(--bg)}
+.topbar{display:flex;gap:10px;align-items:center;padding:10px;background:var(--accent);color:#fff;flex-wrap:wrap}
+.catalog-heading{font-size:16px;font-weight:600}
+.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--accent);cursor:pointer;text-decoration:none}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin:12px}
+.stickybar{position:sticky;top:48px;z-index:5;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.counter{margin-left:auto;color:var(--muted);font-size:13px}
+#q{width:100%;min-height:96px;resize:none;overflow-y:hidden;max-height:420px;margin-top:8px;border:1px solid var(--border);border-radius:10px;padding:8px;font-family:ui-monospace,Consolas,Menlo,monospace}
+#hint{margin-top:6px;color:var(--muted);font-size:12px}
+.tablewrap{margin-top:8px;border:1px solid var(--border);border-radius:12px;overflow:auto;max-height:60vh;background:var(--card)}
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:820px}
+th,td{padding:8px 10px;border-bottom:1px solid #f2f2f2;white-space:nowrap;text-align:left;background:var(--card)}
+thead th{position:sticky;top:0;background:#fafafa;z-index:3}
+thead th .hdr{display:flex;align-items:center;gap:6px}
+.sortbtn{display:inline-flex;align-items:center;gap:4px;margin-left:6px;font-size:12px;padding:2px 7px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--muted);cursor:pointer}
+.sortbtn.active{color:var(--accent);border-color:var(--accent)}
+.sort-icon{font-size:11px}
+.copybtn{display:none;margin-left:auto;font-size:12px;padding:2px 8px;border:1px dashed var(--accent);border-radius:6px;color:var(--accent);background:#fff;cursor:pointer}
+.focus th.focus .copybtn{display:inline-flex}
+.focus td,.focus th{user-select:none}
+.focus td.focus,.focus th.focus{background:var(--focus);user-select:text;position:relative}
+tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,92,114,.3), rgba(53,92,114,0));border:none;border-radius:8px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;background:#111;color:#fff;padding:10px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:99}
+.toast.show{opacity:1;bottom:20px}
+.badge{background:#f0eef2;color:#6b7280;border-radius:999px;padding:2px 8px;margin-left:8px}
+.alias-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.alias-item{display:flex;align-items:center;gap:8px;padding:6px;border:1px solid var(--border);border-radius:8px}
+.alias-item .file{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alias-toggle{cursor:pointer;accent-color:var(--accent)}
+.hidden{display:none}
+#aliasCard.collapsed #aliasList{display:none}
+#aliasCard .fold-btn{margin-left:auto}
+.btnbar{display:flex;gap:8px;margin-top:8px;margin-bottom:6px}
+.togglebar{display:flex;gap:8px;margin-left:auto}
+.tgl{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;color:#6b7280;font-size:13px;cursor:pointer}
+.tgl.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tgl.zero{font-weight:bold}
+.modal{position:fixed;inset:0;display:none;background:rgba(17,24,39,.55);z-index:999;align-items:center;justify-content:center;padding:16px}
+.modal.show{display:flex}
+.dialog{max-width:520px;background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+.dialog h3{margin:0 0 8px 0}
+.dialog .msg{color:#374151;line-height:1.45;margin-bottom:8px;white-space:pre-line}
+.dialog ul{margin:8px 0 0 18px;color:#374151}
+.dialog footer{display:flex;justify-content:flex-end;margin-top:12px}
+.dialog .btn{color:#fff;background:var(--accent);border-color:var(--accent)}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div class="catalog-heading">Каталог номенклатуры</div>
+  <div class="actions">
+    
+    <input type="file" id="picker" accept=".xlsx,.xlsm,.xls,.csv,.json" style="display:none">
+    <label for="picker" class="btn">Загрузить файл</label>
+    <button class="btn" id="btnClear">Очистить память</button>
+  </div>
+</header>
+
+<div class="card"><div id="info">Каталог не загружен</div></div>
+
+<div class="card" id="aliasCard">
+  <div class="stickybar">
+    <button class="btn" id="btnAliasOne">Папка алиасов</button>
+    <span id="aliasCount" class="badge">алиасов: 0</span>
+    <button class="btn fold-btn" id="btnAliasFold">Свернуть</button>
+  </div>
+  <div class="alias-list" id="aliasList"></div>
+</div>
+
+<div class="card">
+  <div class="stickybar">
+    <button class="btn" id="btnSearch">Найти</button>
+    <button class="btn" id="btnReset">Сброс</button>
+    <div class="togglebar">
+      <button class="tgl" id="btnOrder" title="Сортировать в порядке ввода">Порядок ввода</button>
+      <button class="tgl" id="btnReserve" title="Показать колонку резерва">Резерв</button>
+      <button class="tgl zero" id="btnZero" title="Скрывать строки с нулевым остатком">0</button>
+    </div>
+    <span id="resCount" class="counter">—</span>
+  </div>
+
+  <textarea id="q" placeholder="Одна строка — обычный поиск; Несколько строк — массовый (каждая строка отдельный запрос)"></textarea>
+  <div id="hint">Подсказка: можно вставлять строку клиента целиком — лишние слова будут проигнорированы</div>
+
+  <div id="exportActions" class="hidden btnbar">
+    <button class="btn" id="btnExportCSV">Скачать CSV</button>
+    <button class="btn" id="btnExportXLSX">Скачать XLSX</button>
+    <button class="btn" id="btnCopyTable">Копировать таблицу</button>
+  </div>
+  <div id="resultWrap" class="tablewrap"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="dialog">
+    <h3 id="mTitle">Не удалось распознать файл как каталог</h3>
+    <div id="mMsg" class="msg"></div>
+    <ul>
+      <li>Лист <b>Stock</b> со столбцами: <b>code</b>, <b>name</b>, <b>unit</b>, <b>stock</b> (+ опционально <b>reserve</b>).</li>
+      <li>Для тестирования можно загрузить демонстрационный CSV.</li>
+    </ul>
+    <footer><button class="btn" id="mOk">OK</button></footer>
+  </div>
+</div>
+
+<script>
+// ——— утилиты ———
+const $=id=>document.getElementById(id);
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);};
+function showHelp(err){$('mMsg').textContent=(err?'Подробности: '+String(err).replace(/^Error:\s*/,'')+'\n':'')+'Ожидается формат листа «Stock»: code, name, unit, stock (+ reserve).';$('modal').classList.add('show');}
+$('mOk').addEventListener('click',()=>$('modal').classList.remove('show'));
+
+const normU={'А':'A','В':'B','Е':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','Х':'X','У':'Y'};
+const normL={'а':'a','в':'b','е':'e','к':'k','м':'m','н':'h','о':'o','р':'p','с':'c','т':'t','х':'x','у':'y'};
+// ИЗМЕНЕНО: Более агрессивная чистка для подготовки строки
+function normalize(s){if(s==null)return'';let t=String(s).trim().replace(/\s+/g,' ');
+t=t.replace(/(\d)\s*([xх*])\s*(\d)/gi,'$1x$2');t=t.replace(/DIN[\s\-]*([0-9]+)/gi,'DIN$1');t=t.replace(/GOST[\s\-PР]*([0-9]+)/gi, 'GOST$1');
+t=t.split('').map(ch=>normU[ch]??normL[ch]??ch).join('');return t.toUpperCase();}
+const toNum=v=>{const x=Number(String(v??'').replace(',','.'));return Number.isFinite(x)?x:0;};
+(()=>{const txt=$('q');function autosize(){txt.style.height='auto';const max=420;let h=txt.scrollHeight+24;txt.style.overflowY=(h>max)?'auto':'hidden';txt.style.height=Math.min(h,max)+'px';}txt.addEventListener('input',autosize);})();
+
+// ——— IndexedDB ———
+const DB='catalogflow_demo_app', ST='store';
+const KEY_ROWS='catalog_rows', KEY_META='catalog_meta', KEY_ALIAS_FILES='alias_files_meta', KEY_ALIAS_CODE='alias_code_map', KEY_ALIAS_NAME='alias_name_map', KEY_ALIAS_DIR='alias_dir_handle', KEY_UI='ui_prefs';
+let IDB_OK=true;
+function idbOpen(){return new Promise(r=>{try{const q=indexedDB.open(DB,1);q.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(ST))db.createObjectStore(ST);};q.onsuccess=()=>r(q.result);q.onerror=()=>{IDB_OK=false;r(null);};}catch(e){IDB_OK=false;r(null);}});}
+async function idbGet(k){if(!IDB_OK)return null;const db=await idbOpen();if(!db)return null;return new Promise(res=>{const tx=db.transaction(ST,'readonly');const st=tx.objectStore(ST);const rq=st.get(k);rq.onsuccess=()=>res(rq.result||null);rq.onerror=()=>res(null);});}
+async function idbSet(k,v){if(!IDB_OK)return false;const db=await idbOpen();if(!db)return false;return new Promise(res=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(v,k).onsuccess=()=>res(true);tx.onerror=()=>res(false);});}
+async function idbDel(k){if(!IDB_OK)return false;const db=await idbOpen();if(!db)return false;return new Promise(res=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).delete(k).onsuccess=()=>res(true);tx.onerror=()=>res(false);});}
+
+// ——— state ———
+let catalog=[], hideZero=false, sortBy=null, sortDir='desc', focusColIndex=null;
+let lastBase={rows:[],withQuery:false,toks:null};
+let interactiveMode=false;
+
+let aliasFilesMeta=[], aliasCodeMap=new Map(), aliasNameMap=new Map(), codeToAliases=new Map(), aliasPrefixIndex=new Map();
+let savedAliasDirHandle=null, aliasCollapsed=false;
+let whReserve=false, orderByInput=false;
+
+// ——— UI prefs ———
+async function loadUIPrefs(){
+  const p=await idbGet(KEY_UI)||{};
+  hideZero=!!p.hideZero; sortBy=p.sortBy||null; sortDir=p.sortDir||'desc';
+  aliasCollapsed=!!p.aliasCollapsed; whReserve=!!p.whReserve; orderByInput=!!p.orderByInput;
+  $('btnZero').classList.toggle('active',hideZero);
+  $('btnReserve').classList.toggle('active',whReserve);
+  $('btnOrder').classList.toggle('active',orderByInput);
+  $('aliasCard').classList.toggle('collapsed',aliasCollapsed);
+  $('btnAliasFold').textContent=aliasCollapsed?'Развернуть':'Свернуть';
+}
+async function saveUIPrefs(){await idbSet(KEY_UI,{hideZero,sortBy,sortDir,aliasCollapsed,whReserve,orderByInput});}
+
+// ——— чтение каталога (без изменений) ———
+function pickBestSheet(wb){
+  const t=[[ 'material','code','код','артикул','материал'],['material name','name','наименование','название'],
+           ['unit of measure','unit','ед','ед.'],['now in stock','stock','qty','quantity','остаток','наличие','available']];
+  let best={name:null,score:-1};
+  wb.SheetNames.forEach(name=>{
+    const ws=wb.Sheets[name];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});let top=-1;
+    for(let r=0;r<Math.min(100,aoa.length);r++){const row=(aoa[r]||[]).map(x=>normalize(x).toLowerCase());let s=0;t.forEach(g=>{if(row.some(c=>g.includes(c)))s++;});if(s>top)top=s;}
+    if(top>best.score)best={name,score:top};
+  });
+  return best.name||wb.SheetNames[0];
+}
+function extractCatalogRows(aoa){
+  const nm=s=>normalize(s).toLowerCase();
+  const groups={
+    code:['material','code','код','артикул','материал'],
+    name:['material name','name','наименование','название'],
+    unit:['unit of measure','unit','ед','ед.'],
+    stock:['now in stock','stock','qty','quantity','остаток','наличие','available'],
+    reserve:['now in reserve','reserve','in reserve','резерв']
+  };
+  let hdr=0,score=-1;
+  for(let r=0;r<Math.min(100,aoa.length);r++){
+    const row=(aoa[r]||[]).map(nm);let s=0;Object.values(groups).forEach(g=>{if(row.some(c=>g.includes(c)))s++;});
+    if(s>score){score=s;hdr=r;}
+  }
+  const header=(aoa[hdr]||[]).map(nm);
+  const idx=c=>{for(const x of c){const i=header.indexOf(x);if(i>=0)return i;}return -1;};
+  const iC=idx(groups.code), iN=idx(groups.name), iU=idx(groups.unit), iS=idx(groups.stock), iR=idx(groups.reserve);
+  const out=[];
+  for(let r=hdr+1;r<aoa.length;r++){
+    const row=aoa[r]||[];
+    const code=row[iC]||'', name=row[iN]||'', unit=row[iU]||'', stock=row[iS]||'', res=(iR>=0?row[iR]:'')||'';
+    if(String(code).trim() || String(name).trim()){
+      out.push({code,name,unit,stock,reserve:res,code_key:normalize(code),name_key:normalize(name)});
+    }
+  }
+  return out;
+}
+async function readAnyFile(file){
+  const ext=(file.name.split('.').pop()||'').toLowerCase();let wb;
+  if(ext==='csv'){const text=await file.text();wb=XLSX.read(text,{type:'string'});}
+  else if(ext==='json'){const text=await file.text();const obj=JSON.parse(text);if(Array.isArray(obj))return obj;for(const k of['data','rows','items','catalog'])if(Array.isArray(obj[k]))return obj[k];throw new Error('JSON: не найден массив данных');}
+  else if(['xlsx','xlsm','xls'].includes(ext)){const buf=await file.arrayBuffer();wb=XLSX.read(buf,{type:'array'});}
+  else throw new Error('Неподдерживаемый формат');
+  const ws=wb.Sheets[pickBestSheet(wb)]; const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  return extractCatalogRows(aoa);
+}
+async function loadCatalogFromFile(file){
+  try{
+    const rows=await readAnyFile(file);
+    if(!rows||!rows.length)throw new Error('Пустые данные/заголовки не распознаны');
+    catalog=rows;
+    $('info').textContent=`Каталог: ${catalog.length} позиций (${file.name})`;
+    toast('Каталог загружен: '+catalog.length);
+    await idbSet(KEY_ROWS,catalog);
+    await idbSet(KEY_META,{sourceFile:file.name,loadedAt:new Date().toISOString(),size:catalog.length});
+  }catch(e){console.error(e);showHelp(e);}
+}
+
+// ——— алиасы (без изменений) ———
+function addToMapSet(map,key,val){if(!map.has(key))map.set(key,new Set());map.get(key).add(val);}
+function rebuildCodeToAliases(){codeToAliases=new Map();for(const[alias,codes]of aliasCodeMap.entries()){for(const c of codes){addToMapSet(codeToAliases,c,alias);}}}
+function buildAliasPrefixIndex(){
+  aliasPrefixIndex=new Map();
+  const allAliases=new Set([...aliasCodeMap.keys(),...aliasNameMap.keys()]);
+  for(const a of allAliases){
+    const toks=splitTokens(a);
+    for(const t of toks){
+      for(let k=2;k<=t.length;k++){const pref=t.slice(0,k);if(!aliasPrefixIndex.has(pref))aliasPrefixIndex.set(pref,new Set());aliasPrefixIndex.get(pref).add(a);}
+    }
+  }
+}
+async function rebuildAliasMapsFromMeta(){
+  const rawCode=await idbGet(KEY_ALIAS_CODE)||{}, rawName=await idbGet(KEY_ALIAS_NAME)||{};
+  aliasCodeMap=new Map(); aliasNameMap=new Map();
+  for(let i=0;i<aliasFilesMeta.length;i++){
+    const m=aliasFilesMeta[i]; if(!m.enabled) continue;
+    (rawCode['f'+i]||[]).forEach(([a,c])=>addToMapSet(aliasCodeMap,a,c));
+    (rawName['f'+i]||[]).forEach(([a,nk])=>addToMapSet(aliasNameMap,a,nk));
+  }
+  rebuildCodeToAliases(); buildAliasPrefixIndex();
+}
+function updateAliasBadge(){const keys=new Set([...aliasCodeMap.keys(),...aliasNameMap.keys()]);$('aliasCount').textContent='алиасов: '+keys.size;}
+function renderAliasList(){
+  const wrap=$('aliasList'); wrap.innerHTML='';
+  aliasFilesMeta.forEach((m,i)=>{
+    const bCode=m.counts?.a2c?`<div class="badge">a→code: ${m.counts.a2c}</div>`:''; const bName=m.counts?.a2n?`<div class="badge">a→name: ${m.counts.a2n}</div>`:'';
+    const row=document.createElement('div'); row.className='alias-item';
+    row.innerHTML=`<input type="checkbox" class="alias-toggle" data-idx="${i}" ${m.enabled?'checked':''}>
+                   <div class="file" title="${m.name}">${m.name}</div>${bCode}${bName}`;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('.alias-toggle').forEach(ch=>ch.addEventListener('change',async e=>{
+    const idx=+e.target.dataset.idx; aliasFilesMeta[idx].enabled=e.target.checked;
+    await idbSet(KEY_ALIAS_FILES,aliasFilesMeta); await rebuildAliasMapsFromMeta(); renderAliasList(); updateAliasBadge();
+  }));
+  updateAliasBadge();
+}
+async function verifyPermission(handle,readWrite){const opts=readWrite?{mode:'readwrite'}:{};try{const q=await handle.queryPermission?.(opts); if(q==='granted')return true;const r=await handle.requestPermission?.(opts);return r==='granted';}catch(_){return false;}}
+async function scanAliasDirectory(dirHandle){
+  const exts=new Set(['xlsx','xlsm','xls','csv','json']); const files=[];
+  for await(const entry of dirHandle.values()){if(entry.kind==='file'){const ext=(entry.name.split('.').pop()||'').toLowerCase(); if(exts.has(ext)) files.push(entry);}}
+  if(!files.length) return {meta:[],rawCode:{},rawName:{}};
+  const rawCode={}, rawName={}, meta=[];
+  for(let i=0;i<files.length;i++){
+    const f=await files[i].getFile();
+    const parsed=await (async function(file){
+      const ext=(file.name.split('.').pop()||'').toLowerCase(); let wb;
+      if(ext==='csv'){const txt=await file.text(); wb=XLSX.read(txt,{type:'string'});}
+      else if(ext==='json'){const txt=await file.text(); wb=XLSX.read(txt,{type:'string'});}
+      else{const buf=await file.arrayBuffer(); wb=XLSX.read(buf,{type:'array'});}
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const nm=s=>normalize(s).toLowerCase(); let hdr=0,ia=-1,iname=-1,icode=-1;
+      for(let r=0;r<Math.min(50,aoa.length);r++){
+        const row=(aoa[r]||[]).map(nm);
+        ia=row.findIndex(c=>['alias','алиас','ключ','key','old','legacy'].includes(c));
+        iname=row.findIndex(c=>['alias_name','name','наименование','mt_name','name_key'].includes(c));
+        icode=row.findIndex(c=>['code','material','артикул','mt_code'].includes(c));
+        if(ia>=0||iname>=0){hdr=r;break;}
+      }
+      if(ia<0 && iname<0) return {meta:{name:file.name,size:0,counts:{a2c:0,a2n:0}},a2c:[],a2n:[]};
+      const a2c=[], a2n=[];
+      for(let r=hdr+1;r<aoa.length;r++){
+        const row=aoa[r]||[]; const a=normalize(row[ia]??''); const an=normalize(row[iname]??''); const c=icode>=0?normalize(row[icode]??''):'';
+        if(!a)continue; if(an) a2n.push([a,an]); if(c) a2c.push([a,c]);
+      }
+      return {meta:{name:file.name,size:aoa.length,counts:{a2c:a2c.length,a2n:a2n.length}},a2c,a2n};
+    })(f);
+    meta.push({name:parsed.meta.name,enabled:true,size:parsed.meta.size,counts:parsed.meta.counts});
+    rawCode['f'+i]=parsed.a2c; rawName['f'+i]=parsed.a2n;
+  }
+  return {meta,rawCode,rawName};
+}
+async function updateAliasFolderButton(){
+  let label='Подключить папку';
+  try{if(savedAliasDirHandle&&await verifyPermission(savedAliasDirHandle,false)) label='Обновить папку';}catch(_){}
+  const el=$('btnAliasOne'); if(el) el.textContent=label;
+}
+async function aliasFolderAction(){
+  try{
+    if(savedAliasDirHandle && await verifyPermission(savedAliasDirHandle,false)){
+      const {meta,rawCode,rawName}=await scanAliasDirectory(savedAliasDirHandle);
+      if(!meta.length){toast('В папке нет поддерживаемых файлов');await updateAliasFolderButton();return;}
+      aliasFilesMeta=meta; await idbSet(KEY_ALIAS_FILES,aliasFilesMeta);
+      await idbSet(KEY_ALIAS_CODE,rawCode); await idbSet(KEY_ALIAS_NAME,rawName);
+      await rebuildAliasMapsFromMeta(); renderAliasList(); updateAliasBadge();
+      toast('Папка обновлена'); await updateAliasFolderButton(); return;
+    }
+    if(!window.showDirectoryPicker){toast('Браузер не поддерживает выбор папки. Откройте в Chrome/Edge.');return;}
+    const dirHandle=await window.showDirectoryPicker({id:'catalogflow_aliases',mode:'read'});
+    if(!(await verifyPermission(dirHandle,false))){toast('Нет доступа к папке');await updateAliasFolderButton();return;}
+    const {meta,rawCode,rawName}=await scanAliasDirectory(dirHandle);
+    if(!meta.length){toast('В папке нет поддерживаемых файлов');await updateAliasFolderButton();return;}
+    aliasFilesMeta=meta; await idbSet(KEY_ALIAS_FILES,aliasFilesMeta);
+    await idbSet(KEY_ALIAS_CODE,rawCode); await idbSet(KEY_ALIAS_NAME,rawName);
+    const ok=await idbSet(KEY_ALIAS_DIR,dirHandle); if(ok) savedAliasDirHandle=dirHandle;
+    await rebuildAliasMapsFromMeta(); renderAliasList(); updateAliasBadge();
+    toast('Папка подключена'); await updateAliasFolderButton();
+  }catch(e){console.error(e); toast('Ошибка: '+e.message); await updateAliasFolderButton();}
+}
+
+function activeQtyKeys(){ return whReserve ? ['stock','reserve'] : ['stock']; }
+function qtyLabel(key){return key==='reserve'?'Резерв':'Остаток';}
+// ——— поиск ———
+
+ // ИЗМЕНЕНИЕ: Улучшенная функция оценки релевантности
+function advancedRelevanceScore(row, query) {
+    const queryNorm = normalize(query);
+    const queryTokens = queryNorm.split(' ').filter(token => token.length > 2 || /^\d+$/.test(token));
+    const rowText = row.code_key + ' ' + row.name_key;
+    let score = 0;
+
+    const queryNumbers = queryNorm.match(/\d+X\d+|\d+/g) || [];
+    const rowNumbers = rowText.match(/\d+[Xх*]\d+|\d+/g) || [];
+
+    // Очень большой бонус за прямое совпадение артикула или его части
+    if (row.code_key && queryNorm.includes(row.code_key)) {
+        score += 500;
+    }
+
+    // Совпадение чисел и размеров
+    let numberMatches = 0;
+    let mismatch = false;
+    if (queryNumbers.length > 0) {
+        queryNumbers.forEach(qn => {
+            if (rowNumbers.includes(qn)) {
+                score += 30; // Высокий балл за каждое совпавшее число
+                numberMatches++;
+            }
+        });
+        // Если в запросе есть размеры (например, М8), а в результате другие (М10) - накладываем штраф
+        const qM = queryNorm.match(/M\d+/g) || [];
+        const rM = rowText.match(/M\d+/g) || [];
+        if (qM.length > 0 && rM.length > 0 && qM[0] !== rM[0]) {
+            score -= 200; // Огромный штраф за несовпадение резьбы
+            mismatch = true;
+        }
+    }
+    
+    // Бонус за полноту совпадения чисел
+    if (queryNumbers.length > 0 && numberMatches === queryNumbers.length && !mismatch) {
+        score += 100;
+    }
+
+    // Совпадение текстовых токенов
+    queryTokens.forEach(token => {
+        if (!/^\d+$/.test(token) && rowText.includes(token)) {
+            // Больше очков за важные слова
+            if (/\d/.test(token) && /[A-Z]/.test(token)) { // Артикулы типа MT-40
+                score += 50;
+            } else if (['ХОМУТ', 'АНКЕР', 'ШПИЛЬКА', 'КРОНШТЕЙН', 'ПРОФИЛЬ', 'ГАЙКА', 'БОЛТ', 'ШАЙБА'].includes(token)) {
+                score += 20; // Ключевые слова
+            } else {
+                 score += 5; // Обычные слова
+            }
+        }
+    });
+
+    return score;
+}
+
+// ИЗМЕНЕНА: Функция сортировки теперь использует новый скоринг
+function applySort(rows, query){
+  if(orderByInput) return rows;
+  if(!sortBy){
+    rows.sort((a,b)=>{
+      const scoreA = a.score !== undefined ? a.score : advancedRelevanceScore(a, query || "");
+      const scoreB = b.score !== undefined ? b.score : advancedRelevanceScore(b, query || "");
+      const ds = scoreB - scoreA;
+      if(ds) return ds;
+      
+      const cols=activeQtyKeys();
+      const sb=cols.reduce((s,k)=>s+toNum(b[k]),0), sa=cols.reduce((s,k)=>s+toNum(a[k]),0);
+      const d=sb-sa; if(d) return d;
+      return String(a.name).localeCompare(String(b.name));
+    });
+    return rows;
+  }
+  rows.sort((A,B)=>{
+    let a=A[sortBy]??'', b=B[sortBy]??'';
+    if(['stock','reserve'].includes(sortBy)){ a=toNum(a); b=toNum(b); }
+    const r=(a>b)-(a<b); return (sortDir==='asc')?r:-r;
+  });
+  return rows;
+}
+// ——— рендер таблицы (без изменений) ———
+function focusColumn(idx){
+  focusColIndex=idx;
+  const tw=document.querySelector('.tablewrap'); if(!tw)return;
+  tw.classList.add('focus'); tw.querySelectorAll('th,td').forEach(el=>el.classList.remove('focus'));
+  const rows=tw.querySelectorAll('tr'); rows.forEach(r=>{const cell=r.children[idx-1]; if(cell) cell.classList.add('focus');});
+}
+function clearFocus(){focusColIndex=null;const tw=document.querySelector('.tablewrap'); if(!tw)return; tw.classList.remove('focus'); tw.querySelectorAll('th,td').forEach(el=>el.classList.remove('focus')); }
+
+function renderTable(baseRows,withQuery,toks){
+  lastBase={rows:baseRows.slice(),withQuery,toks};
+  let view=baseRows.slice();
+  if(hideZero){const cols=activeQtyKeys(); view=view.filter(r=>cols.some(k=>toNum(r[k])>0));}
+  
+  applySort(view, withQuery ? (view.length > 0 ? lastBase.rows.find(r => r.query === view[0].query)?.query || '' : '') : (toks ? (Array.isArray(toks) ? toks.join(' ') : toks) : ''));
+  
+  const wrap=$('resultWrap'); if(!wrap) return;
+
+  let html='<table><thead><tr>'; let colIndex=1;
+  function th(label,colKey){
+    const cls=(focusColIndex===colIndex?'focus':'');
+    const sortBtn=colKey?`<button class="sortbtn" type="button" data-col="${colKey}" onclick="event.stopPropagation(); setSort('${colKey}')"><span>сорт</span><span class="sort-icon">⇅</span></button>`:'';
+    const copyBtn=colKey?`<button class="copybtn" type="button" onclick="event.stopPropagation(); copyFocused('${colKey}')">Коп.столбец</button>`:'';
+    const out=`<th onclick="focusColumn(${colIndex})" class="${cls}"><div class="hdr"><span>${label}</span>${sortBtn}${copyBtn}</div></th>`;
+    colIndex++; return out;
+  }
+  const qtyCols=activeQtyKeys();
+  const headers=[];
+  if(withQuery) headers.push({label:'Запрос', key:'query'});
+  headers.push({label:'Артикул', key:'code'});
+  headers.push({label:'Наименование', key:'name'});
+  headers.push({label:'Ед.', key:'unit'});
+  qtyCols.forEach(k=>headers.push({label:qtyLabel(k), key:k}));
+  headers.forEach(h=>html+=th(h.label,h.key));
+  html+='</tr></thead><tbody>';
+
+  let currentQuery;
+  view.forEach(r=>{
+    if(withQuery && r.query!==currentQuery){
+      if(currentQuery!==undefined) html+=`<tr class="group-separator"><td colspan="${headers.length}"></td></tr>`;
+      currentQuery=r.query;
+    }
+    html+='<tr>';
+    headers.forEach(h=>{
+      let val=r[h.key]||'';
+      if(h.key==='name'){
+        const aliases=codeToAliases.get(r.code_key)||new Set();
+        if(aliases.size){ val=`${r.name||''} <span style="color:#6b7280">(${[...aliases].slice(0,3).join(', ')}${aliases.size>3?'…':''})</span>`; }
+      }
+      html+=`<td>${val}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+  $('exportActions').classList.toggle('hidden', view.length===0);
+  updateSortButtons();
+  $('resCount').textContent = withQuery ? `строк: ${new Set(baseRows.map(r=>r.query)).size || 0} • найдено: ${view.length}` : `найдено: ${view.length}`;
+}
+function setSort(col){
+  orderByInput=false; $('btnOrder').classList.remove('active');
+  if(sortBy!==col){sortBy=col; sortDir=(['stock','reserve'].includes(col))?'desc':'asc';}
+  else{sortDir=(sortDir==='asc'?'desc':'asc');}
+  updateSortButtons(); renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks); saveUIPrefs();
+}
+function updateSortButtons(){
+  document.querySelectorAll('.sortbtn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sortbtn .sort-icon').forEach(i=>i.textContent='⇅');
+  if(sortBy){document.querySelectorAll('.sortbtn[data-col="'+sortBy+'"]').forEach(btn=>{btn.classList.add('active'); btn.querySelector('.sort-icon').textContent=(sortDir==='asc'?'↑':'↓');});}
+}
+function copyFocused(colKey){
+  const {rows}=getCurrentTableRows(); const out=[]; rows.forEach(r=>out.push(r[colKey]??'')); const text=out.join('\r\n');
+  try{navigator.clipboard.writeText(text).then(()=>toast('Скопировано '+out.length+' строк'));}catch(e){const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Скопировано');}
+}
+function getCurrentTableRows(){
+  let view=lastBase.rows.slice();
+  if(hideZero){const cols=activeQtyKeys(); view=view.filter(r=>cols.some(k=>toNum(r[k])>0));}
+  applySort(view,lastBase.withQuery ? (view.length > 0 ? lastBase.rows.find(r => r.query === view[0].query)?.query || '' : '') : (lastBase.toks ? (Array.isArray(lastBase.toks) ? lastBase.toks.join(' ') : lastBase.toks) : ''));
+  return {rows:view,withQuery:lastBase.withQuery};
+}
+
+// ——— ИЗМЕНЕНО: выполнение поиска ———
+function doSearch(){
+  if(!catalog.length){$('resCount').textContent='—';$('resultWrap').innerHTML='';$('exportActions').classList.add('hidden');toast('Каталог не загружен');return;}
+  const text=$('q').value.trim();
+  if(!text){$('resultWrap').innerHTML='';$('resCount').textContent='—';$('exportActions').classList.add('hidden');return;}
+
+  const lines = text.split(/\r?\n/);
+  const MIN_RELEVANCE_SCORE = 20; // Порог, ниже которого результат считается "ахинеей"
+  const BLACKLIST_WORDS = ['В КОМПЛЕКТЕ', 'С УСТРОЙСТВОМ', 'ИЗ ПЕСКА', 'РАСХОД ДЛЯ', 'ПЛОЩАДЬ ПОКРАСКИ', 'С УЧЕТОМ', 'ВЫПУСК К'];
+
+  // Фильтруем "мусорные" строки
+  const cleanLines = lines.map(s => s.trim()).filter(line => {
+      if (line.length < 5) return false;
+      const normLine = normalize(line);
+      // Проверяем, что в строке есть хотя бы одна буква и это не строка из черного списка
+      return /[A-ZА-Я]/.test(normLine) && !BLACKLIST_WORDS.some(word => normLine.startsWith(word));
+  });
+
+  if (cleanLines.length === 0) {
+      $('resultWrap').innerHTML='';$('resCount').textContent='Не найдено подходящих строк для поиска';$('exportActions').classList.add('hidden');
+      return;
+  }
+  
+  if(cleanLines.length===1){
+    const query = cleanLines[0];
+    const matches = catalog.map(row => {
+        return { ...row, score: advancedRelevanceScore(row, query) };
+    }).filter(row => row.score >= MIN_RELEVANCE_SCORE);
+
+    renderTable(matches, false, query);
+
+  }else{
+    let out=[],found=0;
+    for(const line of cleanLines){
+      let bestMatch = null;
+      let highestScore = -1;
+
+      catalog.forEach(row => {
+          const score = advancedRelevanceScore(row, line);
+          if (score > highestScore) {
+              highestScore = score;
+              bestMatch = row;
+          }
+      });
+      
+      if (highestScore >= MIN_RELEVANCE_SCORE && bestMatch) {
+          out.push({ ...bestMatch, query: line });
+          found++;
+      }
+    }
+    // Если что-то найдено, показываем. Иначе - ничего не показываем.
+    if(out.length > 0) {
+        renderTable(out,true,null);
+    } else {
+        $('resultWrap').innerHTML='';$('resCount').textContent='Нет релевантных совпадений';$('exportActions').classList.add('hidden');
+    }
+  }
+}
+
+
+// ——— экспорт (без изменений) ———
+function exportCSV(){
+  const {rows,withQuery}=getCurrentTableRows(); const qtyCols=activeQtyKeys();
+  const headerBase=['Артикул','Наименование','Ед.'].concat(qtyCols.map(qtyLabel));
+  const colsBase=['code','name','unit'].concat(qtyCols);
+  const header=withQuery?['Запрос'].concat(headerBase):headerBase;
+  const cols=withQuery?['query'].concat(colsBase):colsBase;
+  const sep=';'; const esc=s=>`"${String(s??'').replace(/"/g,'""')}"`;
+  const lines=[header.map(esc).join(sep)]; rows.forEach(r=>lines.push(cols.map(c=>esc(r[c]??'')).join(sep)));
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='catalog_results.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+function exportXLSX(){
+  const {rows,withQuery}=getCurrentTableRows(); const qtyCols=activeQtyKeys();
+  const headerBase=['Артикул','Наименование','Ед.'].concat(qtyCols.map(qtyLabel));
+  const colsBase=['code','name','unit'].concat(qtyCols);
+  const header=withQuery?['Запрос'].concat(headerBase):headerBase;
+  const cols=withQuery?['query'].concat(colsBase):colsBase;
+  const data=[header].concat(rows.map(r=>cols.map(c=>r[c]??'')));
+  const ws=XLSX.utils.aoa_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Results'); XLSX.writeFile(wb,'catalog_results.xlsx');
+}
+
+// ——— события (без изменений) ———
+$('picker').addEventListener('change',async e=>{const f=e.target.files[0]; e.target.value=''; if(!f)return; await loadCatalogFromFile(f);});
+$('btnSearch').addEventListener('click', doSearch);
+$('btnSearch').addEventListener('dblclick',()=>{interactiveMode=!interactiveMode;$('btnSearch').classList.toggle('active',interactiveMode);if(interactiveMode){$('q').addEventListener('input',doSearch);doSearch();}else{$('q').removeEventListener('input',doSearch);}});
+$('btnReset').addEventListener('click',()=>{$('q').value='';$('resultWrap').innerHTML='';$('resCount').textContent='—';$('exportActions').classList.add('hidden');clearFocus();});
+$('btnZero').addEventListener('click',async()=>{hideZero=!hideZero;$('btnZero').classList.toggle('active',hideZero);renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks);await saveUIPrefs();});
+$('btnOrder').addEventListener('click',async()=>{orderByInput=!orderByInput;$('btnOrder').classList.toggle('active',orderByInput);sortBy=null;updateSortButtons();await saveUIPrefs();renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks);});
+$('btnReserve').addEventListener('click',async()=>{whReserve=!whReserve;$('btnReserve').classList.toggle('active',whReserve);await saveUIPrefs();renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks);});
+$('btnExportCSV').addEventListener('click', exportCSV);
+$('btnExportXLSX').addEventListener('click', exportXLSX);
+$('btnCopyTable').addEventListener('click', async ()=>{
+  const {rows,withQuery}=getCurrentTableRows(); const qtyCols=activeQtyKeys();
+  const headerBase=['Артикул','Наименование','Ед.'].concat(qtyCols.map(qtyLabel));
+  const colsBase=['code','name','unit'].concat(qtyCols);
+  const header=withQuery?['Запрос'].concat(headerBase):headerBase;
+  const cols=withQuery?['query'].concat(colsBase):colsBase;
+  const out=[header].concat(rows.map(r=>r.join('\t')));
+  const text=out.join('\r\n');
+  try{await navigator.clipboard.writeText(text);toast('Таблица скопирована: '+rows.length+' строк');}
+  catch(e){const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Таблица скопирована');}
+});
+document.addEventListener('click',e=>{const tw=e.target.closest('.tablewrap'); if(!tw) clearFocus();});
+$('btnClear').addEventListener('click', async ()=>{
+  await idbDel(KEY_ROWS); await idbDel(KEY_META);
+  await idbDel(KEY_ALIAS_FILES); await idbDel(KEY_ALIAS_CODE); await idbDel(KEY_ALIAS_NAME);
+  await idbDel(KEY_ALIAS_DIR); await idbDel(KEY_UI);
+  catalog=[]; aliasFilesMeta=[]; aliasCodeMap.clear(); aliasNameMap.clear(); codeToAliases.clear(); aliasPrefixIndex.clear(); savedAliasDirHandle=null;
+  renderAliasList(); $('info').textContent='Каталог не загружен'; $('resultWrap').innerHTML=''; $('resCount').textContent='—'; $('exportActions').classList.add('hidden');
+  $('btnReserve').classList.remove('active'); whReserve=false; $('btnZero').classList.remove('active'); hideZero=false;
+  $('btnOrder').classList.remove('active'); orderByInput=false; sortBy=null; updateSortButtons(); await saveUIPrefs(); toast('Память очищена');
+});
+$('btnAliasOne').addEventListener('click', aliasFolderAction);
+$('btnAliasFold').addEventListener('click', async ()=>{aliasCollapsed=!aliasCollapsed; $('aliasCard').classList.toggle('collapsed',aliasCollapsed); $('btnAliasFold').textContent=aliasCollapsed?'Развернуть':'Свернуть'; await saveUIPrefs();});
+
+// ——— автозагрузка (без изменений) ———
+async function autoloadFromCache(){
+  await loadUIPrefs();
+  const rows=await idbGet(KEY_ROWS); const meta=await idbGet(KEY_META);
+  if(Array.isArray(rows)&&rows.length){catalog=rows; $('info').textContent=`Каталог: ${rows.length} позиций (кэш${meta?.sourceFile?`: ${meta.sourceFile}`:''})`;}
+
+  // Вымышленные демонстрационные позиции, используются только при отсутствии загруженного каталога.
+  if (!Array.isArray(rows) || !rows.length) {
+    const exampleRows = [{"code":"DEMO-ANC-006-060","name":"Анкер M6x60 (учебный образец)","unit":"шт","stock":80,"reserve":12},{"code":"DEMO-BOLT-006-060","name":"Болт M6x60 (учебный образец)","unit":"шт","stock":57,"reserve":24},{"code":"DEMO-NUT-006-060","name":"Гайка M6x60 (учебный образец)","unit":"шт","stock":34,"reserve":14},{"code":"DEMO-WASH-006-060","name":"Шайба M6x60 (учебный образец)","unit":"шт","stock":111,"reserve":14},{"code":"DEMO-ROD-006-060","name":"Шпилька M6x60 (учебный образец)","unit":"шт","stock":66,"reserve":17},{"code":"DEMO-BRK-006-060","name":"Кронштейн M6x60 (учебный образец)","unit":"шт","stock":160,"reserve":10},{"code":"DEMO-SCREW-006-060","name":"Саморез M6x60 (учебный образец)","unit":"шт","stock":50,"reserve":24},{"code":"DEMO-PLATE-006-060","name":"Пластина M6x60 (учебный образец)","unit":"шт","stock":156,"reserve":5},{"code":"DEMO-ANC-008-060","name":"Анкер M8x60 (учебный образец)","unit":"шт","stock":6,"reserve":20},{"code":"DEMO-BOLT-008-060","name":"Болт M8x60 (учебный образец)","unit":"шт","stock":140,"reserve":1},{"code":"DEMO-NUT-008-060","name":"Гайка M8x60 (учебный образец)","unit":"шт","stock":152,"reserve":25},{"code":"DEMO-WASH-008-060","name":"Шайба M8x60 (учебный образец)","unit":"шт","stock":68,"reserve":16},{"code":"DEMO-ROD-008-060","name":"Шпилька M8x60 (учебный образец)","unit":"шт","stock":113,"reserve":1},{"code":"DEMO-BRK-008-060","name":"Кронштейн M8x60 (учебный образец)","unit":"шт","stock":158,"reserve":4},{"code":"DEMO-SCREW-008-060","name":"Саморез M8x60 (учебный образец)","unit":"шт","stock":55,"reserve":15},{"code":"DEMO-PLATE-008-060","name":"Пластина M8x60 (учебный образец)","unit":"шт","stock":79,"reserve":6},{"code":"DEMO-ANC-010-060","name":"Анкер M10x60 (учебный образец)","unit":"шт","stock":133,"reserve":13},{"code":"DEMO-BOLT-010-060","name":"Болт M10x60 (учебный образец)","unit":"шт","stock":10,"reserve":16},{"code":"DEMO-NUT-010-060","name":"Гайка M10x60 (учебный образец)","unit":"шт","stock":98,"reserve":25},{"code":"DEMO-WASH-010-060","name":"Шайба M10x60 (учебный образец)","unit":"шт","stock":155,"reserve":26},{"code":"DEMO-ROD-010-060","name":"Шпилька M10x60 (учебный образец)","unit":"шт","stock":24,"reserve":19},{"code":"DEMO-BRK-010-060","name":"Кронштейн M10x60 (учебный образец)","unit":"шт","stock":1,"reserve":23},{"code":"DEMO-SCREW-010-060","name":"Саморез M10x60 (учебный образец)","unit":"шт","stock":111,"reserve":8},{"code":"DEMO-PLATE-010-060","name":"Пластина M10x60 (учебный образец)","unit":"шт","stock":113,"reserve":13},{"code":"DEMO-ANC-012-060","name":"Анкер M12x60 (учебный образец)","unit":"шт","stock":87,"reserve":6},{"code":"DEMO-BOLT-012-060","name":"Болт M12x60 (учебный образец)","unit":"шт","stock":54,"reserve":20},{"code":"DEMO-NUT-012-060","name":"Гайка M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":15},{"code":"DEMO-WASH-012-060","name":"Шайба M12x60 (учебный образец)","unit":"шт","stock":116,"reserve":5},{"code":"DEMO-ROD-012-060","name":"Шпилька M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":26},{"code":"DEMO-BRK-012-060","name":"Кронштейн M12x60 (учебный образец)","unit":"шт","stock":24,"reserve":10},{"code":"DEMO-SCREW-012-060","name":"Саморез M12x60 (учебный образец)","unit":"шт","stock":111,"reserve":3},{"code":"DEMO-PLATE-012-060","name":"Пластина M12x60 (учебный образец)","unit":"шт","stock":69,"reserve":23},{"code":"DEMO-ANC-014-060","name":"Анкер M14x60 (учебный образец)","unit":"шт","stock":128,"reserve":22},{"code":"DEMO-BOLT-014-060","name":"Болт M14x60 (учебный образец)","unit":"шт","stock":71,"reserve":5},{"code":"DEMO-NUT-014-060","name":"Гайка M14x60 (учебный образец)","unit":"шт","stock":40,"reserve":14},{"code":"DEMO-WASH-014-060","name":"Шайба M14x60 (учебный образец)","unit":"шт","stock":52,"reserve":22},{"code":"DEMO-ROD-014-060","name":"Шпилька M14x60 (учебный образец)","unit":"шт","stock":101,"reserve":20},{"code":"DEMO-BRK-014-060","name":"Кронштейн M14x60 (учебный образец)","unit":"шт","stock":85,"reserve":25},{"code":"DEMO-SCREW-014-060","name":"Саморез M14x60 (учебный образец)","unit":"шт","stock":164,"reserve":16},{"code":"DEMO-PLATE-014-060","name":"Пластина M14x60 (учебный образец)","unit":"шт","stock":145,"reserve":20},{"code":"DEMO-ANC-016-060","name":"Анкер M16x60 (учебный образец)","unit":"шт","stock":127,"reserve":17},{"code":"DEMO-BOLT-016-060","name":"Болт M16x60 (учебный образец)","unit":"шт","stock":156,"reserve":11},{"code":"DEMO-NUT-016-060","name":"Гайка M16x60 (учебный образец)","unit":"шт","stock":124,"reserve":25},{"code":"DEMO-WASH-016-060","name":"Шайба M16x60 (учебный образец)","unit":"шт","stock":143,"reserve":18},{"code":"DEMO-ROD-016-060","name":"Шпилька M16x60 (учебный образец)","unit":"шт","stock":79,"reserve":1},{"code":"DEMO-BRK-016-060","name":"Кронштейн M16x60 (учебный образец)","unit":"шт","stock":111,"reserve":11},{"code":"DEMO-SCREW-016-060","name":"Саморез M16x60 (учебный образец)","unit":"шт","stock":70,"reserve":7},{"code":"DEMO-PLATE-016-060","name":"Пластина M16x60 (учебный образец)","unit":"шт","stock":144,"reserve":12},{"code":"DEMO-ANC-006-100","name":"Анкер M6x100 (учебный образец)","unit":"шт","stock":26,"reserve":19},{"code":"DEMO-BOLT-006-100","name":"Болт M6x100 (учебный образец)","unit":"шт","stock":83,"reserve":5},{"code":"DEMO-NUT-006-100","name":"Гайка M6x100 (учебный образец)","unit":"шт","stock":148,"reserve":12},{"code":"DEMO-WASH-006-100","name":"Шайба M6x100 (учебный образец)","unit":"шт","stock":35,"reserve":12},{"code":"DEMO-ROD-006-100","name":"Шпилька M6x100 (учебный образец)","unit":"шт","stock":150,"reserve":20},{"code":"DEMO-BRK-006-100","name":"Кронштейн M6x100 (учебный образец)","unit":"шт","stock":153,"reserve":4},{"code":"DEMO-SCREW-006-100","name":"Саморез M6x100 (учебный образец)","unit":"шт","stock":112,"reserve":14},{"code":"DEMO-PLATE-006-100","name":"Пластина M6x100 (учебный образец)","unit":"шт","stock":24,"reserve":25},{"code":"DEMO-ANC-008-100","name":"Анкер M8x100 (учебный образец)","unit":"шт","stock":144,"reserve":21},{"code":"DEMO-BOLT-008-100","name":"Болт M8x100 (учебный образец)","unit":"шт","stock":26,"reserve":2},{"code":"DEMO-NUT-008-100","name":"Гайка M8x100 (учебный образец)","unit":"шт","stock":70,"reserve":16},{"code":"DEMO-WASH-008-100","name":"Шайба M8x100 (учебный образец)","unit":"шт","stock":57,"reserve":19},{"code":"DEMO-ROD-008-100","name":"Шпилька M8x100 (учебный образец)","unit":"шт","stock":63,"reserve":12},{"code":"DEMO-BRK-008-100","name":"Кронштейн M8x100 (учебный образец)","unit":"шт","stock":103,"reserve":16},{"code":"DEMO-SCREW-008-100","name":"Саморез M8x100 (учебный образец)","unit":"шт","stock":38,"reserve":21},{"code":"DEMO-PLATE-008-100","name":"Пластина M8x100 (учебный образец)","unit":"шт","stock":121,"reserve":25},{"code":"DEMO-ANC-010-100","name":"Анкер M10x100 (учебный образец)","unit":"шт","stock":151,"reserve":3},{"code":"DEMO-BOLT-010-100","name":"Болт M10x100 (учебный образец)","unit":"шт","stock":107,"reserve":10},{"code":"DEMO-NUT-010-100","name":"Гайка M10x100 (учебный образец)","unit":"шт","stock":122,"reserve":17},{"code":"DEMO-WASH-010-100","name":"Шайба M10x100 (учебный образец)","unit":"шт","stock":104,"reserve":18},{"code":"DEMO-ROD-010-100","name":"Шпилька M10x100 (учебный образец)","unit":"шт","stock":143,"reserve":26},{"code":"DEMO-BRK-010-100","name":"Кронштейн M10x100 (учебный образец)","unit":"шт","stock":83,"reserve":4},{"code":"DEMO-SCREW-010-100","name":"Саморез M10x100 (учебный образец)","unit":"шт","stock":16,"reserve":8},{"code":"DEMO-PLATE-010-100","name":"Пластина M10x100 (учебный образец)","unit":"шт","stock":32,"reserve":29},{"code":"DEMO-ANC-012-100","name":"Анкер M12x100 (учебный образец)","unit":"шт","stock":26,"reserve":5},{"code":"DEMO-BOLT-012-100","name":"Болт M12x100 (учебный образец)","unit":"шт","stock":124,"reserve":28},{"code":"DEMO-NUT-012-100","name":"Гайка M12x100 (учебный образец)","unit":"шт","stock":115,"reserve":9},{"code":"DEMO-WASH-012-100","name":"Шайба M12x100 (учебный образец)","unit":"шт","stock":29,"reserve":18},{"code":"DEMO-ROD-012-100","name":"Шпилька M12x100 (учебный образец)","unit":"шт","stock":103,"reserve":0},{"code":"DEMO-BRK-012-100","name":"Кронштейн M12x100 (учебный образец)","unit":"шт","stock":156,"reserve":25},{"code":"DEMO-SCREW-012-100","name":"Саморез M12x100 (учебный образец)","unit":"шт","stock":114,"reserve":21},{"code":"DEMO-PLATE-012-100","name":"Пластина M12x100 (учебный образец)","unit":"шт","stock":165,"reserve":26},{"code":"DEMO-ANC-014-100","name":"Анкер M14x100 (учебный образец)","unit":"шт","stock":34,"reserve":23},{"code":"DEMO-BOLT-014-100","name":"Болт M14x100 (учебный образец)","unit":"шт","stock":93,"reserve":21},{"code":"DEMO-NUT-014-100","name":"Гайка M14x100 (учебный образец)","unit":"шт","stock":70,"reserve":24},{"code":"DEMO-WASH-014-100","name":"Шайба M14x100 (учебный образец)","unit":"шт","stock":21,"reserve":23},{"code":"DEMO-ROD-014-100","name":"Шпилька M14x100 (учебный образец)","unit":"шт","stock":3,"reserve":18},{"code":"DEMO-BRK-014-100","name":"Кронштейн M14x100 (учебный образец)","unit":"шт","stock":56,"reserve":27},{"code":"DEMO-SCREW-014-100","name":"Саморез M14x100 (учебный образец)","unit":"шт","stock":96,"reserve":17},{"code":"DEMO-PLATE-014-100","name":"Пластина M14x100 (учебный образец)","unit":"шт","stock":131,"reserve":2},{"code":"DEMO-ANC-016-100","name":"Анкер M16x100 (учебный образец)","unit":"шт","stock":25,"reserve":3},{"code":"DEMO-BOLT-016-100","name":"Болт M16x100 (учебный образец)","unit":"шт","stock":139,"reserve":10},{"code":"DEMO-NUT-016-100","name":"Гайка M16x100 (учебный образец)","unit":"шт","stock":27,"reserve":20},{"code":"DEMO-WASH-016-100","name":"Шайба M16x100 (учебный образец)","unit":"шт","stock":161,"reserve":10},{"code":"DEMO-ROD-016-100","name":"Шпилька M16x100 (учебный образец)","unit":"шт","stock":56,"reserve":28},{"code":"DEMO-BRK-016-100","name":"Кронштейн M16x100 (учебный образец)","unit":"шт","stock":63,"reserve":2},{"code":"DEMO-SCREW-016-100","name":"Саморез M16x100 (учебный образец)","unit":"шт","stock":58,"reserve":24},{"code":"DEMO-PLATE-016-100","name":"Пластина M16x100 (учебный образец)","unit":"шт","stock":121,"reserve":7}];
+    catalog = exampleRows.map(r=>({...r,code_key:normalize(r.code),name_key:normalize(r.name)}));
+    $('info').textContent=`Каталог: ${catalog.length} демонстрационных позиций (вымышленные данные)`;
+  }
+  aliasFilesMeta=await idbGet(KEY_ALIAS_FILES)||[]; await rebuildAliasMapsFromMeta(); renderAliasList();
+  savedAliasDirHandle=await idbGet(KEY_ALIAS_DIR); await updateAliasFolderButton();
+}
+autoloadFromCache();
+</script>
+</body>
+</html>
