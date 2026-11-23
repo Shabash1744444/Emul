@@ -57,58 +57,34 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
 .dialog ul{margin:8px 0 0 18px;color:#374151}
 .dialog footer{display:flex;justify-content:flex-end;margin-top:12px}
 .dialog .btn{color:#fff;background:var(--accent);border-color:var(--accent)}
-
-/* Демонстрация каталога */
-.demo-tools{background:#fafdff;border-left:4px solid var(--accent);}
-.demo-tools h2{margin:0 0 8px;font-size:16px;font-weight:600;color:#23394a;}
-.demo-tools p{margin:0 0 10px;color:#4d6171;font-size:13px;}
-.demo-buttons{display:flex;flex-wrap:wrap;gap:8px;}
-.demo-buttons .btn{font-size:13px;padding:9px 12px;min-height:40px;}
-.demo-note{margin-top:10px;color:#536577;font-size:12px;}
-.guide-dialog{width:min(590px,100%);max-width:100%;max-height:85dvh;overflow:auto;}
-.guide-dialog p,.guide-dialog li{line-height:1.55;}
-.guide-dialog ol{padding-left:20px;}
-.guide-dialog code{display:inline-block;background:#edf2f6;border-radius:4px;padding:2px 5px;}
-@media(max-width:650px){
- .topbar{padding:12px;gap:8px;}
- .actions{width:100%;margin:0;gap:6px;}
- .actions .btn{padding:9px 11px;min-height:40px;}
- .card{margin:10px;padding:12px;}
- .stickybar{top:0;gap:6px;flex-wrap:wrap;}
- .togglebar{margin-left:0;flex-wrap:wrap;}
- .btnbar{flex-wrap:wrap;}
- .demo-buttons .btn{flex:1 1 130px;justify-content:center;}
- .dialog{width:100%;}
-}
-
+/* Публичное демо: интерфейс оригинала без служебной панели алиасов. Код работы с алиасами сохранён. */
+#aliasCard{display:none}
+.demo-label{display:inline-block;vertical-align:middle;margin-left:7px;font-size:10px;font-weight:600;letter-spacing:.04em;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:4px;padding:2px 6px}
+.demo-shortcuts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:12px;color:var(--muted)}
+.demo-shortcuts .btn{padding:3px 8px;font-size:12px;border-radius:6px;min-height:26px}
+#btnSearch{touch-action:manipulation}
+.tablewrap{max-width:100%;-webkit-overflow-scrolling:touch}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <header class="topbar">
-  <div class="catalog-heading">Каталог номенклатуры</div>
+  <div class="catalog-heading">Каталог номенклатуры <span class="demo-label">ДЕМО</span></div>
   <div class="actions">
     
     <input type="file" id="picker" accept=".xlsx,.xlsm,.xls,.csv,.json" style="display:none">
     <label for="picker" class="btn">Загрузить файл</label>
     <button class="btn" id="btnClear">Очистить память</button>
-    <button class="btn" id="btnDemoGuide">Как проверить</button>
   </div>
 </header>
 
-<div class="card"><div id="info">Каталог не загружен</div></div>
-
-<section class="card demo-tools" aria-labelledby="demoTitle">
- <h2 id="demoTitle">Попробовать поиск</h2>
- <p>В каталоге 96 вымышленных позиций. Готовые примеры покажут поиск по артикулу, массовую обработку и остатки с резервом.</p>
- <div class="demo-buttons">
-  <button type="button" class="btn" id="btnDemoOne">Один артикул</button>
-  <button type="button" class="btn" id="btnDemoBatch">Несколько артикулов</button>
-  <button type="button" class="btn" id="btnDemoAll">Показать 96 позиций</button>
- </div>
- <div class="demo-note">После поиска нажми «Резерв», чтобы показать отдельную колонку. На телефоне таблица прокручивается по горизонтали.</div>
-</section>
-
+<div class="card">
+  <div id="info">Каталог не загружен</div>
+  <div class="demo-shortcuts"><span>Тестовые данные:</span>
+    <button class="btn" type="button" id="btnDemoOne">Один артикул</button>
+    <button class="btn" type="button" id="btnDemoBatch">Три артикула</button>
+  </div>
+</div>
 
 <div class="card" id="aliasCard">
   <div class="stickybar">
@@ -142,24 +118,6 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
   <div id="resultWrap" class="tablewrap"></div>
 </div>
 
-
-<div id="demoGuide" class="modal" role="dialog" aria-modal="true" aria-labelledby="demoGuideTitle">
- <div class="dialog guide-dialog">
-  <h3 id="demoGuideTitle">Как проверить каталог</h3>
-  <p>Все товары и цифры вымышлены. Демо показывает обработку номенклатуры, а не реальную складскую базу.</p>
-  <ol>
-   <li><b>Один товар:</b> нажмите «Один артикул» — появится позиция <code>DEMO-ANC-006-060</code>.</li>
-   <li><b>Пакетный поиск:</b> нажмите «Несколько артикулов» — программа обработает три строки и выдаст соответствующие позиции.</li>
-   <li><b>Весь каталог:</b> нажмите «Показать 96 позиций» для просмотра таблицы и сортировки по столбцам.</li>
-   <li><b>Остатки и резерв:</b> кнопка «Резерв» добавляет колонку зарезервированного количества. «Остаток» — учтённое количество; значение резерва показывается отдельно. Резерв не изменяется от нажатия.</li>
-   <li><b>Экспорт:</b> скачайте результаты в CSV или XLSX либо скопируйте таблицу.</li>
-   <li><b>Свой файл:</b> можно загрузить CSV/Excel/JSON со столбцами <code>code, name, unit, stock, reserve</code>. Он заменит демонстрационные данные в текущем каталоге.</li>
-  </ol>
-  <p>На телефоне прокручивайте таблицу по горизонтали. Если данные из собственного файла сохранились в браузере, кнопка «Очистить память» сбросит их; затем обновите страницу для возврата 96 демо-товаров.</p>
-  <footer><button class="btn" type="button" id="closeDemoGuide">Закрыть</button></footer>
- </div>
-</div>
-
 <div id="toast" class="toast"></div>
 
 <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
@@ -191,6 +149,20 @@ const toNum=v=>{const x=Number(String(v??'').replace(',','.'));return Number.isF
 (()=>{const txt=$('q');function autosize(){txt.style.height='auto';const max=420;let h=txt.scrollHeight+24;txt.style.overflowY=(h>max)?'auto':'hidden';txt.style.height=Math.min(h,max)+'px';}txt.addEventListener('input',autosize);})();
 
 // ——— IndexedDB ———
+// Небольшие тестовые сценарии поверх оригинального поискового движка.
+function fillDemoQuery(query) {
+  if (!catalog.some(r => String(r.code).startsWith('DEMO-'))) {
+    toast('Для примера очистите память и перезагрузите страницу');
+    return;
+  }
+  const field = $('q');
+  field.value = query;
+  field.dispatchEvent(new Event('input', {bubbles:true}));
+  if (!interactiveMode) doSearch();
+}
+$('btnDemoOne').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060'));
+$('btnDemoBatch').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060\nDEMO-BOLT-008-100\nDEMO-WASH-012-060'));
+
 const DB='catalogflow_demo_app', ST='store';
 const KEY_ROWS='catalog_rows', KEY_META='catalog_meta', KEY_ALIAS_FILES='alias_files_meta', KEY_ALIAS_CODE='alias_code_map', KEY_ALIAS_NAME='alias_name_map', KEY_ALIAS_DIR='alias_dir_handle', KEY_UI='ui_prefs';
 let IDB_OK=true;
@@ -632,8 +604,26 @@ function exportXLSX(){
 
 // ——— события (без изменений) ———
 $('picker').addEventListener('change',async e=>{const f=e.target.files[0]; e.target.value=''; if(!f)return; await loadCatalogFromFile(f);});
-$('btnSearch').addEventListener('click', doSearch);
-$('btnSearch').addEventListener('dblclick',()=>{interactiveMode=!interactiveMode;$('btnSearch').classList.toggle('active',interactiveMode);if(interactiveMode){$('q').addEventListener('input',doSearch);doSearch();}else{$('q').removeEventListener('input',doSearch);}});
+// Один клик: разовый поиск. Два быстрых клика/тапа: переключить автопоиск.
+let searchLastTap = 0;
+$('btnSearch').title = 'Двойной клик: включить или выключить автопоиск';
+$('btnSearch').addEventListener('click', e => {
+  doSearch();
+  const now = Date.now();
+  const doubleTap = e.detail >= 2 || (searchLastTap > 0 && now - searchLastTap <= 520);
+  if (doubleTap) {
+    interactiveMode = !interactiveMode;
+    $('btnSearch').classList.toggle('active', interactiveMode);
+    $('btnSearch').setAttribute('aria-pressed', String(interactiveMode));
+    $('btnSearch').title = interactiveMode ? 'Автопоиск включён — двойной клик для выключения' : 'Двойной клик: включить или выключить автопоиск';
+    if (interactiveMode) $('q').addEventListener('input', doSearch);
+    else $('q').removeEventListener('input', doSearch);
+    doSearch();
+    searchLastTap = 0;
+  } else {
+    searchLastTap = now;
+  }
+});
 $('btnReset').addEventListener('click',()=>{$('q').value='';$('resultWrap').innerHTML='';$('resCount').textContent='—';$('exportActions').classList.add('hidden');clearFocus();});
 $('btnZero').addEventListener('click',async()=>{hideZero=!hideZero;$('btnZero').classList.toggle('active',hideZero);renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks);await saveUIPrefs();});
 $('btnOrder').addEventListener('click',async()=>{orderByInput=!orderByInput;$('btnOrder').classList.toggle('active',orderByInput);sortBy=null;updateSortButtons();await saveUIPrefs();renderTable(lastBase.rows,lastBase.withQuery,lastBase.toks);});
@@ -663,31 +653,6 @@ $('btnClear').addEventListener('click', async ()=>{
 });
 $('btnAliasOne').addEventListener('click', aliasFolderAction);
 $('btnAliasFold').addEventListener('click', async ()=>{aliasCollapsed=!aliasCollapsed; $('aliasCard').classList.toggle('collapsed',aliasCollapsed); $('btnAliasFold').textContent=aliasCollapsed?'Развернуть':'Свернуть'; await saveUIPrefs();});
-
-
-/* Кнопки демонстрации используют существующий движок поиска. */
-const demoGuide=$('demoGuide');
-$('btnDemoGuide').addEventListener('click',()=>demoGuide.classList.add('show'));
-$('closeDemoGuide').addEventListener('click',()=>demoGuide.classList.remove('show'));
-demoGuide.addEventListener('click',e=>{if(e.target===demoGuide)demoGuide.classList.remove('show');});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')demoGuide.classList.remove('show');});
-function demoPreview(mode){
-  if(!catalog.length){toast('Нет данных. Обновите страницу после очистки памяти.');return;}
-  if(!catalog.some(r=>String(r.code).startsWith('DEMO-'))){toast('Сначала очистите память и обновите страницу, чтобы вернуть демонстрационный каталог.');return;}
-  whReserve=true; $('btnReserve').classList.add('active');saveUIPrefs();
-  sortBy=null; orderByInput=false; $('btnOrder').classList.remove('active');
-  if(mode==='one'){$('q').value='DEMO-ANC-006-060';doSearch();}
-  else if(mode==='batch'){$('q').value='DEMO-ANC-006-060\nDEMO-BOLT-008-100\nDEMO-WASH-012-060';doSearch();}
-  else {$('q').value='';renderTable(catalog,false,null);}
-  const input=$('q');
-  input.style.height='auto';
-  input.style.height=Math.min(input.scrollHeight+24,420)+'px';
-  input.style.overflowY=(input.scrollHeight>420)?'auto':'hidden';
-  $('resultWrap').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
-$('btnDemoOne').addEventListener('click',()=>demoPreview('one'));
-$('btnDemoBatch').addEventListener('click',()=>demoPreview('batch'));
-$('btnDemoAll').addEventListener('click',()=>demoPreview('all'));
 
 // ——— автозагрузка (без изменений) ———
 async function autoloadFromCache(){
