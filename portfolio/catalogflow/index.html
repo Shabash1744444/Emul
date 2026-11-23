@@ -679,7 +679,10 @@ function demoPreview(mode){
   if(mode==='one'){$('q').value='DEMO-ANC-006-060';doSearch();}
   else if(mode==='batch'){$('q').value='DEMO-ANC-006-060\nDEMO-BOLT-008-100\nDEMO-WASH-012-060';doSearch();}
   else {$('q').value='';renderTable(catalog,false,null);}
-  $('q').dispatchEvent(new Event('input',{bubbles:true}));
+  const input=$('q');
+  input.style.height='auto';
+  input.style.height=Math.min(input.scrollHeight+24,420)+'px';
+  input.style.overflowY=(input.scrollHeight>420)?'auto':'hidden';
   $('resultWrap').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 $('btnDemoOne').addEventListener('click',()=>demoPreview('one'));
