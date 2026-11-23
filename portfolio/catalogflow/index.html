@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CatalogFlow — каталог и поиск по номенклатуре</title>
+<title>Демо-каталог — поиск номенклатуры</title>
 <meta name="description" content="Учебный каталог. Все товарные данные вымышлены.">
-<meta name="theme-color" content="#355c72">
+<meta name="theme-color" content="#2459a6">
 <style>
-:root{--accent:#355c72;--bg:#f6f7fb;--card:#fff;--text:#111827;--border:#e5e7eb;--muted:#6b7280;--focus:#e9f1f5}
+:root{--accent:#2459a6;--bg:#f5f8fd;--card:#fff;--text:#111827;--border:#dbe5f1;--muted:#60718a;--focus:#e7f0ff}
 *{box-sizing:border-box}
 body{margin:0;font:14px/1.45 Segoe UI,system-ui,Roboto,Arial;color:var(--text);background:var(--bg)}
 .topbar{display:flex;gap:10px;align-items:center;padding:10px;background:var(--accent);color:#fff;flex-wrap:wrap}
-.catalog-heading{font-size:16px;font-weight:600}
+.catalog-heading{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;font-size:16px;font-weight:900;letter-spacing:.03em;border:1px solid rgba(255,255,255,.35);padding:4px 12px;border-radius:999px}
 .actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--accent);cursor:pointer;text-decoration:none}
 .btn[disabled]{opacity:.5;pointer-events:none}
@@ -33,7 +33,7 @@ thead th .hdr{display:flex;align-items:center;gap:6px}
 .focus th.focus .copybtn{display:inline-flex}
 .focus td,.focus th{user-select:none}
 .focus td.focus,.focus th.focus{background:var(--focus);user-select:text;position:relative}
-tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,92,114,.3), rgba(53,92,114,0));border:none;border-radius:8px}
+tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(36,89,166,.3), rgba(36,89,166,0));border:none;border-radius:8px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;background:#111;color:#fff;padding:10px 12px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;z-index:99}
 .toast.show{opacity:1;bottom:20px}
 .badge{background:#f0eef2;color:#6b7280;border-radius:999px;padding:2px 8px;margin-left:8px}
@@ -58,9 +58,13 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
 .dialog footer{display:flex;justify-content:flex-end;margin-top:12px}
 .dialog .btn{color:#fff;background:var(--accent);border-color:var(--accent)}
 /* Публичное демо: интерфейс оригинала без служебной панели алиасов. Код работы с алиасами сохранён. */
-#aliasCard{display:none}
+/* Панель алиасов свёрнута по умолчанию, весь механизм сохранён. */
 .demo-label{display:inline-block;vertical-align:middle;margin-left:7px;font-size:10px;font-weight:600;letter-spacing:.04em;color:#fff;border:1px solid rgba(255,255,255,.55);border-radius:4px;padding:2px 6px}
 .demo-shortcuts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:12px;color:var(--muted)}
+.topbar .actions{display:none}
+#aliasCard.collapsed{padding:7px 12px}
+#aliasCard.collapsed .stickybar{padding:3px 6px}
+@media(max-width:480px){.catalog-heading{max-width:100%;font-size:14px}.demo-shortcuts .btn{padding:5px 8px}.stickybar{top:0}}
 .demo-shortcuts .btn{padding:3px 8px;font-size:12px;border-radius:6px;min-height:26px}
 #btnSearch{touch-action:manipulation}
 .tablewrap{max-width:100%;-webkit-overflow-scrolling:touch}
@@ -69,7 +73,7 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
 </head>
 <body>
 <header class="topbar">
-  <div class="catalog-heading">Каталог номенклатуры <span class="demo-label">ДЕМО</span></div>
+  <div class="catalog-heading">Демо-каталог <span class="demo-label">ВЫМЫШЛЕННЫЕ ДАННЫЕ</span></div>
   <div class="actions">
     
     <input type="file" id="picker" accept=".xlsx,.xlsm,.xls,.csv,.json" style="display:none">
@@ -83,14 +87,16 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
   <div class="demo-shortcuts"><span>Тестовые данные:</span>
     <button class="btn" type="button" id="btnDemoOne">Один артикул</button>
     <button class="btn" type="button" id="btnDemoBatch">Три артикула</button>
+    <button class="btn" type="button" id="btnDemoZero">Нулевой остаток</button>
+    <button class="btn" type="button" id="btnDemoAll">Все 96 позиций</button>
   </div>
 </div>
 
-<div class="card" id="aliasCard">
+<div class="card collapsed" id="aliasCard">
   <div class="stickybar">
     <button class="btn" id="btnAliasOne">Папка алиасов</button>
     <span id="aliasCount" class="badge">алиасов: 0</span>
-    <button class="btn fold-btn" id="btnAliasFold">Свернуть</button>
+    <button class="btn fold-btn" id="btnAliasFold">Развернуть</button>
   </div>
   <div class="alias-list" id="aliasList"></div>
 </div>
@@ -108,7 +114,7 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
   </div>
 
   <textarea id="q" placeholder="Одна строка — обычный поиск; Несколько строк — массовый (каждая строка отдельный запрос)"></textarea>
-  <div id="hint">Подсказка: можно вставлять строку клиента целиком — лишние слова будут проигнорированы</div>
+  <div id="hint">Двойной клик или два быстрых нажатия «Найти» — автопоиск. «Резерв» показывает резерв, «0» скрывает нулевые остатки.</div>
 
   <div id="exportActions" class="hidden btnbar">
     <button class="btn" id="btnExportCSV">Скачать CSV</button>
@@ -135,6 +141,7 @@ tr.group-separator td{height:12px;background:linear-gradient(to right, rgba(53,9
 <script>
 // ——— утилиты ———
 const $=id=>document.getElementById(id);
+const escapeCell=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const toast=m=>{const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);};
 function showHelp(err){$('mMsg').textContent=(err?'Подробности: '+String(err).replace(/^Error:\s*/,'')+'\n':'')+'Ожидается формат листа «Stock»: code, name, unit, stock (+ reserve).';$('modal').classList.add('show');}
 $('mOk').addEventListener('click',()=>$('modal').classList.remove('show'));
@@ -162,6 +169,15 @@ function fillDemoQuery(query) {
 }
 $('btnDemoOne').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060'));
 $('btnDemoBatch').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060\nDEMO-BOLT-008-100\nDEMO-WASH-012-060'));
+$('btnDemoZero').addEventListener('click', () => {
+  hideZero=false; $('btnZero').classList.remove('active');
+  fillDemoQuery('DEMO-BRK-010-060');
+});
+$('btnDemoAll').addEventListener('click', () => {
+  hideZero=false; $('btnZero').classList.remove('active');
+  $('q').value='';
+  renderTable(catalog,false,null);
+});
 
 const DB='catalogflow_demo_app', ST='store';
 const KEY_ROWS='catalog_rows', KEY_META='catalog_meta', KEY_ALIAS_FILES='alias_files_meta', KEY_ALIAS_CODE='alias_code_map', KEY_ALIAS_NAME='alias_name_map', KEY_ALIAS_DIR='alias_dir_handle', KEY_UI='ui_prefs';
@@ -184,7 +200,7 @@ let whReserve=false, orderByInput=false;
 async function loadUIPrefs(){
   const p=await idbGet(KEY_UI)||{};
   hideZero=!!p.hideZero; sortBy=p.sortBy||null; sortDir=p.sortDir||'desc';
-  aliasCollapsed=!!p.aliasCollapsed; whReserve=!!p.whReserve; orderByInput=!!p.orderByInput;
+  aliasCollapsed=true; whReserve=!!p.whReserve; orderByInput=!!p.orderByInput;
   $('btnZero').classList.toggle('active',hideZero);
   $('btnReserve').classList.toggle('active',whReserve);
   $('btnOrder').classList.toggle('active',orderByInput);
@@ -452,7 +468,7 @@ function clearFocus(){focusColIndex=null;const tw=document.querySelector('.table
 function renderTable(baseRows,withQuery,toks){
   lastBase={rows:baseRows.slice(),withQuery,toks};
   let view=baseRows.slice();
-  if(hideZero){const cols=activeQtyKeys(); view=view.filter(r=>cols.some(k=>toNum(r[k])>0));}
+  if(hideZero){view=view.filter(r=>toNum(r.stock)>0);}
   
   applySort(view, withQuery ? (view.length > 0 ? lastBase.rows.find(r => r.query === view[0].query)?.query || '' : '') : (toks ? (Array.isArray(toks) ? toks.join(' ') : toks) : ''));
   
@@ -484,10 +500,10 @@ function renderTable(baseRows,withQuery,toks){
     }
     html+='<tr>';
     headers.forEach(h=>{
-      let val=r[h.key]||'';
+      let val=escapeCell(r[h.key]??'');
       if(h.key==='name'){
         const aliases=codeToAliases.get(r.code_key)||new Set();
-        if(aliases.size){ val=`${r.name||''} <span style="color:#6b7280">(${[...aliases].slice(0,3).join(', ')}${aliases.size>3?'…':''})</span>`; }
+        if(aliases.size){ val+=` <span style="color:#6b7280">(${[...aliases].slice(0,3).map(escapeCell).join(', ')}${aliases.size>3?'…':''})</span>`; }
       }
       html+=`<td>${val}</td>`;
     });
@@ -516,7 +532,7 @@ function copyFocused(colKey){
 }
 function getCurrentTableRows(){
   let view=lastBase.rows.slice();
-  if(hideZero){const cols=activeQtyKeys(); view=view.filter(r=>cols.some(k=>toNum(r[k])>0));}
+  if(hideZero){view=view.filter(r=>toNum(r.stock)>0);}
   applySort(view,lastBase.withQuery ? (view.length > 0 ? lastBase.rows.find(r => r.query === view[0].query)?.query || '' : '') : (lastBase.toks ? (Array.isArray(lastBase.toks) ? lastBase.toks.join(' ') : lastBase.toks) : ''));
   return {rows:view,withQuery:lastBase.withQuery};
 }
@@ -636,7 +652,7 @@ $('btnCopyTable').addEventListener('click', async ()=>{
   const colsBase=['code','name','unit'].concat(qtyCols);
   const header=withQuery?['Запрос'].concat(headerBase):headerBase;
   const cols=withQuery?['query'].concat(colsBase):colsBase;
-  const out=[header].concat(rows.map(r=>r.join('\t')));
+  const out=[header.join('\t')].concat(rows.map(r=>cols.map(c=>r[c]??'').join('\t')));
   const text=out.join('\r\n');
   try{await navigator.clipboard.writeText(text);toast('Таблица скопирована: '+rows.length+' строк');}
   catch(e){const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('Таблица скопирована');}
@@ -657,17 +673,21 @@ $('btnAliasFold').addEventListener('click', async ()=>{aliasCollapsed=!aliasColl
 // ——— автозагрузка (без изменений) ———
 async function autoloadFromCache(){
   await loadUIPrefs();
-  const rows=await idbGet(KEY_ROWS); const meta=await idbGet(KEY_META);
-  if(Array.isArray(rows)&&rows.length){catalog=rows; $('info').textContent=`Каталог: ${rows.length} позиций (кэш${meta?.sourceFile?`: ${meta.sourceFile}`:''})`;}
-
-  // Вымышленные демонстрационные позиции, используются только при отсутствии загруженного каталога.
-  if (!Array.isArray(rows) || !rows.length) {
-    const exampleRows = [{"code":"DEMO-ANC-006-060","name":"Анкер M6x60 (учебный образец)","unit":"шт","stock":80,"reserve":12},{"code":"DEMO-BOLT-006-060","name":"Болт M6x60 (учебный образец)","unit":"шт","stock":57,"reserve":24},{"code":"DEMO-NUT-006-060","name":"Гайка M6x60 (учебный образец)","unit":"шт","stock":34,"reserve":14},{"code":"DEMO-WASH-006-060","name":"Шайба M6x60 (учебный образец)","unit":"шт","stock":111,"reserve":14},{"code":"DEMO-ROD-006-060","name":"Шпилька M6x60 (учебный образец)","unit":"шт","stock":66,"reserve":17},{"code":"DEMO-BRK-006-060","name":"Кронштейн M6x60 (учебный образец)","unit":"шт","stock":160,"reserve":10},{"code":"DEMO-SCREW-006-060","name":"Саморез M6x60 (учебный образец)","unit":"шт","stock":50,"reserve":24},{"code":"DEMO-PLATE-006-060","name":"Пластина M6x60 (учебный образец)","unit":"шт","stock":156,"reserve":5},{"code":"DEMO-ANC-008-060","name":"Анкер M8x60 (учебный образец)","unit":"шт","stock":28,"reserve":20},{"code":"DEMO-BOLT-008-060","name":"Болт M8x60 (учебный образец)","unit":"шт","stock":140,"reserve":1},{"code":"DEMO-NUT-008-060","name":"Гайка M8x60 (учебный образец)","unit":"шт","stock":152,"reserve":25},{"code":"DEMO-WASH-008-060","name":"Шайба M8x60 (учебный образец)","unit":"шт","stock":68,"reserve":16},{"code":"DEMO-ROD-008-060","name":"Шпилька M8x60 (учебный образец)","unit":"шт","stock":113,"reserve":1},{"code":"DEMO-BRK-008-060","name":"Кронштейн M8x60 (учебный образец)","unit":"шт","stock":158,"reserve":4},{"code":"DEMO-SCREW-008-060","name":"Саморез M8x60 (учебный образец)","unit":"шт","stock":55,"reserve":15},{"code":"DEMO-PLATE-008-060","name":"Пластина M8x60 (учебный образец)","unit":"шт","stock":79,"reserve":6},{"code":"DEMO-ANC-010-060","name":"Анкер M10x60 (учебный образец)","unit":"шт","stock":133,"reserve":13},{"code":"DEMO-BOLT-010-060","name":"Болт M10x60 (учебный образец)","unit":"шт","stock":24,"reserve":16},{"code":"DEMO-NUT-010-060","name":"Гайка M10x60 (учебный образец)","unit":"шт","stock":98,"reserve":25},{"code":"DEMO-WASH-010-060","name":"Шайба M10x60 (учебный образец)","unit":"шт","stock":155,"reserve":26},{"code":"DEMO-ROD-010-060","name":"Шпилька M10x60 (учебный образец)","unit":"шт","stock":24,"reserve":19},{"code":"DEMO-BRK-010-060","name":"Кронштейн M10x60 (учебный образец)","unit":"шт","stock":31,"reserve":23},{"code":"DEMO-SCREW-010-060","name":"Саморез M10x60 (учебный образец)","unit":"шт","stock":111,"reserve":8},{"code":"DEMO-PLATE-010-060","name":"Пластина M10x60 (учебный образец)","unit":"шт","stock":113,"reserve":13},{"code":"DEMO-ANC-012-060","name":"Анкер M12x60 (учебный образец)","unit":"шт","stock":87,"reserve":6},{"code":"DEMO-BOLT-012-060","name":"Болт M12x60 (учебный образец)","unit":"шт","stock":54,"reserve":20},{"code":"DEMO-NUT-012-060","name":"Гайка M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":15},{"code":"DEMO-WASH-012-060","name":"Шайба M12x60 (учебный образец)","unit":"шт","stock":116,"reserve":5},{"code":"DEMO-ROD-012-060","name":"Шпилька M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":26},{"code":"DEMO-BRK-012-060","name":"Кронштейн M12x60 (учебный образец)","unit":"шт","stock":24,"reserve":10},{"code":"DEMO-SCREW-012-060","name":"Саморез M12x60 (учебный образец)","unit":"шт","stock":111,"reserve":3},{"code":"DEMO-PLATE-012-060","name":"Пластина M12x60 (учебный образец)","unit":"шт","stock":69,"reserve":23},{"code":"DEMO-ANC-014-060","name":"Анкер M14x60 (учебный образец)","unit":"шт","stock":128,"reserve":22},{"code":"DEMO-BOLT-014-060","name":"Болт M14x60 (учебный образец)","unit":"шт","stock":71,"reserve":5},{"code":"DEMO-NUT-014-060","name":"Гайка M14x60 (учебный образец)","unit":"шт","stock":40,"reserve":14},{"code":"DEMO-WASH-014-060","name":"Шайба M14x60 (учебный образец)","unit":"шт","stock":52,"reserve":22},{"code":"DEMO-ROD-014-060","name":"Шпилька M14x60 (учебный образец)","unit":"шт","stock":101,"reserve":20},{"code":"DEMO-BRK-014-060","name":"Кронштейн M14x60 (учебный образец)","unit":"шт","stock":85,"reserve":25},{"code":"DEMO-SCREW-014-060","name":"Саморез M14x60 (учебный образец)","unit":"шт","stock":164,"reserve":16},{"code":"DEMO-PLATE-014-060","name":"Пластина M14x60 (учебный образец)","unit":"шт","stock":145,"reserve":20},{"code":"DEMO-ANC-016-060","name":"Анкер M16x60 (учебный образец)","unit":"шт","stock":127,"reserve":17},{"code":"DEMO-BOLT-016-060","name":"Болт M16x60 (учебный образец)","unit":"шт","stock":156,"reserve":11},{"code":"DEMO-NUT-016-060","name":"Гайка M16x60 (учебный образец)","unit":"шт","stock":124,"reserve":25},{"code":"DEMO-WASH-016-060","name":"Шайба M16x60 (учебный образец)","unit":"шт","stock":143,"reserve":18},{"code":"DEMO-ROD-016-060","name":"Шпилька M16x60 (учебный образец)","unit":"шт","stock":79,"reserve":1},{"code":"DEMO-BRK-016-060","name":"Кронштейн M16x60 (учебный образец)","unit":"шт","stock":111,"reserve":11},{"code":"DEMO-SCREW-016-060","name":"Саморез M16x60 (учебный образец)","unit":"шт","stock":70,"reserve":7},{"code":"DEMO-PLATE-016-060","name":"Пластина M16x60 (учебный образец)","unit":"шт","stock":144,"reserve":12},{"code":"DEMO-ANC-006-100","name":"Анкер M6x100 (учебный образец)","unit":"шт","stock":26,"reserve":19},{"code":"DEMO-BOLT-006-100","name":"Болт M6x100 (учебный образец)","unit":"шт","stock":83,"reserve":5},{"code":"DEMO-NUT-006-100","name":"Гайка M6x100 (учебный образец)","unit":"шт","stock":148,"reserve":12},{"code":"DEMO-WASH-006-100","name":"Шайба M6x100 (учебный образец)","unit":"шт","stock":35,"reserve":12},{"code":"DEMO-ROD-006-100","name":"Шпилька M6x100 (учебный образец)","unit":"шт","stock":150,"reserve":20},{"code":"DEMO-BRK-006-100","name":"Кронштейн M6x100 (учебный образец)","unit":"шт","stock":153,"reserve":4},{"code":"DEMO-SCREW-006-100","name":"Саморез M6x100 (учебный образец)","unit":"шт","stock":112,"reserve":14},{"code":"DEMO-PLATE-006-100","name":"Пластина M6x100 (учебный образец)","unit":"шт","stock":33,"reserve":25},{"code":"DEMO-ANC-008-100","name":"Анкер M8x100 (учебный образец)","unit":"шт","stock":144,"reserve":21},{"code":"DEMO-BOLT-008-100","name":"Болт M8x100 (учебный образец)","unit":"шт","stock":26,"reserve":2},{"code":"DEMO-NUT-008-100","name":"Гайка M8x100 (учебный образец)","unit":"шт","stock":70,"reserve":16},{"code":"DEMO-WASH-008-100","name":"Шайба M8x100 (учебный образец)","unit":"шт","stock":57,"reserve":19},{"code":"DEMO-ROD-008-100","name":"Шпилька M8x100 (учебный образец)","unit":"шт","stock":63,"reserve":12},{"code":"DEMO-BRK-008-100","name":"Кронштейн M8x100 (учебный образец)","unit":"шт","stock":103,"reserve":16},{"code":"DEMO-SCREW-008-100","name":"Саморез M8x100 (учебный образец)","unit":"шт","stock":38,"reserve":21},{"code":"DEMO-PLATE-008-100","name":"Пластина M8x100 (учебный образец)","unit":"шт","stock":121,"reserve":25},{"code":"DEMO-ANC-010-100","name":"Анкер M10x100 (учебный образец)","unit":"шт","stock":151,"reserve":3},{"code":"DEMO-BOLT-010-100","name":"Болт M10x100 (учебный образец)","unit":"шт","stock":107,"reserve":10},{"code":"DEMO-NUT-010-100","name":"Гайка M10x100 (учебный образец)","unit":"шт","stock":122,"reserve":17},{"code":"DEMO-WASH-010-100","name":"Шайба M10x100 (учебный образец)","unit":"шт","stock":104,"reserve":18},{"code":"DEMO-ROD-010-100","name":"Шпилька M10x100 (учебный образец)","unit":"шт","stock":143,"reserve":26},{"code":"DEMO-BRK-010-100","name":"Кронштейн M10x100 (учебный образец)","unit":"шт","stock":83,"reserve":4},{"code":"DEMO-SCREW-010-100","name":"Саморез M10x100 (учебный образец)","unit":"шт","stock":16,"reserve":8},{"code":"DEMO-PLATE-010-100","name":"Пластина M10x100 (учебный образец)","unit":"шт","stock":32,"reserve":29},{"code":"DEMO-ANC-012-100","name":"Анкер M12x100 (учебный образец)","unit":"шт","stock":26,"reserve":5},{"code":"DEMO-BOLT-012-100","name":"Болт M12x100 (учебный образец)","unit":"шт","stock":124,"reserve":28},{"code":"DEMO-NUT-012-100","name":"Гайка M12x100 (учебный образец)","unit":"шт","stock":115,"reserve":9},{"code":"DEMO-WASH-012-100","name":"Шайба M12x100 (учебный образец)","unit":"шт","stock":29,"reserve":18},{"code":"DEMO-ROD-012-100","name":"Шпилька M12x100 (учебный образец)","unit":"шт","stock":103,"reserve":0},{"code":"DEMO-BRK-012-100","name":"Кронштейн M12x100 (учебный образец)","unit":"шт","stock":156,"reserve":25},{"code":"DEMO-SCREW-012-100","name":"Саморез M12x100 (учебный образец)","unit":"шт","stock":114,"reserve":21},{"code":"DEMO-PLATE-012-100","name":"Пластина M12x100 (учебный образец)","unit":"шт","stock":165,"reserve":26},{"code":"DEMO-ANC-014-100","name":"Анкер M14x100 (учебный образец)","unit":"шт","stock":34,"reserve":23},{"code":"DEMO-BOLT-014-100","name":"Болт M14x100 (учебный образец)","unit":"шт","stock":93,"reserve":21},{"code":"DEMO-NUT-014-100","name":"Гайка M14x100 (учебный образец)","unit":"шт","stock":70,"reserve":24},{"code":"DEMO-WASH-014-100","name":"Шайба M14x100 (учебный образец)","unit":"шт","stock":31,"reserve":23},{"code":"DEMO-ROD-014-100","name":"Шпилька M14x100 (учебный образец)","unit":"шт","stock":26,"reserve":18},{"code":"DEMO-BRK-014-100","name":"Кронштейн M14x100 (учебный образец)","unit":"шт","stock":56,"reserve":27},{"code":"DEMO-SCREW-014-100","name":"Саморез M14x100 (учебный образец)","unit":"шт","stock":96,"reserve":17},{"code":"DEMO-PLATE-014-100","name":"Пластина M14x100 (учебный образец)","unit":"шт","stock":131,"reserve":2},{"code":"DEMO-ANC-016-100","name":"Анкер M16x100 (учебный образец)","unit":"шт","stock":25,"reserve":3},{"code":"DEMO-BOLT-016-100","name":"Болт M16x100 (учебный образец)","unit":"шт","stock":139,"reserve":10},{"code":"DEMO-NUT-016-100","name":"Гайка M16x100 (учебный образец)","unit":"шт","stock":27,"reserve":20},{"code":"DEMO-WASH-016-100","name":"Шайба M16x100 (учебный образец)","unit":"шт","stock":161,"reserve":10},{"code":"DEMO-ROD-016-100","name":"Шпилька M16x100 (учебный образец)","unit":"шт","stock":56,"reserve":28},{"code":"DEMO-BRK-016-100","name":"Кронштейн M16x100 (учебный образец)","unit":"шт","stock":63,"reserve":2},{"code":"DEMO-SCREW-016-100","name":"Саморез M16x100 (учебный образец)","unit":"шт","stock":58,"reserve":24},{"code":"DEMO-PLATE-016-100","name":"Пластина M16x100 (учебный образец)","unit":"шт","stock":121,"reserve":7}];
+  // Публичное демо всегда стартует с искусственного каталога, независимо от IndexedDB.
+  // При этом импорт и все прочие исходные механизмы остаются работоспособными.
+  {
+    const exampleRows = [{"code":"DEMO-ANC-006-060","name":"Анкер M6x60 (учебный образец)","unit":"шт","stock":80,"reserve":12},{"code":"DEMO-BOLT-006-060","name":"Болт M6x60 (учебный образец)","unit":"шт","stock":57,"reserve":24},{"code":"DEMO-NUT-006-060","name":"Гайка M6x60 (учебный образец)","unit":"шт","stock":34,"reserve":14},{"code":"DEMO-WASH-006-060","name":"Шайба M6x60 (учебный образец)","unit":"шт","stock":111,"reserve":14},{"code":"DEMO-ROD-006-060","name":"Шпилька M6x60 (учебный образец)","unit":"шт","stock":66,"reserve":17},{"code":"DEMO-BRK-006-060","name":"Кронштейн M6x60 (учебный образец)","unit":"шт","stock":160,"reserve":10},{"code":"DEMO-SCREW-006-060","name":"Саморез M6x60 (учебный образец)","unit":"шт","stock":50,"reserve":24},{"code":"DEMO-PLATE-006-060","name":"Пластина M6x60 (учебный образец)","unit":"шт","stock":156,"reserve":5},{"code":"DEMO-ANC-008-060","name":"Анкер M8x60 (учебный образец)","unit":"шт","stock":28,"reserve":20},{"code":"DEMO-BOLT-008-060","name":"Болт M8x60 (учебный образец)","unit":"шт","stock":140,"reserve":1},{"code":"DEMO-NUT-008-060","name":"Гайка M8x60 (учебный образец)","unit":"шт","stock":152,"reserve":25},{"code":"DEMO-WASH-008-060","name":"Шайба M8x60 (учебный образец)","unit":"шт","stock":68,"reserve":16},{"code":"DEMO-ROD-008-060","name":"Шпилька M8x60 (учебный образец)","unit":"шт","stock":113,"reserve":1},{"code":"DEMO-BRK-008-060","name":"Кронштейн M8x60 (учебный образец)","unit":"шт","stock":158,"reserve":4},{"code":"DEMO-SCREW-008-060","name":"Саморез M8x60 (учебный образец)","unit":"шт","stock":55,"reserve":15},{"code":"DEMO-PLATE-008-060","name":"Пластина M8x60 (учебный образец)","unit":"шт","stock":79,"reserve":6},{"code":"DEMO-ANC-010-060","name":"Анкер M10x60 (учебный образец)","unit":"шт","stock":133,"reserve":13},{"code":"DEMO-BOLT-010-060","name":"Болт M10x60 (учебный образец)","unit":"шт","stock":24,"reserve":16},{"code":"DEMO-NUT-010-060","name":"Гайка M10x60 (учебный образец)","unit":"шт","stock":98,"reserve":25},{"code":"DEMO-WASH-010-060","name":"Шайба M10x60 (учебный образец)","unit":"шт","stock":155,"reserve":26},{"code":"DEMO-ROD-010-060","name":"Шпилька M10x60 (учебный образец)","unit":"шт","stock":24,"reserve":19},{"code":"DEMO-BRK-010-060","name":"Кронштейн M10x60 (учебный образец)","unit":"шт","stock":0,"reserve":0},{"code":"DEMO-SCREW-010-060","name":"Саморез M10x60 (учебный образец)","unit":"шт","stock":111,"reserve":8},{"code":"DEMO-PLATE-010-060","name":"Пластина M10x60 (учебный образец)","unit":"шт","stock":113,"reserve":13},{"code":"DEMO-ANC-012-060","name":"Анкер M12x60 (учебный образец)","unit":"шт","stock":87,"reserve":6},{"code":"DEMO-BOLT-012-060","name":"Болт M12x60 (учебный образец)","unit":"шт","stock":54,"reserve":20},{"code":"DEMO-NUT-012-060","name":"Гайка M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":15},{"code":"DEMO-WASH-012-060","name":"Шайба M12x60 (учебный образец)","unit":"шт","stock":116,"reserve":5},{"code":"DEMO-ROD-012-060","name":"Шпилька M12x60 (учебный образец)","unit":"шт","stock":80,"reserve":26},{"code":"DEMO-BRK-012-060","name":"Кронштейн M12x60 (учебный образец)","unit":"шт","stock":24,"reserve":10},{"code":"DEMO-SCREW-012-060","name":"Саморез M12x60 (учебный образец)","unit":"шт","stock":111,"reserve":3},{"code":"DEMO-PLATE-012-060","name":"Пластина M12x60 (учебный образец)","unit":"шт","stock":69,"reserve":23},{"code":"DEMO-ANC-014-060","name":"Анкер M14x60 (учебный образец)","unit":"шт","stock":128,"reserve":22},{"code":"DEMO-BOLT-014-060","name":"Болт M14x60 (учебный образец)","unit":"шт","stock":71,"reserve":5},{"code":"DEMO-NUT-014-060","name":"Гайка M14x60 (учебный образец)","unit":"шт","stock":40,"reserve":14},{"code":"DEMO-WASH-014-060","name":"Шайба M14x60 (учебный образец)","unit":"шт","stock":52,"reserve":22},{"code":"DEMO-ROD-014-060","name":"Шпилька M14x60 (учебный образец)","unit":"шт","stock":101,"reserve":20},{"code":"DEMO-BRK-014-060","name":"Кронштейн M14x60 (учебный образец)","unit":"шт","stock":85,"reserve":25},{"code":"DEMO-SCREW-014-060","name":"Саморез M14x60 (учебный образец)","unit":"шт","stock":164,"reserve":16},{"code":"DEMO-PLATE-014-060","name":"Пластина M14x60 (учебный образец)","unit":"шт","stock":145,"reserve":20},{"code":"DEMO-ANC-016-060","name":"Анкер M16x60 (учебный образец)","unit":"шт","stock":127,"reserve":17},{"code":"DEMO-BOLT-016-060","name":"Болт M16x60 (учебный образец)","unit":"шт","stock":156,"reserve":11},{"code":"DEMO-NUT-016-060","name":"Гайка M16x60 (учебный образец)","unit":"шт","stock":124,"reserve":25},{"code":"DEMO-WASH-016-060","name":"Шайба M16x60 (учебный образец)","unit":"шт","stock":143,"reserve":18},{"code":"DEMO-ROD-016-060","name":"Шпилька M16x60 (учебный образец)","unit":"шт","stock":79,"reserve":1},{"code":"DEMO-BRK-016-060","name":"Кронштейн M16x60 (учебный образец)","unit":"шт","stock":111,"reserve":11},{"code":"DEMO-SCREW-016-060","name":"Саморез M16x60 (учебный образец)","unit":"шт","stock":70,"reserve":7},{"code":"DEMO-PLATE-016-060","name":"Пластина M16x60 (учебный образец)","unit":"шт","stock":144,"reserve":12},{"code":"DEMO-ANC-006-100","name":"Анкер M6x100 (учебный образец)","unit":"шт","stock":26,"reserve":19},{"code":"DEMO-BOLT-006-100","name":"Болт M6x100 (учебный образец)","unit":"шт","stock":83,"reserve":5},{"code":"DEMO-NUT-006-100","name":"Гайка M6x100 (учебный образец)","unit":"шт","stock":0,"reserve":0},{"code":"DEMO-WASH-006-100","name":"Шайба M6x100 (учебный образец)","unit":"шт","stock":35,"reserve":12},{"code":"DEMO-ROD-006-100","name":"Шпилька M6x100 (учебный образец)","unit":"шт","stock":150,"reserve":20},{"code":"DEMO-BRK-006-100","name":"Кронштейн M6x100 (учебный образец)","unit":"шт","stock":153,"reserve":4},{"code":"DEMO-SCREW-006-100","name":"Саморез M6x100 (учебный образец)","unit":"шт","stock":112,"reserve":14},{"code":"DEMO-PLATE-006-100","name":"Пластина M6x100 (учебный образец)","unit":"шт","stock":33,"reserve":25},{"code":"DEMO-ANC-008-100","name":"Анкер M8x100 (учебный образец)","unit":"шт","stock":144,"reserve":21},{"code":"DEMO-BOLT-008-100","name":"Болт M8x100 (учебный образец)","unit":"шт","stock":26,"reserve":2},{"code":"DEMO-NUT-008-100","name":"Гайка M8x100 (учебный образец)","unit":"шт","stock":70,"reserve":16},{"code":"DEMO-WASH-008-100","name":"Шайба M8x100 (учебный образец)","unit":"шт","stock":57,"reserve":19},{"code":"DEMO-ROD-008-100","name":"Шпилька M8x100 (учебный образец)","unit":"шт","stock":63,"reserve":12},{"code":"DEMO-BRK-008-100","name":"Кронштейн M8x100 (учебный образец)","unit":"шт","stock":103,"reserve":16},{"code":"DEMO-SCREW-008-100","name":"Саморез M8x100 (учебный образец)","unit":"шт","stock":0,"reserve":0},{"code":"DEMO-PLATE-008-100","name":"Пластина M8x100 (учебный образец)","unit":"шт","stock":121,"reserve":25},{"code":"DEMO-ANC-010-100","name":"Анкер M10x100 (учебный образец)","unit":"шт","stock":151,"reserve":3},{"code":"DEMO-BOLT-010-100","name":"Болт M10x100 (учебный образец)","unit":"шт","stock":107,"reserve":10},{"code":"DEMO-NUT-010-100","name":"Гайка M10x100 (учебный образец)","unit":"шт","stock":122,"reserve":17},{"code":"DEMO-WASH-010-100","name":"Шайба M10x100 (учебный образец)","unit":"шт","stock":104,"reserve":18},{"code":"DEMO-ROD-010-100","name":"Шпилька M10x100 (учебный образец)","unit":"шт","stock":143,"reserve":26},{"code":"DEMO-BRK-010-100","name":"Кронштейн M10x100 (учебный образец)","unit":"шт","stock":83,"reserve":4},{"code":"DEMO-SCREW-010-100","name":"Саморез M10x100 (учебный образец)","unit":"шт","stock":16,"reserve":8},{"code":"DEMO-PLATE-010-100","name":"Пластина M10x100 (учебный образец)","unit":"шт","stock":32,"reserve":29},{"code":"DEMO-ANC-012-100","name":"Анкер M12x100 (учебный образец)","unit":"шт","stock":26,"reserve":5},{"code":"DEMO-BOLT-012-100","name":"Болт M12x100 (учебный образец)","unit":"шт","stock":124,"reserve":28},{"code":"DEMO-NUT-012-100","name":"Гайка M12x100 (учебный образец)","unit":"шт","stock":115,"reserve":9},{"code":"DEMO-WASH-012-100","name":"Шайба M12x100 (учебный образец)","unit":"шт","stock":29,"reserve":18},{"code":"DEMO-ROD-012-100","name":"Шпилька M12x100 (учебный образец)","unit":"шт","stock":0,"reserve":0},{"code":"DEMO-BRK-012-100","name":"Кронштейн M12x100 (учебный образец)","unit":"шт","stock":156,"reserve":25},{"code":"DEMO-SCREW-012-100","name":"Саморез M12x100 (учебный образец)","unit":"шт","stock":114,"reserve":21},{"code":"DEMO-PLATE-012-100","name":"Пластина M12x100 (учебный образец)","unit":"шт","stock":165,"reserve":26},{"code":"DEMO-ANC-014-100","name":"Анкер M14x100 (учебный образец)","unit":"шт","stock":34,"reserve":23},{"code":"DEMO-BOLT-014-100","name":"Болт M14x100 (учебный образец)","unit":"шт","stock":93,"reserve":21},{"code":"DEMO-NUT-014-100","name":"Гайка M14x100 (учебный образец)","unit":"шт","stock":70,"reserve":24},{"code":"DEMO-WASH-014-100","name":"Шайба M14x100 (учебный образец)","unit":"шт","stock":0,"reserve":0},{"code":"DEMO-ROD-014-100","name":"Шпилька M14x100 (учебный образец)","unit":"шт","stock":26,"reserve":18},{"code":"DEMO-BRK-014-100","name":"Кронштейн M14x100 (учебный образец)","unit":"шт","stock":56,"reserve":27},{"code":"DEMO-SCREW-014-100","name":"Саморез M14x100 (учебный образец)","unit":"шт","stock":96,"reserve":17},{"code":"DEMO-PLATE-014-100","name":"Пластина M14x100 (учебный образец)","unit":"шт","stock":131,"reserve":2},{"code":"DEMO-ANC-016-100","name":"Анкер M16x100 (учебный образец)","unit":"шт","stock":25,"reserve":3},{"code":"DEMO-BOLT-016-100","name":"Болт M16x100 (учебный образец)","unit":"шт","stock":139,"reserve":10},{"code":"DEMO-NUT-016-100","name":"Гайка M16x100 (учебный образец)","unit":"шт","stock":27,"reserve":20},{"code":"DEMO-WASH-016-100","name":"Шайба M16x100 (учебный образец)","unit":"шт","stock":161,"reserve":10},{"code":"DEMO-ROD-016-100","name":"Шпилька M16x100 (учебный образец)","unit":"шт","stock":56,"reserve":28},{"code":"DEMO-BRK-016-100","name":"Кронштейн M16x100 (учебный образец)","unit":"шт","stock":63,"reserve":2},{"code":"DEMO-SCREW-016-100","name":"Саморез M16x100 (учебный образец)","unit":"шт","stock":58,"reserve":24},{"code":"DEMO-PLATE-016-100","name":"Пластина M16x100 (учебный образец)","unit":"шт","stock":0,"reserve":0}];
     catalog = exampleRows.map(r=>({...r,code_key:normalize(r.code),name_key:normalize(r.name)}));
-    $('info').textContent=`Каталог: ${catalog.length} демонстрационных позиций (вымышленные данные)`;
+    $('info').textContent=`Демонстрационный каталог: ${catalog.length} позиций · ${catalog.filter(r=>r.stock===0).length} с нулевым остатком · данные вымышлены`;
   }
   aliasFilesMeta=await idbGet(KEY_ALIAS_FILES)||[]; await rebuildAliasMapsFromMeta(); renderAliasList();
   savedAliasDirHandle=await idbGet(KEY_ALIAS_DIR); await updateAliasFolderButton();
+  // Нейтральное состояние для демонстрации, не зависящее от прежних настроек браузера.
+  hideZero=false; whReserve=true; sortBy=null; orderByInput=false; aliasCollapsed=true;
+  $('btnZero').classList.remove('active'); $('btnOrder').classList.remove('active');
+  $('btnReserve').classList.add('active'); $('aliasCard').classList.add('collapsed');
+  $('btnAliasFold').textContent='Развернуть';
+  renderTable(catalog,false,null);
 }
 autoloadFromCache();
 </script>
