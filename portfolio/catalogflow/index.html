@@ -542,7 +542,7 @@ function getCurrentTableRows(){
 function doSearch(){
   if(!catalog.length){$('resCount').textContent='—';$('resultWrap').innerHTML='';$('exportActions').classList.add('hidden');toast('Каталог не загружен');return;}
   const text=$('q').value.trim();
-  if(!text){$('resultWrap').innerHTML='';$('resCount').textContent='—';$('exportActions').classList.add('hidden');return;}
+  if(!text){renderTable(catalog,false,null);return;}
 
   const lines = text.split(/\r?\n/);
   const MIN_RELEVANCE_SCORE = 20; // Порог, ниже которого результат считается "ахинеей"
@@ -579,6 +579,9 @@ function doSearch(){
   }else{
     let out=[],found=0;
     for(const line of cleanLines){
+      // Batch mode: exact SKU first, fuzzy ranking for free-form client text.
+      const exactMatch = catalog.find(row=>row.code_key===normalize(line));
+      if(exactMatch){out.push({...exactMatch,query:line});found++;continue;}
       let bestMatch = null;
       let highestScore = -1;
 
