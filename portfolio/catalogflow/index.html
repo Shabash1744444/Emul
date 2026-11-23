@@ -171,7 +171,8 @@ $('btnDemoOne').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060'
 $('btnDemoBatch').addEventListener('click', () => fillDemoQuery('DEMO-ANC-006-060\nDEMO-BOLT-008-100\nDEMO-WASH-012-060'));
 $('btnDemoZero').addEventListener('click', () => {
   hideZero=false; $('btnZero').classList.remove('active');
-  fillDemoQuery('DEMO-BRK-010-060');
+  $('q').value='';
+  renderTable(catalog.filter(r=>toNum(r.stock)===0),false,null);
 });
 $('btnDemoAll').addEventListener('click', () => {
   hideZero=false; $('btnZero').classList.remove('active');
@@ -562,6 +563,13 @@ function doSearch(){
   
   if(cleanLines.length===1){
     const query = cleanLines[0];
+    // Exact code match is unambiguous; preserve the original relevance search for all other queries.
+    const exactCode = normalize(query);
+    const exactMatches = catalog.filter(row => row.code_key===exactCode);
+    if(exactMatches.length) {
+      renderTable(exactMatches,false,query);
+      return;
+    }
     const matches = catalog.map(row => {
         return { ...row, score: advancedRelevanceScore(row, query) };
     }).filter(row => row.score >= MIN_RELEVANCE_SCORE);
