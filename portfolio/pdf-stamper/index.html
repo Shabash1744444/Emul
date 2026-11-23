@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Stamper PRO v22 (Absolute Sync)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        body { background: #09090b; color: #cbd5e1; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .header h1 { color: #0ea5e9; margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .layout { display: flex; gap: 20px; width: 100%; max-width: 1400px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+        
+        /* ЛЕВАЯ ПАНЕЛЬ */
+        .panel { background: #18181b; padding: 15px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 1px solid #27272a; width: 100%; max-width: 450px; flex-shrink: 0; }
+        .form-group { margin-bottom: 10px; background: #000; padding: 10px; border-radius: 6px; border: 1px solid #27272a; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #a1a1aa; font-size: 11px; text-transform: uppercase;}
+        input[type="file"], input[type="text"] { display: block; width: 100%; font-size: 12px; color: #f8fafc; box-sizing: border-box; }
+        input[type="text"] { background: #18181b; border: 1px solid #3f3f46; padding: 6px 8px; border-radius: 4px; outline: none; }
+        input[type="text"]:focus { border-color: #0ea5e9; }
+        input[type="file"]::file-selector-button { background: #0ea5e9; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-right: 10px; transition: 0.2s; font-size: 11px;}
+        input[type="file"]::file-selector-button:hover { background: #0284c7; }
+        
+        .two-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .compact-group { padding: 8px; margin-bottom: 8px;}
+        
+        .slider-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+        .slider-row span { font-size: 11px; color: #38bdf8; font-weight: bold; width: 12px; }
+        .slider-row input[type="range"] { flex-grow: 1; accent-color: #10b981; height: 4px; }
+        .slider-row input[type="number"] { width: 45px; background: #18181b; border: 1px solid #3f3f46; color: #facc15; font-weight: bold; text-align: center; padding: 2px; border-radius: 4px; font-size: 11px;}
+        
+        .btn { width: 100%; padding: 14px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; transition: 0.3s; margin-top: 5px; }
+        .btn-save { background: #2563eb; color: #fff; }
+        .btn-save:hover { background: #1d4ed8; }
+        .btn-generate { background: #10b981; color: #000; box-shadow: 0 0 15px rgba(16,185,129,0.2);}
+        .btn-generate:hover { background: #059669; color: #fff; box-shadow: 0 0 25px rgba(16,185,129,0.4);}
+        .btn-generate:disabled { background: #3f3f46; color: #a1a1aa; cursor: not-allowed; box-shadow: none;}
+        .status { text-align: center; margin-top: 10px; font-weight: bold; min-height: 18px; color: #facc15; font-size: 12px; }
+        .section-title { font-size: 10px; text-transform: uppercase; color: #0ea5e9; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #27272a; padding-bottom: 4px;}
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer; margin-top: 6px; color: #10b981; font-weight: bold;}
+        .checkbox-label input { transform: scale(1.1); margin: 0;}
+        .cache-badge { display: inline-block; background: #064e3b; color: #34d399; font-size: 10px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; display: none; }
+        
+        /* ПРАВАЯ ПАНЕЛЬ ПРЕДПРОСМОТРА */
+        .preview-panel { background: #18181b; padding: 15px; border-radius: 10px; border: 1px solid #27272a; flex-grow: 1; max-width: 850px; display: none; flex-direction: column; align-items: center;}
+        .preview-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .preview-header h3 { margin: 0; color: #10b981; font-size: 14px; text-transform: uppercase; }
+        
+        /* КОНТЕЙНЕР СО СКРОЛЛОМ */
+        .preview-container { position: relative; width: 100%; max-height: 80vh; overflow-y: auto; overflow-x: hidden; border: 1px solid #3f3f46; border-radius: 4px; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); touch-action: pan-y; }
+        
+        /* ИСПРАВЛЕНИЕ КООРДИНАТ: ВНУТРЕННИЙ WRAPPER */
+        #pdfWrapper { position: relative; width: 100%; display: block; line-height: 0; }
+        #pdfCanvas { display: block; width: 100%; height: auto; pointer-events: none; }
+        
+        .overlay-item { 
+            position: absolute; transform-origin: bottom left; cursor: grab; 
+            border: 2px dashed transparent; transition: border 0.2s, background 0.2s; user-select: none; touch-action: none; line-height: normal;
+        }
+        .overlay-item:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+        .overlay-item:active { cursor: grabbing; border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        
+        #previewSign { z-index: 10; }
+        #previewStamp { z-index: 9; opacity: 0.95; }
+        #previewText { z-index: 11; color: #000; font-family: 'Arial', sans-serif; font-size: 14px; white-space: nowrap; padding: 2px; touch-action: none;}
+        
+        .anchor-point { position: absolute; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; transform: translate(-50%, 50%); z-index: 20; box-shadow: 0 0 5px #000; pointer-events: none;}
+        .hint { display: inline-block; background: #064e3b; color: #34d399; font-size: 10px; padding: 4px 8px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🎙 PDF Stamper PRO v22 (Absolute Sync)</h1>
+    </div>
+
+    <div class="layout">
+        
+        <div class="panel">
+            
+            <div class="form-group" style="border-color: #10b981; background: rgba(16, 185, 129, 0.05);">
+                <label style="color: #10b981;">📄 Шаг 1: Загрузить PDF (можно сразу много)</label>
+                <input type="file" id="pdfInput" accept=".pdf" multiple>
+            </div>
+
+            <div class="form-group">
+                <label>🖋 Шаг 2: Исходники</label>
+                <div style="font-size: 10px; margin-bottom: 5px;">
+                    <span id="badgeSign" class="cache-badge">Подпись загружена</span> 
+                    <span id="badgeStamp" class="cache-badge">Печать загружена</span>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 6px;">
+                    <input type="file" id="signInput" accept=".png, .jpg, .jpeg" title="Подпись">
+                    <input type="file" id="stampInput" accept=".png, .jpg, .jpeg" title="Печать">
+                </div>
+                <input type="text" id="fioInput" placeholder="Текст ФИО (Иванов И.И.)">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="transparentToggle" checked> Вырезать белый фон картинок
+                </label>
+            </div>
+
+            <div id="controlsBlock" style="display: none;">
+                <div class="two-cols">
+                    <div class="form-group compact-group">
+                        <div class="section-title">🖋 Подпись</div>
+                        <div class="slider-row"><span title="Вправо">X</span><input type="range" id="signX_slider" min="-100" max="500" value="10"><input type="number" id="signX" value="10"></div>
+                        <div class="slider-row"><span title="Вверх">Y</span><input type="range" id="signY_slider" min="-100" max="100" value="5"><input type="number" id="signY" value="5"></div>
+                        <div class="slider-row"><span title="Размер">W</span><input type="range" id="signW_slider" min="50" max="300" value="120"><input type="number" id="signW" value="120"></div>
+                    </div>
+
+                    <div class="form-group compact-group">
+                        <div class="section-title">ות Печать</div>
+                        <div class="slider-row"><span>X</span><input type="range" id="stampX_slider" min="-100" max="500" value="70"><input type="number" id="stampX" value="70"></div>
+                        <div class="slider-row"><span>Y</span><input type="range" id="stampY_slider" min="-100" max="100" value="-25"><input type="number" id="stampY" value="-25"></div>
+                        <div class="slider-row"><span>W</span><input type="range" id="stampW_slider" min="50" max="250" value="95"><input type="number" id="stampW" value="95"></div>
+                    </div>
+                </div>
+
+                <div class="form-group compact-group">
+                    <div class="section-title">👤 ФИО</div>
+                    <div class="two-cols">
+                        <div class="slider-row"><span>X</span><input type="range" id="textX_slider" min="-50" max="600" value="150"><input type="number" id="textX" value="150"></div>
+                        <div class="slider-row"><span>Y</span><input type="range" id="textY_slider" min="-100" max="100" value="2"><input type="number" id="textY" value="2"></div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-save" id="btnSaveConfig" style="padding: 10px; font-size: 11px; background: #3f3f46;">💾 Сохранить эти координаты на будущее</button>
+            </div>
+
+            <button class="btn btn-generate" id="btnGenerate" disabled>✅ ПОДПИСАТЬ И СКАЧАТЬ</button>
+            <div id="workStatus" class="status">Загрузите PDF для начала...</div>
+        </div>
+
+        <div class="preview-panel" id="previewPanel">
+            <div class="preview-header">
+                <h3>👁 Предпросмотр (Студия)</h3>
+                <span class="hint">👉 Тащи элементы мышкой!</span>
+            </div>
+            <div class="preview-container" id="previewContainer">
+                <div id="pdfWrapper">
+                    <canvas id="pdfCanvas"></canvas>
+                    <div class="anchor-point" id="anchorPoint" style="display:none;" title="Якорь"></div>
+                    <img id="previewSign" class="overlay-item" style="display:none;" draggable="false">
+                    <img id="previewStamp" class="overlay-item" style="display:none;" draggable="false">
+                    <div id="previewText" class="overlay-item" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    let currentPdfBytes = null; let anchorData = null; let pdfDims = null; let signImgData = null; let stampImgData = null;
+
+    const DOM = {
+        pdfInput: document.getElementById('pdfInput'), signInput: document.getElementById('signInput'), stampInput: document.getElementById('stampInput'),
+        fioInput: document.getElementById('fioInput'), controlsBlock: document.getElementById('controlsBlock'), previewPanel: document.getElementById('previewPanel'),
+        pdfCanvas: document.getElementById('pdfCanvas'), previewContainer: document.getElementById('previewContainer'), 
+        previewSign: document.getElementById('previewSign'), previewStamp: document.getElementById('previewStamp'), previewText: document.getElementById('previewText'), 
+        anchorPoint: document.getElementById('anchorPoint'), btnGenerate: document.getElementById('btnGenerate'), workStatus: document.getElementById('workStatus'), 
+        transparentToggle: document.getElementById('transparentToggle'), badgeSign: document.getElementById('badgeSign'), badgeStamp: document.getElementById('badgeStamp')
+    };
+
+    const STORAGE_KEY = 'pdfStamperConfig_v22';
+    let cachedConfig = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    const controls = ['signX', 'signY', 'signW', 'stampX', 'stampY', 'stampW', 'textX', 'textY'];
+
+    // ПЕРЕВОДЧИК КАРТИНОК
+    function base64ToArrayBuffer(base64) {
+        const base64Data = base64.split(',')[1] || base64;
+        const binaryString = window.atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) { bytes[i] = binaryString.charCodeAt(i); }
+        return bytes.buffer;
+    }
+
+    async function initFromCache() {
+        controls.forEach(id => { if (cachedConfig[id] !== undefined) document.getElementById(id).value = cachedConfig[id]; document.getElementById(id+'_slider').value = document.getElementById(id).value; });
+        if (cachedConfig.fioInput !== undefined) DOM.fioInput.value = cachedConfig.fioInput;
+        
+        if (cachedConfig.signBase64) {
+            signImgData = await loadBase64ToImage(cachedConfig.signBase64);
+            DOM.previewSign.src = signImgData.src; DOM.badgeSign.style.display = 'inline-block';
+        }
+        if (cachedConfig.stampBase64) {
+            stampImgData = await loadBase64ToImage(cachedConfig.stampBase64);
+            DOM.previewStamp.src = stampImgData.src; DOM.badgeStamp.style.display = 'inline-block';
+        }
+    }
+
+    function loadBase64ToImage(base64) {
+        return new Promise(resolve => {
+            const img = new Image(); img.onload = () => resolve({ src: base64, ratio: img.height / img.width }); img.src = base64;
+        });
+    }
+
+    controls.forEach(id => {
+        const slider = document.getElementById(id + '_slider'); const num = document.getElementById(id);
+        slider.addEventListener('input', () => { num.value = slider.value; updateOverlay(); });
+        num.addEventListener('input', () => { slider.value = num.value; updateOverlay(); });
+    });
+    DOM.fioInput.addEventListener('input', updateOverlay);
+
+    async function readFileAsArrayBuffer(file) {
+        return new Promise(resolve => {
+            const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function processImageToRam(file, applyTransparency) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image(); img.crossOrigin = "Anonymous";
+                img.onload = () => {
+                    try {
+                        const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0);
+                        if (applyTransparency) {
+                            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height); const data = imgData.data;
+                            for (let i = 0; i < data.length; i += 4) { if (data[i] > 200 && data[i+1] > 200 && data[i+2] > 200) data[i+3] = 0; }
+                            ctx.putImageData(imgData, 0, 0);
+                        }
+                        resolve({ src: canvas.toDataURL('image/png'), ratio: img.height / img.width });
+                    } catch (err) { resolve({ src: e.target.result, ratio: img.height / img.width }); }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleImageUpload() {
+        const applyTransp = DOM.transparentToggle.checked;
+        if (DOM.signInput.files[0]) { signImgData = await processImageToRam(DOM.signInput.files[0], applyTransp); DOM.previewSign.src = signImgData.src; DOM.badgeSign.style.display = 'none'; }
+        if (DOM.stampInput.files[0]) { stampImgData = await processImageToRam(DOM.stampInput.files[0], applyTransp); DOM.previewStamp.src = stampImgData.src; DOM.badgeStamp.style.display = 'none'; }
+        updateOverlay();
+    }
+    DOM.signInput.addEventListener('change', handleImageUpload);
+    DOM.stampInput.addEventListener('change', handleImageUpload);
+    DOM.transparentToggle.addEventListener('change', handleImageUpload);
+
+    document.getElementById('btnSaveConfig').addEventListener('click', async () => {
+        const btn = document.getElementById('btnSaveConfig'); btn.textContent = '⏳ Сохраняем...';
+        controls.forEach(id => { cachedConfig[id] = document.getElementById(id).value; });
+        cachedConfig.fioInput = DOM.fioInput.value;
+        if (signImgData) cachedConfig.signBase64 = signImgData.src;
+        if (stampImgData) cachedConfig.stampBase64 = stampImgData.src;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedConfig));
+        DOM.badgeSign.style.display = 'inline-block'; DOM.badgeStamp.style.display = 'inline-block';
+        btn.textContent = '✅ Запомнил!'; setTimeout(() => btn.textContent = '💾 Сохранить эти координаты на будущее', 2000);
+    });
+
+    async function findUnderscoreTextAnchor(pdfBytes) {
+        const pdf = await pdfjsLib.getDocument({data: new Uint8Array(pdfBytes)}).promise;
+        for (let pageNum = pdf.numPages; pageNum >= 1; pageNum--) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            let lines = [];
+            for (let item of textContent.items) {
+                let y = Math.round(item.transform[5]); let x = item.transform[4];
+                let line = lines.find(l => Math.abs(l.y - y) < 4);
+                if (line) { line.items.push({x: x, str: item.str}); line.text += item.str; } 
+                else { lines.push({ y: y, items: [{x: x, str: item.str}], text: item.str }); }
+            }
+            let anchorLines = lines.filter(l => /_{5,}/.test(l.text));
+            if (anchorLines.length > 0) {
+                anchorLines.sort((a, b) => a.y - b.y);
+                let targetLine = anchorLines[0]; targetLine.items.sort((a, b) => a.x - b.x);
+                let underscoreItem = targetLine.items.find(i => /_+/.test(i.str));
+                let startX = underscoreItem ? underscoreItem.x : targetLine.items[0].x;
+                const viewport = page.getViewport({scale: 1.0});
+                return { pageIndex: pageNum - 1, x: startX, y: targetLine.y, pdfWidth: viewport.width, pdfHeight: viewport.height, pageObj: page };
+            }
+        }
+        return null;
+    }
+
+    DOM.pdfInput.addEventListener('change', async (e) => {
+        if (e.target.files.length === 0) return;
+        DOM.workStatus.style.color = '#38bdf8'; DOM.workStatus.textContent = '⏳ Анализ документа...';
+        try {
+            currentPdfBytes = await readFileAsArrayBuffer(e.target.files[0]);
+            anchorData = await findUnderscoreTextAnchor(currentPdfBytes);
+            if (!anchorData) throw new Error('Линия "_____" не найдена на листе.');
+
+            pdfDims = { w: anchorData.pdfWidth, h: anchorData.pdfHeight };
+            const viewport = anchorData.pageObj.getViewport({scale: 1.5}); 
+            DOM.pdfCanvas.width = viewport.width; DOM.pdfCanvas.height = viewport.height;
+            await anchorData.pageObj.render({canvasContext: DOM.pdfCanvas.getContext('2d'), viewport: viewport}).promise;
+
+            DOM.previewPanel.style.display = 'flex'; DOM.controlsBlock.style.display = 'block'; DOM.btnGenerate.disabled = false;
+            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `✅ Студия открыта!`;
+            
+            // Скроллим в самый низ контейнера
+            setTimeout(() => { DOM.previewContainer.scrollTop = DOM.previewContainer.scrollHeight; }, 300);
+            updateOverlay();
+        } catch (err) {
+            DOM.workStatus.style.color = '#ef4444'; DOM.workStatus.textContent = `❌ Ошибка: ${err.message}`;
+        }
+    });
+
+    // ОТРИСОВКА В СТУДИИ (Исправленные координаты)
+    function updateOverlay() {
+        if (!anchorData) return;
+        const scale = DOM.pdfCanvas.clientWidth / pdfDims.w;
+
+        DOM.anchorPoint.style.display = 'block'; 
+        DOM.anchorPoint.style.left = (anchorData.x * scale) + 'px'; 
+        DOM.anchorPoint.style.bottom = (anchorData.y * scale) + 'px'; // Теперь якорь привязан к bottom враппера!
+
+        const sX = parseFloat(document.getElementById('signX').value) || 0; const sY = parseFloat(document.getElementById('signY').value) || 0; const sW = parseFloat(document.getElementById('signW').value) || 120;
+        const stX = parseFloat(document.getElementById('stampX').value) || 0; const stY = parseFloat(document.getElementById('stampY').value) || 0; const stW = parseFloat(document.getElementById('stampW').value) || 90;
+        const txtX = parseFloat(document.getElementById('textX').value) || 0; const txtY = parseFloat(document.getElementById('textY').value) || 0;
+        const fioText = DOM.fioInput.value.trim();
+
+        if (signImgData) {
+            DOM.previewSign.style.display = 'block'; DOM.previewSign.style.width = (sW * scale) + 'px'; DOM.previewSign.style.height = (signImgData.ratio * sW * scale) + 'px';
+            DOM.previewSign.style.left = ((anchorData.x + sX) * scale) + 'px'; DOM.previewSign.style.bottom = ((anchorData.y + sY) * scale) + 'px';
+        }
+        if (stampImgData) {
+            DOM.previewStamp.style.display = 'block'; DOM.previewStamp.style.width = (stW * scale) + 'px'; DOM.previewStamp.style.height = (stampImgData.ratio * stW * scale) + 'px';
+            DOM.previewStamp.style.left = ((anchorData.x + stX) * scale) + 'px'; DOM.previewStamp.style.bottom = ((anchorData.y + stY) * scale) + 'px';
+        }
+        if (fioText) {
+            DOM.previewText.style.display = 'block'; DOM.previewText.textContent = fioText; DOM.previewText.style.fontSize = (11 * scale) + 'px';
+            DOM.previewText.style.left = ((anchorData.x + txtX) * scale) + 'px'; DOM.previewText.style.bottom = ((anchorData.y + txtY) * scale) + 'px';
+        } else { DOM.previewText.style.display = 'none'; }
+    }
+
+    function makeDraggable(element, idX, idY) {
+        let isDragging = false, startMouseX, startMouseY, startValX, startValY;
+        const startDrag = (e) => {
+            if (!anchorData) return; isDragging = true;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            startMouseX = clientX; startMouseY = clientY;
+            startValX = parseFloat(document.getElementById(idX).value) || 0; startValY = parseFloat(document.getElementById(idY).value) || 0;
+            if (!e.touches) e.preventDefault(); 
+        };
+        const drag = (e) => {
+            if (!isDragging || !anchorData) return;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scale = DOM.pdfCanvas.clientWidth / pdfDims.w;
+            const dx = clientX - startMouseX; const dy = clientY - startMouseY;
+            const newX = Math.round(startValX + (dx / scale)); const newY = Math.round(startValY - (dy / scale)); 
+            document.getElementById(idX).value = newX; document.getElementById(idX + '_slider').value = newX;
+            document.getElementById(idY).value = newY; document.getElementById(idY + '_slider').value = newY;
+            updateOverlay();
+            if (e.touches) e.preventDefault();
+        };
+        const endDrag = () => { isDragging = false; };
+        element.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', drag); document.addEventListener('mouseup', endDrag);
+        element.addEventListener('touchstart', startDrag, {passive: false}); document.addEventListener('touchmove', drag, {passive: false}); document.addEventListener('touchend', endDrag);
+    }
+    makeDraggable(DOM.previewSign, 'signX', 'signY'); makeDraggable(DOM.previewStamp, 'stampX', 'stampY'); makeDraggable(DOM.previewText, 'textX', 'textY');
+
+    // ГЕНЕРАЦИЯ С ИСПРАВЛЕННЫМ ШРИФТОМ
+    DOM.btnGenerate.addEventListener('click', async () => {
+        const pdfFiles = DOM.pdfInput.files;
+        if (!signImgData || !stampImgData) { alert("Загрузите Подпись и Печать!"); return; }
+
+        try {
+            DOM.btnGenerate.disabled = true; DOM.workStatus.style.color = '#38bdf8'; DOM.workStatus.textContent = '⏳ Штампуем...';
+
+            const signBuffer = base64ToArrayBuffer(signImgData.src); 
+            const stampBuffer = base64ToArrayBuffer(stampImgData.src);
+            const fioText = DOM.fioInput.value.trim();
+            const sX = parseFloat(document.getElementById('signX').value) || 0; const sY = parseFloat(document.getElementById('signY').value) || 0; const sW = parseFloat(document.getElementById('signW').value) || 120;
+            const stX = parseFloat(document.getElementById('stampX').value) || 0; const stY = parseFloat(document.getElementById('stampY').value) || 0; const stW = parseFloat(document.getElementById('stampW').value) || 90;
+            const txtX = parseFloat(document.getElementById('textX').value) || 0; const txtY = parseFloat(document.getElementById('textY').value) || 0;
+
+            // Надежная загрузка шрифта (Защита от 403 Forbidden)
+            let fontBytes = null;
+            if (fioText) {
+                try {
+                    let res = await fetch('https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf');
+                    if (res.ok) { fontBytes = await res.arrayBuffer(); } else { throw new Error("403"); }
+                } catch(e) {
+                    try {
+                        let res2 = await fetch('https://unpkg.com/@pdfme/font@2.0.0/Roboto-Regular.ttf');
+                        if (res2.ok) { fontBytes = await res2.arrayBuffer(); }
+                    } catch(e2) {
+                        alert("⚠️ Сервер шрифтов заблокирован. ФИО не будет напечатано, но печати поставятся.");
+                    }
+                }
+            }
+
+            let success = 0;
+
+            for (let i = 0; i < pdfFiles.length; i++) {
+                const file = pdfFiles[i];
+                DOM.workStatus.textContent = `🎯 Обработка файла: ${i + 1} из ${pdfFiles.length}...`;
+                
+                const pdfBytes = await readFileAsArrayBuffer(file);
+                const fileAnchor = await findUnderscoreTextAnchor(pdfBytes);
+
+                if (!fileAnchor) continue; 
+
+                const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                let customFont = null;
+                if (fioText && fontBytes) { pdfDoc.registerFontkit(window.fontkit); customFont = await pdfDoc.embedFont(fontBytes); }
+
+                const signImg = await pdfDoc.embedPng(signBuffer); const stampImg = await pdfDoc.embedPng(stampBuffer);
+                const targetPage = pdfDoc.getPages()[fileAnchor.pageIndex];
+
+                const signH = (signImg.height / signImg.width) * sW; const stampH = (stampImg.height / stampImg.width) * stW;
+
+                targetPage.drawImage(signImg, { x: fileAnchor.x + sX, y: fileAnchor.y + sY, width: sW, height: signH });
+                targetPage.drawImage(stampImg, { x: fileAnchor.x + stX, y: fileAnchor.y + stY, width: stW, height: stampH, opacity: 0.95 });
+                if (fioText && customFont) { targetPage.drawText(fioText, { x: fileAnchor.x + txtX, y: fileAnchor.y + txtY, font: customFont, size: 11, color: PDFLib.rgb(0,0,0) }); }
+
+                const modifiedBytes = await pdfDoc.save();
+                const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([modifiedBytes], { type: 'application/pdf' })); link.download = `Signed_${file.name}`;
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                success++; await new Promise(r => setTimeout(r, 200));
+            }
+
+            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `✅ Готово! Проштамповано: ${success} шт.`;
+        } catch (e) {
+            DOM.workStatus.style.color = '#ef4444'; DOM.workStatus.textContent = `❌ Ошибка: ${e.message}`;
+        } finally {
+            DOM.btnGenerate.disabled = false;
+        }
+    });
+
+    initFromCache();
+</script>
+</body>
+</html>
