@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Stamper PRO v22 (Absolute Sync)</title>
+    <title>PDF — подписи и печати</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -69,12 +69,75 @@
         
         .anchor-point { position: absolute; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; transform: translate(-50%, 50%); z-index: 20; box-shadow: 0 0 5px #000; pointer-events: none;}
         .hint { display: inline-block; background: #064e3b; color: #34d399; font-size: 10px; padding: 4px 8px; border-radius: 4px; }
-    </style>
+    
+/* Строгий адаптивный интерфейс без изменения PDF-алгоритма */
+*,*::before,*::after{box-sizing:border-box}
+html,body{max-width:100%;overflow-x:hidden}
+:root{color-scheme:dark}
+body{width:100%;padding:18px 12px 44px;background:#11161c;color:#e1e7ed;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.header{width:100%;max-width:1200px;text-align:left;margin:0 auto 18px}
+.header h1{font-size:clamp(21px,4vw,28px);text-transform:none;letter-spacing:0;font-weight:650;color:#f5f7fa}
+.subtitle{color:#9eadbc;font-size:13px;margin:6px 0 0;line-height:1.5}
+.layout{width:100%;max-width:1200px;gap:18px;justify-content:flex-start}
+.panel{flex:1 1 390px;width:100%;max-width:485px;min-width:0;padding:18px;background:#1b222b;border:1px solid #303b48;box-shadow:none;border-radius:12px}
+.preview-panel{flex:2 1 510px;width:100%;min-width:0;max-width:none;padding:16px;background:#1b222b;border:1px solid #303b48;border-radius:12px}
+.preview-header{gap:8px;flex-wrap:wrap}
+.preview-header h3{font-size:15px;font-weight:650;color:#e9eff5;text-transform:none}
+.hint{color:#b5c2cf;background:#27323e;font-size:11px;padding:6px 9px;border-radius:6px}
+.form-group{min-width:0;background:#151b23;border:1px solid #303b46;border-radius:9px;padding:13px;margin-bottom:12px}
+.form-group label{color:#c0ccd7;text-transform:none;font-size:12px;letter-spacing:0}
+input[type="file"],input[type="text"],input[type="number"]{max-width:100%;min-width:0}
+input[type="file"]{width:100%;padding:5px 0;color:#e0e8ef;font-size:12px}
+input[type="file"]::file-selector-button{background:#2a3f52;color:#eaf1f7;border:1px solid #47627a;padding:7px 10px;border-radius:6px;font-weight:500}
+input[type="text"]{background:#212b36;border:1px solid #3c4b5a;border-radius:7px;padding:10px}
+.source-files{display:flex;flex-wrap:wrap;gap:12px}
+.source-file{flex:1 1 160px;min-width:0}
+.source-file input{width:100%}
+.two-cols{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.two-cols>*{min-width:0}
+.slider-row{min-width:0;gap:7px;margin-bottom:8px}
+.slider-row span{flex:0 0 12px;color:#abc7dd;font-size:12px}
+.slider-row input[type="range"]{flex:1 1 auto;min-width:35px;accent-color:#7c9fbc}
+.slider-row input[type="number"]{flex:0 0 56px;width:56px;padding:6px 2px;background:#222e3b;color:#e9eff4;border:1px solid #455465;border-radius:6px;font-size:13px}
+.section-title{color:#e0e8ef;font-size:13px;text-transform:none;border-bottom-color:#35414d;padding-bottom:9px}
+.checkbox-label{color:#ced8e2;font-size:12px}
+.cache-badge{background:#244538;color:#c2e7cf;padding:4px 7px}
+.btn{font-size:14px;text-transform:none;border-radius:7px;letter-spacing:0;transition:background .15s ease}
+.btn-save{background:#344456!important;color:#f1f5f8;box-shadow:none}
+.btn-save:hover{background:#45596f!important}
+.btn-generate{background:#35755f;color:#fff;box-shadow:none}
+.btn-generate:hover{background:#458b74;color:#fff;box-shadow:none}
+.btn-generate:disabled{background:#35404c;color:#a9b4c0}
+.status{font-size:12px;font-weight:500;color:#a9b9c8}
+.demo-section{background:#202c38;border:1px solid #385267;border-radius:9px;padding:14px;margin-bottom:16px}
+.eyebrow{font-size:12px;color:#b6c8d8;font-weight:600;margin-bottom:10px}
+.demo-start{background:#507c9d;color:#fff;min-height:44px;margin:0 0 12px;font-weight:650}
+.demo-start:hover{background:#608daf}
+.demo-batch-label{display:flex;gap:9px;align-items:center;color:#dae4ec;font-size:13px;line-height:1.4;font-weight:400;cursor:pointer}
+.demo-batch-label input{width:17px;height:17px;flex:0 0 auto;accent-color:#799fbf}
+.demo-info{font-size:12px;color:#b2c1ce;line-height:1.6;margin:12px 0 0;overflow-wrap:anywhere}
+.preview-container{max-width:100%;overflow-x:hidden;border:1px solid #425161;box-shadow:none}
+@media(max-width:780px){
+ body{padding:14px 10px 30px}
+ .panel,.preview-panel{flex:1 1 100%;width:100%;max-width:100%;min-width:0}
+ .panel{padding:13px}.preview-panel{padding:12px}
+ .two-cols{grid-template-columns:minmax(0,1fr)}
+ .source-files{flex-direction:column;gap:8px}
+ .source-file{flex:auto;width:100%}
+ .slider-row{gap:10px}
+ .slider-row input[type="number"]{width:64px;flex-basis:64px}
+}
+@media(max-width:370px){
+ .panel{padding:10px}.form-group{padding:10px}
+ .slider-row{gap:6px}.slider-row input[type="number"]{width:56px;flex-basis:56px}
+}
+
+</style>
 </head>
 <body>
 
     <div class="header">
-        <h1>🎙 PDF Stamper PRO v22 (Absolute Sync)</h1>
+        <h1>PDF — подписи и печати</h1><p class="subtitle">Обработка документов с размещением подписей и печатей</p>
     </div>
 
     <div class="layout">
@@ -84,47 +147,44 @@
         
         <div class="panel">
         <!-- Public portfolio demonstration: synthetic documents and visibly invalid marks only -->
-        <section style="background:#102936;border:1px solid #167997;border-radius:12px;padding:13px;margin-bottom:14px;">
-            <div style="font-size:12px;color:#7dd3fc;font-weight:700;margin-bottom:8px;">ПОРТФОЛИО · ТЕСТОВЫЕ ДАННЫЕ</div>
-            <button type="button" class="btn" id="btnDemo" style="background:#0ea5e9;color:#06171e;font-weight:800;margin:0 0 10px;">▶ Запустить демо</button>
-            <label style="display:flex;gap:8px;align-items:center;color:#e2e8f0;font-size:12px;font-weight:400;cursor:pointer;">
-                <input type="checkbox" id="demoBatch" style="accent-color:#0ea5e9;"> Проверить пакетную обработку (3 PDF)
+        <section class="demo-section">
+            <div class="eyebrow">Демонстрация · вымышленные данные</div>
+            <button type="button" class="btn demo-start" id="btnDemo">Запустить демо</button>
+            <label class="demo-batch-label">
+                <input type="checkbox" id="demoBatch"> Проверить пакетную обработку (3 PDF)
             </label>
-            <p id="demoInfo" style="font-size:12px;color:#cbd5e1;line-height:1.5;margin:10px 0 0;">Создаст вымышленный PDF, образец подписи и печать с маркировкой DEMO. Затем можно перемещать элементы в предпросмотре и нажать «ПОДПИСАТЬ И СКАЧАТЬ». Собственные PDF по-прежнему можно загружать ниже.</p>
+            <p id="demoInfo" class="demo-info">Создаст вымышленный PDF, образец подписи и печать с маркировкой DEMO. Затем можно перемещать элементы в предпросмотре и нажать «ПОДПИСАТЬ И СКАЧАТЬ». Собственные PDF по-прежнему можно загружать ниже.</p>
         </section>
             
             <div class="form-group" style="border-color: #10b981; background: rgba(16, 185, 129, 0.05);">
-                <label style="color: #10b981;">📄 Шаг 1: Загрузить PDF (можно сразу много)</label>
+                <label style="color: #10b981;">1. Загрузить PDF (можно несколько)</label>
                 <input type="file" id="pdfInput" accept=".pdf" multiple>
             </div>
 
             <div class="form-group">
-                <label>🖋 Шаг 2: Исходники</label>
+                <label>2. Подпись и печать</label>
                 <div style="font-size: 10px; margin-bottom: 5px;">
                     <span id="badgeSign" class="cache-badge">Подпись загружена</span> 
                     <span id="badgeStamp" class="cache-badge">Печать загружена</span>
                 </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 6px;">
-                    <input type="file" id="signInput" accept=".png, .jpg, .jpeg" title="Подпись">
-                    <input type="file" id="stampInput" accept=".png, .jpg, .jpeg" title="Печать">
-                </div>
+                <div class="source-files"><div class="source-file"><label for="signInput">Изображение подписи</label><input type="file" id="signInput" accept=".png, .jpg, .jpeg" title="Подпись"></div><div class="source-file"><label for="stampInput">Изображение печати</label><input type="file" id="stampInput" accept=".png, .jpg, .jpeg" title="Печать"></div></div>
                 <input type="text" id="fioInput" placeholder="Текст ФИО (Иванов И.И.)">
                 <label class="checkbox-label">
-                    <input type="checkbox" id="transparentToggle" checked> Вырезать белый фон картинок
+                    <input type="checkbox" id="transparentToggle" checked> Убрать белый фон изображений
                 </label>
             </div>
 
             <div id="controlsBlock" style="display: none;">
                 <div class="two-cols">
                     <div class="form-group compact-group">
-                        <div class="section-title">🖋 Подпись</div>
+                        <div class="section-title">Подпись</div>
                         <div class="slider-row"><span title="Вправо">X</span><input type="range" id="signX_slider" min="-100" max="500" value="10"><input type="number" id="signX" value="10"></div>
                         <div class="slider-row"><span title="Вверх">Y</span><input type="range" id="signY_slider" min="-100" max="100" value="5"><input type="number" id="signY" value="5"></div>
                         <div class="slider-row"><span title="Размер">W</span><input type="range" id="signW_slider" min="50" max="300" value="120"><input type="number" id="signW" value="120"></div>
                     </div>
 
                     <div class="form-group compact-group">
-                        <div class="section-title">ות Печать</div>
+                        <div class="section-title">Печать</div>
                         <div class="slider-row"><span>X</span><input type="range" id="stampX_slider" min="-100" max="500" value="70"><input type="number" id="stampX" value="70"></div>
                         <div class="slider-row"><span>Y</span><input type="range" id="stampY_slider" min="-100" max="100" value="-25"><input type="number" id="stampY" value="-25"></div>
                         <div class="slider-row"><span>W</span><input type="range" id="stampW_slider" min="50" max="250" value="95"><input type="number" id="stampW" value="95"></div>
@@ -132,24 +192,24 @@
                 </div>
 
                 <div class="form-group compact-group">
-                    <div class="section-title">👤 ФИО</div>
+                    <div class="section-title">Текст</div>
                     <div class="two-cols">
                         <div class="slider-row"><span>X</span><input type="range" id="textX_slider" min="-50" max="600" value="150"><input type="number" id="textX" value="150"></div>
                         <div class="slider-row"><span>Y</span><input type="range" id="textY_slider" min="-100" max="100" value="2"><input type="number" id="textY" value="2"></div>
                     </div>
                 </div>
                 
-                <button class="btn btn-save" id="btnSaveConfig" style="padding: 10px; font-size: 11px; background: #3f3f46;">💾 Сохранить эти координаты на будущее</button>
+                <button class="btn btn-save" id="btnSaveConfig" style="padding: 10px; font-size: 11px; background: #3f3f46;">Сохранить настройки</button>
             </div>
 
-            <button class="btn btn-generate" id="btnGenerate" disabled>✅ ПОДПИСАТЬ И СКАЧАТЬ</button>
+            <button class="btn btn-generate" id="btnGenerate" disabled>Обработать и скачать PDF</button>
             <div id="workStatus" class="status">Загрузите PDF для начала...</div>
         </div>
 
         <div class="preview-panel" id="previewPanel">
             <div class="preview-header">
-                <h3>👁 Предпросмотр (Студия)</h3>
-                <span class="hint">👉 Тащи элементы мышкой!</span>
+                <h3>Предпросмотр</h3>
+                <span class="hint">Перетаскивайте мышью или пальцем</span>
             </div>
             <div class="preview-container" id="previewContainer">
                 <div id="pdfWrapper">
@@ -264,7 +324,7 @@
         if (stampImgData) cachedConfig.stampBase64 = stampImgData.src;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cachedConfig));
         DOM.badgeSign.style.display = 'inline-block'; DOM.badgeStamp.style.display = 'inline-block';
-        btn.textContent = '✅ Запомнил!'; setTimeout(() => btn.textContent = '💾 Сохранить эти координаты на будущее', 2000);
+        btn.textContent = 'Настройки сохранены'; setTimeout(() => btn.textContent = 'Сохранить настройки', 2000);
     });
 
     async function findUnderscoreTextAnchor(pdfBytes) {
@@ -306,7 +366,7 @@
             await anchorData.pageObj.render({canvasContext: DOM.pdfCanvas.getContext('2d'), viewport: viewport}).promise;
 
             DOM.previewPanel.style.display = 'flex'; DOM.controlsBlock.style.display = 'block'; DOM.btnGenerate.disabled = false;
-            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `✅ Студия открыта!`;
+            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `Документ открыт в предпросмотре`;
             
             // Скроллим в самый низ контейнера
             setTimeout(() => { DOM.previewContainer.scrollTop = DOM.previewContainer.scrollHeight; }, 300);
@@ -376,7 +436,7 @@
         if (!signImgData || !stampImgData) { alert("Загрузите Подпись и Печать!"); return; }
 
         try {
-            DOM.btnGenerate.disabled = true; DOM.workStatus.style.color = '#38bdf8'; DOM.workStatus.textContent = '⏳ Штампуем...';
+            DOM.btnGenerate.disabled = true; DOM.workStatus.style.color = '#38bdf8'; DOM.workStatus.textContent = 'Обработка документов...';
 
             const signBuffer = base64ToArrayBuffer(signImgData.src); 
             const stampBuffer = base64ToArrayBuffer(stampImgData.src);
@@ -405,7 +465,7 @@
 
             for (let i = 0; i < pdfFiles.length; i++) {
                 const file = pdfFiles[i];
-                DOM.workStatus.textContent = `🎯 Обработка файла: ${i + 1} из ${pdfFiles.length}...`;
+                DOM.workStatus.textContent = `Обработка файла: ${i + 1} из ${pdfFiles.length}...`;
                 
                 const pdfBytes = await readFileAsArrayBuffer(file);
                 const fileAnchor = await findUnderscoreTextAnchor(pdfBytes);
@@ -431,7 +491,7 @@
                 success++; await new Promise(r => setTimeout(r, 200));
             }
 
-            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `✅ Готово! Проштамповано: ${success} шт.`;
+            DOM.workStatus.style.color = '#10b981'; DOM.workStatus.textContent = `Готово. Обработано: ${success} шт.`;
         } catch (e) {
             DOM.workStatus.style.color = '#ef4444'; DOM.workStatus.textContent = `❌ Ошибка: ${e.message}`;
         } finally {
@@ -531,7 +591,7 @@
       DOM.workStatus.textContent = 'Ошибка подготовки демо: ' + error.message;
     } finally {
       trigger.disabled = false;
-      trigger.textContent = '▶ Запустить демо';
+      trigger.textContent = 'Запустить демо';
     }
   });
 })();
